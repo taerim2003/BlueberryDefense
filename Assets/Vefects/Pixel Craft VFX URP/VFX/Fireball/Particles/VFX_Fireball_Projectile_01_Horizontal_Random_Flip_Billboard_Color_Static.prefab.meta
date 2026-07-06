@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 679b88b34c8b0f64c99fedfb86bb9f81
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fireball/Particles/VFX_Fireball_Projectile_01_Horizontal_Random_Flip_Billboard_Color_Static.prefab
+  uploadId: 771746

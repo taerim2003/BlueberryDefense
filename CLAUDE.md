@@ -67,18 +67,41 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Unity 6** (6000.4.4f1), URP 2D
 - **UI 시스템**: uGUI (미정 시 기본값. 필요 시 UI Toolkit으로 전환하고 여기 갱신)
 - **빌트인 패키지**: 2D Animation, 2D Tilemap, 2D SpriteShape, URP
-- **서드파티 플러그인**: 없음 (도트 그래픽은 직접 그리기 또는 에셋스토어 검토 예정 — GDD §6 참고)
+- **서드파티 플러그인**:
+  - **Unity-MCP** (IvanMurzak, `com.ivanmurzak.unity.mcp`) — Claude Code가 Unity 에디터를 직접 조작하기 위한 MCP 브릿지. §6 참고.
+  - VFX: `Assets/Vefects/Pixel Craft VFX URP` (에셋스토어, URP 2D용 임포트 완료 — `VFX_2D_...` 접두사 프리팹 사용)
+  - 도트 그래픽: 캐릭터·몬스터·배경은 직접 그리기 (GDD §6 프로토타입 계획 참고)
 
 ---
 
-## 6. 엔진·에디터 우선 원칙
+## 6. Unity-MCP — Claude가 씬을 직접 조작함
 
-**Unity가 제공하는 걸 코드로 재구현하지 말 것.** 빌트인 시스템·에디터 워크플로를 코드보다 먼저 고려한다.
+**이 프로젝트는 Claude Code가 Unity 에디터에 직접 연결되어 있다.** `ai-game-developer` MCP 서버(로컬, `http://localhost:23269`)를 통해 GameObject 생성·컴포넌트 부착/수정·프리팹 생성·씬 저장·플레이모드 진입까지 Claude가 직접 수행한다. **더 이상 "에디터 작업은 사용자가, 코드는 Claude가" 원칙이 아님** — 오브젝트 배치·참조 연결도 Claude가 MCP 툴로 처리한다.
 
-- 에디터에서 할 수 있는 것(오브젝트 배치·크기·참조 연결)은 에디터에서. 코드는 로직만.
-- UI 작성 규칙은 프로젝트가 쓰는 시스템에 맞춰 여기 기입:
+- 연결 설정: `.mcp.json` (프로젝트 루트), Unity 쪽 설정은 `UserSettings/AI-Game-Developer-Config.json` — Unity 에디터의 `Window > AI Game Developer` 창에서 Local/Cloud 모드 확인 가능.
+- 새 세션에서 Unity MCP 툴이 안 보이면: Claude Code 세션을 재시작해야 `.mcp.json` 변경이 반영됨.
+- Unity 에디터가 열려 있어야 로컬 서버가 뜬다. `mcp__ai-game-developer__scene-list-opened`로 연결 확인.
+
+**자주 겪는 함정 (이번 세션에서 실제로 겪은 것들):**
+- `gameobject-component-add`로 SpriteRenderer + BoxCollider2D를 **동시에** 추가하면, Collider가 스프라이트 지정 전 시점 기준으로 자동 맞춤되어 크기가 `(0.0001, 0.0001)`로 잡히는 버그가 있음. → 스프라이트 지정 후 반드시 `size`를 명시적으로 다시 설정할 것.
+- `RigidbodyType2D` enum 값: `0=Dynamic, 1=Kinematic, 2=Static`. 헷갈리기 쉬우니 값 넣고 나서 꼭 재확인.
+- **Play 모드 진입은 도메인 리로드 때문에 몇 초~10초 이상 걸릴 수 있음.** `EditorApplication.isPlaying = true` 호출 직후 바로 상태를 재지 말고, 별도 로그(`Debug.Log`)로 실제 진입 여부를 확인한 뒤 로직을 검증할 것.
+- **Play 모드 중에 씬 오브젝트를 수정해도 Play 모드 종료 시 원복된다.** 수정은 반드시 Edit 모드에서 다시 적용하고 `scene-save`할 것.
+- `script-execute`의 body-only 모드는 메서드가 `void` 고정이라 `return <expr>;` 불가 — 값 확인은 `Debug.Log` + `console-get-logs`로.
+- **Canvas를 `gameobject-component-add`로 붙이면 `renderMode`가 기본값 `WorldSpace`로 잡힘** (에디터 메뉴 `UI > Canvas`는 자동으로 `ScreenSpaceOverlay`로 잡아주는데, MCP로 컴포넌트만 추가하면 그 초기화가 없음). UI 만들 때마다 `renderMode`를 명시적으로 `ScreenSpaceOverlay`(0)로 설정할 것.
+- UI 작성 규칙 (오브젝트는 여전히 Claude가 MCP로 배치하되, 시스템별 관례는 유지):
   - **uGUI 사용 시**: UI 오브젝트(Canvas·Text·Button)는 씬에 배치, 코드는 SerializeField 참조만.
   - **UI Toolkit 사용 시**: 레이아웃은 UXML/USS로 선언적으로, 코드(C#)는 데이터 바인딩·로직만.
+
+---
+
+## 6-1. 노션(Notion) 연동
+
+이 프로젝트의 원본 기획은 Notion에도 있음 — GDD.md/SESSION_ZERO.md는 여기서 옮겨 적은 것.
+
+- 페이지: "🍓 블루베리 디펜스" (Notion 워크스페이스 "천진난만배 게임잼 챌린지" > "Prototyping" 데이터소스 하위)
+- URL: https://app.notion.com/p/3956394cd98380aba9abf02072b96d6c
+- Notion MCP(`mcp__claude_ai_Notion__*`)가 연결되어 있어 `notion-search`/`notion-fetch`로 직접 조회 가능. GDD.md와 내용이 어긋나면 — 원본은 Notion이지만, 코딩 중 결정 사항은 GDD.md/SESSION_ZERO.md를 우선 신뢰할 것 (Notion은 초기 기획, 로컬 문서가 최신 결정 반영).
 
 ---
 
@@ -88,8 +111,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 1. `HANDOFF.md` 읽어서 현재 상태 파악
 2. 코드 작업이 예상되면 `ARCHITECTURE.md` 함께 읽어 구조 파악 (폴더 책임·매니저 호출관계·"X 추가하려면 어디 손대나" 표)
 3. `GDD.md`는 `grep`으로 필요한 섹션만 조각내어 읽을 것 (`cat GDD.md` 금지)
-4. (선택) 최근 일기 `d:\unity\prototyping-kit\journal\` 의 마지막 1~2편 훑어 과정상 미해결 마찰 확인
-5. 한 줄 브리핑 후 사용자에게 다음 목표 확인
+4. 씬 작업이 예상되면 Unity-MCP 툴(`mcp__ai-game-developer__*`)이 로드됐는지 확인. 안 보이면 사용자에게 Claude Code 재시작 요청 (§6 참고)
+5. (선택) 최근 일기 `d:\unity\prototyping-kit\journal\` 의 마지막 1~2편 훑어 과정상 미해결 마찰 확인
+6. 한 줄 브리핑 후 사용자에게 다음 목표 확인
 
 ---
 

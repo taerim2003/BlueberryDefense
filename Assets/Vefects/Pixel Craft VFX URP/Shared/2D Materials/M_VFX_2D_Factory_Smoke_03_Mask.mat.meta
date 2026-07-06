@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f9cb5bfbb49c16f43bb92cfa7dc3d305
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Factory Smoke/Materials/M_VFX_Factory_Smoke_03_Mask.mat
+  uploadId: 768456

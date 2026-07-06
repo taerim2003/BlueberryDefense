@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 91e0d8a00b260354994c3602e210de0b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Item Pick Up/Particles/VFX_Item_Pickup_05_Mask_Static.prefab
+  uploadId: 771746

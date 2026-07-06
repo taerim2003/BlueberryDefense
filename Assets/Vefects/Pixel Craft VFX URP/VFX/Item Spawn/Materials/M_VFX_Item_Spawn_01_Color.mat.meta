@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5f799d1c59c3ca94ca6cb86f63ac608a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Item Spawn/Materials/M_VFX_Item_Spawn_01_Color.mat
+  uploadId: 771746

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 8a18f68fd7cbc1a439a968696e569606
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/Demo/Resources/Shaders/SH_Vefects_URP_VFX_Character_Showoff.shader
+  uploadId: 771746

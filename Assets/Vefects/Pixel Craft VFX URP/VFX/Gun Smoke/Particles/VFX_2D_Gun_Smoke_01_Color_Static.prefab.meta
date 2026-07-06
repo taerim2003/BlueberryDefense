@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: beda2778a7374424db8057def6fcd691
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/VFX_Gun_Smoke_01_Color_Static.prefab
+  uploadId: 771196

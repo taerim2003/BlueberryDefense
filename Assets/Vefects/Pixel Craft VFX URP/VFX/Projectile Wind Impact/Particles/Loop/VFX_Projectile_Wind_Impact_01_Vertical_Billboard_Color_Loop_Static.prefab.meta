@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 88844ddc0e3095a46a2ba447ca09a7fe
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Wind Impact/Particles/Loop/VFX_Projectile_Wind_Impact_01_Vertical_Billboard_Color_Loop_Static.prefab
+  uploadId: 771746

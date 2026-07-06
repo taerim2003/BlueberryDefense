@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b36d7d05698b3e841ba2b5403e280565
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Leaf/Particles/VFX_Leaf_01_Vertical_Billboard_Mask_Static.prefab
+  uploadId: 771196

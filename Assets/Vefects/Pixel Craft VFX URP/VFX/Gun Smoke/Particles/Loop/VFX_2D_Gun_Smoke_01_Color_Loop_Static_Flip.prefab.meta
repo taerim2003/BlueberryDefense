@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cb03bd1953540ad46b0f9b5e88a8b14d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/Loop/VFX_Gun_Smoke_01_Color_Loop_Static_Flip.prefab
+  uploadId: 771196

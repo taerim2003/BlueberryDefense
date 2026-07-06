@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6d36f396d27b7a84595cd6ee68e1b127
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fireball/Materials/M_VFX_Fireball_Impact_01_Color.mat
+  uploadId: 771746

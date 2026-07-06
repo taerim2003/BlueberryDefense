@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 126a960c09216b641815bdaee45d66df
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Chest Open/Materials/M_VFX_Chest_Open_01_Color.mat
+  uploadId: 768456

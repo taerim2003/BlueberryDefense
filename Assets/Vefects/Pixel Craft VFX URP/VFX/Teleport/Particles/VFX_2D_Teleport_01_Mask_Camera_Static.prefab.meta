@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b455885bc2d0fc74c86ebc697787262d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Teleport/Particles/VFX_Teleport_01_Mask_Camera_Static.prefab
+  uploadId: 771196

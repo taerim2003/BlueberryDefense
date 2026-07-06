@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 61d81cc24d90c0544b3f49405dd46090
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Explosion Small/Materials/M_VFX_Explosion_Small_02_Mask.mat
+  uploadId: 771746

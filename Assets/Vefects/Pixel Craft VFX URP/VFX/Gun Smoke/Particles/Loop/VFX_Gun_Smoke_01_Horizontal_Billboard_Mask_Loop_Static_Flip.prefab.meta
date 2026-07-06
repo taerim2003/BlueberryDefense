@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 32172cf8a3ca30e49bf640601e690da0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/Loop/VFX_Gun_Smoke_01_Horizontal_Billboard_Mask_Loop_Static_Flip.prefab
+  uploadId: 771746

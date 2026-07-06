@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2fec9806359785547b9bb6657c27a14b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Wind Impact/Materials/M_VFX_Projectile_Wind_Impact_01_Color.mat
+  uploadId: 768456

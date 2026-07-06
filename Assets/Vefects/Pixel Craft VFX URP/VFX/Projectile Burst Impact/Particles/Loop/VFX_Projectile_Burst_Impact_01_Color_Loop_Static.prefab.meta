@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1d0f19eb71d381240b1126fb23c62d56
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Burst Impact/Particles/Loop/VFX_Projectile_Burst_Impact_01_Color_Loop_Static.prefab
+  uploadId: 771746

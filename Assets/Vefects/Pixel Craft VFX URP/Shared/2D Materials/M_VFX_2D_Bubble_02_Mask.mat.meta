@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e9b171216f79fd143b8cdc4f907b9a84
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Bubble/Materials/M_VFX_Bubble_02_Mask.mat
+  uploadId: 768456

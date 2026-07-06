@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8fb54bd58b5bc3d41bfcda73a9084852
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Poison Debuff/Particles/VFX_Poison_Debuff_02_Vertical_Billboard_Mask_Static.prefab
+  uploadId: 771746

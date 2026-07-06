@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a1e42b9b9473dc743886ad27f8f1cdfb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire/Particles/VFX_Projectile_Fire_01_Vertical_Billboard_Color_Static.prefab
+  uploadId: 771746

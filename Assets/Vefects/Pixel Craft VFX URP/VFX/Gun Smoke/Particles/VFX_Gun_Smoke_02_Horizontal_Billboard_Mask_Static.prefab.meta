@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e67adfc7cf402e846b792230a5d998bf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/VFX_Gun_Smoke_02_Horizontal_Billboard_Mask_Static.prefab
+  uploadId: 771746

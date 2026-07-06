@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: db6e49a433e9ed34a9014e0d4bf67ba2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/VFX_Gun_Smoke_02_Mask_Static.prefab
+  uploadId: 771746

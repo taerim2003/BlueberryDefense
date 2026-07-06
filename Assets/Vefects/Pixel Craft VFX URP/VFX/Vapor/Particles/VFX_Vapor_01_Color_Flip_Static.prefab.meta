@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 73b737a19c526474f813ad981ad4fc08
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Vapor/Particles/VFX_Vapor_01_Color_Flip_Static.prefab
+  uploadId: 771746

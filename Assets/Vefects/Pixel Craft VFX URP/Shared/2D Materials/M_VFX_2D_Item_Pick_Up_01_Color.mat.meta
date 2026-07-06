@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 748538df6ffe2b4448b35ceade5a89a5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Item Pick Up/Materials/M_VFX_Item_Pick_Up_01_Color.mat
+  uploadId: 768456

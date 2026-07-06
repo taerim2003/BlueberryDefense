@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 51ec95ed11a07d441b7ea5a2fb71620e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Lightning/Particles/Loop/VFX_Projectile_Lightning_01_Vertical_Billboard_Color_Loop_Static.prefab
+  uploadId: 771746

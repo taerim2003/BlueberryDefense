@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f56a1171e8f46fd4a8e1b21b612c8a85
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Leaf/Materials/M_VFX_Leaf_01_Color.mat
+  uploadId: 771746

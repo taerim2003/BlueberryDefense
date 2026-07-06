@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 31a7b7c4a25f94d45b30a9f97603601e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Item Spawn/Particles/Loop/VFX_Item_Spawn_01_Vertical_Billboard_Color_Loop_Static.prefab
+  uploadId: 771196

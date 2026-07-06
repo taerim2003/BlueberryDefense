@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 313f93e8caee3e44aa59d896d0036390
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Vanish/Particles/Loop/VFX_Vanish_01_Color_Loop_Static.prefab
+  uploadId: 771196

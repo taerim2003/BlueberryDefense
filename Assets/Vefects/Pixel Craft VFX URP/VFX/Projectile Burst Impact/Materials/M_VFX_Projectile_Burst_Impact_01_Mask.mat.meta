@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 78af68614b9ca2f4bbe851bb4d53f9da
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Burst Impact/Materials/M_VFX_Projectile_Burst_Impact_01_Mask.mat
+  uploadId: 771746

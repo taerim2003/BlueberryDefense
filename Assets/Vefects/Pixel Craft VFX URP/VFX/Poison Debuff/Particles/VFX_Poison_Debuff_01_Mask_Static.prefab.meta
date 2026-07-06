@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2f00651d302c45547b9fdb9c7bbd6139
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Poison Debuff/Particles/VFX_Poison_Debuff_01_Mask_Static.prefab
+  uploadId: 771746

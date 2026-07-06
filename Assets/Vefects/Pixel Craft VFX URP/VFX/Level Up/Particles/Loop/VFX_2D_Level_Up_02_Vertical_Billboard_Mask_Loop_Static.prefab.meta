@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cce5888680620b946800f05b4cbf9dff
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Level Up/Particles/Loop/VFX_Level_Up_02_Vertical_Billboard_Mask_Loop_Static.prefab
+  uploadId: 771196

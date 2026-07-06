@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 318d9d76a35eb6c498ff0f62f58f9ab3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Buble Burst Big/Materials/M_VFX_Bubble_Burst_Big_01_Mask.mat
+  uploadId: 771746

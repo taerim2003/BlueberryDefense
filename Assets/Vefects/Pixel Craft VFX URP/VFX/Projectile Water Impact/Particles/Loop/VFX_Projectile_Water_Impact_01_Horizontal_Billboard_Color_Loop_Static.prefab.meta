@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b026eb1f930cef5448e2f9d9bae0562a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water Impact/Particles/Loop/VFX_Projectile_Water_Impact_01_Horizontal_Billboard_Color_Loop_Static.prefab
+  uploadId: 771746

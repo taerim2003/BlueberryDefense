@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3c606c22616f44f47ba9a3e0f960ea55
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Teleport/Materials/M_VFX_Teleport_02_Mask.mat
+  uploadId: 771746

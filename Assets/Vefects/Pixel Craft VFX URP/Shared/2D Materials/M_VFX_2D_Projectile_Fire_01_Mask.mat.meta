@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c3f4910923a2a2d48aaf65fa1b7223cb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire/Materials/M_VFX_Projectile_Fire_01_Mask.mat
+  uploadId: 768456

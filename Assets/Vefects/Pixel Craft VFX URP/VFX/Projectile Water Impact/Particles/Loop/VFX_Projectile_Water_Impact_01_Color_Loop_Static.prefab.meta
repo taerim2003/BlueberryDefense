@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 95c626e8edb672b449ffb5e67feba7c3
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water Impact/Particles/Loop/VFX_Projectile_Water_Impact_01_Color_Loop_Static.prefab
+  uploadId: 771746

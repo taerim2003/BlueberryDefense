@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dda9b20edbb6bee489bab2b272c18d28
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Lightning/Particles/Loop/VFX_Projectile_Lightning_01_Color_Loop_Static.prefab
+  uploadId: 771196

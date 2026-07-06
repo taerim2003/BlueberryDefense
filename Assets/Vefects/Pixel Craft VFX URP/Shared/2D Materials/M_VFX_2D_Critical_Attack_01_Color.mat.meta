@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7a454cc2e9f74ba4386118631cb8bf6c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Critical Attack/Materials/M_VFX_Critical_Attack_01_Color.mat
+  uploadId: 768456

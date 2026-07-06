@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fa453b305a9a51c4cb48b6c8801b4107
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water/Particles/VFX_Projectile_Water_01_Color_Static.prefab
+  uploadId: 771746

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2deda90177c185e4e98f6b51ef0626d5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Lightning Impact/Materials/M_VFX_Projectile_Lightning_Impact_01_Color.mat
+  uploadId: 768456

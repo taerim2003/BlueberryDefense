@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2eaf084bcb0fa9a41bce5db3774e3c27
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Shield/Materials/M_VFX_Shield_01_Mask.mat
+  uploadId: 771746

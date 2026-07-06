@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ad3be986b7298ab45ba8c82a5a904cd7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Teleport/Materials/M_VFX_Teleport_01_Color.mat
+  uploadId: 771746

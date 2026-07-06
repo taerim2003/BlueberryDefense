@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 27d343c6063b0854a935308e9e4baa44
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Poison Debuff/Particles/VFX_Poison_Debuff_01_Color_Static.prefab
+  uploadId: 771746

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d7bfc22cb4fe84c42af2257939518a25
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Teleport/Particles/Loop/VFX_Teleport_01_Mask_Flip_Loop_Static.prefab
+  uploadId: 771196

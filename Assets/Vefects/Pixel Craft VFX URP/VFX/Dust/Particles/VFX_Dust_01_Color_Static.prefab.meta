@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 97de0d3ec5268724e818aca665656967
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Dust/Particles/VFX_Dust_01_Color_Static.prefab
+  uploadId: 771746

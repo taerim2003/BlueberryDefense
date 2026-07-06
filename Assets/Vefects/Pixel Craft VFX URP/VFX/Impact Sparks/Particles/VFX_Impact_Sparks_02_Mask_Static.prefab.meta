@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 65e8bd208445a794d870ad3da68d0b5a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Impact Sparks/Particles/VFX_Impact_Sparks_02_Mask_Static.prefab
+  uploadId: 771746

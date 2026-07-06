@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 465bcf1b4b1427f49b5a0024c23073e9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fireball/Materials/M_VFX_Fireball_Projectile_01_Color.mat
+  uploadId: 768456

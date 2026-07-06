@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 65d34f10a8bfe88408cadbf2b04ce600
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/Demo/Resources/Scene/Settings/PostProProfile_Pixel.asset
+  uploadId: 771746

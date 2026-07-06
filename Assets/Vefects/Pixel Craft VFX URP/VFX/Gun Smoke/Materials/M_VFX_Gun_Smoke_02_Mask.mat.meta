@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e69e04cbb74b8c14db09c1f40cf7a66e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Materials/M_VFX_Gun_Smoke_02_Mask.mat
+  uploadId: 771746

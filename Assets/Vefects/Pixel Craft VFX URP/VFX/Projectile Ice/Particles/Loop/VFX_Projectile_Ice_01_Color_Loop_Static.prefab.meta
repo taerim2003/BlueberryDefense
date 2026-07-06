@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0db7aa5cff03e92478e5cff43b47bd3a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Ice/Particles/Loop/VFX_Projectile_Ice_01_Color_Loop_Static.prefab
+  uploadId: 771746

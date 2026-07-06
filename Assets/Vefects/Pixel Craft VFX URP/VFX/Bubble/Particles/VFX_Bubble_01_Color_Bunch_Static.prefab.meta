@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc8e0887ddd59048976a84da21a95ed
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Bubble/Particles/VFX_Bubble_01_Color_Bunch_Static.prefab
+  uploadId: 771746

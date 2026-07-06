@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6a723b3a95cca3b43951c6e69f9e25ea
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Wind/Materials/M_VFX_Projectile_Wind_01_Mask.mat
+  uploadId: 771746

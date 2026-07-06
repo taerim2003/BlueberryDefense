@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5325ba0a8797dcb4a84fe1846d06c8ca
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Dust/Materials/M_VFX_Dust_02_Mask.mat
+  uploadId: 771746

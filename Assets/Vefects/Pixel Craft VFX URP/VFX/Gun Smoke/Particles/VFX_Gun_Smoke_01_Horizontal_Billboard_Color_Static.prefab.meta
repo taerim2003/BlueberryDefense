@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2201d0e5381d7f6498081b5bd216383d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/VFX_Gun_Smoke_01_Horizontal_Billboard_Color_Static.prefab
+  uploadId: 771746

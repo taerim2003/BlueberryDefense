@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3e7a101bfb7bfe94a916692b485b8c77
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water Impact/Materials/M_VFX_Projectile_Water_Impact_01_Mask.mat
+  uploadId: 768456

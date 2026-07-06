@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 07299efce1d47ee4e8ed39ed85f8f38b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Shield/Materials/M_VFX_Shield_01_Color.mat
+  uploadId: 768456

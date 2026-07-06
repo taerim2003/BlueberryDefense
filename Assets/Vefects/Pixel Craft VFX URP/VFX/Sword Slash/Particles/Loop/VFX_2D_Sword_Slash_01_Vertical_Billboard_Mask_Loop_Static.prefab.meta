@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 605539897302b5c4d97a8b5cc6efc567
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Sword Slash/Particles/Loop/VFX_Sword_Slash_01_Vertical_Billboard_Mask_Loop_Static.prefab
+  uploadId: 771196

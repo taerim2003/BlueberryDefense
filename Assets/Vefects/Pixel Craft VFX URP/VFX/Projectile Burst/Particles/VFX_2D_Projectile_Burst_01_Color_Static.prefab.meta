@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 56ec544c24a9b704fb538870772d4981
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Burst/Particles/VFX_Projectile_Burst_01_Color_Static.prefab
+  uploadId: 771196

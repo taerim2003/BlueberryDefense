@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5a76e1299f04b0d43915cf46a6878cd9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water/Materials/M_VFX_Projectile_Water_01_Color.mat
+  uploadId: 768456

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 526f225d5dab04549b66cb9e495fa5bd
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/Shared/Shaders/SH_Vefects_URP_Unlit_Flipbook_Pixel_01.shader
+  uploadId: 771746

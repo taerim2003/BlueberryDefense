@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e2f166e60c5dfda46ac8e8af3ce3bbfd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire Impact/Particles/Loop/VFX_Projectile_Fire_Impact_01_Vertical_Billboard_Color_Loop_Static.prefab
+  uploadId: 771196

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 571307067ebd5224daddac381b888c82
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Poison Debuff/Particles/Loop/VFX_Poison_Debuff_02_Mask_Loop_Bunch.prefab
+  uploadId: 771746

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fc85e20c3a1229842b9e8d3f610316bf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire/Particles/VFX_Projectile_Fire_01_Color_Static.prefab
+  uploadId: 771746

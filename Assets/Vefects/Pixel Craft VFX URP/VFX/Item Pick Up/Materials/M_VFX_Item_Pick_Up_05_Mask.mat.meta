@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 993fb7913b59b9f499c6532f6bcffabd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Item Pick Up/Materials/M_VFX_Item_Pick_Up_05_Mask.mat
+  uploadId: 771746

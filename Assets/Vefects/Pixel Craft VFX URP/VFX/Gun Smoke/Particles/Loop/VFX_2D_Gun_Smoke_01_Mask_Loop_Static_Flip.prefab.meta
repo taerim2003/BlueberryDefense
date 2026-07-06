@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 34e7b3fe8b306224b9767379cad043ad
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Gun Smoke/Particles/Loop/VFX_Gun_Smoke_01_Mask_Loop_Static_Flip.prefab
+  uploadId: 771196

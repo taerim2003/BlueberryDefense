@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 730a2e1517de4544cb277f978559df92
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Critical Attack/Particles/VFX_Critical_Attack_02_Mask.prefab
+  uploadId: 771196

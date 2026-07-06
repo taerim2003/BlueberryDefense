@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 65d8ff6408e42f845aca4cc7f28d7c31
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Bubble/Particles/VFX_Bubble_01_Mask_Bunch_Movement.prefab
+  uploadId: 771196

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c52f6b41387a3de4e87e0f9da75e2ae1
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Factory Smoke/Particles/VFX_Factory_Smoke_04_Vertical_Billboard_Mask_Static.prefab
+  uploadId: 771196

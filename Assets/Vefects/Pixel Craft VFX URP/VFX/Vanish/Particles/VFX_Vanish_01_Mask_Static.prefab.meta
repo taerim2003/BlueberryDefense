@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e1897611225fc93438027d0966aa78a5
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Vanish/Particles/VFX_Vanish_01_Mask_Static.prefab
+  uploadId: 771746

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bce0610e873f8664dab031146f22dca6
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Heal/Particles/Loop/VFX_Heal_01_Color_Loop_Static.prefab
+  uploadId: 771746

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e05c2d91789e53c4b8f923a49208aa48
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fireball/Particles/VFX_Fireball_Impact_01_Color_Static.prefab
+  uploadId: 771196

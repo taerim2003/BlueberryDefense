@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c4969c585ed1ef6479dbbee12c0156b6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Ice Impact/Materials/M_VFX_Projectile_Ice_Impact_01_Mask.mat
+  uploadId: 771746

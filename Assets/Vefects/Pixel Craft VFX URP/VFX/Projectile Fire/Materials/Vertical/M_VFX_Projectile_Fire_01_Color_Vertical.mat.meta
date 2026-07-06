@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5d4a79a75c06b7648b738f7201cda0f4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire/Materials/Vertical/M_VFX_Projectile_Fire_01_Color_Vertical.mat
+  uploadId: 771746

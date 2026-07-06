@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 688b3b1528819af47a04408319ed202e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Bubble Burst Small/Materials/M_VFX_Bubble_Burst_Small_01_Color.mat
+  uploadId: 771746

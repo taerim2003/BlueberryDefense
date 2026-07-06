@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d0db35faa5296e340995e3c6e7a759cb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Sword Slash/Materials/M_VFX_Sword_Slash_01_Mask.mat
+  uploadId: 768456

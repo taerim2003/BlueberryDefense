@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a9f51d7886cb5f04fbe3a86dd326a20e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Ice/Materials/M_VFX_Projectile_Ice_01_Color.mat
+  uploadId: 768456

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 28321ccd4a422ad46950c0ebe8efe33e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Dust/Particles/Loop/VFX_Dust_01_Mask_Loop_Static.prefab
+  uploadId: 771746

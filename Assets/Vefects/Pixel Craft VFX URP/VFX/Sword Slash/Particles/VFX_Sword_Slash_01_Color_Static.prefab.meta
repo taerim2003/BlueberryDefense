@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a32195572ef3dc040bdf1d9f52373826
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Sword Slash/Particles/VFX_Sword_Slash_01_Color_Static.prefab
+  uploadId: 771746

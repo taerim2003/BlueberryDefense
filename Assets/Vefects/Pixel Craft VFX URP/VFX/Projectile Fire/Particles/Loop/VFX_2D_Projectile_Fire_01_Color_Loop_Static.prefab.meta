@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3d5b805818e423c498c895b79de4ac0b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Fire/Particles/Loop/VFX_Projectile_Fire_01_Color_Loop_Static.prefab
+  uploadId: 771196

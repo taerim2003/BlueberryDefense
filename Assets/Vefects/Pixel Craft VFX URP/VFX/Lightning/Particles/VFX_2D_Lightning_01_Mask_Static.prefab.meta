@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: aaabc12d2f3435340a04c08bdbe8a326
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Lightning/Particles/VFX_Lightning_01_Mask_Static.prefab
+  uploadId: 771196

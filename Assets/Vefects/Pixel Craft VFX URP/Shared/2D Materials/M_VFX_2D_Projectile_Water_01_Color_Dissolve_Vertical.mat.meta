@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4679d4b3b9465a24b85ff7db4845a443
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water/Materials/M_VFX_Projectile_Water_01_Color_Dissolve_Vertical.mat
+  uploadId: 768456

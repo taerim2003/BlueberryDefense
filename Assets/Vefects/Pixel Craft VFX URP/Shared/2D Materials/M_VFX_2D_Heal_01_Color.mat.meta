@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c0fc9fd8cb9186f43b2a4ca5a505bfd6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Heal/Materials/M_VFX_Heal_01_Color.mat
+  uploadId: 768456

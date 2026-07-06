@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 53fdd8e587f64334cb02d36f83967e54
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fireball/Particles/VFX_Fireball_Impact_01_Horizontal_Billboard_Color_Static.prefab
+  uploadId: 771746

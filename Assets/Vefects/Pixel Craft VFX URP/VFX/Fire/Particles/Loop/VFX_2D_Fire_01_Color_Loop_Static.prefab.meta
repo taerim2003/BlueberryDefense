@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a3243e70ef6ea174888d1ace55451c96
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fire/Particles/Loop/VFX_Fire_01_Color_Loop_Static.prefab
+  uploadId: 771196

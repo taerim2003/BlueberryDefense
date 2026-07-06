@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 59f7f6257b1e23a4b977be95f9bd9329
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Vapor/Particles/Loop/VFX_Vapor_01_Color_Loop_Static.prefab
+  uploadId: 771746

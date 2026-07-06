@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 295ca28eebe79104aae63b461c3443c5
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Lightning Impact/Particles/VFX_Projectile_Lightning_Impact_01_Vertical_Billboard_Color_Static.prefab
+  uploadId: 771746

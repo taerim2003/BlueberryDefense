@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dd7e7a5cba389c74b98b854c972eb7cc
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Explosion Small/Particles/VFX_Explosion_Small_02_Vertical_Billboard_Mask_Static.prefab
+  uploadId: 771746

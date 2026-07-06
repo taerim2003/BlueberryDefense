@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b5da69a527415154581ccec9c67feb04
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Leaf/Materials/M_VFX_Leaf_Single_01_Mask.mat
+  uploadId: 768456

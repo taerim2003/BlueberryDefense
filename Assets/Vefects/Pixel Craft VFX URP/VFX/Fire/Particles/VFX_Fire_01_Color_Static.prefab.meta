@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: db8114dc17e3cfc45a76a0373357b32b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Fire/Particles/VFX_Fire_01_Color_Static.prefab
+  uploadId: 771746

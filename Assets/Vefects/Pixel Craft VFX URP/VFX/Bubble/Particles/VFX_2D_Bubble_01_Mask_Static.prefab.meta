@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f96444e6bbd5d0f47b2b0bb3072753fa
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Bubble/Particles/VFX_Bubble_01_Mask_Static.prefab
+  uploadId: 771196

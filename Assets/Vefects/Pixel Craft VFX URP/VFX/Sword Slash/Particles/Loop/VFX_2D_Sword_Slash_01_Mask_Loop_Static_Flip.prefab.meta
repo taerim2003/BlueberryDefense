@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ec4a08ec1a588ed46944996e05533186
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.02
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Sword Slash/Particles/Loop/VFX_Sword_Slash_01_Mask_Loop_Static_Flip.prefab
+  uploadId: 771196

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d37b55b1335bb9643b57e0a91d459ce2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Projectile Water Impact/Particles/VFX_Projectile_Water_Impact_01_Vertical_Billboard_Color_Static.prefab
+  uploadId: 771746

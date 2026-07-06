@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5ce9f0f5fc30b204a8581223324a9602
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.0
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Level Up/Materials/M_VFX_Level_Up_02_Mask.mat
+  uploadId: 768456

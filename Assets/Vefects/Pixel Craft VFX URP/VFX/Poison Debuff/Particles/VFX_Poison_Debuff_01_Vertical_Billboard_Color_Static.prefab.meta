@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c1d86ad54ce4b9247a14edb4c76713e8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/VFX/Poison Debuff/Particles/VFX_Poison_Debuff_01_Vertical_Billboard_Color_Static.prefab
+  uploadId: 771746
