@@ -7,8 +7,13 @@ public class PlayerExperience : MonoBehaviour
     [SerializeField] private int level = 1;
     [SerializeField] private int currentXP;
     [SerializeField] private int xpToNextLevel = 10;
+    [SerializeField] private GameObject levelUpVfxPrefab;
 
     private float xpMultiplier = 1f;
+
+    public int Level => level;
+    public int CurrentXP => currentXP;
+    public int XPToNextLevel => xpToNextLevel;
 
     private void Awake()
     {
@@ -29,6 +34,10 @@ public class PlayerExperience : MonoBehaviour
             currentXP -= xpToNextLevel;
             level++;
             xpToNextLevel += 5;
+
+            if (levelUpVfxPrefab != null)
+                Destroy(Instantiate(levelUpVfxPrefab, transform.position, Quaternion.identity), 2f);
+
             LevelUpUI.Instance.Show();
         }
     }

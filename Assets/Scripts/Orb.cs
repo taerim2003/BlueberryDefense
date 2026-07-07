@@ -6,6 +6,7 @@ public class Orb : MonoBehaviour
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float slowMultiplier = 0.5f;
     [SerializeField] private float slowDuration = 2f;
+    [SerializeField] private GameObject impactVfxPrefab;
 
     public float Damage { get; set; }
     public bool ApplyGemVulnerable { get; set; }
@@ -23,6 +24,10 @@ public class Orb : MonoBehaviour
         enemy.TakeDamage(Damage);
         enemy.ApplySlow(slowMultiplier, slowDuration);
         if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
+
+        if (impactVfxPrefab != null)
+            Destroy(Instantiate(impactVfxPrefab, transform.position, Quaternion.identity), 2f);
+
         Destroy(gameObject);
     }
 }

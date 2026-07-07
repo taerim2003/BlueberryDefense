@@ -5,6 +5,7 @@ public class Whirlwind : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float lifetime = 3f;
+    [SerializeField] private GameObject impactVfxPrefab;
 
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
@@ -28,5 +29,8 @@ public class Whirlwind : MonoBehaviour
         enemy.TakeDamage(Damage);
         if (ApplyGemSlow) enemy.ApplySlow(0.3f, 3f);
         if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
+
+        if (impactVfxPrefab != null)
+            Destroy(Instantiate(impactVfxPrefab, other.transform.position, Quaternion.identity), 2f);
     }
 }

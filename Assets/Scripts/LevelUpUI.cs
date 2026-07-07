@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class LevelUpUI : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class LevelUpUI : MonoBehaviour
     private class Option
     {
         public string Label;
+        public Sprite Icon;
         public System.Action Apply;
     }
 
@@ -17,9 +19,15 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Button optionButtonA;
     [SerializeField] private Button optionButtonB;
     [SerializeField] private Button optionButtonC;
-    [SerializeField] private Text labelA;
-    [SerializeField] private Text labelB;
-    [SerializeField] private Text labelC;
+    [SerializeField] private TMP_Text labelA;
+    [SerializeField] private TMP_Text labelB;
+    [SerializeField] private TMP_Text labelC;
+    [SerializeField] private Image iconA;
+    [SerializeField] private Image iconB;
+    [SerializeField] private Image iconC;
+    [SerializeField] private Sprite[] activeIcons;
+    [SerializeField] private Sprite[] passiveIcons;
+    [SerializeField] private Sprite[] gemIcons;
 
     private Option[] currentOptions;
 
@@ -40,13 +48,27 @@ public class LevelUpUI : MonoBehaviour
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
         currentOptions = BuildOptions(skills, health, passives);
+        ShowOptions();
+    }
 
+    private void ShowOptions()
+    {
         labelA.text = currentOptions[0].Label;
         labelB.text = currentOptions[1].Label;
         labelC.text = currentOptions[2].Label;
 
+        SetIcon(iconA, currentOptions[0].Icon);
+        SetIcon(iconB, currentOptions[1].Icon);
+        SetIcon(iconC, currentOptions[2].Icon);
+
         panel.SetActive(true);
         Time.timeScale = 0f;
+    }
+
+    private static void SetIcon(Image image, Sprite sprite)
+    {
+        image.enabled = sprite != null;
+        image.sprite = sprite;
     }
 
     private Option[] BuildOptions(PlayerSkills skills, PlayerHealth health, PlayerPassives passives)
@@ -59,7 +81,12 @@ public class LevelUpUI : MonoBehaviour
             {
                 if (skills.HasSkill(id)) continue;
                 ActiveSkillId captured = id;
-                candidates.Add(new Option { Label = GetActiveSkillName(captured) + " 획득", Apply = () => skills.AcquireSkill(captured) });
+                candidates.Add(new Option
+                {
+                    Label = GetActiveSkillName(captured) + " 획득\n\n" + GetActiveSkillDescription(captured),
+                    Icon = GetIcon(activeIcons, (int)captured),
+                    Apply = () => skills.AcquireSkill(captured),
+                });
             }
         }
 
@@ -69,7 +96,12 @@ public class LevelUpUI : MonoBehaviour
             {
                 if (passives.HasPassive(id)) continue;
                 PassiveSkillId captured = id;
-                candidates.Add(new Option { Label = GetPassiveSkillName(captured) + " 획득", Apply = () => passives.AcquirePassive(captured) });
+                candidates.Add(new Option
+                {
+                    Label = GetPassiveSkillName(captured) + " 획득\n\n" + GetPassiveSkillDescription(captured),
+                    Icon = GetIcon(passiveIcons, (int)captured),
+                    Apply = () => passives.AcquirePassive(captured),
+                });
             }
         }
 
@@ -79,7 +111,8 @@ public class LevelUpUI : MonoBehaviour
             EquippedSkill captured = equipped;
             candidates.Add(new Option
             {
-                Label = GetActiveSkillName(captured.Id) + " 강화 (Lv." + (captured.Level + 1) + ")",
+                Label = GetActiveSkillName(captured.Id) + " 강화 (Lv." + (captured.Level + 1) + ")\n\n피해량 15% 증가",
+                Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
             });
         }
@@ -128,13 +161,7 @@ public class LevelUpUI : MonoBehaviour
         }
 
         currentOptions = BuildGemOptions(skills, blocked);
-
-        labelA.text = currentOptions[0].Label;
-        labelB.text = currentOptions[1].Label;
-        labelC.text = currentOptions[2].Label;
-
-        panel.SetActive(true);
-        Time.timeScale = 0f;
+        ShowOptions();
     }
 
     private Option[] BuildGemOptions(PlayerSkills skills, EquippedSkill skill)
@@ -147,7 +174,12 @@ public class LevelUpUI : MonoBehaviour
         for (int i = 0; i < Mathf.Min(3, pool.Count); i++)
         {
             GemType gem = pool[i];
-            options.Add(new Option { Label = GetGemName(gem) + " 장착 (" + GetActiveSkillName(skill.Id) + ")", Apply = () => skills.EquipGem(skill.Id, gem) });
+            options.Add(new Option
+            {
+                Label = GetGemName(gem) + " 장착 (" + GetActiveSkillName(skill.Id) + ")\n\n" + GetGemDescription(gem),
+                Icon = GetIcon(gemIcons, (int)gem),
+                Apply = () => skills.EquipGem(skill.Id, gem),
+            });
         }
 
         while (options.Count < 3)
@@ -156,6 +188,9 @@ public class LevelUpUI : MonoBehaviour
         return options.ToArray();
     }
 
+    private static Sprite GetIcon(Sprite[] icons, int index) =>
+        icons != null && index >= 0 && index < icons.Length ? icons[index] : null;
+
     private static string GetGemName(GemType gem) => gem switch
     {
         GemType.Emerald => "에메랄드",
@@ -163,6 +198,34 @@ public class LevelUpUI : MonoBehaviour
         GemType.Amethyst => "자수정",
         GemType.Garnet => "가넷",
         _ => gem.ToString(),
+    };
+
+    private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
+    {
+        ActiveSkillId.Whirlwind => "전방으로 이동하는 회오리를 소환. 맞으면 피해",
+        ActiveSkillId.Orb => "전방으로 이동하는 오브를 소환. 맞으면 느려지고 피해",
+        ActiveSkillId.Lightning => "6초간 공격 피해를 입는 모든 적들에게 30% 확률로 낙뢰가 떨어져 피해",
+        ActiveSkillId.EagleDrop => "화면 전체에 독수리를 1초 간격으로 3회 투하해 모든 적에게 피해",
+        _ => "",
+    };
+
+    private static string GetPassiveSkillDescription(PassiveSkillId id) => id switch
+    {
+        PassiveSkillId.Strength => "피해량 10% 증가",
+        PassiveSkillId.Health => "최대 체력 20 증가",
+        PassiveSkillId.Knowledge => "경험치 획득량 10% 증가",
+        PassiveSkillId.Assassinate => "모든 피해가 4% 확률로 3배 피해",
+        PassiveSkillId.Refresh => "스킬 사용 시 5% 확률로 쿨타임 초기화",
+        _ => "",
+    };
+
+    private static string GetGemDescription(GemType gem) => gem switch
+    {
+        GemType.Emerald => "피해량 50% 증가",
+        GemType.Topaz => "쿨타임 35% 감소",
+        GemType.Amethyst => "맞은 적 3초간 이동속도 70% 감소",
+        GemType.Garnet => "맞은 적에게 50% 추가 피해를 받는 취약 부여",
+        _ => "",
     };
 
     private void Choose(int index)

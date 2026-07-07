@@ -154,3 +154,4 @@ MonoBehaviour:
   moveSpeed: 6
   slowMultiplier: 0.5
   slowDuration: 2
+  impactVfxPrefab: {fileID: 4748681987041982144, guid: 35260861c151a204496200369fbb9182, type: 3}

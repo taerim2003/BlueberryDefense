@@ -24,6 +24,7 @@ public class PlayerPassives : MonoBehaviour
     private readonly List<PassiveSkillId> acquiredPassives = new List<PassiveSkillId>();
 
     public bool HasMaxPassives => acquiredPassives.Count >= MaxPassives;
+    public IReadOnlyList<PassiveSkillId> AcquiredPassives => acquiredPassives;
 
     public bool HasPassive(PassiveSkillId id) => acquiredPassives.Contains(id);
 

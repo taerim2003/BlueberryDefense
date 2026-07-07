@@ -92,6 +92,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - UI 작성 규칙 (오브젝트는 여전히 Claude가 MCP로 배치하되, 시스템별 관례는 유지):
   - **uGUI 사용 시**: UI 오브젝트(Canvas·Text·Button)는 씬에 배치, 코드는 SerializeField 참조만.
   - **UI Toolkit 사용 시**: 레이아웃은 UXML/USS로 선언적으로, 코드(C#)는 데이터 바인딩·로직만.
+- **새로 만든 .cs 파일을 컴파일러가 전혀 인식하지 못하는 경우가 있다** (AssetDatabase엔 잡히는데 `CompilationPipeline`의 sourceFiles엔 안 잡힘). assets-refresh, RequestScriptReload, .meta 재생성 등으로도 해결 안 됐음 — 우회책은 새 클래스를 **이미 정상 컴파일되는 기존 .cs 파일 하단에 병합**하는 것. 원인은 못 밝힘, 재발 시 이 우회책부터 시도할 것.
+- **`PlayerSettings.runInBackground`가 꺼져 있으면 Unity 에디터 창이 OS 포커스를 잃었을 때 Play 모드의 `Update()` 루프가 거의 멈춘다.** script-execute로 자동화 테스트(sleep 후 상태 확인 등)를 할 때 이게 꺼져 있으면 "값이 안 변한다"는 오탐이 발생함 — 자동화 테스트 신뢰성을 위해 반드시 켜둘 것.
+- **Play 모드 중 파티클 시스템 상태(`particleCount`, `isPlaying`)를 너무 이른 타이밍에 확인하면 오탐 발생.** 특히 burst 방식 emission(파티클팩에 흔함)은 프레임당 0~1개만 나오는 랜덤 버스트라, 발동 직후 바로 확인하면 "안 나온다"고 착각하기 쉬움 — 최소 0.5~1초 실제 대기 후 확인할 것.
+- **외부 VFX/파티클 에셋팩을 도트 그래픽 프로젝트에 재사용할 때는 픽셀 밀도부터 확인할 것.** "픽셀아트" 표방 팩이라도 실제 텍셀 밀도가 우리 스프라이트(PPU)보다 훨씬 성길 수 있음 — 순간적으로 터지고 사라지는 임팩트 이펙트는 티가 안 나지만, 화면에 계속 떠 있는 트레일/모션 효과는 이질감이 그대로 드러남. 전체 적용 전에 작은 샘플 1~2개를 실제 게임 해상도로 먼저 미리보기할 것.
+- **에디터(Edit 모드)에서 크기 비교·디버그용으로 만든 임시 GameObject는 `scene-save` 호출 직전에 반드시 정리 여부를 확인할 것.** Play 모드 중 생성한 오브젝트는 Play 모드 종료 시 자동 소거되지만, Edit 모드에서 만든 건 그대로 씬 파일에 저장된다.
 
 ---
 

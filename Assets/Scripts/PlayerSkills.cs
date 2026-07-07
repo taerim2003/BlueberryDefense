@@ -33,6 +33,7 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject orbPrefab;
     [SerializeField] private GameObject eagleDropPrefab;
+    [SerializeField] private GameObject eagleImpactVfxPrefab;
     [SerializeField] private Animator animator;
 
     private readonly List<EquippedSkill> equippedSkills = new List<EquippedSkill>();
@@ -42,6 +43,7 @@ public class PlayerSkills : MonoBehaviour
 
     public bool HasMaxSkills => equippedSkills.Count >= SlotKeys.Length;
     public IReadOnlyList<EquippedSkill> EquippedSkills => equippedSkills;
+    public float GlobalCooldownRatio => Mathf.Clamp01(globalCooldownTimer / GlobalCooldown);
 
     private void Awake()
     {
@@ -203,18 +205,40 @@ public class PlayerSkills : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            if (eagleDropPrefab != null)
-                Instantiate(eagleDropPrefab, transform.position, Quaternion.identity);
-
             foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             {
+                Vector3 pos = enemy.transform.position;
                 enemy.TakeDamage(damage);
                 if (applySlow) enemy.ApplySlow(0.3f, 3f);
                 if (applyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
+                StartCoroutine(MeteorImpact(pos));
             }
 
             yield return new WaitForSeconds(1f);
         }
+    }
+
+    private IEnumerator MeteorImpact(Vector3 targetPos)
+    {
+        if (eagleDropPrefab == null) yield break;
+
+        Vector3 start = targetPos + Vector3.up * 4f;
+        GameObject meteor = Instantiate(eagleDropPrefab, start, Quaternion.identity);
+        foreach (ParticleSystem ps in meteor.GetComponentsInChildren<ParticleSystem>(true))
+            ps.Play();
+
+        float duration = 0.2f;
+        float t = 0f;
+        while (t < duration)
+        {
+            meteor.transform.position = Vector3.Lerp(start, targetPos, t / duration);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        Destroy(meteor);
+
+        if (eagleImpactVfxPrefab != null)
+            Destroy(Instantiate(eagleImpactVfxPrefab, targetPos, Quaternion.identity), 2f);
     }
 
     private Enemy FindFrontmostEnemy()

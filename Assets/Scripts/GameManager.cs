@@ -2,9 +2,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] private float stageDuration = 45f;
+
     public static GameManager Instance { get; private set; }
 
     public bool IsGameOver { get; private set; }
+    public int CurrentStage { get; private set; } = 1;
+
+    private float stageTimer;
 
     private void Awake()
     {
@@ -14,6 +19,18 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void Update()
+    {
+        if (IsGameOver) return;
+
+        stageTimer += Time.deltaTime;
+        if (stageTimer >= stageDuration)
+        {
+            stageTimer -= stageDuration;
+            CurrentStage++;
+        }
     }
 
     public void GameOver()
