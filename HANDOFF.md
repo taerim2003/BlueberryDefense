@@ -85,6 +85,7 @@
 - **EXP바/HP바 버그 수정**: Unity `Image` 컴포넌트가 `sprite == null`이면 `Filled` 타입이어도 fillAmount를 무시하고 항상 꽉 찬 사각형을 그리는 특성 때문에 진행이 안 보였음 — 흰색 단색 스프라이트(`UI_SolidFill.png`) 만들어서 해결.
 - **스킬 타격 이펙트 5종 (전부 다른 이펙트)**: 기본공격=Impact Sparks, 회오리=Projectile Wind Impact, 오브=Magic Impact, 낙뢰(패시브 프록)=Lightning, 독수리투하=Explosion Big(적 위치마다 메테오 낙하 후 폭발). 몬스터 사망 시 Vanish, 플레이어 레벨업 시 Level Up 이펙트 추가.
 - **VFX 트레일 시도 후 철회**: 회오리/오브/기본공격에 지속 이펙트(Vapor/Shield/Fireball 등)를 붙였다가 픽셀 밀도 불일치로 전부 제거. `Whirlwind.cs`/`Orb.cs`/`Projectile.cs`는 `impactVfxPrefab` 필드로 타격 시 1회성 이펙트만 스폰.
+- **사망(Vanish)/독수리 메테오·임팩트(Explosion Big) 이펙트도 도트 크기 과대 문제 발견**: 원인은 이 VFX들의 원본 월드 스케일이 우리 캐릭터(약 1유닛)보다 훨씬 커서(Explosion Big 원본 약 7유닛) 같은 텍스처 픽셀이 훨씬 넓게 늘어나 보였던 것 (셰이더의 `_Pixelate` 옵션 자체는 꺼져 있어 무관함 — 순수 스케일 문제). `Enemy.cs`/`PlayerSkills.cs`에서 인스턴스 생성 직후 `localScale`을 0.2~0.25로 축소해서 캐릭터 스케일에 맞춤.
 - **발견한 것**: `Projectile_BasicAttack`/`Whirlwind_Skill`/`Orb_Skill` 프리팹이 이번 세션 전까지 전부 Unity 기본 원(placeholder) 스프라이트였음 (UI 아이콘만 그려져 있었고 실제 인게임 모양은 방치돼 있었음) — 위 체크리스트 참고.
 
 ---

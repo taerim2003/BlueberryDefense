@@ -224,6 +224,7 @@ public class PlayerSkills : MonoBehaviour
 
         Vector3 start = targetPos + Vector3.up * 4f;
         GameObject meteor = Instantiate(eagleDropPrefab, start, Quaternion.identity);
+        meteor.transform.localScale = Vector3.one * 0.2f;
         foreach (ParticleSystem ps in meteor.GetComponentsInChildren<ParticleSystem>(true))
             ps.Play();
 
@@ -238,7 +239,11 @@ public class PlayerSkills : MonoBehaviour
         Destroy(meteor);
 
         if (eagleImpactVfxPrefab != null)
-            Destroy(Instantiate(eagleImpactVfxPrefab, targetPos, Quaternion.identity), 2f);
+        {
+            GameObject impact = Instantiate(eagleImpactVfxPrefab, targetPos, Quaternion.identity);
+            impact.transform.localScale = Vector3.one * 0.25f;
+            Destroy(impact, 2f);
+        }
     }
 
     private Enemy FindFrontmostEnemy()

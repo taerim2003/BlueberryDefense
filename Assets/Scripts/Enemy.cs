@@ -66,7 +66,11 @@ public class Enemy : MonoBehaviour
         if (currentHealth <= 0f)
         {
             if (deathVfxPrefab != null)
-                Destroy(Instantiate(deathVfxPrefab, transform.position, Quaternion.identity), 2f);
+            {
+                GameObject deathVfx = Instantiate(deathVfxPrefab, transform.position, Quaternion.identity);
+                deathVfx.transform.localScale = Vector3.one * 0.2f;
+                Destroy(deathVfx, 2f);
+            }
 
             PlayerExperience.Instance?.AddXP(xpValue);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
