@@ -82,6 +82,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - 새 세션에서 Unity MCP 툴이 안 보이면: Claude Code 세션을 재시작해야 `.mcp.json` 변경이 반영됨.
 - Unity 에디터가 열려 있어야 로컬 서버가 뜬다. `mcp__ai-game-developer__scene-list-opened`로 연결 확인.
 
+**시각적 판단 원칙**: 스프라이트 방향(좌우반전 등)·색감·스타일처럼 정적인 시각 요소는 결정 전에 원본 이미지를 Read로 직접 보고 판단한다 (임포트 설정 잡을 때 이미 여는 파일이라 추가 비용 거의 없음). 파티클·애니메이션처럼 동적인 결과는 스크린샷으로 검증하지 않는다 (판단 신뢰도가 낮고 이 프로젝트 URP 2D lit 셰이더에서 스크린샷 툴 자체도 불안정했음) — 이런 건 사용자 확인에 맡긴다.
+
 **자주 겪는 함정 (이번 세션에서 실제로 겪은 것들):**
 - `gameobject-component-add`로 SpriteRenderer + BoxCollider2D를 **동시에** 추가하면, Collider가 스프라이트 지정 전 시점 기준으로 자동 맞춤되어 크기가 `(0.0001, 0.0001)`로 잡히는 버그가 있음. → 스프라이트 지정 후 반드시 `size`를 명시적으로 다시 설정할 것.
 - `RigidbodyType2D` enum 값: `0=Dynamic, 1=Kinematic, 2=Static`. 헷갈리기 쉬우니 값 넣고 나서 꼭 재확인.
