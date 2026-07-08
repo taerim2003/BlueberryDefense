@@ -142,7 +142,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 플레이 빌드 배포 후 또는 프로토타입 중단 결정 후:
 
 1. `RETROSPECTIVE.md` 작성 (틀: `templates\RETROSPECTIVE.md`)
+   — **AI 혼자 작성하고 끝내지 말 것.** 작성 시작 전에 먼저 사용자에게 플레이테스트를 해봤는지, 결과가 어땠는지 물어볼 것. 그 답변을 반영해서 작성하고, 다 쓴 뒤에도 사용자에게 보여주고 피드백(동의 여부, 빠진 마찰, 유저 쪽 시각) 받아 확정할 것.
    — What Went Well/Wrong은 **워크플로 수준**으로. 코드 버그 목록 아님.
    — 과정 개선안 중 Kit에 반영할 것은 **[→ Kit]** 표시 후 실제 반영
-2. 노션 등 외부 도구에 공유 (선택)
+2. 노션 등 외부 도구에 공유 (선택, 확정 후에)
 3. 다음 프로토타입 SESSION_ZERO 작성 시 이 회고 먼저 읽을 것
