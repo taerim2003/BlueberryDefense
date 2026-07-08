@@ -9,10 +9,11 @@ public class Projectile : MonoBehaviour
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
     public bool ApplyGemVulnerable { get; set; }
+    public float SpeedMultiplier { get; set; } = 1f;
 
     private void Update()
     {
-        transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
+        transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

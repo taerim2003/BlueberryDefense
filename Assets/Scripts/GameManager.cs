@@ -3,11 +3,14 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private float stageDuration = 45f;
+    [SerializeField] private StageTable stageTable;
 
     public static GameManager Instance { get; private set; }
 
     public bool IsGameOver { get; private set; }
     public int CurrentStage { get; private set; } = 1;
+
+    public StageData CurrentStageData => stageTable != null ? stageTable.GetStage(CurrentStage) : null;
 
     private float stageTimer;
 
@@ -25,10 +28,11 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
 
+        float duration = CurrentStageData != null ? CurrentStageData.duration : stageDuration;
         stageTimer += Time.deltaTime;
-        if (stageTimer >= stageDuration)
+        if (stageTimer >= duration)
         {
-            stageTimer -= stageDuration;
+            stageTimer -= duration;
             CurrentStage++;
         }
     }
@@ -40,5 +44,31 @@ public class GameManager : MonoBehaviour
         IsGameOver = true;
         Debug.Log("Game Over");
         Time.timeScale = 0f;
+    }
+}
+
+[System.Serializable]
+public class StageData
+{
+    public int stageNumber = 1;
+    public float duration = 45f;
+    public float spawnInterval = 1.5f;
+    public float eliteChance = 0f;
+    public float paperPlaneChance = 0f;
+    public float enemyHpMultiplier = 1f;
+    public float enemySpeedMultiplier = 1f;
+    public float enemyDamageMultiplier = 1f;
+}
+
+[CreateAssetMenu(fileName = "StageTable", menuName = "BlueberryDefense/Stage Table")]
+public class StageTable : ScriptableObject
+{
+    public StageData[] stages;
+
+    public StageData GetStage(int stageNumber)
+    {
+        if (stages == null || stages.Length == 0) return null;
+        int index = Mathf.Clamp(stageNumber - 1, 0, stages.Length - 1);
+        return stages[index];
     }
 }

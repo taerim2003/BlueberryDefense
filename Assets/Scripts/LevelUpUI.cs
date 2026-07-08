@@ -111,7 +111,7 @@ public class LevelUpUI : MonoBehaviour
             EquippedSkill captured = equipped;
             candidates.Add(new Option
             {
-                Label = GetActiveSkillName(captured.Id) + " 강화 (Lv." + (captured.Level + 1) + ")\n\n피해량 15% 증가",
+                Label = GetActiveSkillName(captured.Id) + " 강화 (Lv." + (captured.Level + 1) + ")\n\n" + PlayerSkills.DescribeUpgradeEffect(captured.Id, captured.Level + 1),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
             });
@@ -202,8 +202,8 @@ public class LevelUpUI : MonoBehaviour
 
     private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
     {
-        ActiveSkillId.Whirlwind => "전방으로 이동하는 회오리를 소환. 맞으면 피해",
-        ActiveSkillId.Orb => "전방으로 이동하는 오브를 소환. 맞으면 느려지고 피해",
+        ActiveSkillId.Whirlwind => "적을 자동으로 추적하는 회오리를 소환(지속시간 4초). 닿아있는 동안 지속 피해를 주며, 피해를 주는 동안 이동 속도가 느려짐",
+        ActiveSkillId.Orb => "전방으로 관통하며 나아가는 오브를 소환. 닿아있는 모든 적에게 지속 피해를 주고 느려지게 함",
         ActiveSkillId.Lightning => "6초간 공격 피해를 입는 모든 적들에게 30% 확률로 낙뢰가 떨어져 피해",
         ActiveSkillId.EagleDrop => "화면 전체에 독수리를 1초 간격으로 3회 투하해 모든 적에게 피해",
         _ => "",

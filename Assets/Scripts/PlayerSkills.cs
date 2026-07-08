@@ -21,12 +21,15 @@ public class EquippedSkill
     public float Damage;
     public float CooldownTimer;
     public int Level = 1;
+    public float Scale = 1f;
+    public float ProjectileSpeedMultiplier = 1f;
+    public float ProcChanceBonus = 0f;
     public readonly List<GemType> EquippedGems = new List<GemType>();
 }
 
 public class PlayerSkills : MonoBehaviour
 {
-    private const float GlobalCooldown = 0.2f;
+    private const float GlobalCooldown = 0.4f;
     private static readonly Key[] SlotKeys = { Key.Q, Key.W, Key.E, Key.R };
 
     [SerializeField] private GameObject basicAttackProjectilePrefab;
@@ -104,7 +107,55 @@ public class PlayerSkills : MonoBehaviour
         if (skill == null || !CanUpgradeSkill(skill)) return;
 
         skill.Level++;
-        skill.Damage *= 1.15f;
+        ApplyUpgradeEffect(skill, skill.Level);
+    }
+
+    private static void ApplyUpgradeEffect(EquippedSkill skill, int level)
+    {
+        switch (level % 3)
+        {
+            case 1:
+                skill.Damage *= 1.3f;
+                break;
+            case 2:
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.85f);
+                break;
+            default:
+                ApplyThirdUpgradeEffect(skill);
+                break;
+        }
+    }
+
+    private static void ApplyThirdUpgradeEffect(EquippedSkill skill)
+    {
+        switch (skill.Id)
+        {
+            case ActiveSkillId.BasicAttack:
+                skill.ProjectileSpeedMultiplier += 0.15f;
+                break;
+            case ActiveSkillId.Lightning:
+                skill.ProcChanceBonus += 0.05f;
+                break;
+            default:
+                skill.Scale += 0.08f;
+                break;
+        }
+    }
+
+    public static string DescribeUpgradeEffect(ActiveSkillId id, int nextLevel)
+    {
+        switch (nextLevel % 3)
+        {
+            case 1: return "피해량 30% 증가";
+            case 2: return "재사용 대기시간 감소";
+            default:
+                return id switch
+                {
+                    ActiveSkillId.BasicAttack => "투사체 속도 증가",
+                    ActiveSkillId.Lightning => "발동 확률 증가",
+                    _ => "크기 증가",
+                };
+        }
     }
 
     public void EquipGem(ActiveSkillId id, GemType gem)
@@ -144,6 +195,7 @@ public class PlayerSkills : MonoBehaviour
                 break;
             case ActiveSkillId.Lightning:
                 LightningStorm.ActiveUntil = Time.time + 6f;
+                LightningStorm.ProcChance = LightningStorm.BaseProcChance + skill.ProcChanceBonus;
                 break;
             case ActiveSkillId.EagleDrop:
                 StartCoroutine(EagleDropRoutine(damage, skill));
@@ -172,9 +224,11 @@ public class PlayerSkills : MonoBehaviour
         Enemy target = FindFrontmostEnemy();
         if (target == null) return false;
 
-        GameObject obj = Instantiate(basicAttackProjectilePrefab, transform.position, Quaternion.identity);
+        GameObject obj = Instantiate(basicAttackProjectilePrefab, transform.position + Vector3.left * 0.6f, Quaternion.identity);
+        obj.transform.localScale *= skill.Scale;
         Projectile projectile = obj.GetComponent<Projectile>();
         projectile.Damage = damage;
+        projectile.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
         projectile.ApplyGemSlow = skill.EquippedGems.Contains(GemType.Amethyst);
         projectile.ApplyGemVulnerable = skill.EquippedGems.Contains(GemType.Garnet);
         animator.SetTrigger("Attack");
@@ -183,7 +237,8 @@ public class PlayerSkills : MonoBehaviour
 
     private void FireWhirlwind(float damage, EquippedSkill skill)
     {
-        GameObject obj = Instantiate(whirlwindPrefab, transform.position, Quaternion.identity);
+        GameObject obj = Instantiate(whirlwindPrefab, transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f, Quaternion.identity);
+        obj.transform.localScale *= skill.Scale;
         Whirlwind whirlwind = obj.GetComponent<Whirlwind>();
         whirlwind.Damage = damage;
         whirlwind.ApplyGemSlow = skill.EquippedGems.Contains(GemType.Amethyst);
@@ -192,7 +247,8 @@ public class PlayerSkills : MonoBehaviour
 
     private void FireOrb(float damage, EquippedSkill skill)
     {
-        GameObject obj = Instantiate(orbPrefab, transform.position, Quaternion.identity);
+        GameObject obj = Instantiate(orbPrefab, transform.position + Vector3.up * 0.6f, Quaternion.identity);
+        obj.transform.localScale *= skill.Scale;
         Orb orb = obj.GetComponent<Orb>();
         orb.Damage = damage;
         orb.ApplyGemVulnerable = skill.EquippedGems.Contains(GemType.Garnet);
@@ -211,38 +267,40 @@ public class PlayerSkills : MonoBehaviour
                 enemy.TakeDamage(damage);
                 if (applySlow) enemy.ApplySlow(0.3f, 3f);
                 if (applyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
-                StartCoroutine(MeteorImpact(pos));
+                StartCoroutine(MeteorImpact(pos, skill.Scale));
             }
 
             yield return new WaitForSeconds(1f);
         }
     }
 
-    private IEnumerator MeteorImpact(Vector3 targetPos)
+    private IEnumerator MeteorImpact(Vector3 targetPos, float scale)
     {
         if (eagleDropPrefab == null) yield break;
 
-        Vector3 start = targetPos + Vector3.up * 4f;
-        GameObject meteor = Instantiate(eagleDropPrefab, start, Quaternion.identity);
-        meteor.transform.localScale = Vector3.one * 0.2f;
-        foreach (ParticleSystem ps in meteor.GetComponentsInChildren<ParticleSystem>(true))
-            ps.Play();
+        const float fallHeight = 6f;
+        const float fallAngleFromVertical = 15f;
+        Vector3 landPos = targetPos + new Vector3(0.4f, 0.6f, 0f);
+        float horizontalOffset = fallHeight * Mathf.Tan(fallAngleFromVertical * Mathf.Deg2Rad);
+        Vector3 start = landPos + new Vector3(horizontalOffset, fallHeight, 0f);
+        GameObject eagle = Instantiate(eagleDropPrefab, start, Quaternion.identity);
+        eagle.transform.localScale *= scale;
 
-        float duration = 0.2f;
+        float duration = 0.3f;
         float t = 0f;
         while (t < duration)
         {
-            meteor.transform.position = Vector3.Lerp(start, targetPos, t / duration);
+            eagle.transform.position = Vector3.Lerp(start, landPos, t / duration);
             t += Time.deltaTime;
             yield return null;
         }
-        Destroy(meteor);
+        Destroy(eagle);
 
         if (eagleImpactVfxPrefab != null)
         {
-            GameObject impact = Instantiate(eagleImpactVfxPrefab, targetPos, Quaternion.identity);
-            impact.transform.localScale = Vector3.one * 0.25f;
-            Destroy(impact, 2f);
+            GameObject impact = ObjectPool.Instance.Spawn(eagleImpactVfxPrefab, landPos, Quaternion.identity);
+            impact.transform.localScale = Vector3.one * 0.25f * scale;
+            ObjectPool.Instance.Despawn(impact, 2f);
         }
     }
 
@@ -277,10 +335,10 @@ public class PlayerSkills : MonoBehaviour
     private static float GetDefaultDamage(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => 10f,
-        ActiveSkillId.Whirlwind => 15f,
-        ActiveSkillId.Orb => 12f,
+        ActiveSkillId.Whirlwind => 9f,
+        ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => LightningStorm.ProcDamage,
-        ActiveSkillId.EagleDrop => 10f,
-        _ => 10f,
+        ActiveSkillId.EagleDrop => 6f,
+        _ => 6f,
     };
 }

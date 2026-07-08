@@ -6,7 +6,7 @@ public class PlayerExperience : MonoBehaviour
 
     [SerializeField] private int level = 1;
     [SerializeField] private int currentXP;
-    [SerializeField] private int xpToNextLevel = 10;
+    [SerializeField] private int xpToNextLevel = 18;
     [SerializeField] private GameObject levelUpVfxPrefab;
 
     private float xpMultiplier = 1f;
@@ -33,7 +33,7 @@ public class PlayerExperience : MonoBehaviour
         {
             currentXP -= xpToNextLevel;
             level++;
-            xpToNextLevel += 5;
+            xpToNextLevel += 9;
 
             if (levelUpVfxPrefab != null)
                 Destroy(Instantiate(levelUpVfxPrefab, transform.position, Quaternion.identity), 2f);
