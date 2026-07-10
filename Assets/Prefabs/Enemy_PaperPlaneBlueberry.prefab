@@ -209,6 +209,7 @@ MonoBehaviour:
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}
+  chainLightningVfxPrefab: {fileID: 2139788027143211048, guid: 07ab3add344a1a746a3ea6c4012db20f, type: 3}
   deathVfxPrefab: {fileID: 4748681987041982144, guid: 3eccf8519d036954898bdcd007ae4e13, type: 3}
   hitParticlePrefab: {fileID: 8514423321508764034, guid: 694aef26ff233bd4bae11bd02d82c7dd, type: 3}
   hitParticleSprites:
@@ -217,4 +218,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 7960975e53790b9469b6701fe28d1a2f, type: 3}
   - {fileID: 21300000, guid: 0867bbf6f7d6cf641aeada7282277cd0, type: 3}
   playerCollisionVfxPrefab: {fileID: 4748681987041982144, guid: 3e01d91f8713f0642b74a8180d67b988, type: 3}
-  spawnYOffset: 0.9
+  spawnYOffset: 1.1
+  alwaysBackLayer: 0
+  isFlying: 1

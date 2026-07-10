@@ -1,0 +1,20 @@
+{
+  "name": "com.jhc98.juicyui",
+  "version": "0.1.0",
+  "displayName": "JuicyUI",
+  "description": "Reusable Juicy UI components for Unity (URP + DOTween). Includes animated buttons, health bar, tooltips, and options panel.",
+  "unity": "2021.3",
+  "author": {
+    "name": "jhc98",
+    "email": "jinhachun@gmail.com"
+  },
+  "keywords": ["ui", "animation", "dotween", "urp", "juicy"],
+  "samples": [
+    {
+      "displayName": "Health Bar Tester",
+      "description": "Inspector buttons to test JuicyHealthBar damage and heal at runtime.",
+      "path": "Samples~/HealthBarTester"
+    }
+  ],
+  "dependencies": {}
+}

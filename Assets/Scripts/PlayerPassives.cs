@@ -17,7 +17,7 @@ public class PlayerPassives : MonoBehaviour
     private const float KnowledgeXPBonus = 0.1f;
     private const int HealthBonus = 20;
 
-    public const float AssassinateCritChance = 0.04f;
+    public const float AssassinateCritChance = 0.15f;
     public const float AssassinateCritMultiplier = 3f;
     public const float RefreshChance = 0.05f;
 

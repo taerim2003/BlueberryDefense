@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.35, y: 1.35, z: 1.35}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -153,7 +153,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Whirlwind
   moveSpeed: 4
+  damagingMoveSpeedMultiplier: 0.4
   lifetime: 4
+  tickInterval: 0.3
   impactVfxPrefab: {fileID: 4748681987041982144, guid: de11d192308ce774daf6028b74849dec, type: 3}
 --- !u!95 &3393588966977291835
 Animator:

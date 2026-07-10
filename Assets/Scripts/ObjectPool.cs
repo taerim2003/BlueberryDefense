@@ -47,6 +47,13 @@ public class ObjectPool : MonoBehaviour
             ps.Play(true);
         }
 
+        foreach (AudioSource source in obj.GetComponentsInChildren<AudioSource>())
+        {
+            if (source.clip == null) continue;
+            if (AudioThrottle.TryConsume(source.clip)) source.Play();
+            else source.Stop();
+        }
+
         return obj;
     }
 

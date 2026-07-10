@@ -13,6 +13,10 @@ public class Orb : MonoBehaviour
 
     public float Damage { get; set; }
     public bool ApplyGemVulnerable { get; set; }
+    public bool IsCrit { get; set; }
+    public float FlyingDamageMultiplier { get; set; } = 1f;
+    public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
+    public float SlowDurationBonus { get; set; } // 덧셈(초)
 
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
@@ -27,13 +31,16 @@ public class Orb : MonoBehaviour
         transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
 
         overlappingEnemies.RemoveWhere(e => e == null);
+        bool canHitFlying = FlyingDamageMultiplier > 1f; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0)로만 해금
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
             if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy.IsFlying && !canHitFlying) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
-            enemy.TakeDamage(Damage);
-            enemy.ApplySlow(slowMultiplier, slowDuration);
+            float damage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
+            enemy.TakeDamage(damage, isCrit: IsCrit);
+            enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)

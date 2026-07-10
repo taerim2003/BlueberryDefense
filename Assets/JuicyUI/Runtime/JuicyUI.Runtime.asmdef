@@ -1,0 +1,17 @@
+{
+  "name": "JuicyUI.Runtime",
+  "references": [
+    "Unity.TextMeshPro",
+    "Unity.InputSystem",
+    "DOTween.Modules"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

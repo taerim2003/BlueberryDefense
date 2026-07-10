@@ -10,24 +10,37 @@ public class LevelUpUI : MonoBehaviour
 
     private class Option
     {
-        public string Label;
+        public string Title;
+        public string LevelText;
+        public bool IsNew;
+        public string Description;
         public Sprite Icon;
         public System.Action Apply;
     }
 
     [SerializeField] private GameObject panel;
+    [SerializeField] private UITransition panelTransition;
     [SerializeField] private Button optionButtonA;
     [SerializeField] private Button optionButtonB;
     [SerializeField] private Button optionButtonC;
-    [SerializeField] private TMP_Text labelA;
-    [SerializeField] private TMP_Text labelB;
-    [SerializeField] private TMP_Text labelC;
+    [SerializeField] private TMP_Text titleA;
+    [SerializeField] private TMP_Text titleB;
+    [SerializeField] private TMP_Text titleC;
+    [SerializeField] private TMP_Text levelA;
+    [SerializeField] private TMP_Text levelB;
+    [SerializeField] private TMP_Text levelC;
+    [SerializeField] private TMP_Text descA;
+    [SerializeField] private TMP_Text descB;
+    [SerializeField] private TMP_Text descC;
     [SerializeField] private Image iconA;
     [SerializeField] private Image iconB;
     [SerializeField] private Image iconC;
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
-    [SerializeField] private Sprite[] gemIcons;
+    [SerializeField] private LevelUpStatOptionSO[] statOptions;
+
+    private static readonly Color NewTagColor = new Color(1f, 0.85f, 0.2f, 1f);
+    private static readonly Color LevelTagColor = new Color(0.75f, 0.85f, 1f, 1f);
 
     private Option[] currentOptions;
 
@@ -53,16 +66,39 @@ public class LevelUpUI : MonoBehaviour
 
     private void ShowOptions()
     {
-        labelA.text = currentOptions[0].Label;
-        labelB.text = currentOptions[1].Label;
-        labelC.text = currentOptions[2].Label;
+        bool alreadyOpen = panel.activeSelf;
 
-        SetIcon(iconA, currentOptions[0].Icon);
-        SetIcon(iconB, currentOptions[1].Icon);
-        SetIcon(iconC, currentOptions[2].Icon);
+        SetRow(titleA, levelA, descA, iconA, currentOptions[0]);
+        SetRow(titleB, levelB, descB, iconB, currentOptions[1]);
+        SetRow(titleC, levelC, descC, iconC, currentOptions[2]);
 
         panel.SetActive(true);
-        Time.timeScale = 0f;
+        if (!alreadyOpen) ModalPause.Push();
+    }
+
+    private static void SetRow(TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
+    {
+        title.text = option.Title;
+        desc.text = option.Description;
+        SetIcon(icon, option.Icon);
+
+        if (level != null)
+        {
+            if (option.IsNew)
+            {
+                level.text = "신규!";
+                level.color = NewTagColor;
+            }
+            else if (!string.IsNullOrEmpty(option.LevelText))
+            {
+                level.text = option.LevelText;
+                level.color = LevelTagColor;
+            }
+            else
+            {
+                level.text = "";
+            }
+        }
     }
 
     private static void SetIcon(Image image, Sprite sprite)
@@ -83,7 +119,9 @@ public class LevelUpUI : MonoBehaviour
                 ActiveSkillId captured = id;
                 candidates.Add(new Option
                 {
-                    Label = GetActiveSkillName(captured) + " 획득\n\n" + GetActiveSkillDescription(captured),
+                    Title = PlayerSkills.GetActiveSkillName(captured),
+                    IsNew = true,
+                    Description = GetActiveSkillDescription(captured),
                     Icon = GetIcon(activeIcons, (int)captured),
                     Apply = () => skills.AcquireSkill(captured),
                 });
@@ -98,7 +136,9 @@ public class LevelUpUI : MonoBehaviour
                 PassiveSkillId captured = id;
                 candidates.Add(new Option
                 {
-                    Label = GetPassiveSkillName(captured) + " 획득\n\n" + GetPassiveSkillDescription(captured),
+                    Title = PlayerSkills.GetPassiveSkillName(captured),
+                    IsNew = true,
+                    Description = GetPassiveSkillDescription(captured),
                     Icon = GetIcon(passiveIcons, (int)captured),
                     Apply = () => passives.AcquirePassive(captured),
                 });
@@ -111,7 +151,9 @@ public class LevelUpUI : MonoBehaviour
             EquippedSkill captured = equipped;
             candidates.Add(new Option
             {
-                Label = GetActiveSkillName(captured.Id) + " 강화 (Lv." + (captured.Level + 1) + ")\n\n" + PlayerSkills.DescribeUpgradeEffect(captured.Id, captured.Level + 1),
+                Title = PlayerSkills.GetActiveSkillName(captured.Id),
+                LevelText = "레벨: " + (captured.Level + 1),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured.Id, captured.Level + 1),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
             });
@@ -120,27 +162,11 @@ public class LevelUpUI : MonoBehaviour
         Shuffle(candidates);
         List<Option> options = candidates.Take(3).ToList();
 
-        string[] statLabels =
-        {
-            "기본 공격 피해량 +5",
-            "기본 공격 쿨타임 10% 감소",
-            "최대 체력 +20",
-        };
         int statIndex = 0;
-        while (options.Count < 3)
+        while (options.Count < 3 && statOptions != null && statOptions.Length > 0)
         {
-            switch (statIndex % 3)
-            {
-                case 0:
-                    options.Add(new Option { Label = statLabels[0], Apply = () => skills.UpgradeSkillDamage(ActiveSkillId.BasicAttack, 5f) });
-                    break;
-                case 1:
-                    options.Add(new Option { Label = statLabels[1], Apply = () => skills.UpgradeSkillCooldown(ActiveSkillId.BasicAttack, 0.9f) });
-                    break;
-                case 2:
-                    options.Add(new Option { Label = statLabels[2], Apply = () => health.IncreaseMaxHealth(20) });
-                    break;
-            }
+            LevelUpStatOptionSO so = statOptions[statIndex % statOptions.Length];
+            options.Add(new Option { Title = so.title, Description = so.description, Apply = () => ApplyStatEffect(so, skills, health) });
             statIndex++;
         }
 
@@ -151,54 +177,59 @@ public class LevelUpUI : MonoBehaviour
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
 
-        EquippedSkill blocked = skills.EquippedSkills.FirstOrDefault(s =>
-            s.Level >= 5 && s.EquippedGems.Count < s.Level / 5 && s.EquippedGems.Count < 3);
+        List<EquippedSkill> ready = skills.EquippedSkills.Where(s =>
+            s.Level >= 5 && s.TotalEvolutionTier < s.Level / 5 && s.TotalEvolutionTier < 4 && skills.CanEvolveAnyPath(s)).ToList();
 
-        if (blocked == null)
+        if (ready.Count == 0)
         {
             Show();
             return;
         }
 
-        currentOptions = BuildGemOptions(skills, blocked);
+        if (ready.Count == 1)
+        {
+            EvolutionTreeUI.Instance.Show(skills, ready[0]);
+            return;
+        }
+
+        Shuffle(ready);
+        List<Option> pickOptions = ready.Take(3).Select(s => new Option
+        {
+            Title = PlayerSkills.GetActiveSkillName(s.Id),
+            LevelText = "진화 가능",
+            Description = "어떤 스킬을 먼저 진화시킬지 선택하세요",
+            Icon = GetIcon(activeIcons, (int)s.Id),
+            Apply = () => EvolutionTreeUI.Instance.Show(skills, s),
+        }).ToList();
+
+        while (pickOptions.Count < 3)
+            pickOptions.Add(new Option { Title = "체력 강화", Description = "최대 체력 +20", Apply = () => FindAnyObjectByType<PlayerHealth>().IncreaseMaxHealth(20) });
+
+        currentOptions = pickOptions.ToArray();
         ShowOptions();
     }
 
-    private Option[] BuildGemOptions(PlayerSkills skills, EquippedSkill skill)
+    private static void ApplyStatEffect(LevelUpStatOptionSO so, PlayerSkills skills, PlayerHealth health)
     {
-        List<GemType> pool = new List<GemType> { GemType.Emerald, GemType.Topaz, GemType.Amethyst, GemType.Garnet };
-        pool.RemoveAll(g => skill.EquippedGems.Contains(g));
-        Shuffle(pool);
-
-        List<Option> options = new List<Option>();
-        for (int i = 0; i < Mathf.Min(3, pool.Count); i++)
+        switch (so.effect)
         {
-            GemType gem = pool[i];
-            options.Add(new Option
-            {
-                Label = GetGemName(gem) + " 장착 (" + GetActiveSkillName(skill.Id) + ")\n\n" + GetGemDescription(gem),
-                Icon = GetIcon(gemIcons, (int)gem),
-                Apply = () => skills.EquipGem(skill.Id, gem),
-            });
+            case LevelUpStatEffect.BasicAttackDamageFlat:
+                skills.UpgradeSkillDamage(ActiveSkillId.BasicAttack, so.value);
+                break;
+            case LevelUpStatEffect.BasicAttackCooldownPercent:
+                skills.UpgradeSkillCooldown(ActiveSkillId.BasicAttack, 1f - so.value / 100f);
+                break;
+            case LevelUpStatEffect.MaxHealthFlat:
+                health.IncreaseMaxHealth((int)so.value);
+                break;
+            case LevelUpStatEffect.XpMultiplierPercent:
+                PlayerExperience.Instance.IncreaseXPMultiplier(so.value / 100f);
+                break;
         }
-
-        while (options.Count < 3)
-            options.Add(new Option { Label = "최대 체력 +20", Apply = () => FindAnyObjectByType<PlayerHealth>().IncreaseMaxHealth(20) });
-
-        return options.ToArray();
     }
 
     private static Sprite GetIcon(Sprite[] icons, int index) =>
         icons != null && index >= 0 && index < icons.Length ? icons[index] : null;
-
-    private static string GetGemName(GemType gem) => gem switch
-    {
-        GemType.Emerald => "에메랄드",
-        GemType.Topaz => "토파즈",
-        GemType.Amethyst => "자수정",
-        GemType.Garnet => "가넷",
-        _ => gem.ToString(),
-    };
 
     private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
     {
@@ -214,17 +245,8 @@ public class LevelUpUI : MonoBehaviour
         PassiveSkillId.Strength => "피해량 10% 증가",
         PassiveSkillId.Health => "최대 체력 20 증가",
         PassiveSkillId.Knowledge => "경험치 획득량 10% 증가",
-        PassiveSkillId.Assassinate => "모든 피해가 4% 확률로 3배 피해",
+        PassiveSkillId.Assassinate => "모든 피해가 15% 확률로 3배 피해",
         PassiveSkillId.Refresh => "스킬 사용 시 5% 확률로 쿨타임 초기화",
-        _ => "",
-    };
-
-    private static string GetGemDescription(GemType gem) => gem switch
-    {
-        GemType.Emerald => "피해량 50% 증가",
-        GemType.Topaz => "쿨타임 35% 감소",
-        GemType.Amethyst => "맞은 적 3초간 이동속도 70% 감소",
-        GemType.Garnet => "맞은 적에게 50% 추가 피해를 받는 취약 부여",
         _ => "",
     };
 
@@ -236,8 +258,9 @@ public class LevelUpUI : MonoBehaviour
 
     private void Close()
     {
-        panel.SetActive(false);
-        Time.timeScale = 1f;
+        ModalPause.Pop();
+        if (panelTransition != null) panelTransition.Hide();
+        else panel.SetActive(false);
     }
 
     private static void Shuffle<T>(List<T> list)
@@ -249,22 +272,4 @@ public class LevelUpUI : MonoBehaviour
         }
     }
 
-    private static string GetActiveSkillName(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.Whirlwind => "회오리",
-        ActiveSkillId.Orb => "오브",
-        ActiveSkillId.Lightning => "낙뢰",
-        ActiveSkillId.EagleDrop => "독수리 투하",
-        _ => id.ToString(),
-    };
-
-    private static string GetPassiveSkillName(PassiveSkillId id) => id switch
-    {
-        PassiveSkillId.Strength => "힘",
-        PassiveSkillId.Health => "건강",
-        PassiveSkillId.Knowledge => "지식",
-        PassiveSkillId.Assassinate => "암살",
-        PassiveSkillId.Refresh => "리프레쉬",
-        _ => id.ToString(),
-    };
 }

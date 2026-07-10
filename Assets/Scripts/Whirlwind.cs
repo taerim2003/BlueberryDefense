@@ -13,13 +13,17 @@ public class Whirlwind : MonoBehaviour
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
     public bool ApplyGemVulnerable { get; set; }
+    public bool IsCrit { get; set; }
+    public int MaxHitCount { get; set; } // 0이면 비활성화(기존처럼 lifetime 기준으로 소멸)
+    public float SlowDuration { get; set; } = 3f;
 
+    private int hitCount;
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
 
     private void Start()
     {
-        Destroy(gameObject, lifetime);
+        if (MaxHitCount <= 0) Destroy(gameObject, lifetime);
     }
 
     private void Update()
@@ -35,12 +39,18 @@ public class Whirlwind : MonoBehaviour
             if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
-            enemy.TakeDamage(Damage);
-            if (ApplyGemSlow) enemy.ApplySlow(0.3f, 3f);
+            enemy.TakeDamage(Damage, isCrit: IsCrit);
+            if (ApplyGemSlow) enemy.ApplySlow(0.3f, SlowDuration);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)
                 ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2f);
+
+            if (MaxHitCount > 0 && ++hitCount >= MaxHitCount)
+            {
+                Destroy(gameObject);
+                return;
+            }
         }
     }
 

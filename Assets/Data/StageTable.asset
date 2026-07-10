@@ -55,121 +55,121 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.42
   - stageNumber: 6
     duration: 30
-    spawnInterval: 0.5
-    eliteChance: 0.13
+    spawnInterval: 0.3
+    eliteChance: 0.271
     paperPlaneChance: 0.08
     enemyHpMultiplier: 1.76
     enemySpeedMultiplier: 1.16
     enemyDamageMultiplier: 1.53
   - stageNumber: 7
     duration: 32
-    spawnInterval: 0.46
-    eliteChance: 0.15
+    spawnInterval: 0.27600002
+    eliteChance: 0.305
     paperPlaneChance: 0.08
     enemyHpMultiplier: 1.97
     enemySpeedMultiplier: 1.19
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
     duration: 34
-    spawnInterval: 0.42
-    eliteChance: 0.17
+    spawnInterval: 0.252
+    eliteChance: 0.33900002
     paperPlaneChance: 0.08
     enemyHpMultiplier: 2.21
     enemySpeedMultiplier: 1.22
     enemyDamageMultiplier: 1.74
   - stageNumber: 9
     duration: 36
-    spawnInterval: 0.39
-    eliteChance: 0.19
+    spawnInterval: 0.234
+    eliteChance: 0.373
     paperPlaneChance: 0.08
     enemyHpMultiplier: 2.48
     enemySpeedMultiplier: 1.25
     enemyDamageMultiplier: 1.84
   - stageNumber: 10
     duration: 38
-    spawnInterval: 0.36
-    eliteChance: 0.21
+    spawnInterval: 0.21600002
+    eliteChance: 0.407
     paperPlaneChance: 0.08
     enemyHpMultiplier: 2.77
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.95
   - stageNumber: 11
     duration: 40
-    spawnInterval: 0.33
-    eliteChance: 0.23
-    paperPlaneChance: 0.08
+    spawnInterval: 0.192
+    eliteChance: 0.458
+    paperPlaneChance: 0.1
     enemyHpMultiplier: 3.11
     enemySpeedMultiplier: 1.32
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
     duration: 40
-    spawnInterval: 0.3
-    eliteChance: 0.25
-    paperPlaneChance: 0.08
+    spawnInterval: 0.174
+    eliteChance: 0.509
+    paperPlaneChance: 0.1
     enemyHpMultiplier: 3.48
     enemySpeedMultiplier: 1.35
     enemyDamageMultiplier: 2.16
   - stageNumber: 13
     duration: 42
-    spawnInterval: 0.28
-    eliteChance: 0.27
-    paperPlaneChance: 0.08
+    spawnInterval: 0.156
+    eliteChance: 0.56000006
+    paperPlaneChance: 0.11
     enemyHpMultiplier: 3.9
     enemySpeedMultiplier: 1.38
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
     duration: 42
-    spawnInterval: 0.26
-    eliteChance: 0.29
-    paperPlaneChance: 0.08
+    spawnInterval: 0.13800001
+    eliteChance: 0.61100006
+    paperPlaneChance: 0.11
     enemyHpMultiplier: 4.36
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.37
   - stageNumber: 15
     duration: 44
-    spawnInterval: 0.24
-    eliteChance: 0.31
-    paperPlaneChance: 0.08
+    spawnInterval: 0.126
+    eliteChance: 0.66200006
+    paperPlaneChance: 0.12
     enemyHpMultiplier: 4.89
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 2.47
   - stageNumber: 16
     duration: 44
-    spawnInterval: 0.22
-    eliteChance: 0.33
-    paperPlaneChance: 0.08
+    spawnInterval: 0.114
+    eliteChance: 0.7
+    paperPlaneChance: 0.12
     enemyHpMultiplier: 5.47
     enemySpeedMultiplier: 1.47
     enemyDamageMultiplier: 2.58
   - stageNumber: 17
     duration: 46
-    spawnInterval: 0.2
-    eliteChance: 0.35
-    paperPlaneChance: 0.08
+    spawnInterval: 0.102000006
+    eliteChance: 0.7
+    paperPlaneChance: 0.13
     enemyHpMultiplier: 6.13
     enemySpeedMultiplier: 1.51
     enemyDamageMultiplier: 2.68
   - stageNumber: 18
     duration: 46
-    spawnInterval: 0.19
-    eliteChance: 0.37
-    paperPlaneChance: 0.08
+    spawnInterval: 0.09
+    eliteChance: 0.7
+    paperPlaneChance: 0.13
     enemyHpMultiplier: 6.87
     enemySpeedMultiplier: 1.54
     enemyDamageMultiplier: 2.79
   - stageNumber: 19
     duration: 48
-    spawnInterval: 0.18
-    eliteChance: 0.39
-    paperPlaneChance: 0.08
+    spawnInterval: 0.08
+    eliteChance: 0.7
+    paperPlaneChance: 0.14
     enemyHpMultiplier: 7.69
     enemySpeedMultiplier: 1.57
     enemyDamageMultiplier: 2.89
   - stageNumber: 20
     duration: 60
-    spawnInterval: 0.18
-    eliteChance: 0.42
-    paperPlaneChance: 0.08
+    spawnInterval: 0.08
+    eliteChance: 0.7
+    paperPlaneChance: 0.15
     enemyHpMultiplier: 8.61
     enemySpeedMultiplier: 1.6
     enemyDamageMultiplier: 3
