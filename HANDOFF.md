@@ -1,5 +1,28 @@
 # HANDOFF.md — 세션 인계 문서
 
+## 사운드 시스템 미해결 — 다음 세션 최우선 (2026-07-11 밤)
+
+**⚠️ 여러 차례 패치했지만 아직도 문제가 남아있음. 사용자가 "코드 완전 다시 새로 짜"라고 할 정도로 반복 실패한 영역 — 다음 세션은 땜질 대신 처음부터 설계 재검토할 것.**
+
+이번 세션에 다룬 것: 체인라이트닝 낙뢰가 기본공격 킬샷에서 발동 안 하던 버그(`Enemy.TakeDamage` 사망 체크 순서), 체인 빔 가시성, 몬스터 사망음, 발사음, 각종 임팩트음 볼륨 밸런스, 발사음이 명중 즉시 끊기는 버그 등 — 계속 사용자가 "이거 아직도 이상해" → 원인 하나 고침 → "이번엔 다른 증상" 반복.
+
+**마지막으로 확인된 미해결 증상 (사용자 보고, 검증 못 함)**: "쏘는 소리가 갑자기 커졌는데? 심지어 가끔씩 씹혀. 앞만 씹힐때도 있고 통째로 씹힐 때도 있고."
+
+**이번 세션에 시도한 것들 (시간순, 전부 부분적으로만 효과 있었거나 검증 안 됨)**:
+1. 발사체(`Projectile`)에 직접 AudioSource 부착 → 명중 즉시 Destroy되며 소리 끊김 발견
+2. `AudioSource.PlayClipAtPoint`로 전환 → 발사체 수명과 분리했지만, 이 방식이 **매번 새 GameObject를 만들고 기본값이 3D(spatialBlend=1)라서** 거리 감쇠로 소리가 작아지는 부작용 있었음(뒤늦게 발견)
+3. `ObjectPool.Spawn()`의 오디오 재생 로직과 각 VFX 프리팹의 `playOnAwake=1`이 충돌해서, 근접한 타이밍에 같은 클립이 재생되면 **막 자동재생 시작한 소리를 우리 코드가 Stop() 시켜버리는** 버그 발견 → 전부 `playOnAwake=0`으로 통일
+4. 마지막으로 `SfxPlayer.cs`(상시 유지되는 단일 2D AudioSource + `PlayOneShot`) 신규 도입해서 발사음/캐스트음(회오리·오브·독수리투하)을 여기로 이전 — **이 변경 직후 사용자가 "갑자기 커졌다 + 가끔 씹힌다"고 보고, 검증 전에 세션 종료됨.**
+
+**의심되는 것**: `SfxPlayer.MasterVolume=1.3f`가 개별 프리팹 볼륨(`fireSfxVolume` 등)과 곱해지면서 이전 어느 조정 단계보다 실제 체감 볼륨이 커졌을 가능성 큼(볼륨 급증 원인). "씹힘"은 `PlayOneShot`이 겹쳐 재생될 때 __같은 AudioClip을 같은 AudioSource에서 여러 번 동시에 트리거하면 서로 위상이 겹치며 실제로 소리가 뭉개지거나 클리핑될 수 있음__ — `AudioThrottle`의 80ms 디바운스 윈도우가 기본공격의 실제 연사 속도보다 짧아서 여전히 겹침이 새는 게 아닌지 의심. 다음 세션엔:
+- `AudioThrottle.MinInterval`을 실제 기본공격 쿨다운/연사 간격과 비교해서 재조정하거나, 애초에 디바운스 대신 **재생 중인 clip은 새 요청을 무시하는 방식**(`source.isPlaying` 체크)으로 바꾸는 게 나을 수 있음
+- `SfxPlayer.MasterVolume`과 개별 볼륨이 이중으로 곱해지는 구조 자체를 재검토 — 볼륨 소스가 너무 여러 군데(개별 프리팹 m_Volume, fireSfxVolume/castSfxVolume 필드, SfxPlayer.MasterVolume)로 분산돼 있어서 예측 불가능한 상태. **한 곳으로 통합 권장.**
+- 이번 세션 동안 손댄 볼륨 값들이 최종적으로 일관성이 없을 가능성 높음 — 처음부터 전체 사운드 볼륨/재생 아키텍처를 표로 정리하고 재설계하는 게 나을 듯
+
+**관련 파일**: `SfxPlayer.cs`(신규), `AudioThrottle.cs`, `ObjectPool.cs`, `Projectile.cs`, `PlayerSkills.cs`(`PlayCastSfx`), 각 Vefects VFX 프리팹의 AudioSource(`m_Volume`/`Priority`/`m_PlayOnAwake`).
+
+---
+
 ## 현재 상태 (2026-07-08)
 
 **빌드 상태**: 1차 프로토타입 완성. Must Have + Should Have 전 항목 구현 및 플레이테스트 완료. 스탠드얼론 빌드까지 검증 완료 (빌드 전용 크래시 버그 발견 후 수정, Player.log로 확인).

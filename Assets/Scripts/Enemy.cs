@@ -20,6 +20,15 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
 
+    // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=초록, 2회=파랑, 3회=보라, 4회=마젠타)
+    private static readonly Color[] RecursiveLightningColors =
+    {
+        new Color(0.4f, 1f, 0.4f),
+        new Color(0.35f, 0.55f, 1f),
+        new Color(0.75f, 0.35f, 1f),
+        new Color(1f, 0.35f, 0.85f),
+    };
+
     public bool IsFlying => isFlying;
 
     private float currentHealth;
@@ -91,9 +100,32 @@ public class Enemy : MonoBehaviour
         // 체인 라이트닝으로 전이된 타격은 연결선(beam)으로 이미 시각화되므로,
         // 하늘에서 세로로 내리치는 낙뢰 VFX를 여기서도 또 띄우면 "이어진다"는 느낌이 묻힘 — 이 경우만 생략.
         if (isLightningProc && !suppressLightningStrikeVfx && lightningVfxPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(lightningVfxPrefab, transform.position, Quaternion.identity), 2f);
+        {
+            GameObject strikeVfx = ObjectPool.Instance.Spawn(lightningVfxPrefab, transform.position, Quaternion.identity);
+            if (lightningChainDepth >= 1) TintLightningVfx(strikeVfx, RecursiveLightningColors[Mathf.Min(lightningChainDepth, RecursiveLightningColors.Length) - 1]);
+            ObjectPool.Instance.Despawn(strikeVfx, 2f);
+        }
 
-        if (currentHealth <= 0f)
+        // 체인 라이트닝과 낙뢰 발동 판정은 이 타격이 적을 죽이는지와 무관하게 실행돼야 한다(사망 처리보다 뒤에 있으면,
+        // 기본공격처럼 잡몹을 한 방에 죽이는 일이 잦은 공격에서는 그 킬각 타격이 애초에 낙뢰를 굴려볼 기회조차 못 얻는다).
+        if (isLightningProc && lightningChainDepth == 1 && LightningStorm.ChainEnabled)
+            ChainLightningToNearby();
+
+        bool canChainAgain = !isLightningProc || (LightningStorm.RecursiveProcEnabled && lightningChainDepth < MaxLightningChain);
+        if (canChainAgain)
+        {
+            // 낙뢰 버프는 스택형이라 살아있는 스택 수만큼 발동 확률을 독립적으로 판정한다 (스택 2개=최대 2번 발동).
+            int procCount = LightningStorm.RollProcCount();
+            for (int i = 0; i < procCount; i++)
+            {
+                // 힘 연계 path0 T3: 재귀로 떨어지는 낙뢰일수록(체인 깊이가 깊을수록) 더 강해짐
+                float procDamage = LightningStorm.ProcDamage * Mathf.Pow(1f + LightningStorm.RecursiveDamageGrowth, lightningChainDepth);
+                TakeDamage(procDamage, isLightningProc: true, lightningChainDepth: lightningChainDepth + 1);
+            }
+        }
+
+        // 위 재귀 프록 도중에 이미 사망 처리가 끝났을 수 있으므로(같은 프레임 재진입) 여기서 한 번 더 막는다.
+        if (currentHealth <= 0f && !isDead)
         {
             isDead = true;
 
@@ -107,15 +139,7 @@ public class Enemy : MonoBehaviour
             PlayerExperience.Instance?.AddXP(xpValue);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
             Destroy(gameObject);
-            return;
         }
-
-        if (isLightningProc && lightningChainDepth == 1 && LightningStorm.ChainEnabled)
-            ChainLightningToNearby();
-
-        bool canChainAgain = !isLightningProc || (LightningStorm.RecursiveProcEnabled && lightningChainDepth < MaxLightningChain);
-        if (canChainAgain && Time.time < LightningStorm.ActiveUntil && Random.value < LightningStorm.ProcChance)
-            TakeDamage(LightningStorm.ProcDamage, isLightningProc: true, lightningChainDepth: lightningChainDepth + 1);
     }
 
     // 체인 라이트닝: 첫 낙뢰 피격 시 주변 적 최대 3마리에게 전이 (재귀적으로 더 퍼지지는 않음)
@@ -140,9 +164,18 @@ public class Enemy : MonoBehaviour
             {
                 GameObject beam = ObjectPool.Instance.Spawn(chainLightningVfxPrefab, transform.position, Quaternion.identity);
                 beam.GetComponent<ChainLightningBeam>().Init(transform.position, target.transform.position);
-                ObjectPool.Instance.Despawn(beam, 0.35f);
+                ObjectPool.Instance.Despawn(beam, 0.6f);
             }
             target.TakeDamage(LightningStorm.ProcDamage, isLightningProc: true, lightningChainDepth: MaxLightningChain, suppressLightningStrikeVfx: true);
+        }
+    }
+
+    private static void TintLightningVfx(GameObject vfx, Color color)
+    {
+        foreach (ParticleSystem ps in vfx.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ParticleSystem.MainModule main = ps.main;
+            main.startColor = color;
         }
     }
 

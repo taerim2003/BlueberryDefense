@@ -31,8 +31,18 @@ public class HUDController : MonoBehaviour
     [SerializeField] private RectTransform healthPanel;
     [SerializeField] private Image expFill;
 
+    [System.Serializable]
+    private class BuffSlot
+    {
+        public GameObject root;
+        public Image icon;
+        public TMP_Text timerText;
+        public TMP_Text stackText;
+    }
+
     [SerializeField] private Image[] passiveSlots;
     [SerializeField] private ActiveSlot[] activeSlots;
+    [SerializeField] private BuffSlot[] buffSlots; // 지속시간 있는 버프 표시용 — 슬롯 개수만큼 BuffTracker의 활성 버프를 순서대로 채운다
 
     [SerializeField] private Sprite[] passiveIcons;
     [SerializeField] private Sprite[] activeIcons;
@@ -78,7 +88,48 @@ public class HUDController : MonoBehaviour
 
         UpdatePassiveSlots();
         UpdateActiveSlots();
+        UpdateBuffSlots();
     }
+
+    // BuffTracker에 등록된 버프를 슬롯 개수만큼 순서대로 채운다. 새 버프가 늘어나도
+    // 발생 지점에서 BuffTracker.Set(...)만 호출하면 되고, 여기 손댈 곳은 GetBuffIcon 매핑 한 줄뿐이다.
+    private void UpdateBuffSlots()
+    {
+        if (buffSlots == null || buffSlots.Length == 0) return;
+
+        var active = BuffTracker.GetActive();
+        for (int i = 0; i < buffSlots.Length; i++)
+        {
+            BuffSlot slot = buffSlots[i];
+            bool hasBuff = i < active.Count;
+            if (slot.root != null) slot.root.SetActive(hasBuff);
+            if (!hasBuff) continue;
+
+            BuffTracker.Entry entry = active[i];
+            if (slot.icon != null) slot.icon.sprite = GetBuffIcon(entry.Key);
+
+            if (slot.timerText != null)
+            {
+                slot.timerText.enabled = entry.ShowTimer;
+                if (entry.ShowTimer) slot.timerText.text = Mathf.Max(0f, entry.EndTime - Time.time).ToString("F1");
+            }
+
+            int stacks = entry.StackCount != null ? entry.StackCount() : 0;
+            if (slot.stackText != null)
+            {
+                slot.stackText.enabled = stacks > 0;
+                if (stacks > 0) slot.stackText.text = "x" + stacks;
+            }
+        }
+    }
+
+    private Sprite GetBuffIcon(string key) => key switch
+    {
+        "Lightning" => GetIcon(activeIcons, (int)ActiveSkillId.Lightning),
+        "OrbAltar" => GetIcon(activeIcons, (int)ActiveSkillId.Orb),
+        "LightningDamageBuff" => GetIcon(passiveIcons, (int)PassiveSkillId.Strength),
+        _ => null,
+    };
 
     private void UpdateHealthFill()
     {

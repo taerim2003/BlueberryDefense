@@ -153,7 +153,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillName(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured.Id, captured.Level + 1),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
             });

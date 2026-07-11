@@ -28,6 +28,13 @@ public class PlayerPassives : MonoBehaviour
 
     public bool HasPassive(PassiveSkillId id) => acquiredPassives.Contains(id);
 
+    // 타격 기준 치명타: 각 데미지 이벤트(투사체 명중, 회오리/오브 틱 등)마다 개별적으로 굴린다.
+    public static float ApplyCrit(float damage, float critChance, out bool isCrit)
+    {
+        isCrit = critChance > 0f && Random.value < critChance;
+        return isCrit ? damage * AssassinateCritMultiplier : damage;
+    }
+
     public void AcquirePassive(PassiveSkillId id)
     {
         if (HasMaxPassives || HasPassive(id)) return;

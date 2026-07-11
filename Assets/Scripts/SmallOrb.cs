@@ -12,7 +12,7 @@ public class SmallOrb : MonoBehaviour
 
     public float Damage { get; set; }
     public bool ApplyVulnerable { get; set; }
-    public bool IsCrit { get; set; }
+    public float CritChance { get; set; } // 타격 기준: 명중 시 개별적으로 치명타를 굴린다
 
     public void Init(Vector2 dir, float damage, bool applyVulnerable)
     {
@@ -32,7 +32,8 @@ public class SmallOrb : MonoBehaviour
         if (enemy == null) return;
 
         hasHit = true;
-        enemy.TakeDamage(Damage, isCrit: IsCrit);
+        float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
+        enemy.TakeDamage(hitDamage, isCrit: isCrit);
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)

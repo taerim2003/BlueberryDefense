@@ -4,9 +4,9 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class ChainLightningBeam : MonoBehaviour
 {
-    [SerializeField] private float lifetime = 0.35f;
-    [SerializeField] private int segments = 6;
-    [SerializeField] private float jitter = 0.15f;
+    [SerializeField] private float lifetime = 0.6f;
+    [SerializeField] private int segments = 8;
+    [SerializeField] private float jitter = 0.25f;
 
     private LineRenderer line;
     private float timer;
@@ -41,7 +41,10 @@ public class ChainLightningBeam : MonoBehaviour
     private void Update()
     {
         timer += Time.deltaTime;
-        SetAlpha(Mathf.Lerp(1f, 0f, timer / lifetime));
+        float t = timer / lifetime;
+        // 처음부터 서서히 흐려지면 눈에 띄기도 전에 옅어져 보이므로, 절반은 완전히 밝게 유지하다가 후반에만 페이드
+        float alpha = t < 0.5f ? 1f : Mathf.Lerp(1f, 0f, (t - 0.5f) / 0.5f);
+        SetAlpha(alpha);
     }
 
     private void SetAlpha(float alpha)

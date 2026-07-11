@@ -13,7 +13,7 @@ public class Orb : MonoBehaviour
 
     public float Damage { get; set; }
     public bool ApplyGemVulnerable { get; set; }
-    public bool IsCrit { get; set; }
+    public float CritChance { get; set; } // 타격 기준: 틱마다 개별적으로 치명타를 굴린다
     public float FlyingDamageMultiplier { get; set; } = 1f;
     public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
     public float SlowDurationBonus { get; set; } // 덧셈(초)
@@ -38,8 +38,9 @@ public class Orb : MonoBehaviour
             if (enemy.IsFlying && !canHitFlying) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
-            float damage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
-            enemy.TakeDamage(damage, isCrit: IsCrit);
+            float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
+            float tickDamage = PlayerPassives.ApplyCrit(baseDamage, CritChance, out bool isCrit);
+            enemy.TakeDamage(tickDamage, isCrit: isCrit);
             enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 

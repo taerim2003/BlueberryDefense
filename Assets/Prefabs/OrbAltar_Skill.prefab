@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OrbAltar
   smallOrbPrefab: {fileID: 3514838508345509191, guid: 40a74e4322362af4a89f9747ce7531da, type: 3}
-  lifetime: 8
-  orbInterval: 2
-  lightningInterval: 4
+  lifetime: 15
+  orbInterval: 1
+  lightningInterval: 2.5
   orbDirectionCount: 8
+  forwardSpreadDegrees: 90

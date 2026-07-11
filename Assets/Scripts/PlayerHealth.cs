@@ -37,6 +37,15 @@ public class PlayerHealth : MonoBehaviour
 
     public void AddOverheal(int amount)
     {
+        // 체력이 최대보다 낮으면 먼저 회복에 쓰고, 남는 만큼만(또는 이미 풀피면 전부) 오버힐 보호막으로 전환
+        if (CurrentHealth < maxHealth)
+        {
+            int healAmount = Mathf.Min(amount, maxHealth - CurrentHealth);
+            CurrentHealth += healAmount;
+            amount -= healAmount;
+        }
+        if (amount <= 0) return;
+
         Overheal = Mathf.Min(Overheal + amount, MaxOverheal);
     }
 

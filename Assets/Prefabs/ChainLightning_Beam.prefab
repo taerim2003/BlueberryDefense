@@ -80,7 +80,7 @@ LineRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 50
+  m_SortingOrder: 300
   m_MaskInteraction: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
@@ -93,7 +93,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.14
+        value: 0.28
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -102,7 +102,7 @@ LineRenderer:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1
-        value: 0.14
+        value: 0.28
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -164,6 +164,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea986abf33915e946a201262b86eefe0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChainLightningBeam
-  lifetime: 0.2
-  segments: 6
-  jitter: 0.15
+  lifetime: 0.6
+  segments: 8
+  jitter: 0.25

@@ -153,3 +153,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   moveSpeed: 10
   impactVfxPrefab: {fileID: 4748681987041982144, guid: 52d6661fa75ab2d44b85fd7cbc945860, type: 3}
+  fireSfx: {fileID: 8300000, guid: ee8fdf6df0b237c4f9a1016200771392, type: 3}
+  fireSfxVolume: 1.1
