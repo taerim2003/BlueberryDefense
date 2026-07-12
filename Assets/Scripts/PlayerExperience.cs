@@ -27,7 +27,14 @@ public class PlayerExperience : MonoBehaviour
 
     public void AddXP(int amount)
     {
-        currentXP += Mathf.RoundToInt(amount * xpMultiplier);
+        // 후반 경험치 과다 획득 완화: 스테이지 1에서 100%, 20에서 50%로 선형 감소(그 이후는 50% 유지)
+        float stageFactor = 1f;
+        if (GameManager.Instance != null)
+        {
+            int stage = Mathf.Clamp(GameManager.Instance.CurrentStage, 1, 20);
+            stageFactor = Mathf.Lerp(1f, 0.5f, (stage - 1) / 19f);
+        }
+        currentXP += Mathf.RoundToInt(amount * xpMultiplier * stageFactor);
 
         while (currentXP >= xpToNextLevel)
         {
@@ -36,7 +43,7 @@ public class PlayerExperience : MonoBehaviour
             xpToNextLevel += 9;
 
             if (levelUpVfxPrefab != null)
-                Destroy(Instantiate(levelUpVfxPrefab, transform.position, Quaternion.identity), 2f);
+                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(levelUpVfxPrefab, transform.position, Quaternion.identity), 2f);
 
             LevelUpUI.Instance.Show();
         }

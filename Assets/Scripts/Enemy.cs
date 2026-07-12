@@ -20,16 +20,21 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
 
-    // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=초록, 2회=파랑, 3회=보라, 4회=마젠타)
+    // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
+    public static GameObject HeartPickupPrefab;
+    public const float HeartDropChance = 0.06f; // 처치 시 하트 드랍 확률
+
+    // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=노랑, 2회=파랑, 3회=보라, 4회=마젠타)
     private static readonly Color[] RecursiveLightningColors =
     {
-        new Color(0.4f, 1f, 0.4f),
+        new Color(1f, 0.95f, 0.3f),
         new Color(0.35f, 0.55f, 1f),
         new Color(0.75f, 0.35f, 1f),
         new Color(1f, 0.35f, 0.85f),
     };
 
     public bool IsFlying => isFlying;
+    public float CurrentHealth => currentHealth;
 
     private float currentHealth;
     private bool isDead;
@@ -88,12 +93,13 @@ public class Enemy : MonoBehaviour
 
     private const int MaxLightningChain = 4;
 
-    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false)
+    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null)
     {
         if (isDead) return; // Destroy()는 프레임 끝에 실행되므로, 같은 프레임 내 중복 피격으로 사망 처리가 두 번 도는 것을 막음
 
         float actualDamage = amount * vulnerableMultiplier;
         currentHealth -= actualDamage;
+        DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
         SpawnDamageNumber(actualDamage, isCrit);
         SpawnHitParticles(actualDamage);
 
@@ -121,6 +127,7 @@ public class Enemy : MonoBehaviour
                 // 힘 연계 path0 T3: 재귀로 떨어지는 낙뢰일수록(체인 깊이가 깊을수록) 더 강해짐
                 float procDamage = LightningStorm.ProcDamage * Mathf.Pow(1f + LightningStorm.RecursiveDamageGrowth, lightningChainDepth);
                 TakeDamage(procDamage, isLightningProc: true, lightningChainDepth: lightningChainDepth + 1);
+                LightningStorm.OnProc?.Invoke();
             }
         }
 
@@ -136,8 +143,14 @@ public class Enemy : MonoBehaviour
                 ObjectPool.Instance.Despawn(deathVfx, 2f);
             }
 
-            PlayerExperience.Instance?.AddXP(xpValue);
+            // 암살 연계 path1: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
+            int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
+            PlayerExperience.Instance?.AddXP(grantedXp);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
+
+            if (HeartPickupPrefab != null && Random.value < HeartDropChance)
+                Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
+
             Destroy(gameObject);
         }
     }

@@ -33,11 +33,11 @@ public class SmallOrb : MonoBehaviour
 
         hasHit = true;
         float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-        enemy.TakeDamage(hitDamage, isCrit: isCrit);
+        enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2f);
+            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);
 
         Destroy(gameObject);
     }

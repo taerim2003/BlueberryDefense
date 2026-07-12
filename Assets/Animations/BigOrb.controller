@@ -29,7 +29,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Orb_Pulse
+  m_Name: BigOrb_Pulse
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -54,7 +54,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Orb
+  m_Name: BigOrb
   serializedVersion: 6
   m_AnimatorParameters: []
   m_AnimatorLayers:

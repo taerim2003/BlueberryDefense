@@ -9,6 +9,10 @@ public class Whirlwind : MonoBehaviour
     [SerializeField] private float lifetime = 4f;
     [SerializeField] private float tickInterval = 0.3f;
     [SerializeField] private GameObject impactVfxPrefab;
+    [SerializeField] private float groundY = 0f; // 공중(비행 적 처치 지점 등)에서 생성돼도 이 높이까지 자연스럽게 낙하
+    [SerializeField] private float gravity = 25f;
+
+    private float fallVelocity;
 
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
@@ -17,6 +21,8 @@ public class Whirlwind : MonoBehaviour
     public int MaxHitCount { get; set; } // 0이면 비활성화(기존처럼 lifetime 기준으로 소멸)
     public float SlowDuration { get; set; } = 3f;
     public float ExtraLifetime { get; set; } // 레벨업 고유 강화: 지속시간(초) 추가
+    public bool TargetHighestHealth { get; set; } // 암살 연계 (패시브 path2): 최고 체력 적을 타겟팅
+    public bool CanHitFlying { get; set; } = true; // 미니 회오리는 비행 적을 타격할 수 없다
 
     private int hitCount;
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
@@ -29,6 +35,8 @@ public class Whirlwind : MonoBehaviour
 
     private void Update()
     {
+        ApplyGravity();
+
         overlappingEnemies.RemoveWhere(e => e == null);
 
         Vector2 direction = FindHomingDirection();
@@ -37,11 +45,11 @@ public class Whirlwind : MonoBehaviour
 
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
-            if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy == null || (enemy.IsFlying && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
             float tickDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-            enemy.TakeDamage(tickDamage, isCrit: isCrit);
+            enemy.TakeDamage(tickDamage, isCrit: isCrit, source: ActiveSkillId.Whirlwind);
             if (ApplyGemSlow) enemy.ApplySlow(0.3f, SlowDuration);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
@@ -56,23 +64,52 @@ public class Whirlwind : MonoBehaviour
         }
     }
 
+    private void ApplyGravity()
+    {
+        if (transform.position.y <= groundY)
+        {
+            fallVelocity = 0f;
+            return;
+        }
+
+        fallVelocity += gravity * Time.deltaTime;
+        float newY = Mathf.Max(groundY, transform.position.y - fallVelocity * Time.deltaTime);
+        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+    }
+
     private Vector2 FindHomingDirection()
     {
         Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-        Enemy nearest = null;
-        float nearestSqrDist = float.MaxValue;
-        foreach (Enemy enemy in enemies)
+        Enemy target = null;
+
+        if (TargetHighestHealth)
         {
-            float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
-            if (sqrDist < nearestSqrDist)
+            float highestHealth = float.NegativeInfinity;
+            foreach (Enemy enemy in enemies)
             {
-                nearestSqrDist = sqrDist;
-                nearest = enemy;
+                if (enemy.CurrentHealth > highestHealth)
+                {
+                    highestHealth = enemy.CurrentHealth;
+                    target = enemy;
+                }
+            }
+        }
+        else
+        {
+            float nearestSqrDist = float.MaxValue;
+            foreach (Enemy enemy in enemies)
+            {
+                float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
+                if (sqrDist < nearestSqrDist)
+                {
+                    nearestSqrDist = sqrDist;
+                    target = enemy;
+                }
             }
         }
 
-        if (nearest == null) return Vector2.left;
-        return nearest.transform.position.x >= transform.position.x ? Vector2.right : Vector2.left;
+        if (target == null) return Vector2.left;
+        return target.transform.position.x >= transform.position.x ? Vector2.right : Vector2.left;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

@@ -1,33 +1,46 @@
 using UnityEngine;
 
-// AudioSource.PlayClipAtPoint는 호출마다 새 GameObject를 만들고, 그 AudioSource가 Unity 기본값인
-// spatialBlend=1(3D)로 생성돼 카메라와의 거리에 따라 소리가 작아지거나, 연타 시 임시 오브젝트가
-// 계속 쌓여 재생이 불안정해지는 문제가 있었다. 상시 하나의 2D AudioSource에서 PlayOneShot으로
-// 겹쳐 재생해 거리 감쇠와 오브젝트 생성/파괴를 모두 없앤다.
+// AudioSource 하나에서 PlayOneShot으로 계속 겹쳐 재생하면, 짧은 간격으로 몰리는 원샷 보이스를
+// 그 소스 혼자 스케줄링하다가 가끔 출력이 안 나가는 경우가 있었다. 전용 AudioSource 풀을
+// 라운드로빈으로 돌려 재생 요청마다 항상 자기 채널을 갖게 한다.
 public static class SfxPlayer
 {
     public static float MasterVolume = 1.3f;
 
-    private static AudioSource source;
-    private static AudioSource Source
+    private const int PoolSize = 12;
+
+    private static AudioSource[] pool;
+    private static int nextIndex;
+
+    private static void EnsurePool()
     {
-        get
+        if (pool != null) return;
+
+        GameObject root = new GameObject("SfxPlayer");
+        Object.DontDestroyOnLoad(root);
+
+        pool = new AudioSource[PoolSize];
+        for (int i = 0; i < PoolSize; i++)
         {
-            if (source == null)
-            {
-                GameObject obj = new GameObject("SfxPlayer");
-                Object.DontDestroyOnLoad(obj);
-                source = obj.AddComponent<AudioSource>();
-                source.spatialBlend = 0f;
-                source.playOnAwake = false;
-            }
-            return source;
+            AudioSource src = root.AddComponent<AudioSource>();
+            src.spatialBlend = 0f;
+            src.playOnAwake = false;
+            src.priority = 0; // 발사/캐스트음은 핵심 게임플레이 피드백이라 가상화되지 않도록 최우선순위 고정
+            pool[i] = src;
         }
     }
 
     public static void Play(AudioClip clip, float volume)
     {
         if (clip == null) return;
-        Source.PlayOneShot(clip, volume * MasterVolume);
+        EnsurePool();
+
+        AudioSource src = pool[nextIndex];
+        nextIndex = (nextIndex + 1) % PoolSize;
+
+        src.Stop();
+        src.clip = clip;
+        src.volume = volume * MasterVolume;
+        src.Play();
     }
 }

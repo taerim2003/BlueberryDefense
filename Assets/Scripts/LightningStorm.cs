@@ -11,7 +11,7 @@ public static class LightningStorm
 
     public const float BaseProcChance = 0.6f;
     public static float ProcChance = BaseProcChance;
-    public static float ProcDamage = 15f;
+    public static float ProcDamage = 12f;
     public static bool RecursiveProcEnabled;
     public static float RecursiveDamageGrowth; // 힘 연계 path0 T3: 재귀 단계마다 이 비율만큼 낙뢰 피해량 누적 증가
 
@@ -23,6 +23,9 @@ public static class LightningStorm
     // 회오리 연계 (path2): 중첩당 전체 공격 피해량 증가
     public static bool StackDamageEnabled;
     public const float StackDamageBonusPerStack = 0.15f;
+
+    // 리프레쉬 연계 (패시브 path2): 낙뢰가 실제로 떨어질 때마다 호출
+    public static System.Action OnProc;
 
     public static int ActiveStackCount
     {

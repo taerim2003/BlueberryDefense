@@ -6,8 +6,6 @@ public class Projectile : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private GameObject impactVfxPrefab;
-    [SerializeField] private AudioClip fireSfx;
-    [SerializeField] private float fireSfxVolume = 0.45f;
 
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
@@ -15,19 +13,14 @@ public class Projectile : MonoBehaviour
     public float CritChance { get; set; } // 타격 기준: 명중할 때마다 개별적으로 치명타를 굴린다
     public float SpeedMultiplier { get; set; } = 1f;
     public int PierceRemaining { get; set; }
+    public bool CanHitFlying { get; set; } // 기본 path T1: 비행 적 타격 가능
     public System.Action<Enemy, bool> OnHitBonus { get; set; } // (적, 이번 타격의 치명타 여부)
 
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
-    private void Awake()
-    {
-        // 발사체에 AudioSource를 직접 붙이면 명중 즉시 Destroy될 때 소리가 중간에 끊긴다(관통 없이 가까운 적에게 바로 맞는 경우 등).
-        // PlayClipAtPoint는 호출마다 3D AudioSource가 달린 새 GameObject를 만들어서 거리 감쇠로 작게 들리고,
-        // 연타 시 임시 오브젝트가 쌓여 재생이 불안정해진다 — SfxPlayer(상시 2D AudioSource + PlayOneShot)로 대체.
-        // 같은 프레임에 여러 발이 동시 발사돼도(추가 발사체 레벨업, 크리티컬 보너스 발사 등) 무제한 중첩되지 않도록 디바운스한다.
-        if (fireSfx != null && AudioThrottle.TryConsume(fireSfx))
-            SfxPlayer.Play(fireSfx, fireSfxVolume);
-    }
+    // 발사음은 이 컴포넌트가 아니라 PlayerSkills.FireBasicAttack에서 한 캐스트당 정확히 한 번만 재생한다
+    // (Projectile은 캐스트 한 번에 여러 발 생성될 수 있어, 발사체 쪽에 소리를 두면 재생 시점이 GameObject
+    // 생성/컴포넌트 초기화 타이밍에 얽혀 불안정해진다).
 
     private void Update()
     {
@@ -37,11 +30,11 @@ public class Projectile : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         Enemy enemy = other.GetComponent<Enemy>();
-        if (enemy == null || enemy.IsFlying || hitEnemies.Contains(enemy)) return;
+        if (enemy == null || (enemy.IsFlying && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
         float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-        enemy.TakeDamage(hitDamage, isCrit: isCrit);
+        enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.BasicAttack);
         if (ApplyGemSlow) enemy.ApplySlow(0.3f, 3f);
         if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
         OnHitBonus?.Invoke(enemy, isCrit);

@@ -50,6 +50,9 @@ public class ObjectPool : MonoBehaviour
         foreach (AudioSource source in obj.GetComponentsInChildren<AudioSource>())
         {
             if (source.clip == null) continue;
+            // 원본 VFX 팩 클립이 대부분 0dBFS 근처로 마스터링돼 있어 볼륨을 더 올리면 클리핑이 난다.
+            // 브릭월 리미터를 걸어서 순간 피크만 눌러주고 게인은 더 높게 잡을 수 있게 한다.
+            if (source.GetComponent<SfxLimiter>() == null) source.gameObject.AddComponent<SfxLimiter>();
             if (AudioThrottle.TryConsume(source.clip)) source.Play();
             else source.Stop();
         }

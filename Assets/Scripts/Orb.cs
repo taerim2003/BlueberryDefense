@@ -5,7 +5,7 @@ using UnityEngine;
 public class Orb : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 6f;
-    [SerializeField] private float slowMultiplier = 0.5f;
+    [SerializeField] private float slowMultiplier = 0.65f;
     [SerializeField] private float slowDuration = 2f;
     [SerializeField] private float lifetime = 5f;
     [SerializeField] private float tickInterval = 0.3f;
@@ -18,6 +18,9 @@ public class Orb : MonoBehaviour
     public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
     public float SlowDurationBonus { get; set; } // 덧셈(초)
 
+    private const float ImpactSfxCooldown = 0.9f; // Whirlwind와 동일한 이유: 임팩트 클립 길이가 틱 간격(0.3초)보다 길어서 매 틱 재생하면 겹쳐 쌓인다.
+
+    private float nextImpactSfxTime;
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
 
@@ -40,12 +43,23 @@ public class Orb : MonoBehaviour
 
             float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
             float tickDamage = PlayerPassives.ApplyCrit(baseDamage, CritChance, out bool isCrit);
-            enemy.TakeDamage(tickDamage, isCrit: isCrit);
+            enemy.TakeDamage(tickDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
             enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2f);
+            {
+                GameObject vfx = ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity);
+                if (Time.time < nextImpactSfxTime)
+                {
+                    foreach (AudioSource src in vfx.GetComponentsInChildren<AudioSource>()) src.Stop();
+                }
+                else
+                {
+                    nextImpactSfxTime = Time.time + ImpactSfxCooldown;
+                }
+                ObjectPool.Instance.Despawn(vfx, 2.2f);
+            }
         }
     }
 

@@ -29,12 +29,16 @@ public class EvolutionTreeUI : MonoBehaviour
     [SerializeField] private TMP_Text subInfoText;
     [SerializeField] private Image skillIcon;
     [SerializeField] private Sprite[] activeIcons;
+    [SerializeField] private Sprite[] passiveIcons;
     [SerializeField] private Sprite[] pathIconSprites; // path 0~2 색상 아이콘
     [SerializeField] private NodeButton[] nodes; // 길이 9, index = path*3 + (tier-1)
     [SerializeField] private TMP_Text[] arrows; // 길이 6, index = path*2 + (0: T1->T2, 1: T2->T3)
 
     private PlayerSkills skills;
+    private PlayerPassives passives;
     private EquippedSkill currentSkill;
+    private EquippedPassive currentPassive;
+    private bool isPassiveMode;
 
     private void Awake()
     {
@@ -46,30 +50,49 @@ public class EvolutionTreeUI : MonoBehaviour
             for (int tierIdx = 0; tierIdx < 3; tierIdx++)
             {
                 int capturedPath = path;
-                int capturedTierIdx = tierIdx;
-                nodes[path * 3 + tierIdx].button.onClick.AddListener(() => OnNodeClicked(capturedPath, capturedTierIdx));
+                nodes[path * 3 + tierIdx].button.onClick.AddListener(() => OnNodeClicked(capturedPath));
             }
         }
     }
 
     public void Show(PlayerSkills skillsRef, EquippedSkill skill)
     {
-        bool alreadyOpen = panel.activeSelf;
-
         skills = skillsRef;
         currentSkill = skill;
+        currentPassive = null;
+        isPassiveMode = false;
+        ShowInternal();
+    }
 
-        skillNameText.text = PlayerSkills.GetActiveSkillName(skill.Id) + " 진화 — Lv." + skill.Level;
+    public void Show(PlayerPassives passivesRef, EquippedPassive passive)
+    {
+        passives = passivesRef;
+        currentPassive = passive;
+        currentSkill = null;
+        isPassiveMode = true;
+        ShowInternal();
+    }
+
+    private void ShowInternal()
+    {
+        bool alreadyOpen = panel.activeSelf;
+
+        string name = isPassiveMode ? PlayerSkills.GetPassiveSkillName(currentPassive.Id) : PlayerSkills.GetActiveSkillName(currentSkill.Id);
+        int level = isPassiveMode ? currentPassive.Level : currentSkill.Level;
+        int totalTier = isPassiveMode ? currentPassive.TotalEvolutionTier : currentSkill.TotalEvolutionTier;
+        int[] pathTier = isPassiveMode ? currentPassive.PathTier : currentSkill.PathTier;
+
+        skillNameText.text = name + " 진화 — Lv." + level;
 
         if (subInfoText != null)
         {
-            int nextLevel = (skill.TotalEvolutionTier + 1) * 5;
-            subInfoText.text = skill.TotalEvolutionTier >= 4
+            int nextLevel = (totalTier + 1) * 5;
+            subInfoText.text = totalTier >= 4
                 ? "모든 진화 완료"
-                : $"Lv.{skill.Level} 달성으로 진화 가능 · 다음 진화: Lv.{nextLevel}";
+                : $"Lv.{level} 달성으로 진화 가능 · 다음 진화: Lv.{nextLevel}";
         }
 
-        SetIcon(skillIcon, GetIcon(activeIcons, (int)skill.Id));
+        SetIcon(skillIcon, isPassiveMode ? GetIcon(passiveIcons, (int)currentPassive.Id) : GetIcon(activeIcons, (int)currentSkill.Id));
 
         for (int path = 0; path < 3; path++)
         {
@@ -77,8 +100,8 @@ public class EvolutionTreeUI : MonoBehaviour
             {
                 int tier = tierIdx + 1;
                 NodeButton node = nodes[path * 3 + tierIdx];
-                bool owned = currentSkill.PathTier[path] >= tier;
-                bool available = currentSkill.PathTier[path] == tier - 1 && skills.CanEvolvePath(currentSkill, path);
+                bool owned = pathTier[path] >= tier;
+                bool available = pathTier[path] == tier - 1 && CanEvolvePath(path);
                 bool locked = !owned && !available;
 
                 SetIcon(node.icon, GetIcon(pathIconSprites, path));
@@ -87,14 +110,15 @@ public class EvolutionTreeUI : MonoBehaviour
 
                 if (node.title != null)
                 {
-                    node.title.text = skills.GetPathTitleText(skill.Id, path, tier);
+                    node.title.text = GetPathTitleText(path, tier);
                     node.title.color = locked ? LockedTextColor : Color.black;
                 }
 
-                string effect = skills.GetPathEffectText(skill.Id, path, tier);
+                string effect = GetPathEffectText(path, tier);
                 if (locked)
                 {
-                    string reason = (tier == 2 && path != 0) ? GetPathName(skill.Id, path) + " 필요 · " : "";
+                    // 연계 대상 진화(path1/path2)는 대상 스킬/패시브가 Lv.5 이상이어야 함
+                    string reason = (tier == 2 && path != 0) ? GetPathName(path) + " Lv.5 필요 · " : "";
                     node.description.text = "🔒 " + reason + effect;
                 }
                 else
@@ -107,8 +131,8 @@ public class EvolutionTreeUI : MonoBehaviour
 
             if (arrows != null && arrows.Length >= (path + 1) * 2)
             {
-                arrows[path * 2].color = currentSkill.PathTier[path] >= 1 ? ActiveArrowColor : InactiveArrowColor;
-                arrows[path * 2 + 1].color = currentSkill.PathTier[path] >= 2 ? ActiveArrowColor : InactiveArrowColor;
+                arrows[path * 2].color = pathTier[path] >= 1 ? ActiveArrowColor : InactiveArrowColor;
+                arrows[path * 2 + 1].color = pathTier[path] >= 2 ? ActiveArrowColor : InactiveArrowColor;
             }
         }
 
@@ -116,9 +140,19 @@ public class EvolutionTreeUI : MonoBehaviour
         if (!alreadyOpen) ModalPause.Push();
     }
 
-    private void OnNodeClicked(int path, int tierIdx)
+    private bool CanEvolvePath(int path) =>
+        isPassiveMode ? passives.CanEvolvePath(currentPassive, path) : skills.CanEvolvePath(currentSkill, path);
+
+    private string GetPathTitleText(int path, int tier) =>
+        isPassiveMode ? PlayerPassives.GetPathTierTitle(currentPassive.Id, path, tier) : skills.GetPathTitleText(currentSkill.Id, path, tier);
+
+    private string GetPathEffectText(int path, int tier) =>
+        isPassiveMode ? PlayerPassives.DescribePathEffect(currentPassive.Id, path, tier) : skills.GetPathEffectText(currentSkill.Id, path, tier);
+
+    private void OnNodeClicked(int path)
     {
-        skills.EvolveSkill(currentSkill.Id, path);
+        if (isPassiveMode) passives.EvolvePassive(currentPassive.Id, path);
+        else skills.EvolveSkill(currentSkill.Id, path);
         Close();
     }
 
@@ -129,16 +163,28 @@ public class EvolutionTreeUI : MonoBehaviour
         else panel.SetActive(false);
     }
 
-    private string GetPathName(ActiveSkillId skillId, int path)
+    private string GetPathName(int path)
     {
         if (path == 0) return "기본";
+
+        if (isPassiveMode)
+        {
+            if (path == 1)
+            {
+                PassiveSkillId? req = PlayerPassives.GetPassivePrereq(currentPassive.Id);
+                return req.HasValue ? PlayerSkills.GetPassiveSkillName(req.Value) : "";
+            }
+            ActiveSkillId? activeReq = PlayerPassives.GetActivePrereq(currentPassive.Id);
+            return activeReq.HasValue ? PlayerSkills.GetActiveSkillName(activeReq.Value) : "";
+        }
+
         if (path == 1)
         {
-            PassiveSkillId? req = PlayerSkills.GetPassivePrereq(skillId);
-            return req.HasValue ? PlayerSkills.GetPassiveSkillName(req.Value) : "";
+            PassiveSkillId? passiveReq = PlayerSkills.GetPassivePrereq(currentSkill.Id);
+            return passiveReq.HasValue ? PlayerSkills.GetPassiveSkillName(passiveReq.Value) : "";
         }
-        ActiveSkillId? activeReq = PlayerSkills.GetActivePrereq(skillId);
-        return activeReq.HasValue ? PlayerSkills.GetActiveSkillName(activeReq.Value) : "";
+        ActiveSkillId? req2 = PlayerSkills.GetActivePrereq(currentSkill.Id);
+        return req2.HasValue ? PlayerSkills.GetActiveSkillName(req2.Value) : "";
     }
 
     private static void SetIcon(Image image, Sprite sprite)

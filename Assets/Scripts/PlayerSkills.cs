@@ -28,9 +28,8 @@ public class EquippedSkill
 
     // 레벨업 전용 고유 강화치 (진화 트리와 별개)
     public int ExtraPierce = 0; // 기본공격: 관통 +1
-    public int ExtraProjectiles = 0; // 기본공격: 위아래로 추가 발사 (1당 위/아래 1발씩)
+    public int ExtraProjectiles = 0; // 기본공격: 투사체 추가 발사 (1당 1발)
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
-    public float ExtraEagleDropIntervalReduction = 0f; // 독수리투하: 투하 간격(초) 감소
 
     // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
     public readonly int[] PathTier = new int[3];
@@ -43,10 +42,15 @@ public class PlayerSkills : MonoBehaviour
     private const float OrbAltarCooldown = 15f;
     private static readonly Key[] SlotKeys = { Key.Q, Key.W, Key.E, Key.R };
 
+    // 회오리 path0(미니 회오리)와 독수리투하 path2(미니 회오리)가 공유하는 피해 배율 보너스 — 둘 중 어느 쪽에 투자해도 서로의 미니 회오리가 함께 강해진다.
+    public static float MiniWhirlwindDamageBonus = 0f;
+
     [SerializeField] private GameObject basicAttackProjectilePrefab;
+    private const float FlyingArrowSpawnRaise = 0.65f; // 비행 적 타격 진화 시 발사점을 이만큼 위로 올린다. 세로로 긴 히트박스와 합쳐 지상(y=0)·비행(y≈1.1) 띠를 한 발이 동시에 커버.
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject bigTornadoPrefab;
     [SerializeField] private GameObject orbPrefab;
+    [SerializeField] private GameObject bigOrbPrefab; // 지식 연계 path1 T2부터 등장하는 큰 초록 오브 비주얼
     [SerializeField] private GameObject orbAltarPrefab;
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
@@ -57,6 +61,8 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private AudioClip orbCastSfx;
     [SerializeField] private AudioClip eagleDropCastSfx;
     [SerializeField] private float castSfxVolume = 0.7f;
+    [SerializeField] private float orbCastSfxVolume = 0.55f; // 원본 오브 발사음 자체가 다른 캐스트음보다 훨씬 크게(0dBFS 근접) 마스터링되어 있어 별도 볼륨 필요
+    [SerializeField] private float whirlwindCastSfxVolume = 0.4f; // 원본 회오리 소환음 클립이 사실상 무음에 가까운 깨진 파일이었는데, 임포터 normalize 설정 때문에 재생 시 0dB까지 증폭되어 오히려 굉음으로 들리던 버그 — 정상 클립으로 교체 후 볼륨도 재보정
 
     private readonly List<EquippedSkill> equippedSkills = new List<EquippedSkill>();
     private float globalCooldownTimer;
@@ -170,7 +176,7 @@ public class PlayerSkills : MonoBehaviour
                 else skill.Scale += 0.05f;
                 break;
             case ActiveSkillId.EagleDrop:
-                skill.ExtraEagleDropIntervalReduction += 0.5f;
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.95f);
                 break;
             default: // Orb
                 skill.Scale += 0.05f;
@@ -199,14 +205,14 @@ public class PlayerSkills : MonoBehaviour
                 {
                     0 => "관통 1회 추가",
                     1 => "투사체 속도 10% 증가",
-                    _ => "위아래로 투사체 1발씩 추가 발사",
+                    _ => "투사체 +1",
                 };
             case ActiveSkillId.Lightning:
                 return "발동 확률 3%p 증가";
             case ActiveSkillId.Whirlwind:
                 return occurrence % 2 == 0 ? "지속시간 0.5초 증가" : "크기 5% 증가";
             case ActiveSkillId.EagleDrop:
-                return "투하 간격 0.5초 감소";
+                return "재사용 대기시간 5% 감소";
             default: // Orb
                 return "크기 5% 증가";
         }
@@ -258,7 +264,10 @@ public class PlayerSkills : MonoBehaviour
                 skill.Damage *= 2f; // 피해량 100% 증가
                 break;
             case (ActiveSkillId.Whirlwind, 0, 2):
-                skill.Damage *= 1.25f;
+                MiniWhirlwindDamageBonus += 0.4f; // 미니 회오리 피해량 40% 증가
+                break;
+            case (ActiveSkillId.Whirlwind, 0, 3):
+                MiniWhirlwindDamageBonus += 0.25f; // 미니 회오리 피해량 25% 추가 증가
                 break;
             case (ActiveSkillId.Orb, 0, 2):
             case (ActiveSkillId.Lightning, 0, 2):
@@ -266,9 +275,12 @@ public class PlayerSkills : MonoBehaviour
                 break;
             // EagleDrop path0 T2(화면 내 적 수 반비례 스케일링)는 EagleDropRoutine에서 매 캐스트마다 실시간 계산
             // Lightning path0 T3(재귀마다 피해량 누적 증가)는 LightningStorm.RecursiveDamageGrowth로 실시간 계산
+            // Whirlwind path0 T1/T3(미니 회오리 개수)는 FireWhirlwind에서 매 캐스트마다 실시간 계산
 
             // path1(패시브 연계)
-            case (ActiveSkillId.Whirlwind, 1, 2):
+            case (ActiveSkillId.Whirlwind, 1, 1):
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.8f); // 쿨감 20%
+                break;
             case (ActiveSkillId.EagleDrop, 1, 2):
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.85f);
                 break;
@@ -293,8 +305,7 @@ public class PlayerSkills : MonoBehaviour
 
             // path2(액티브 연계)
             case (ActiveSkillId.EagleDrop, 2, 1):
-                skill.Cooldown += 3f; // 쿨타임 3초 증가
-                skill.Damage *= 1.4f; // 피해량 40% 증가
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.6f); // 쿨감 40%
                 break;
         }
     }
@@ -309,17 +320,22 @@ public class PlayerSkills : MonoBehaviour
         return -1;
     }
 
+    // path1/path2 진화는 연계 대상(패시브/액티브)을 보유하는 것만으로는 부족하고, Lv.5 이상이어야 함
     private bool HasPathPrereq(ActiveSkillId skillId, int path)
     {
         if (path == 1)
         {
             PassiveSkillId? req = GetPassivePrereq(skillId);
-            return req.HasValue && passives != null && passives.HasPassive(req.Value);
+            if (!req.HasValue || passives == null) return false;
+            EquippedPassive p = passives.GetPassive(req.Value);
+            return p != null && p.Level >= 5;
         }
         if (path == 2)
         {
             ActiveSkillId? req = GetActivePrereq(skillId);
-            return req.HasValue && HasSkill(req.Value);
+            if (!req.HasValue) return false;
+            EquippedSkill s = equippedSkills.FirstOrDefault(x => x.Id == req.Value);
+            return s != null && s.Level >= 5;
         }
         return true;
     }
@@ -383,10 +399,10 @@ public class PlayerSkills : MonoBehaviour
     public static string DescribePathEffect(ActiveSkillId id, int path, int tier) => (id, path, tier) switch
     {
         // BasicAttack
-        (ActiveSkillId.BasicAttack, 0, 1) => "관통 3회 추가",
+        (ActiveSkillId.BasicAttack, 0, 1) => "관통 3회 추가, 비행 적 타격 가능",
         (ActiveSkillId.BasicAttack, 0, 2) => "피해량 100% 증가",
-        (ActiveSkillId.BasicAttack, 0, 3) => "관통 5회 추가 (총 8회)",
-        (ActiveSkillId.BasicAttack, 1, 1) => "기본공격 치명타 확률 40% 증가",
+        (ActiveSkillId.BasicAttack, 0, 3) => "관통 10회 추가",
+        (ActiveSkillId.BasicAttack, 1, 1) => "기본공격 치명타 확률 30% 증가",
         (ActiveSkillId.BasicAttack, 1, 2) => "치명타 적중 시 투사체 1회 추가 발사",
         (ActiveSkillId.BasicAttack, 1, 3) => "재사용 대기시간 50% 감소",
         (ActiveSkillId.BasicAttack, 2, 1) => "명중 시 미니 독수리 투하 (피해량 40%)",
@@ -394,11 +410,11 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.BasicAttack, 2, 3) => "미니 독수리 확산 범위 확대 (최대 10마리)",
 
         // Whirlwind
-        (ActiveSkillId.Whirlwind, 0, 1) => "회오리 1개 추가 소환 (총 2개)",
-        (ActiveSkillId.Whirlwind, 0, 2) => "피해량 25% 증가",
-        (ActiveSkillId.Whirlwind, 0, 3) => "회오리 1개 추가 소환 (총 3개)",
-        (ActiveSkillId.Whirlwind, 1, 1) => "리프레쉬 발동 시 전체 스킬 쿨타임 1초 감소",
-        (ActiveSkillId.Whirlwind, 1, 2) => "재사용 대기시간 15% 감소",
+        (ActiveSkillId.Whirlwind, 0, 1) => "회오리 소환 시 미니 회오리 2개 추가 소환 (비행 적 타격 불가)",
+        (ActiveSkillId.Whirlwind, 0, 2) => "미니 회오리 피해량 40% 증가",
+        (ActiveSkillId.Whirlwind, 0, 3) => "미니 회오리 1개 추가 소환, 피해량 25% 추가 증가",
+        (ActiveSkillId.Whirlwind, 1, 1) => "회오리 쿨타임 20% 감소",
+        (ActiveSkillId.Whirlwind, 1, 2) => "리프레쉬 발동 시 전체 스킬 쿨타임 1초 감소",
         (ActiveSkillId.Whirlwind, 1, 3) => "재사용 대기시간 10% 추가 감소",
         (ActiveSkillId.Whirlwind, 2, 1) => "적 둔화 부여 (30% 감속, 3초)",
         (ActiveSkillId.Whirlwind, 2, 2) => "거대 회오리로 변화 (분열 없이 하나의 거대한 회오리, 둔화 지속시간 4.5초)",
@@ -408,9 +424,9 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Orb, 0, 1) => "공중 타격 가능, 공중 적 추가 피해 40%",
         (ActiveSkillId.Orb, 0, 2) => "피해량 40% 증가",
         (ActiveSkillId.Orb, 0, 3) => "공중 적 추가 피해 100%",
-        (ActiveSkillId.Orb, 1, 1) => "슬로우 효과 10%p 강화",
-        (ActiveSkillId.Orb, 1, 2) => "재사용 대기시간 25% 감소, 오브 크기 증가",
-        (ActiveSkillId.Orb, 1, 3) => "슬로우 효과 10%p 추가 강화 (총 20%p), 재사용 대기시간 10% 추가 감소",
+        (ActiveSkillId.Orb, 1, 1) => "슬로우 효과 10%p 강화, 오브가 더 높이 날아감",
+        (ActiveSkillId.Orb, 1, 2) => "재사용 대기시간 25% 감소, 오브 크기 증가, 오브가 더 높이 날아감, 큰 초록 오브로 변화",
+        (ActiveSkillId.Orb, 1, 3) => "슬로우 효과 10%p 추가 강화, 재사용 대기시간 10% 추가 감소, 오브가 더 높이 날아감",
         (ActiveSkillId.Orb, 2, 1) => "취약 부여 (추가 피해 50%)",
         (ActiveSkillId.Orb, 2, 2) => "오브 설치기로 대체 (캐릭터 앞에 설치되어 전방으로 미니 오브 1초마다 발사 + 2.5초마다 화면 내 모든 적에게 낙뢰)",
         (ActiveSkillId.Orb, 2, 3) => "설치기 피해량 50% 증가",
@@ -427,15 +443,15 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Lightning, 2, 3) => "낙뢰 버프 중첩당 모든 공격 피해량 15% 증가",
 
         // EagleDrop
-        (ActiveSkillId.EagleDrop, 0, 1) => "투하 횟수 1회 추가 (총 4회)",
+        (ActiveSkillId.EagleDrop, 0, 1) => "투하 횟수 1회 추가",
         (ActiveSkillId.EagleDrop, 0, 2) => "화면 내 적이 적을수록 피해량 증가 (최대 450%)",
         (ActiveSkillId.EagleDrop, 0, 3) => "투하 간격 50% 감소, 피해량 50% 증가",
         (ActiveSkillId.EagleDrop, 1, 1) => "적중 시 초과체력(오버힐) 2 획득",
         (ActiveSkillId.EagleDrop, 1, 2) => "재사용 대기시간 15% 감소",
-        (ActiveSkillId.EagleDrop, 1, 3) => "오버힐 획득량 2 추가 (총 4)",
-        (ActiveSkillId.EagleDrop, 2, 1) => "재사용 대기시간 3초 증가, 피해량 40% 증가",
-        (ActiveSkillId.EagleDrop, 2, 2) => "착탄 시 미니 회오리 생성 (피해량 30%, 최대 6회 타격)",
-        (ActiveSkillId.EagleDrop, 2, 3) => "미니 회오리 피해량 45%로 증가, 최대 타격 횟수 +5회 (총 11회)",
+        (ActiveSkillId.EagleDrop, 1, 3) => "오버힐 획득량 2 추가",
+        (ActiveSkillId.EagleDrop, 2, 1) => "재사용 대기시간 40% 감소, 투하 횟수 1회 감소",
+        (ActiveSkillId.EagleDrop, 2, 2) => "착탄 시 미니 회오리 생성 (피해량 25%, 최대 5회 타격)",
+        (ActiveSkillId.EagleDrop, 2, 3) => "미니 회오리 피해량 35%로 증가, 최대 타격 횟수 +3회",
 
         _ => "",
     };
@@ -453,11 +469,11 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.BasicAttack, 2, 2) => "미니 독수리 확산",
         (ActiveSkillId.BasicAttack, 2, 3) => "미니 독수리 확산 II",
 
-        (ActiveSkillId.Whirlwind, 0, 1) => "분열 소환",
-        (ActiveSkillId.Whirlwind, 0, 2) => "피해량 강화",
-        (ActiveSkillId.Whirlwind, 0, 3) => "분열 소환 II",
-        (ActiveSkillId.Whirlwind, 1, 1) => "쿨타임 리셋",
-        (ActiveSkillId.Whirlwind, 1, 2) => "쿨타임 감소",
+        (ActiveSkillId.Whirlwind, 0, 1) => "미니 회오리",
+        (ActiveSkillId.Whirlwind, 0, 2) => "미니 회오리 강화",
+        (ActiveSkillId.Whirlwind, 0, 3) => "미니 회오리 강화 II",
+        (ActiveSkillId.Whirlwind, 1, 1) => "쿨타임 감소",
+        (ActiveSkillId.Whirlwind, 1, 2) => "쿨타임 리셋",
         (ActiveSkillId.Whirlwind, 1, 3) => "쿨타임 감소 II",
         (ActiveSkillId.Whirlwind, 2, 1) => "둔화 부여",
         (ActiveSkillId.Whirlwind, 2, 2) => "거대 회오리",
@@ -489,7 +505,7 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.EagleDrop, 1, 1) => "오버힐 획득",
         (ActiveSkillId.EagleDrop, 1, 2) => "쿨타임 감소",
         (ActiveSkillId.EagleDrop, 1, 3) => "오버힐 강화",
-        (ActiveSkillId.EagleDrop, 2, 1) => "피해 강화 (쿨타임 증가)",
+        (ActiveSkillId.EagleDrop, 2, 1) => "쿨타임 감소 (투하 횟수 감소)",
         (ActiveSkillId.EagleDrop, 2, 2) => "미니 회오리",
         (ActiveSkillId.EagleDrop, 2, 3) => "미니 회오리 강화",
 
@@ -502,7 +518,7 @@ public class PlayerSkills : MonoBehaviour
 
         // 타격 기준 치명타: 캐스트 시점엔 확률만 확정하고, 실제 치명타 여부는 각 데미지 이벤트(투사체 명중/틱)마다 개별적으로 굴린다.
         float critChance = GetCritChance(skill);
-        float damage = ComputeBaseDamage(skill.Damage);
+        float damage = ComputeBaseDamage(skill.Damage, skill.Id);
 
         switch (skill.Id)
         {
@@ -517,7 +533,7 @@ public class PlayerSkills : MonoBehaviour
                 break;
             case ActiveSkillId.Lightning:
                 // 낙뢰 연계 path2 T1: 낙뢰 지속시간 30% 증가
-                float baseDuration = 6f * (skill.PathTier[2] >= 1 ? 1.3f : 1f);
+                float baseDuration = 10f * (skill.PathTier[2] >= 1 ? 1.3f : 1f);
                 // 기존 스택을 지우지 않고 새로 추가한다 — 평소엔 쿨타임이 지속시간보다 길어 이전 스택이 이미 만료된 상태지만,
                 // 회오리 연계로 지속시간이 계속 연장돼 있으면 새 캐스트가 기존 스택 위에 쌓인다.
                 LightningStorm.AddStack(baseDuration);
@@ -542,8 +558,11 @@ public class PlayerSkills : MonoBehaviour
         if (passives != null && passives.HasPassive(PassiveSkillId.Refresh) && Random.value < PlayerPassives.RefreshChance)
         {
             skill.CooldownTimer = 0f;
-            if (skill.Id == ActiveSkillId.Whirlwind && skill.PathTier[1] >= 1)
+            if (skill.Id == ActiveSkillId.Whirlwind && skill.PathTier[1] >= 2)
                 ReduceAllCooldowns(1f);
+            // 리프레쉬 연계 path1: 쿨타임 초기화시마다 체력(또는 초과체력) 회복
+            if (health != null && PlayerPassives.RefreshHealOnResetAmount > 0f)
+                health.AddOverheal(Mathf.RoundToInt(PlayerPassives.RefreshHealOnResetAmount));
         }
     }
 
@@ -555,7 +574,8 @@ public class PlayerSkills : MonoBehaviour
             s.CooldownTimer = 0f;
     }
 
-    private void ReduceAllCooldowns(float amount)
+    // 리프레쉬 연계(패시브 path2)에서 낙뢰 발동 시에도 호출됨
+    public void ReduceAllCooldowns(float amount)
     {
         foreach (EquippedSkill s in equippedSkills)
             s.CooldownTimer = Mathf.Max(0f, s.CooldownTimer - amount);
@@ -565,13 +585,16 @@ public class PlayerSkills : MonoBehaviour
     private float GetCritChance(EquippedSkill skill)
     {
         // 암살 연계 path1 T1: 기본공격 전용 추가 치명타 확률
-        float chance = skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 1 ? 0.4f : 0f;
+        float chance = skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 1 ? 0.3f : 0f;
         if (passives != null && passives.HasPassive(PassiveSkillId.Assassinate))
             chance += PlayerPassives.AssassinateCritChance;
+        // 암살 연계 path2(패시브): 회오리 전용 추가 치명타 확률
+        if (skill.Id == ActiveSkillId.Whirlwind)
+            chance += PlayerPassives.AssassinateWhirlwindCritBonus;
         return chance;
     }
 
-    private float ComputeBaseDamage(float baseDamage)
+    private float ComputeBaseDamage(float baseDamage, ActiveSkillId skillId)
     {
         float damage = baseDamage * passiveDamageMultiplier;
 
@@ -579,25 +602,29 @@ public class PlayerSkills : MonoBehaviour
         if (LightningStorm.StackDamageEnabled && LightningStorm.ActiveStackCount > 0)
             damage *= 1f + LightningStorm.StackDamageBonusPerStack * LightningStorm.ActiveStackCount;
 
+        // 건강 연계 path1(패시브): 최대체력에 비례한 전체 피해량 증가
+        if (health != null && PlayerPassives.HealthDamagePerHp > 0f)
+            damage *= 1f + PlayerPassives.HealthDamagePerHp * health.MaxHealth;
+
+        // 힘 연계 path2(패시브): 기본공격 전용 추가 피해량 증가
+        if (skillId == ActiveSkillId.BasicAttack)
+            damage *= 1f + PlayerPassives.BasicAttackDamageMultiplierBonus;
+
         return damage;
     }
 
     private bool FireBasicAttack(EquippedSkill skill, float damage, float critChance, bool allowBonusShot)
     {
-        Enemy target = FindFrontmostEnemy();
-        if (target == null) return false;
-
-        int pierce = 0; // 기본 path: 관통 (T1=3회, T3=추가 5회)
+        // 적이 화면에 없어도 발사는 되어야 한다(허공에 쏘더라도 키 입력에 무반응인 건 고장난 것처럼 느껴짐).
+        // target은 조준에는 안 쓰이고(투사체는 항상 정면으로 직선 발사) 과거엔 "쏠 게 있는지" 게이트로만 쓰였다.
+        int pierce = 0; // 기본 path: 관통 (T1=3회, T3=추가 10회)
         if (skill.PathTier[0] >= 1) pierce += 3;
-        if (skill.PathTier[0] >= 3) pierce += 5;
+        if (skill.PathTier[0] >= 3) pierce += 10;
         pierce += skill.ExtraPierce; // 레벨업 고유 강화
 
         SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0f, allowBonusShot);
-        for (int i = 1; i <= skill.ExtraProjectiles; i++) // 레벨업 고유 강화: 위아래로 추가 발사
-        {
-            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0.5f * i, allowBonusShot);
-            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, -0.5f * i, allowBonusShot);
-        }
+        for (int i = 1; i <= skill.ExtraProjectiles; i++) // 레벨업 고유 강화: 투사체 추가 발사
+            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0.4f * i, allowBonusShot);
 
         animator.SetTrigger("Attack");
         return true;
@@ -605,13 +632,18 @@ public class PlayerSkills : MonoBehaviour
 
     private void SpawnBasicAttackProjectile(EquippedSkill skill, float damage, float critChance, int pierce, float verticalOffset, bool allowBonusShot)
     {
-        GameObject obj = Instantiate(basicAttackProjectilePrefab, transform.position + Vector3.left * 0.6f + Vector3.down * 0.25f + Vector3.up * verticalOffset, Quaternion.identity);
+        bool canHitFlying = skill.PathTier[0] >= 1;
+        // 비행 적 타격 진화 시 발사점을 위로 올려 발사한다(비행 적은 y≈1.1 위쪽 띠에 있어 지상 높이 수평 발사로는 안 맞음).
+        // 세로로 긴 히트박스와 합쳐, 수평으로 날아가는 한 발이 지상·비행 띠를 동시에 지나가게 한다 — 진화 전에는 원래 높이 유지.
+        float spawnRaise = canHitFlying ? FlyingArrowSpawnRaise : 0f;
+        GameObject obj = Instantiate(basicAttackProjectilePrefab, transform.position + Vector3.left * 0.6f + Vector3.down * 0.25f + Vector3.up * (verticalOffset + spawnRaise), Quaternion.identity);
         obj.transform.localScale *= skill.Scale;
         Projectile projectile = obj.GetComponent<Projectile>();
         projectile.Damage = damage;
         projectile.CritChance = critChance;
         projectile.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
         projectile.PierceRemaining = pierce;
+        projectile.CanHitFlying = canHitFlying;
 
         bool spawnMiniEagle = skill.PathTier[2] >= 1; // 독수리투하 연계 path: 명중 시 미니 독수리 (T2/T3에서 주변 적까지 확산)
         int maxTargets = skill.PathTier[2] >= 3 ? 10 : (skill.PathTier[2] >= 2 ? 4 : 1);
@@ -657,17 +689,24 @@ public class PlayerSkills : MonoBehaviour
         }
         else
         {
-            int count = 1; // 기본 path: 소형 회오리 분열 소환 (T1, T3에서 1개씩 추가)
-            if (skill.PathTier[0] >= 1) count++;
-            if (skill.PathTier[0] >= 3) count++;
-            float perDamage = damage / count;
-            float perScale = skill.Scale / Mathf.Sqrt(count);
+            Vector3 spawnPos = transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f;
+            SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration);
 
-            for (int i = 0; i < count; i++)
+            // 기본 path: 미니 회오리 추가 소환 (T1=2개, T3=+1개 총 3개). 독수리투하 연계(path T3)의 미니 회오리와
+            // MiniWhirlwindDamageBonus를 공유해서, 이 트리에 투자하면 독수리투하 쪽 미니 회오리도 함께 강해진다.
+            int miniCount = 0;
+            if (skill.PathTier[0] >= 1) miniCount += 2;
+            if (skill.PathTier[0] >= 3) miniCount += 1;
+
+            if (miniCount > 0)
             {
-                Vector2 offset = count == 1 ? Vector2.zero : Random.insideUnitCircle * 0.4f;
-                Vector3 spawnPos = transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f + (Vector3)offset;
-                SpawnWhirlwind(spawnPos, perDamage, critChance, perScale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration);
+                float miniDamage = damage * 0.3f * (1f + MiniWhirlwindDamageBonus);
+                for (int i = 0; i < miniCount; i++)
+                {
+                    Vector2 offset = Random.insideUnitCircle * 0.5f;
+                    Vector3 miniSpawnPos = spawnPos + (Vector3)offset;
+                    SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * 0.4f, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
+                }
             }
         }
 
@@ -697,7 +736,7 @@ public class PlayerSkills : MonoBehaviour
 
     private void SpawnBigTornado(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, float extraLifetime = 0f)
     {
-        PlayCastSfx(whirlwindCastSfx, castSfxVolume);
+        PlayCastSfx(whirlwindCastSfx, whirlwindCastSfxVolume);
         GameObject prefab = bigTornadoPrefab != null ? bigTornadoPrefab : whirlwindPrefab;
         GameObject obj = Instantiate(prefab, position, Quaternion.identity);
         obj.transform.localScale *= scale;
@@ -708,11 +747,12 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.CritChance = critChance;
         whirlwind.SlowDuration = 4.5f;
         whirlwind.ExtraLifetime = extraLifetime;
+        whirlwind.TargetHighestHealth = PlayerPassives.AssassinateWhirlwindTargetHighest;
     }
 
-    private void SpawnWhirlwind(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, int maxHitCount = 0, float slowDuration = 3f, float extraLifetime = 0f)
+    private void SpawnWhirlwind(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, int maxHitCount = 0, float slowDuration = 3f, float extraLifetime = 0f, bool isMini = false)
     {
-        PlayCastSfx(whirlwindCastSfx, castSfxVolume);
+        PlayCastSfx(whirlwindCastSfx, whirlwindCastSfxVolume);
         GameObject obj = Instantiate(whirlwindPrefab, position, Quaternion.identity);
         obj.transform.localScale *= scale;
         Whirlwind whirlwind = obj.GetComponent<Whirlwind>();
@@ -723,11 +763,13 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.MaxHitCount = maxHitCount;
         whirlwind.SlowDuration = slowDuration;
         whirlwind.ExtraLifetime = extraLifetime;
+        whirlwind.TargetHighestHealth = PlayerPassives.AssassinateWhirlwindTargetHighest;
+        whirlwind.CanHitFlying = !isMini; // 미니 회오리는 비행 적을 타격할 수 없다
     }
 
     private void FireOrb(float damage, float critChance, EquippedSkill skill)
     {
-        PlayCastSfx(orbCastSfx, castSfxVolume);
+        PlayCastSfx(orbCastSfx, orbCastSfxVolume);
 
         if (skill.PathTier[2] >= 2) // 낙뢰 연계 path T2: 날아가는 오브 대신 캐릭터 앞에 고정 설치기 소환
         {
@@ -736,7 +778,10 @@ public class PlayerSkills : MonoBehaviour
             return;
         }
 
-        GameObject obj = Instantiate(orbPrefab, transform.position + Vector3.down * 0.1f, Quaternion.identity);
+        // 지식 연계 path: 티어당 오브가 더 위로 날아감, T2부터는 큰 초록 오브 비주얼로 교체
+        float heightBonus = 0.3f * skill.PathTier[1];
+        GameObject prefabToSpawn = skill.PathTier[1] >= 2 && bigOrbPrefab != null ? bigOrbPrefab : orbPrefab;
+        GameObject obj = Instantiate(prefabToSpawn, transform.position + Vector3.down * 0.1f + Vector3.up * heightBonus, Quaternion.identity);
         obj.transform.localScale *= skill.Scale;
         Orb orb = obj.GetComponent<Orb>();
         orb.Damage = damage;
@@ -775,18 +820,22 @@ public class PlayerSkills : MonoBehaviour
     {
         PlayCastSfx(eagleDropCastSfx, castSfxVolume);
 
-        bool spawnMiniWhirlwind = skill.PathTier[2] >= 2; // 회오리 연계 path T2: 미니 회오리 생성 (T1은 쿨타임/피해량 트레이드오프)
-        float miniWhirlwindDamageMult = skill.PathTier[2] >= 3 ? 0.45f : 0.3f; // T2=30%, T3=45%(30%에서 50% 증가)
-        int miniWhirlwindMaxHits = skill.PathTier[2] >= 3 ? 11 : 6; // T2=6회, T3=+5(총 11회)
+        // 지식 연계 path2(패시브): 독수리 투하 시전마다 즉시 경험치 획득
+        if (PlayerPassives.EagleDropCastXpBonus > 0)
+            PlayerExperience.Instance?.AddXP(PlayerPassives.EagleDropCastXpBonus);
+
+        bool spawnMiniWhirlwind = skill.PathTier[2] >= 2; // 회오리 연계 path T2: 미니 회오리 생성 (T1은 쿨타임/투하횟수 트레이드오프)
+        float miniWhirlwindDamageMult = skill.PathTier[2] >= 3 ? 0.35f : 0.25f; // T2=25%, T3=35%
+        int miniWhirlwindMaxHits = skill.PathTier[2] >= 3 ? 8 : 5; // T2=5회, T3=+3(총 8회)
 
         int overhealPerHit = 0; // 건강 연계 path: 초과체력 획득 (T1, T3에서 2씩)
         if (skill.PathTier[1] >= 1) overhealPerHit += 2;
         if (skill.PathTier[1] >= 3) overhealPerHit += 2;
 
-        int dropCount = 3 + (skill.PathTier[0] >= 1 ? 1 : 0); // 기본 path T1: 투하 횟수 +1 (총 4회)
+        int dropCount = 3 + (skill.PathTier[0] >= 1 ? 1 : 0) - (skill.PathTier[2] >= 1 ? 1 : 0); // 기본 path T1: 투하 횟수 +1, 회오리 연계 path T1: 투하 횟수 -1 (쿨감 트레이드오프)
         bool scaleByEnemyCount = skill.PathTier[0] >= 2; // 기본 path T2: 화면 내 적 수에 반비례한 피해량 스케일링(최대 450%)
         float t3DamageMult = skill.PathTier[0] >= 3 ? 1.5f : 1f; // 기본 path T3: 피해량 50% 증가
-        float interval = Mathf.Max(0.2f, (skill.PathTier[0] >= 3 ? 0.5f : 1f) - skill.ExtraEagleDropIntervalReduction); // 기본 path T3: 투하 간격 50% 감소 + 레벨업 고유 강화
+        float interval = skill.PathTier[0] >= 3 ? 0.5f : 1f; // 기본 path T3: 투하 간격 50% 감소
 
         for (int i = 0; i < dropCount; i++)
         {
@@ -804,10 +853,10 @@ public class PlayerSkills : MonoBehaviour
             {
                 Vector3 pos = enemy.transform.position;
                 float hitDamage = PlayerPassives.ApplyCrit(dropDamage, critChance, out bool isCrit);
-                enemy.TakeDamage(hitDamage, isCrit: isCrit);
+                enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.EagleDrop);
 
                 if (overhealPerHit > 0 && health != null) health.AddOverheal(overhealPerHit);
-                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult, critChance, skill.Scale * 0.4f, false, false, maxHitCount: miniWhirlwindMaxHits);
+                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * 0.4f, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
 
                 StartCoroutine(MeteorImpact(pos, skill.Scale));
             }
@@ -824,7 +873,7 @@ public class PlayerSkills : MonoBehaviour
         if (target == null) yield break;
 
         float hitDamage = PlayerPassives.ApplyCrit(damage, critChance, out bool isCrit);
-        target.TakeDamage(hitDamage, isCrit: isCrit);
+        target.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.BasicAttack);
     }
 
     private IEnumerator MeteorImpact(Vector3 targetPos, float scale)
@@ -857,24 +906,6 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    private Enemy FindFrontmostEnemy()
-    {
-        Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-        Enemy frontmost = null;
-        float maxX = float.NegativeInfinity;
-
-        foreach (Enemy enemy in enemies)
-        {
-            if (enemy.transform.position.x > maxX)
-            {
-                maxX = enemy.transform.position.x;
-                frontmost = enemy;
-            }
-        }
-
-        return frontmost;
-    }
-
     private static float GetDefaultCooldown(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => 1f,
@@ -888,10 +919,10 @@ public class PlayerSkills : MonoBehaviour
     private static float GetDefaultDamage(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => 20f,
-        ActiveSkillId.Whirlwind => 6f,
+        ActiveSkillId.Whirlwind => 7f,
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => LightningStorm.ProcDamage,
-        ActiveSkillId.EagleDrop => 10f,
+        ActiveSkillId.EagleDrop => 11f,
         _ => 6f,
     };
 }

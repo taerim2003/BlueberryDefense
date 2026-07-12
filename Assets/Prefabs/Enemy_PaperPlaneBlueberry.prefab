@@ -205,7 +205,7 @@ MonoBehaviour:
   moveSpeed: 5
   damage: 6
   maxHealth: 7
-  xpValue: 3
+  xpValue: 5
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}

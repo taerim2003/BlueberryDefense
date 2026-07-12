@@ -10,6 +10,9 @@ public class PlayerHealth : MonoBehaviour
     public int MaxHealth => maxHealth;
     public int Overheal { get; private set; }
 
+    // 건강 연계 path2: 실제로 체력이 깎일 때마다(오버힐 흡수분 제외) 호출됨
+    public System.Action<int> OnDamageTaken;
+
     private void Awake()
     {
         CurrentHealth = maxHealth;
@@ -28,11 +31,17 @@ public class PlayerHealth : MonoBehaviour
         if (amount <= 0) return;
 
         CurrentHealth -= amount;
+        OnDamageTaken?.Invoke(amount);
         if (CurrentHealth <= 0)
         {
             CurrentHealth = 0;
             GameManager.Instance?.GameOver();
         }
+    }
+
+    public void Heal(int amount)
+    {
+        CurrentHealth = Mathf.Min(CurrentHealth + amount, maxHealth);
     }
 
     public void AddOverheal(int amount)

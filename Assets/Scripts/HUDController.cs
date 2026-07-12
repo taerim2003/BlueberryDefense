@@ -16,6 +16,13 @@ public class HUDController : MonoBehaviour
         public Image[] gemIcons;
     }
 
+    [System.Serializable]
+    private class PassiveSlot
+    {
+        public Image icon;
+        public TMP_Text levelLabel;
+    }
+
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private PlayerSkills playerSkills;
     [SerializeField] private PlayerPassives playerPassives;
@@ -40,7 +47,7 @@ public class HUDController : MonoBehaviour
         public TMP_Text stackText;
     }
 
-    [SerializeField] private Image[] passiveSlots;
+    [SerializeField] private PassiveSlot[] passiveSlots;
     [SerializeField] private ActiveSlot[] activeSlots;
     [SerializeField] private BuffSlot[] buffSlots; // 지속시간 있는 버프 표시용 — 슬롯 개수만큼 BuffTracker의 활성 버프를 순서대로 채운다
 
@@ -59,6 +66,7 @@ public class HUDController : MonoBehaviour
     private bool[] activeSlotWasOnCooldown;
     private int lastSeenStage = -1;
     private Sequence stageBannerSeq;
+    private float baseHealthPanelWidth = -1f;
 
     private void Update()
     {
@@ -76,6 +84,7 @@ public class HUDController : MonoBehaviour
         }
 
         healthText.text = $"{playerHealth.CurrentHealth} / {playerHealth.MaxHealth}";
+        UpdateHealthPanelWidth();
         UpdateHealthFill();
         UpdateOverhealFill();
 
@@ -131,9 +140,26 @@ public class HUDController : MonoBehaviour
         _ => null,
     };
 
+    // 오버힐(보호막)이 있으면 체력바 자체의 폭을 (최대체력+오버힐)/최대체력 비율만큼 왼쪽으로 늘린다 (pivot이 우측 고정이라
+    // sizeDelta만 키우면 자동으로 왼쪽으로만 자라 화면 밖으로 삐져나가지 않는다). 체력 1당 픽셀 밀도는 그대로 유지되므로
+    // 최대체력 100·오버힐 20이면 정확히 5:1 비율로 배분되어 보인다.
+    private float HealthBarScale => playerHealth.MaxHealth + playerHealth.Overheal;
+
+    private void UpdateHealthPanelWidth()
+    {
+        if (healthPanel == null) return;
+        if (baseHealthPanelWidth < 0f) baseHealthPanelWidth = healthPanel.sizeDelta.x;
+
+        float widthMultiplier = playerHealth.MaxHealth > 0 ? HealthBarScale / playerHealth.MaxHealth : 1f;
+        Vector2 sizeDelta = healthPanel.sizeDelta;
+        sizeDelta.x = baseHealthPanelWidth * widthMultiplier;
+        healthPanel.sizeDelta = sizeDelta;
+    }
+
     private void UpdateHealthFill()
     {
-        float ratio = playerHealth.MaxHealth > 0 ? (float)playerHealth.CurrentHealth / playerHealth.MaxHealth : 0f;
+        float scale = HealthBarScale;
+        float ratio = scale > 0 ? (float)playerHealth.CurrentHealth / scale : 0f;
         if (Mathf.Approximately(ratio, healthFillTarget)) return;
 
         bool isDamage = ratio < healthFillTarget;
@@ -150,7 +176,8 @@ public class HUDController : MonoBehaviour
     {
         if (overhealFill == null || playerHealth.MaxHealth <= 0) return;
 
-        float ratio = Mathf.Clamp01((float)(playerHealth.CurrentHealth + playerHealth.Overheal) / playerHealth.MaxHealth);
+        float scale = HealthBarScale;
+        float ratio = scale > 0 ? (float)(playerHealth.CurrentHealth + playerHealth.Overheal) / scale : 0f;
         if (Mathf.Approximately(ratio, overhealFillTarget)) return;
 
         overhealFillTarget = ratio;
@@ -170,16 +197,23 @@ public class HUDController : MonoBehaviour
 
     private void UpdatePassiveSlots()
     {
-        var acquired = playerPassives.AcquiredPassives;
+        var acquired = playerPassives.EquippedPassives;
         if (passiveSlotWasFilled == null) passiveSlotWasFilled = new bool[passiveSlots.Length];
 
         for (int i = 0; i < passiveSlots.Length; i++)
         {
+            PassiveSlot slot = passiveSlots[i];
             bool hasPassive = i < acquired.Count;
-            passiveSlots[i].enabled = hasPassive;
-            if (hasPassive) passiveSlots[i].sprite = GetIcon(passiveIcons, (int)acquired[i]);
+            slot.icon.enabled = hasPassive;
+            if (slot.levelLabel != null) slot.levelLabel.enabled = hasPassive;
 
-            if (hasPassive && !passiveSlotWasFilled[i]) PunchIcon(passiveSlots[i].rectTransform);
+            if (hasPassive)
+            {
+                slot.icon.sprite = GetIcon(passiveIcons, (int)acquired[i].Id);
+                if (slot.levelLabel != null) slot.levelLabel.text = "Lv." + acquired[i].Level;
+            }
+
+            if (hasPassive && !passiveSlotWasFilled[i]) PunchIcon(slot.icon.rectTransform);
             passiveSlotWasFilled[i] = hasPassive;
         }
     }

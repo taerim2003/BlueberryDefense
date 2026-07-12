@@ -113,6 +113,28 @@ public class CheatWindow : EditorWindow
                 passives.AcquirePassive(id);
         }
         EditorGUILayout.Space();
+
+        EditorGUILayout.LabelField("장착 패시브 / 진화", EditorStyles.boldLabel);
+        foreach (EquippedPassive eq in passives.EquippedPassives.ToList())
+        {
+            EditorGUILayout.LabelField(PlayerSkills.GetPassiveSkillName(eq.Id) + " Lv." + eq.Level
+                + "  [" + eq.PathTier[0] + "/" + eq.PathTier[1] + "/" + eq.PathTier[2] + "]");
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("레벨 +1")) passives.UpgradePassiveLevel(eq.Id);
+            for (int path = 0; path < 3; path++)
+            {
+                int capturedPath = path;
+                bool canEvolve = passives.CanEvolvePath(eq, capturedPath);
+                using (new EditorGUI.DisabledScope(!canEvolve))
+                {
+                    if (GUILayout.Button("진화 path" + (capturedPath + 1)))
+                        passives.EvolvePassive(eq.Id, capturedPath);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        EditorGUILayout.Space();
     }
 
     private void DrawStageSection()

@@ -159,6 +159,20 @@ public class LevelUpUI : MonoBehaviour
             });
         }
 
+        foreach (EquippedPassive equipped in passives.EquippedPassives)
+        {
+            if (!passives.CanUpgradePassive(equipped)) continue;
+            EquippedPassive captured = equipped;
+            candidates.Add(new Option
+            {
+                Title = PlayerSkills.GetPassiveSkillName(captured.Id),
+                LevelText = "레벨: " + (captured.Level + 1),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
+                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Apply = () => passives.UpgradePassiveLevel(captured.Id),
+            });
+        }
+
         Shuffle(candidates);
         List<Option> options = candidates.Take(3).ToList();
 
@@ -176,31 +190,54 @@ public class LevelUpUI : MonoBehaviour
     public void ShowTreasureReward()
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
-        List<EquippedSkill> ready = skills.EquippedSkills.Where(s =>
+        List<EquippedSkill> readySkills = skills.EquippedSkills.Where(s =>
             s.Level >= 5 && s.TotalEvolutionTier < s.Level / 5 && s.TotalEvolutionTier < 4 && skills.CanEvolveAnyPath(s)).ToList();
+        List<EquippedPassive> readyPassives = passives.EquippedPassives.Where(p =>
+            p.Level >= 5 && p.TotalEvolutionTier < p.Level / 5 && p.TotalEvolutionTier < 4 && passives.CanEvolveAnyPath(p)).ToList();
 
-        if (ready.Count == 0)
+        if (readySkills.Count == 0 && readyPassives.Count == 0)
         {
             Show();
             return;
         }
 
-        if (ready.Count == 1)
+        if (readySkills.Count + readyPassives.Count == 1)
         {
-            EvolutionTreeUI.Instance.Show(skills, ready[0]);
+            if (readySkills.Count == 1) EvolutionTreeUI.Instance.Show(skills, readySkills[0]);
+            else EvolutionTreeUI.Instance.Show(passives, readyPassives[0]);
             return;
         }
 
-        Shuffle(ready);
-        List<Option> pickOptions = ready.Take(3).Select(s => new Option
+        List<Option> pickOptions = new List<Option>();
+        foreach (EquippedSkill s in readySkills)
         {
-            Title = PlayerSkills.GetActiveSkillName(s.Id),
-            LevelText = "진화 가능",
-            Description = "어떤 스킬을 먼저 진화시킬지 선택하세요",
-            Icon = GetIcon(activeIcons, (int)s.Id),
-            Apply = () => EvolutionTreeUI.Instance.Show(skills, s),
-        }).ToList();
+            EquippedSkill captured = s;
+            pickOptions.Add(new Option
+            {
+                Title = PlayerSkills.GetActiveSkillName(captured.Id),
+                LevelText = "진화 가능",
+                Description = "어떤 스킬을 먼저 진화시킬지 선택하세요",
+                Icon = GetIcon(activeIcons, (int)captured.Id),
+                Apply = () => EvolutionTreeUI.Instance.Show(skills, captured),
+            });
+        }
+        foreach (EquippedPassive p in readyPassives)
+        {
+            EquippedPassive captured = p;
+            pickOptions.Add(new Option
+            {
+                Title = PlayerSkills.GetPassiveSkillName(captured.Id),
+                LevelText = "진화 가능",
+                Description = "어떤 패시브를 먼저 진화시킬지 선택하세요",
+                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Apply = () => EvolutionTreeUI.Instance.Show(passives, captured),
+            });
+        }
+
+        Shuffle(pickOptions);
+        pickOptions = pickOptions.Take(3).ToList();
 
         while (pickOptions.Count < 3)
             pickOptions.Add(new Option { Title = "체력 강화", Description = "최대 체력 +20", Apply = () => FindAnyObjectByType<PlayerHealth>().IncreaseMaxHealth(20) });
@@ -242,11 +279,11 @@ public class LevelUpUI : MonoBehaviour
 
     private static string GetPassiveSkillDescription(PassiveSkillId id) => id switch
     {
-        PassiveSkillId.Strength => "피해량 10% 증가",
+        PassiveSkillId.Strength => "피해량 7% 증가",
         PassiveSkillId.Health => "최대 체력 20 증가",
-        PassiveSkillId.Knowledge => "경험치 획득량 10% 증가",
+        PassiveSkillId.Knowledge => "경험치 획득량 8% 증가",
         PassiveSkillId.Assassinate => "모든 피해가 15% 확률로 3배 피해",
-        PassiveSkillId.Refresh => "스킬 사용 시 5% 확률로 쿨타임 초기화",
+        PassiveSkillId.Refresh => "스킬 사용 시 10% 확률로 쿨타임 초기화",
         _ => "",
     };
 
