@@ -144,5 +144,13 @@ public class CheatWindow : EditorWindow
         EditorGUILayout.LabelField("스테이지 (현재 " + GameManager.Instance.CurrentStage + ")", EditorStyles.boldLabel);
         if (GUILayout.Button("다음 스테이지로 스킵"))
             GameManager.Instance.SkipToNextStage();
+
+        if (GUILayout.Button("방패 블루베리 스폰 (테스트)"))
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemy_ShieldBlueberry.prefab");
+            EnemySpawner spawner = FindAnyObjectByType<EnemySpawner>();
+            Vector3 pos = spawner != null ? spawner.transform.position : new Vector3(9f, 0f, 0f);
+            if (prefab != null) Instantiate(prefab, pos, Quaternion.identity);
+        }
     }
 }

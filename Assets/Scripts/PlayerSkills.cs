@@ -40,6 +40,7 @@ public class PlayerSkills : MonoBehaviour
 {
     private const float GlobalCooldown = 0.4f;
     private const float OrbAltarCooldown = 15f;
+    private const float MaxCritChance = 0.7f; // 치명타 확률 상한 — 100% 상시 크리(크리 배율이 상시 전역 배율로 굳는 문제)를 막는다
     private static readonly Key[] SlotKeys = { Key.Q, Key.W, Key.E, Key.R };
 
     // 회오리 path0(미니 회오리)와 독수리투하 path2(미니 회오리)가 공유하는 피해 배율 보너스 — 둘 중 어느 쪽에 투자해도 서로의 미니 회오리가 함께 강해진다.
@@ -402,7 +403,7 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.BasicAttack, 0, 1) => "관통 3회 추가, 비행 적 타격 가능",
         (ActiveSkillId.BasicAttack, 0, 2) => "피해량 100% 증가",
         (ActiveSkillId.BasicAttack, 0, 3) => "관통 10회 추가",
-        (ActiveSkillId.BasicAttack, 1, 1) => "기본공격 치명타 확률 30% 증가",
+        (ActiveSkillId.BasicAttack, 1, 1) => "기본공격 치명타 확률 15% 증가",
         (ActiveSkillId.BasicAttack, 1, 2) => "치명타 적중 시 투사체 1회 추가 발사",
         (ActiveSkillId.BasicAttack, 1, 3) => "재사용 대기시간 50% 감소",
         (ActiveSkillId.BasicAttack, 2, 1) => "명중 시 미니 독수리 투하 (피해량 40%)",
@@ -585,18 +586,24 @@ public class PlayerSkills : MonoBehaviour
     private float GetCritChance(EquippedSkill skill)
     {
         // 암살 연계 path1 T1: 기본공격 전용 추가 치명타 확률
-        float chance = skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 1 ? 0.3f : 0f;
+        float chance = skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 1 ? 0.15f : 0f;
         if (passives != null && passives.HasPassive(PassiveSkillId.Assassinate))
             chance += PlayerPassives.AssassinateCritChance;
         // 암살 연계 path2(패시브): 회오리 전용 추가 치명타 확률
         if (skill.Id == ActiveSkillId.Whirlwind)
             chance += PlayerPassives.AssassinateWhirlwindCritBonus;
-        return chance;
+        return Mathf.Min(chance, MaxCritChance);
     }
 
     private float ComputeBaseDamage(float baseDamage, ActiveSkillId skillId)
     {
-        float damage = baseDamage * passiveDamageMultiplier;
+        // 힘 패시브 계열 피해 배율은 하나의 덧셈 풀로 합친다 — path0(전 스킬 공통)과 path2(기본공격 전용)를
+        // 곱연산으로 각각 겹쳐 쌓으면 기본공격에서 배율이 폭발한다. 같은 풀에서 더한 뒤 한 번만 곱한다.
+        float damageMultiplier = passiveDamageMultiplier;
+        if (skillId == ActiveSkillId.BasicAttack) // 힘 연계 path2(패시브): 기본공격 전용 추가 피해량 (덧셈 합류)
+            damageMultiplier += PlayerPassives.BasicAttackDamageMultiplierBonus;
+
+        float damage = baseDamage * damageMultiplier;
 
         // 낙뢰 연계 path2 T3: 낙뢰 버프 중첩당 전체 공격 피해량 증가
         if (LightningStorm.StackDamageEnabled && LightningStorm.ActiveStackCount > 0)
@@ -605,10 +612,6 @@ public class PlayerSkills : MonoBehaviour
         // 건강 연계 path1(패시브): 최대체력에 비례한 전체 피해량 증가
         if (health != null && PlayerPassives.HealthDamagePerHp > 0f)
             damage *= 1f + PlayerPassives.HealthDamagePerHp * health.MaxHealth;
-
-        // 힘 연계 path2(패시브): 기본공격 전용 추가 피해량 증가
-        if (skillId == ActiveSkillId.BasicAttack)
-            damage *= 1f + PlayerPassives.BasicAttackDamageMultiplierBonus;
 
         return damage;
     }

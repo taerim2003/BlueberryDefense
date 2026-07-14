@@ -7,6 +7,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private GameObject eliteEnemyPrefab;
     [SerializeField] private GameObject paperPlaneEnemyPrefab;
     [SerializeField] private GameObject ufoEnemyPrefab;
+    [SerializeField] private GameObject shieldEnemyPrefab;
     [SerializeField] private float spawnInterval = 1.5f;
     [SerializeField] private float treasureSpawnRatio = 0.85f; // 스테이지 진행률이 이 이상일 때만 보물상자 블루베리 등장
     [SerializeField] private float treasureGapAfter = 1.5f; // 보물상자 등장 직후 다음 스폰까지 추가 텀
@@ -30,6 +31,7 @@ public class EnemySpawner : MonoBehaviour
         float eliteChance = stage != null ? stage.eliteChance : 0f;
         float paperPlaneChance = stage != null ? stage.paperPlaneChance : 0f;
         float ufoChance = stage != null ? stage.ufoChance : 0f;
+        float shieldChance = stage != null ? stage.shieldChance : 0f;
         int currentStage = GameManager.Instance != null ? GameManager.Instance.CurrentStage : 1;
         float stageRatio = GameManager.Instance != null ? GameManager.Instance.StageElapsedRatio : 0f;
         bool paperPlaneOnlyStage = currentStage == 7;
@@ -56,6 +58,8 @@ public class EnemySpawner : MonoBehaviour
             prefabToSpawn = paperPlaneEnemyPrefab;
         else if (!paperPlaneOnlyStage && ufoEnemyPrefab != null && currentStage >= 11 && Random.value < ufoChance)
             prefabToSpawn = ufoEnemyPrefab;
+        else if (!paperPlaneOnlyStage && shieldEnemyPrefab != null && Random.value < shieldChance)
+            prefabToSpawn = shieldEnemyPrefab;
 
         for (int i = 0; i < spawnCount; i++)
         {

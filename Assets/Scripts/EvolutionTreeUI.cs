@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 public class EvolutionTreeUI : MonoBehaviour
 {
@@ -40,6 +42,9 @@ public class EvolutionTreeUI : MonoBehaviour
     private EquippedPassive currentPassive;
     private bool isPassiveMode;
 
+    // 진화 노드 카드에 붙는 juice 연출(등장 pop-in, 진화 가능 노드 강조 펄스)용 트윈 — 재오픈/닫기 시 정리
+    private readonly List<Tween> nodeTweens = new List<Tween>();
+
     private void Awake()
     {
         Instance = this;
@@ -76,6 +81,7 @@ public class EvolutionTreeUI : MonoBehaviour
     private void ShowInternal()
     {
         bool alreadyOpen = panel.activeSelf;
+        KillNodeTweens();
 
         string name = isPassiveMode ? PlayerSkills.GetPassiveSkillName(currentPassive.Id) : PlayerSkills.GetActiveSkillName(currentSkill.Id);
         int level = isPassiveMode ? currentPassive.Level : currentSkill.Level;
@@ -93,6 +99,11 @@ public class EvolutionTreeUI : MonoBehaviour
         }
 
         SetIcon(skillIcon, isPassiveMode ? GetIcon(passiveIcons, (int)currentPassive.Id) : GetIcon(activeIcons, (int)currentSkill.Id));
+        if (!alreadyOpen && skillIcon != null)
+        {
+            skillIcon.rectTransform.localScale = Vector3.one;
+            nodeTweens.Add(skillIcon.rectTransform.DOPunchScale(Vector3.one * 0.35f, 0.4f, 6, 0.5f).SetUpdate(true));
+        }
 
         for (int path = 0; path < 3; path++)
         {
@@ -127,6 +138,8 @@ public class EvolutionTreeUI : MonoBehaviour
                 }
                 node.description.color = locked ? LockedTextColor : Color.black;
                 node.button.interactable = available;
+
+                AnimateNode((RectTransform)node.button.transform, path * 3 + tierIdx, available, alreadyOpen);
             }
 
             if (arrows != null && arrows.Length >= (path + 1) * 2)
@@ -156,8 +169,34 @@ public class EvolutionTreeUI : MonoBehaviour
         Close();
     }
 
+    // 카드 등장 pop-in(스태거) + 진화 가능 노드 강조 펄스. Time.timeScale=0(모달 일시정지) 중에도 돌도록 SetUpdate(true).
+    private void AnimateNode(RectTransform rt, int order, bool available, bool alreadyOpen)
+    {
+        if (rt == null) return;
+        rt.localScale = Vector3.one;
+
+        float pulseDelay = 0f;
+        if (!alreadyOpen)
+        {
+            float delay = order * 0.03f;
+            rt.localScale = Vector3.one * 0.55f;
+            nodeTweens.Add(rt.DOScale(1f, 0.35f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true));
+            pulseDelay = delay + 0.35f;
+        }
+
+        if (available)
+            nodeTweens.Add(rt.DOScale(1.07f, 0.55f).SetDelay(pulseDelay).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true));
+    }
+
+    private void KillNodeTweens()
+    {
+        foreach (Tween t in nodeTweens) t?.Kill();
+        nodeTweens.Clear();
+    }
+
     private void Close()
     {
+        KillNodeTweens();
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);

@@ -7267,6 +7267,7 @@ MonoBehaviour:
   eliteEnemyPrefab: {fileID: 1348368236079402333, guid: 017ef458e4ed6be41aeea56d842438bc, type: 3}
   paperPlaneEnemyPrefab: {fileID: 2450170008170281, guid: cc51a7d5446e5f64faa618a4e06e8744, type: 3}
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
+  shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
   spawnInterval: 1.5
   treasureSpawnRatio: 0.85
   treasureGapAfter: 1.5

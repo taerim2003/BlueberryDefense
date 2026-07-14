@@ -19,6 +19,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float spawnYOffset = 0f;
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
+    [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
@@ -34,6 +35,7 @@ public class Enemy : MonoBehaviour
     };
 
     public bool IsFlying => isFlying;
+    public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
 
     private float currentHealth;

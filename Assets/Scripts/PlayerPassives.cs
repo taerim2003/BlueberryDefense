@@ -204,9 +204,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Strength, 0, 1): skills.IncreaseDamageMultiplier(0.08f); break;
             case (PassiveSkillId.Strength, 0, 2): skills.IncreaseDamageMultiplier(0.15f); break;
             case (PassiveSkillId.Strength, 0, 3): skills.IncreaseDamageMultiplier(0.22f); break;
-            case (PassiveSkillId.Strength, 1, 1): AssassinateCritMultiplier += 0.3f; break;
-            case (PassiveSkillId.Strength, 1, 2): AssassinateCritMultiplier += 0.7f; break;
-            case (PassiveSkillId.Strength, 1, 3): AssassinateCritMultiplier += 1.0f; break;
+            case (PassiveSkillId.Strength, 1, 1): AssassinateCritMultiplier += 0.15f; break;
+            case (PassiveSkillId.Strength, 1, 2): AssassinateCritMultiplier += 0.35f; break;
+            case (PassiveSkillId.Strength, 1, 3): AssassinateCritMultiplier += 0.5f; break;
             case (PassiveSkillId.Strength, 2, 1): BasicAttackDamageMultiplierBonus += 0.20f; break;
             case (PassiveSkillId.Strength, 2, 2): BasicAttackDamageMultiplierBonus += 0.35f; break;
             case (PassiveSkillId.Strength, 2, 3): BasicAttackDamageMultiplierBonus += 0.50f; break;
@@ -237,9 +237,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Assassinate, 0, 1): AssassinateCritChance += 0.08f; break;
             case (PassiveSkillId.Assassinate, 0, 2): AssassinateCritChance += 0.15f; break;
             case (PassiveSkillId.Assassinate, 0, 3): AssassinateCritChance += 0.22f; break;
-            case (PassiveSkillId.Assassinate, 1, 1): AssassinateKillXpMultiplier += 0.5f; break;
-            case (PassiveSkillId.Assassinate, 1, 2): AssassinateKillXpMultiplier += 1.5f; break;
-            case (PassiveSkillId.Assassinate, 1, 3): AssassinateKillXpMultiplier += 1.0f; break;
+            case (PassiveSkillId.Assassinate, 1, 1): AssassinateKillXpMultiplier += 0.25f; break;
+            case (PassiveSkillId.Assassinate, 1, 2): AssassinateKillXpMultiplier += 0.75f; break;
+            case (PassiveSkillId.Assassinate, 1, 3): AssassinateKillXpMultiplier += 0.5f; break;
             case (PassiveSkillId.Assassinate, 2, 1): AssassinateWhirlwindTargetHighest = true; AssassinateWhirlwindCritBonus += 0.1f; break;
             case (PassiveSkillId.Assassinate, 2, 2): AssassinateWhirlwindCritBonus += 0.1f; break;
             case (PassiveSkillId.Assassinate, 2, 3): AssassinateWhirlwindCritBonus += 0.1f; break;
@@ -313,9 +313,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Strength, 0, 1) => "피해량 8% 추가 증가",
         (PassiveSkillId.Strength, 0, 2) => "피해량 15% 추가 증가",
         (PassiveSkillId.Strength, 0, 3) => "피해량 22% 추가 증가",
-        (PassiveSkillId.Strength, 1, 1) => "치명타 피해 배율 +0.3",
-        (PassiveSkillId.Strength, 1, 2) => "치명타 피해 배율 +0.7",
-        (PassiveSkillId.Strength, 1, 3) => "치명타 피해 배율 +1.0",
+        (PassiveSkillId.Strength, 1, 1) => "치명타 피해 배율 +0.15",
+        (PassiveSkillId.Strength, 1, 2) => "치명타 피해 배율 +0.35",
+        (PassiveSkillId.Strength, 1, 3) => "치명타 피해 배율 +0.5",
         (PassiveSkillId.Strength, 2, 1) => "기본 공격 피해량 20% 증가",
         (PassiveSkillId.Strength, 2, 2) => "기본 공격 피해량 35% 증가",
         (PassiveSkillId.Strength, 2, 3) => "기본 공격 피해량 50% 증가",
@@ -343,9 +343,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Assassinate, 0, 1) => "치명타 확률 8%p 증가",
         (PassiveSkillId.Assassinate, 0, 2) => "치명타 확률 15%p 증가",
         (PassiveSkillId.Assassinate, 0, 3) => "치명타 확률 22%p 증가",
-        (PassiveSkillId.Assassinate, 1, 1) => "치명타로 처치한 적 경험치 1.5배",
-        (PassiveSkillId.Assassinate, 1, 2) => "치명타로 처치한 적 경험치 3배",
-        (PassiveSkillId.Assassinate, 1, 3) => "치명타로 처치한 적 경험치 4배",
+        (PassiveSkillId.Assassinate, 1, 1) => "치명타로 처치한 적 경험치 1.25배",
+        (PassiveSkillId.Assassinate, 1, 2) => "치명타로 처치한 적 경험치 2배",
+        (PassiveSkillId.Assassinate, 1, 3) => "치명타로 처치한 적 경험치 2.5배",
         (PassiveSkillId.Assassinate, 2, 1) => "회오리가 가장 체력이 높은 적을 타겟팅, 회오리 치명타 확률 10%p 증가",
         (PassiveSkillId.Assassinate, 2, 2) => "회오리 치명타 확률 20%p 증가",
         (PassiveSkillId.Assassinate, 2, 3) => "회오리 치명타 확률 30%p 증가",

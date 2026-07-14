@@ -66,7 +66,20 @@ public class Orb : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         Enemy enemy = other.GetComponent<Enemy>();
-        if (enemy != null) overlappingEnemies.Add(enemy);
+        if (enemy == null) return;
+
+        // 방패 블루베리: 오브도 통과하지 못하고 여기서 소멸 — 마지막으로 한 번 타격을 주고 사라진다
+        if (enemy.BlocksProjectiles)
+        {
+            float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
+            enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
+            if (impactVfxPrefab != null)
+                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);
+            Destroy(gameObject);
+            return;
+        }
+
+        overlappingEnemies.Add(enemy);
     }
 
     private void OnTriggerExit2D(Collider2D other)
