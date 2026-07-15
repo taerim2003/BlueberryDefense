@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using DG.Tweening;
 
 public class GameManager : MonoBehaviour
@@ -9,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float stageBreakDuration = 4.5f; // 스테이지 전환 시 적 스폰이 멈추는 텀
     [SerializeField] private StageTable stageTable;
     [SerializeField] private GameObject heartPickupPrefab;
+    [SerializeField] private GameObject essencePickupPrefab;
 
     public static GameManager Instance { get; private set; }
 
@@ -40,6 +42,7 @@ public class GameManager : MonoBehaviour
 
         DamageMeter.Reset();
         Enemy.HeartPickupPrefab = heartPickupPrefab;
+        EssencePickup.Prefab = essencePickupPrefab;
     }
 
     private void Update()
@@ -95,6 +98,7 @@ public class GameManager : MonoBehaviour
 
         IsGameOver = true;
         Debug.Log("Game Over");
+        BankRunCurrency();
         Time.timeScale = 0f;
     }
 
@@ -104,6 +108,20 @@ public class GameManager : MonoBehaviour
 
         IsGameClear = true;
         Debug.Log("Game Clear");
+        BankRunCurrency();
         Time.timeScale = 0f;
+    }
+
+    // 이번 판에서 모은 정수를 영구 저장에 적립(판 종료 시 1회)
+    private void BankRunCurrency()
+    {
+        MetaSave.AddCurrency(MetaRun.RunCurrency);
+    }
+
+    // 게임오버/클리어 패널의 "타이틀로" 버튼이 호출
+    public void ReturnToTitle()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Title");
     }
 }

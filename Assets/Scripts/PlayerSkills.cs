@@ -533,8 +533,8 @@ public class PlayerSkills : MonoBehaviour
                 FireOrb(damage, critChance, skill);
                 break;
             case ActiveSkillId.Lightning:
-                // 낙뢰 연계 path2 T1: 낙뢰 지속시간 30% 증가
-                float baseDuration = 10f * (skill.PathTier[2] >= 1 ? 1.3f : 1f);
+                // 낙뢰 연계 path2 T1: 낙뢰 지속시간 30% 증가 (메타 "지속시간" 업그레이드가 곱해짐)
+                float baseDuration = 10f * (skill.PathTier[2] >= 1 ? 1.3f : 1f) * MetaBonuses.DurationMult;
                 // 기존 스택을 지우지 않고 새로 추가한다 — 평소엔 쿨타임이 지속시간보다 길어 이전 스택이 이미 만료된 상태지만,
                 // 회오리 연계로 지속시간이 계속 연장돼 있으면 새 캐스트가 기존 스택 위에 쌓인다.
                 LightningStorm.AddStack(baseDuration);
@@ -554,7 +554,8 @@ public class PlayerSkills : MonoBehaviour
 
         globalCooldownTimer = GlobalCooldown;
         // 오브가 설치기(낙뢰 연계)로 대체된 상태에서는 훨씬 긴 별도 쿨타임을 사용
-        skill.CooldownTimer = (skill.Id == ActiveSkillId.Orb && skill.PathTier[2] >= 2) ? OrbAltarCooldown : skill.Cooldown;
+        // (메타 "쿨타임" 업그레이드가 전역 배율로 곱해짐)
+        skill.CooldownTimer = ((skill.Id == ActiveSkillId.Orb && skill.PathTier[2] >= 2) ? OrbAltarCooldown : skill.Cooldown) * MetaBonuses.CooldownMult;
 
         if (passives != null && passives.HasPassive(PassiveSkillId.Refresh) && Random.value < PlayerPassives.RefreshChance)
         {
@@ -592,6 +593,7 @@ public class PlayerSkills : MonoBehaviour
         // 암살 연계 path2(패시브): 회오리 전용 추가 치명타 확률
         if (skill.Id == ActiveSkillId.Whirlwind)
             chance += PlayerPassives.AssassinateWhirlwindCritBonus;
+        chance += MetaBonuses.CritBonus; // 메타 "치명타" 업그레이드(전역 가산)
         return Mathf.Min(chance, MaxCritChance);
     }
 

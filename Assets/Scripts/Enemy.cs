@@ -9,6 +9,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float maxHealth = 20f;
     [SerializeField] private int xpValue = 5;
     [SerializeField] private bool isTreasure;
+    [SerializeField] private float essenceDropChance = 0.15f; // 처치 시 정수(태양빛) 드랍 확률
+    [SerializeField] private int essenceDropAmount = 2;        // 드랍 시 지급 정수량(보물은 확률 무시·확정 드랍)
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
     [SerializeField] private GameObject chainLightningVfxPrefab;
@@ -149,6 +151,16 @@ public class Enemy : MonoBehaviour
             int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
             PlayerExperience.Instance?.AddXP(grantedXp);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
+
+            // 아웃게임 정수(태양빛) 드랍 — 하트처럼 물리적 픽업이 플레이어에게 흡입되어 적립됨
+            if (isTreasure || Random.value < essenceDropChance)
+            {
+                if (EssencePickup.Prefab != null)
+                    Instantiate(EssencePickup.Prefab, transform.position, Quaternion.identity)
+                        .GetComponent<EssencePickup>().SetAmount(essenceDropAmount);
+                else
+                    MetaRun.Collect(essenceDropAmount); // 프리팹 미설정 시 즉시 적립(폴백)
+            }
 
             if (HeartPickupPrefab != null && Random.value < HeartDropChance)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);

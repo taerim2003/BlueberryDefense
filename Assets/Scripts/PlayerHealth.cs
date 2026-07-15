@@ -13,9 +13,25 @@ public class PlayerHealth : MonoBehaviour
     // 건강 연계 path2: 실제로 체력이 깎일 때마다(오버힐 흡수분 제외) 호출됨
     public System.Action<int> OnDamageTaken;
 
+    private float metaRegenTimer;
+
     private void Awake()
     {
         CurrentHealth = maxHealth;
+    }
+
+    // 메타 "회복" 업그레이드: 5초마다 일정량 회복(기본 regen과 별개로 스택)
+    private void Update()
+    {
+        if (MetaBonuses.RegenPer5s <= 0) return;
+        if (GameManager.Instance != null && (GameManager.Instance.IsGameOver || GameManager.Instance.IsGameClear)) return;
+
+        metaRegenTimer += Time.deltaTime;
+        if (metaRegenTimer >= 5f)
+        {
+            metaRegenTimer -= 5f;
+            Heal(MetaBonuses.RegenPer5s);
+        }
     }
 
     public void TakeDamage(int amount)

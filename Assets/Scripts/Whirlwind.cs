@@ -30,7 +30,7 @@ public class Whirlwind : MonoBehaviour
 
     private void Start()
     {
-        if (MaxHitCount <= 0) Destroy(gameObject, lifetime + ExtraLifetime);
+        if (MaxHitCount <= 0) Destroy(gameObject, (lifetime + ExtraLifetime) * MetaBonuses.DurationMult);
     }
 
     private void Update()
