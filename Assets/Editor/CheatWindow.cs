@@ -14,9 +14,15 @@ public class CheatWindow : EditorWindow
 
     private void OnGUI()
     {
+        scroll = EditorGUILayout.BeginScrollView(scroll);
+
+        // 메타 자원(스킬트리) — Player/Play 모드 없이도 항상 사용 가능(PlayerPrefs 저장). 타이틀 씬에서도 됨.
+        DrawMetaResourceSection();
+
         if (!Application.isPlaying)
         {
-            EditorGUILayout.HelpBox("Play 모드에서만 사용할 수 있습니다.", MessageType.Info);
+            EditorGUILayout.HelpBox("아래 인게임 치트는 Play 모드에서만 사용할 수 있습니다.", MessageType.Info);
+            EditorGUILayout.EndScrollView();
             return;
         }
 
@@ -26,11 +32,10 @@ public class CheatWindow : EditorWindow
 
         if (skills == null || health == null || passives == null)
         {
-            EditorGUILayout.HelpBox("Player를 찾을 수 없습니다.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Player를 찾을 수 없습니다 (인게임 씬에서 사용하세요).", MessageType.Warning);
+            EditorGUILayout.EndScrollView();
             return;
         }
-
-        scroll = EditorGUILayout.BeginScrollView(scroll);
 
         DrawExperienceSection();
         DrawHealthSection(health);
@@ -40,6 +45,26 @@ public class CheatWindow : EditorWindow
         DrawStageSection();
 
         EditorGUILayout.EndScrollView();
+    }
+
+    private void DrawMetaResourceSection()
+    {
+        EditorGUILayout.LabelField("메타 자원 (스킬트리)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"정수 {SkillTreeSave.EssenceEarned}  ·  결정 {SkillTreeSave.CrystalEarned}  ·  가루 {SkillTreeSave.PowderEarned}");
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("정수 +100")) SkillTreeSave.AddEssence(100);
+        if (GUILayout.Button("정수 +1000")) SkillTreeSave.AddEssence(1000);
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("결정 +5")) SkillTreeSave.AddCrystal(5);
+        if (GUILayout.Button("가루 +5")) SkillTreeSave.AddPowder(5);
+        EditorGUILayout.EndHorizontal();
+
+        if (GUILayout.Button("스킬트리 자원·해금 전체 초기화")) SkillTreeSave.ResetAll();
+
+        EditorGUILayout.Space();
     }
 
     private void DrawExperienceSection()

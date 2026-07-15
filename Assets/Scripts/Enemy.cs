@@ -25,7 +25,7 @@ public class Enemy : MonoBehaviour
 
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
-    public const float HeartDropChance = 0.06f; // 처치 시 하트 드랍 확률
+    // 하트(체력회복) 드랍은 스킬트리 루트(root_hp) 해금 시에만 발동 — 확률은 MetaBonuses.HealDropChanceBonus로 전적으로 결정
 
     // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=노랑, 2회=파랑, 3회=보라, 4회=마젠타)
     private static readonly Color[] RecursiveLightningColors =
@@ -102,6 +102,10 @@ public class Enemy : MonoBehaviour
         if (isDead) return; // Destroy()는 프레임 끝에 실행되므로, 같은 프레임 내 중복 피격으로 사망 처리가 두 번 도는 것을 막음
 
         float actualDamage = amount * vulnerableMultiplier;
+        // 스킬트리: 비행 적 추가피해(전역 + 독수리 전용)
+        if (isFlying)
+            actualDamage *= 1f + MetaBonuses.FlyDamageBonus
+                + (source == ActiveSkillId.EagleDrop ? MetaBonuses.EagleFlyDamageBonus : 0f);
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
         SpawnDamageNumber(actualDamage, isCrit);
@@ -162,7 +166,7 @@ public class Enemy : MonoBehaviour
                     MetaRun.Collect(essenceDropAmount); // 프리팹 미설정 시 즉시 적립(폴백)
             }
 
-            if (HeartPickupPrefab != null && Random.value < HeartDropChance)
+            if (HeartPickupPrefab != null && Random.value < MetaBonuses.HealDropChanceBonus)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
 
             Destroy(gameObject);

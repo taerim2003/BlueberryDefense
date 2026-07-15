@@ -61,6 +61,10 @@ public class GameManager : MonoBehaviour
             {
                 waitingForClear = false;
 
+                // 스킬트리 자원: 스테이지 클리어마다 가루 +1, 15/20 클리어 시 태양결정 +1
+                SkillTreeSave.AddPowder(1);
+                if (CurrentStage == 15 || CurrentStage == 20) SkillTreeSave.AddCrystal(1);
+
                 if (CurrentStage >= FinalStage)
                 {
                     GameClear();
@@ -115,7 +119,7 @@ public class GameManager : MonoBehaviour
     // 이번 판에서 모은 정수를 영구 저장에 적립(판 종료 시 1회)
     private void BankRunCurrency()
     {
-        MetaSave.AddCurrency(MetaRun.RunCurrency);
+        SkillTreeSave.AddEssence(MetaRun.RunCurrency);
     }
 
     // 게임오버/클리어 패널의 "타이틀로" 버튼이 호출

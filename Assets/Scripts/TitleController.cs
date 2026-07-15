@@ -11,7 +11,7 @@ public class TitleController : MonoBehaviour
     [SerializeField] private Button collectionButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button quitButton;
-    [SerializeField] private UpgradeShopUI upgradeShop;
+    [SerializeField] private SkillTreeUI skillTree;
     [SerializeField] private TMP_Text currencyText;
 
     private const string GameSceneName = "SampleScene";
@@ -29,14 +29,14 @@ public class TitleController : MonoBehaviour
 
     public void RefreshCurrency()
     {
-        if (currencyText != null) currencyText.text = MetaSave.Currency + " 정수";
+        if (currencyText != null) currencyText.text = SkillTreeSave.EssenceEarned + " 정수";
     }
 
     private void Play() => SceneManager.LoadScene(GameSceneName);
 
     private void OpenUpgrade()
     {
-        if (upgradeShop != null) upgradeShop.Open();
+        if (skillTree != null) skillTree.Open();
     }
 
     private void Quit()

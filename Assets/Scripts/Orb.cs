@@ -34,7 +34,7 @@ public class Orb : MonoBehaviour
         transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
 
         overlappingEnemies.RemoveWhere(e => e == null);
-        bool canHitFlying = FlyingDamageMultiplier > 1f; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0)로만 해금
+        bool canHitFlying = FlyingDamageMultiplier > 1f || MetaBonuses.OrbCanHitFlying; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0) 또는 스킬트리로 해금
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
             if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;

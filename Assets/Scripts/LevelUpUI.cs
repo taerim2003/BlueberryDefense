@@ -13,6 +13,7 @@ public class LevelUpUI : MonoBehaviour
         public string Title;
         public string LevelText;
         public bool IsNew;
+        public bool UnlocksEvolution; // 다음 레벨이 5의 배수 → 진화 해금 가능 레벨업
         public string Description;
         public Sprite Icon;
         public System.Action Apply;
@@ -38,11 +39,18 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
     [SerializeField] private LevelUpStatOptionSO[] statOptions;
+    [SerializeField] private Button rerollButton;   // 스킬트리 리롤 해금 시 노출
+    [SerializeField] private TMP_Text rerollLabel;
 
     private static readonly Color NewTagColor = new Color(1f, 0.85f, 0.2f, 1f);
     private static readonly Color LevelTagColor = new Color(0.75f, 0.85f, 1f, 1f);
+    private static readonly Color EvolveTagColor = new Color(1f, 0.55f, 0.1f, 1f); // 진화 가능 강조(주황)
+
+    private Outline[] optionOutlines;
 
     private Option[] currentOptions;
+    private int rerollsRemaining;  // 게임당 남은 리롤 횟수
+    private bool rerollable;        // 이번 모달이 리롤 가능한가(진화 선택 모달은 불가)
 
     private void Awake()
     {
@@ -52,7 +60,25 @@ public class LevelUpUI : MonoBehaviour
         optionButtonA.onClick.AddListener(() => Choose(0));
         optionButtonB.onClick.AddListener(() => Choose(1));
         optionButtonC.onClick.AddListener(() => Choose(2));
+        if (rerollButton != null) rerollButton.onClick.AddListener(OnReroll);
+
+        // 진화 가능 레벨업 강조용 셀 아웃라인(기본 꺼짐)
+        optionOutlines = new[] { MakeOutline(optionButtonA), MakeOutline(optionButtonB), MakeOutline(optionButtonC) };
     }
+
+    private static Outline MakeOutline(Button btn)
+    {
+        if (btn == null) return null;
+        Outline o = btn.GetComponent<Outline>();
+        if (o == null) o = btn.gameObject.AddComponent<Outline>();
+        o.effectColor = EvolveTagColor;
+        o.effectDistance = new Vector2(5f, 5f);
+        o.enabled = false;
+        return o;
+    }
+
+    // 판 시작 시 MetaRunApplier가 호출 — 스킬트리 리롤 노드 해금 수만큼 리롤 부여
+    public void InitRerolls(int count) => rerollsRemaining = count;
 
     public void Show()
     {
@@ -60,8 +86,16 @@ public class LevelUpUI : MonoBehaviour
         PlayerHealth health = FindAnyObjectByType<PlayerHealth>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
+        rerollable = true;
         currentOptions = BuildOptions(skills, health, passives);
         ShowOptions();
+    }
+
+    private void OnReroll()
+    {
+        if (!rerollable || rerollsRemaining <= 0) return;
+        rerollsRemaining--;
+        Show(); // 후보 재구성 + 재셔플 (rerollable 다시 true)
     }
 
     private void ShowOptions()
@@ -72,8 +106,22 @@ public class LevelUpUI : MonoBehaviour
         SetRow(titleB, levelB, descB, iconB, currentOptions[1]);
         SetRow(titleC, levelC, descC, iconC, currentOptions[2]);
 
+        if (optionOutlines != null)
+            for (int i = 0; i < optionOutlines.Length; i++)
+                if (optionOutlines[i] != null) optionOutlines[i].enabled = currentOptions[i].UnlocksEvolution;
+
+        UpdateRerollButton();
+
         panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
+    }
+
+    private void UpdateRerollButton()
+    {
+        if (rerollButton == null) return;
+        bool show = rerollable && rerollsRemaining > 0;
+        rerollButton.gameObject.SetActive(show);
+        if (show && rerollLabel != null) rerollLabel.text = $"다시 뽑기 ({rerollsRemaining})";
     }
 
     private static void SetRow(TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
@@ -88,6 +136,11 @@ public class LevelUpUI : MonoBehaviour
             {
                 level.text = "신규!";
                 level.color = NewTagColor;
+            }
+            else if (option.UnlocksEvolution)
+            {
+                level.text = "진화 가능! " + option.LevelText;
+                level.color = EvolveTagColor;
             }
             else if (!string.IsNullOrEmpty(option.LevelText))
             {
@@ -153,6 +206,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillName(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
+                UnlocksEvolution = (captured.Level + 1) % 5 == 0,
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
@@ -167,6 +221,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillName(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
+                UnlocksEvolution = (captured.Level + 1) % 5 == 0,
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
                 Icon = GetIcon(passiveIcons, (int)captured.Id),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
@@ -242,6 +297,7 @@ public class LevelUpUI : MonoBehaviour
         while (pickOptions.Count < 3)
             pickOptions.Add(new Option { Title = "체력 강화", Description = "최대 체력 +20", Apply = () => FindAnyObjectByType<PlayerHealth>().IncreaseMaxHealth(20) });
 
+        rerollable = false; // 진화 대상 선택 모달은 리롤 불가
         currentOptions = pickOptions.ToArray();
         ShowOptions();
     }

@@ -68,6 +68,22 @@ public class HUDController : MonoBehaviour
     private Sequence stageBannerSeq;
     private float baseHealthPanelWidth = -1f;
 
+    private void OnEnable() => PlayerSkills.OnRefreshProc += PulseRefreshIcon;
+    private void OnDisable() => PlayerSkills.OnRefreshProc -= PulseRefreshIcon;
+
+    // 리프레쉬 발동 시 리프레쉬 패시브 아이콘에 보잉(액티브 쿨타임 완료 연출과 동일)
+    private void PulseRefreshIcon()
+    {
+        if (playerPassives == null || passiveSlots == null) return;
+        var acquired = playerPassives.EquippedPassives;
+        for (int i = 0; i < passiveSlots.Length && i < acquired.Count; i++)
+            if (acquired[i].Id == PassiveSkillId.Refresh && passiveSlots[i].icon != null)
+            {
+                PunchIcon(passiveSlots[i].icon.rectTransform);
+                return;
+            }
+    }
+
     private void Update()
     {
         if (GameManager.Instance != null)
@@ -83,7 +99,9 @@ public class HUDController : MonoBehaviour
             }
         }
 
-        healthText.text = $"{playerHealth.CurrentHealth} / {playerHealth.MaxHealth}";
+        healthText.text = playerHealth.Overheal > 0
+            ? $"{playerHealth.CurrentHealth} (+{playerHealth.Overheal}) / {playerHealth.MaxHealth}"
+            : $"{playerHealth.CurrentHealth} / {playerHealth.MaxHealth}";
         UpdateHealthPanelWidth();
         UpdateHealthFill();
         UpdateOverhealFill();

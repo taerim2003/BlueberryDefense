@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    private const int MaxOverheal = 50;
+    private const int MaxOverheal = 200;
 
     [SerializeField] private int maxHealth = 100;
 

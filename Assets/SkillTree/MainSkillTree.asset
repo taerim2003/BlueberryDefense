@@ -25,9 +25,8 @@ MonoBehaviour:
     cost: 40
     costGrowth: 1.5
     gateCost: 1
-    prereqIds:
-    - node_5
-    editorPos: {x: -78.98779, y: -141.2221}
+    prereqIds: []
+    editorPos: {x: -132.9878, y: -148.2221}
   - id: atk_1
     displayName: "\uACF5\uACA9\uB825 I"
     description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 5% \uC99D\uAC00"
@@ -69,7 +68,7 @@ MonoBehaviour:
     gateCost: 1
     prereqIds:
     - root_hp
-    editorPos: {x: 268.51233, y: -311.6222}
+    editorPos: {x: 292.51233, y: -293.6222}
   - id: hp_2
     displayName: "\uCCB4\uB825 II"
     description: "\uCD5C\uB300 \uCCB4\uB825\uC774 15 \uC99D\uAC00"
@@ -215,7 +214,7 @@ MonoBehaviour:
     displayName: "\uD654\uC0B4 \uC219\uB828"
     description: "(\uB538\uAE30 \uC120\uD0DD \uC2DC) \uD654\uC0B4 3\uB808\uBCA8\uB85C
       \uC2DC\uC791"
-    type: 0
+    type: 2
     hasEffect: 0
     effect: 0
     perLevel: 5
@@ -244,7 +243,7 @@ MonoBehaviour:
     displayName: "\uC624\uBE0C \uBE44\uD589 \uD0C0\uACA9 \uAC00\uB2A5"
     description: "\uAE30\uBCF8 \uC624\uBE0C\uB3C4 \uBE44\uD589 \uC801\uC744 \uD0C0\uACA9\uD560
       \uC218 \uC788\uAC8C \uB428"
-    type: 0
+    type: 2
     hasEffect: 0
     effect: 0
     perLevel: 5
@@ -273,7 +272,7 @@ MonoBehaviour:
     displayName: "\uB3C5\uC218\uB9AC \uBE44\uD589 \uCD94\uAC00 \uD53C\uD574"
     description: "\uB3C5\uC218\uB9AC \uD22C\uD558\uC758 \uBE44\uD589 \uC801 \uCD94\uAC00
       \uD53C\uD574 +30%"
-    type: 0
+    type: 2
     hasEffect: 0
     effect: 0
     perLevel: 5
@@ -344,7 +343,7 @@ MonoBehaviour:
     displayName: "\uC2E0\uC18D\uD55C \uD68C\uC624\uB9AC"
     description: "\uD68C\uC624\uB9AC\uB294 \uBAA8\uB4E0 \uCFE8\uD0C0\uC784 \uAC10\uC18C
       \uD6A8\uACFC\uB97C 1.5\uBC30\uB85C \uBC1B\uC74C"
-    type: 0
+    type: 2
     hasEffect: 0
     effect: 0
     perLevel: 5
@@ -374,7 +373,7 @@ MonoBehaviour:
     displayName: "\uB099\uB8B0 \uCFE8\uD0C0\uC784 \uAC10\uC18C"
     description: "\uB099\uB8B0\uAC00 \uCE60 \uB54C\uB9C8\uB2E4 \uB099\uB8B0 \uCFE8\uD0C0\uC784
       -0.1\uCD08"
-    type: 0
+    type: 2
     hasEffect: 0
     effect: 0
     perLevel: 5

@@ -207,9 +207,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Strength, 1, 1): AssassinateCritMultiplier += 0.15f; break;
             case (PassiveSkillId.Strength, 1, 2): AssassinateCritMultiplier += 0.35f; break;
             case (PassiveSkillId.Strength, 1, 3): AssassinateCritMultiplier += 0.5f; break;
-            case (PassiveSkillId.Strength, 2, 1): BasicAttackDamageMultiplierBonus += 0.20f; break;
-            case (PassiveSkillId.Strength, 2, 2): BasicAttackDamageMultiplierBonus += 0.35f; break;
-            case (PassiveSkillId.Strength, 2, 3): BasicAttackDamageMultiplierBonus += 0.50f; break;
+            case (PassiveSkillId.Strength, 2, 1): BasicAttackDamageMultiplierBonus += 0.10f; break;
+            case (PassiveSkillId.Strength, 2, 2): BasicAttackDamageMultiplierBonus += 0.175f; break;
+            case (PassiveSkillId.Strength, 2, 3): BasicAttackDamageMultiplierBonus += 0.25f; break;
 
             // 건강
             case (PassiveSkillId.Health, 0, 1): regenAmount = 2f; regenInterval = 5f; break;
@@ -316,9 +316,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Strength, 1, 1) => "치명타 피해 배율 +0.15",
         (PassiveSkillId.Strength, 1, 2) => "치명타 피해 배율 +0.35",
         (PassiveSkillId.Strength, 1, 3) => "치명타 피해 배율 +0.5",
-        (PassiveSkillId.Strength, 2, 1) => "기본 공격 피해량 20% 증가",
-        (PassiveSkillId.Strength, 2, 2) => "기본 공격 피해량 35% 증가",
-        (PassiveSkillId.Strength, 2, 3) => "기본 공격 피해량 50% 증가",
+        (PassiveSkillId.Strength, 2, 1) => "기본 공격 피해량 10% 증가",
+        (PassiveSkillId.Strength, 2, 2) => "기본 공격 피해량 18% 증가",
+        (PassiveSkillId.Strength, 2, 3) => "기본 공격 피해량 25% 증가",
 
         (PassiveSkillId.Health, 0, 1) => "5초마다 체력 2 재생",
         (PassiveSkillId.Health, 0, 2) => "5초마다 체력 5 재생",
