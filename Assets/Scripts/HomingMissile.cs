@@ -7,13 +7,14 @@ public class HomingMissile : MonoBehaviour
     [SerializeField] private float moveSpeed = 9f;
     [SerializeField] private float turnDegPerSec = 360f;
     [SerializeField] private float lifetime = 4f;
+    [SerializeField] private GameObject explodeVfxPrefab; // 폭발(Route2) VFX — 프로젝트의 실제 폭발 에셋을 프리팹에 배선
+    [SerializeField] private float explodeVfxScale = 0.6f;
 
     public float Damage { get; set; }
     public float CritChance { get; set; }
     public bool Explode { get; set; }
     public float ExplodeRadius { get; set; } = 1.5f;
     public float ExplodeRatio { get; set; } = 0.4f;
-    public GameObject ExplodeVfx { get; set; }
 
     private Enemy target;
     private Vector2 dir = Vector2.right;
@@ -71,8 +72,12 @@ public class HomingMissile : MonoBehaviour
 
         if (Explode)
         {
-            if (ExplodeVfx != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(ExplodeVfx, pos, Quaternion.identity), 0.6f);
+            if (explodeVfxPrefab != null)
+            {
+                GameObject vfx = ObjectPool.Instance.Spawn(explodeVfxPrefab, pos, Quaternion.identity);
+                vfx.transform.localScale = Vector3.one * explodeVfxScale;
+                ObjectPool.Instance.Despawn(vfx, 1.2f);
+            }
             foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             {
                 if (o == null || o == e) continue;

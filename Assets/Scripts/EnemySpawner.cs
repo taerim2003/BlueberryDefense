@@ -12,17 +12,18 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private int bossStage = 15;
     [SerializeField] private float spawnInterval = 1.5f;
     [SerializeField] private int defaultSpawnCount = 20; // StageData 없을 때 폴백 물량
-    [SerializeField] private float treasureSpawnRatio = 0.85f; // 스테이지 진행률이 이 이상일 때만 보물상자 블루베리 등장
-    [SerializeField] private float treasureGapAfter = 1.5f; // 보물상자 등장 직후 다음 스폰까지 추가 텀
 
     // 3스테이지마다 추가로 붙는 체력/이속 배율 — 처음엔 거의 안 느껴지다가 갈수록 증가폭이 커짐(후반일수록 스텝당 증가폭 자체가 커짐)
-    private static readonly float[] HpStepBonus = { 0f, 0.04f, 0.10f, 0.18f, 0.28f, 0.40f, 0.55f };
+    private static readonly float[] HpStepBonus = { 0f, 0.06f, 0.16f, 0.30f, 0.48f, 0.72f, 1.0f };
     private static readonly float[] SpeedStepBonus = { 0f, 0.025f, 0.06f, 0.11f, 0.17f, 0.24f, 0.33f };
 
     // 지식 연계 path1: 블루베리 스폰 시 이 확률로 보물상자 블루베리로 대체
     public static float ExtraTreasureChance = 0f;
 
+    private const float TreasureDelay = 5f; // 일반 몹이 전부 나온 뒤 이 시간만큼 텀을 두고 보물상자 등장(잔몹 정리 시간)
+
     private float timer;
+    private float treasureDelayTimer;
     private int treasureSpawnedForStage = 0;
     private int stageBeingCounted = -1;
     private bool bossSpawnedThisStage;
@@ -48,17 +49,32 @@ public class EnemySpawner : MonoBehaviour
             treasureSpawnedForStage = 0;
             bossSpawnedThisStage = false;
             timer = 0f;
+            treasureDelayTimer = 0f;
         }
 
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
+
+        int treasureCount = currentStage >= 11 ? 2 : 1; // 11스테이지부터 스테이지 종료 보물상자 블루베리 2마리
+        bool isBossStage = currentStage == bossStage && bossEnemyPrefab != null;
+        bool treasureStage = !isBossStage && treasureEnemyPrefab != null;
+
+        // 스테이지 종료 보물상자: 일반 몹이 전부 나온 뒤(SpawnTarget-treasureCount 도달) 5초 텀을 두고 등장.
+        // 그동안 스폰은 멈춰 있어 플레이어가 잔몹을 정리하고 보물상자를 확실히 먹을 수 있다.
+        if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - treasureCount)
+        {
+            treasureDelayTimer += Time.deltaTime;
+            if (treasureDelayTimer < TreasureDelay) return;
+            SpawnEnemies(treasureEnemyPrefab, treasureCount, stage, currentStage);
+            treasureSpawnedForStage = currentStage;
+            return;
+        }
 
         float interval = stage != null ? stage.spawnInterval : spawnInterval;
         float eliteChance = stage != null ? stage.eliteChance : 0f;
         float paperPlaneChance = stage != null ? stage.paperPlaneChance : 0f;
         float ufoChance = stage != null ? stage.ufoChance : 0f;
         float shieldChance = stage != null ? stage.shieldChance : 0f;
-        float stageRatio = SpawnRatio;
         bool paperPlaneOnlyStage = currentStage == 7;
 
         timer += Time.deltaTime;
@@ -67,19 +83,11 @@ public class EnemySpawner : MonoBehaviour
         timer = 0f;
 
         GameObject prefabToSpawn = paperPlaneOnlyStage && paperPlaneEnemyPrefab != null ? paperPlaneEnemyPrefab : enemyPrefab;
-        int batchCount = 1;
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어)
-        if (currentStage == bossStage && bossEnemyPrefab != null && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
+        if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
         {
             prefabToSpawn = bossEnemyPrefab;
             bossSpawnedThisStage = true;
-        }
-        else if (treasureEnemyPrefab != null && currentStage != treasureSpawnedForStage && stageRatio >= treasureSpawnRatio)
-        {
-            prefabToSpawn = treasureEnemyPrefab;
-            treasureSpawnedForStage = currentStage;
-            timer = -treasureGapAfter;
-            if (currentStage >= 11) batchCount = 2; // 11스테이지부터 스테이지 종료 보물상자 블루베리 2마리
         }
         else if (treasureEnemyPrefab != null && ExtraTreasureChance > 0f && Random.value < ExtraTreasureChance)
             prefabToSpawn = treasureEnemyPrefab;
@@ -92,11 +100,16 @@ public class EnemySpawner : MonoBehaviour
         else if (!paperPlaneOnlyStage && shieldEnemyPrefab != null && Random.value < shieldChance)
             prefabToSpawn = shieldEnemyPrefab;
 
-        for (int i = 0; i < batchCount; i++)
+        SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
+    }
+
+    private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage)
+    {
+        for (int i = 0; i < count; i++)
         {
-            // 보물상자 2마리 스폰 시 겹치지 않게 뒤쪽(왼쪽)으로 살짝 벌려 단일 대열 유지
+            // 2마리 이상 동시 스폰 시 겹치지 않게 뒤쪽(왼쪽)으로 살짝 벌려 단일 대열 유지
             Vector3 spawnPos = transform.position + Vector3.left * (1.2f * i);
-            GameObject obj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+            GameObject obj = Instantiate(prefab, spawnPos, Quaternion.identity);
 
             if (stage != null)
             {
@@ -111,6 +124,6 @@ public class EnemySpawner : MonoBehaviour
             }
         }
 
-        SpawnedThisStage += batchCount;
+        SpawnedThisStage += count;
     }
 }

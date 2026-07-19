@@ -282,6 +282,8 @@ public class HUDController : MonoBehaviour
                 slot.cooldownText.enabled = false;
                 if (slot.levelLabel != null) slot.levelLabel.enabled = false;
                 SetPathIcons(slot, null);
+                Outline emptyOutline = slot.icon.GetComponent<Outline>();
+                if (emptyOutline != null) emptyOutline.enabled = false;
                 activeSlotWasFilled[i] = false;
                 activeSlotWasOnCooldown[i] = false;
                 continue;
@@ -310,7 +312,24 @@ public class HUDController : MonoBehaviour
             activeSlotWasOnCooldown[i] = onCooldown;
 
             SetPathIcons(slot, skill);
+            UpdateShotgunHighlight(slot, skill.Id);
         }
+    }
+
+    // 산탄 타수버프를 받는 동안 해당 스킬 아이콘에 노란 테두리를 켠다 (버프가 실제로 걸렸는지 눈에 보이게).
+    private void UpdateShotgunHighlight(ActiveSlot slot, ActiveSkillId id)
+    {
+        if (slot.icon == null) return;
+        bool buffed = PlayerSkills.IsShotgunBuffed(id);
+        Outline outline = slot.icon.GetComponent<Outline>();
+        if (outline == null)
+        {
+            if (!buffed) return; // 필요할 때만 컴포넌트를 붙인다
+            outline = slot.icon.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 0.85f, 0.1f, 1f);
+            outline.effectDistance = new Vector2(4f, 4f);
+        }
+        outline.enabled = buffed;
     }
 
     private void SetPathIcons(ActiveSlot slot, EquippedSkill skill)

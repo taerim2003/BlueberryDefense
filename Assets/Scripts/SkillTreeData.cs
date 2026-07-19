@@ -67,9 +67,38 @@ public static class SkillTreeSave
     public static int CrystalEarned => PlayerPrefs.GetInt(CrystalKey, 0);
     public static int PowderEarned => PlayerPrefs.GetInt(PowderKey, 0);
 
-    public static void AddEssence(int amount) => Add(EssenceKey, amount);
+    // 정수 적립 시 아웃게임 레벨이 오르면 그만큼 가루를 지급한다(가루는 오직 레벨업으로만 획득).
+    public static void AddEssence(int amount)
+    {
+        if (amount <= 0) return;
+        int before = OutgameLevel;
+        Add(EssenceKey, amount);
+        int gained = OutgameLevel - before;
+        if (gained > 0) AddPowder(gained);
+    }
+
     public static void AddCrystal(int amount) => Add(CrystalKey, amount);
     public static void AddPowder(int amount) => Add(PowderKey, amount);
+
+    // ── 아웃게임 레벨: 지금까지 번 정수 총합(EssenceEarned)이 그대로 경험치. 레벨업마다 가루 +1. ──
+    // 레벨 L에 "도달"하는 데 필요한 누적 정수 = LevelXpBase·L·(L-1) → L→L+1 비용은 2·LevelXpBase·L 로 점증.
+    private const int LevelXpBase = 20;
+
+    public static int EssenceForLevel(int level) => LevelXpBase * level * (level - 1);
+
+    public static int OutgameLevel => LevelForEssence(EssenceEarned);
+
+    public static int LevelForEssence(int totalEssence)
+    {
+        int level = 1;
+        while (level < 9999 && EssenceForLevel(level + 1) <= totalEssence) level++;
+        return level;
+    }
+
+    // 경험치 바 UI용: 현재 레벨 구간에서의 진행 정도
+    public static int XpIntoCurrentLevel => EssenceEarned - EssenceForLevel(OutgameLevel);
+    public static int XpForNextLevel => EssenceForLevel(OutgameLevel + 1) - EssenceForLevel(OutgameLevel);
+    public static float LevelProgress => XpForNextLevel > 0 ? Mathf.Clamp01((float)XpIntoCurrentLevel / XpForNextLevel) : 0f;
 
     private static void Add(string key, int amount)
     {
@@ -115,9 +144,9 @@ public static class SkillTreeSave
     public static int NextLevelCost(SkillTreeData tree, SkillNode n) =>
         Mathf.RoundToInt(CostOf(tree, n) * Mathf.Pow(LevelCostGrowth, LevelOf(n.id)));
 
-    // 정수 비용: 루트로부터의 깊이가 깊을수록 비쌈. 30 · 1.4^depth
+    // 정수 비용: 루트로부터의 깊이가 깊을수록 비쌈. 15 · 1.4^depth (기존 30에서 절반으로 인하)
     public static int EssenceCost(SkillTreeData tree, SkillNode n) =>
-        Mathf.RoundToInt(30f * Mathf.Pow(1.4f, Depth(tree, n.id)));
+        Mathf.RoundToInt(15f * Mathf.Pow(1.4f, Depth(tree, n.id)));
 
     // 루트로부터 최단 선행 거리(루트=0). 순수 데이터라 UI/저장 양쪽에서 씀.
     public static int Depth(SkillTreeData tree, string id) => DepthRec(tree, id, new HashSet<string>());

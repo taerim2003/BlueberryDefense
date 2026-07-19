@@ -182,7 +182,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   moveSpeed: 2
   damage: 10
-  maxHealth: 20
+  maxHealth: 14
   xpValue: 5
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}

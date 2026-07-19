@@ -65,8 +65,7 @@ public class GameManager : MonoBehaviour
     // 현재 스테이지 클리어 처리 → 다음 스테이지(또는 게임 클리어)
     private void AdvanceStage()
     {
-        // 스킬트리 자원: 스테이지 클리어마다 가루 +1, 최종(15) 클리어 시 태양결정 +1
-        SkillTreeSave.AddPowder(1);
+        // 스킬트리 자원: 최종(15) 클리어 시 태양결정 +1. (가루는 이제 아웃게임 레벨업으로만 획득 — 스테이지 클리어 지급 폐지)
         if (CurrentStage >= FinalStage) SkillTreeSave.AddCrystal(1);
 
         if (CurrentStage >= FinalStage)

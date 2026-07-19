@@ -51,6 +51,7 @@ public class Enemy : MonoBehaviour
     public bool IsFlying => isFlying;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
+    public float SpawnYOffset => spawnYOffset; // 이 종류가 서는 자연 높이(레인 y=0 기준). 분출 팝콘의 착지 높이로 사용
 
     private float currentHealth;
     private bool isDead;
@@ -59,12 +60,20 @@ public class Enemy : MonoBehaviour
     private float vulnerableMultiplier = 1f;
     private float vulnerableTimer;
     private SpriteRenderer spriteRenderer;
+    private Animator animator; // 걷기 애니메이터(없을 수 있음) — 기절 중 정지시키기 위해 캐시
 
     private void Awake()
     {
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponentInChildren<Animator>();
         if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
+    }
+
+    // 기절 = 이동정지(slowMultiplier≈0). 이때 걷기 애니메이션도 함께 멈추고, 풀리면 다시 재생한다.
+    private void SetAnimatorFrozen(bool frozen)
+    {
+        if (animator != null) animator.speed = frozen ? 0f : 1f;
     }
 
     public void ApplyStageMultipliers(float hpMultiplier, float speedMultiplier, float damageMultiplier)
@@ -102,7 +111,10 @@ public class Enemy : MonoBehaviour
         {
             slowTimer -= Time.deltaTime;
             if (slowTimer <= 0f)
+            {
                 slowMultiplier = 1f;
+                SetAnimatorFrozen(false); // 기절 해제 → 걷기 재생 복구
+            }
         }
 
         if (vulnerableTimer > 0f)
@@ -120,6 +132,7 @@ public class Enemy : MonoBehaviour
     {
         slowMultiplier = multiplier;
         slowTimer = duration;
+        SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
     }
 
     public void ApplyVulnerable(float multiplier, float duration)
@@ -130,12 +143,19 @@ public class Enemy : MonoBehaviour
 
     private const int MaxLightningChain = 4;
 
-    // rollLightning: 이 타격이 낙뢰 발동을 굴릴지. 멀티히트(TakeSkillHit)에선 첫 서브히트만 true로 넘겨
-    //                공격당 낙뢰 기회를 1회로 유지한다(히트가 쪼개졌다고 낙뢰 빈도가 뻥튀기되지 않게).
-    // hitIndex:     멀티히트 서브히트 순번. 데미지 숫자를 위로 주루룩 쌓는 데 씀.
-    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0)
+    // rollLightning:    이 타격이 낙뢰 발동을 굴릴지. 멀티히트(TakeSkillHit)에선 첫 서브히트만 true로 넘겨
+    //                   공격당 낙뢰 기회를 1회로 유지한다(히트가 쪼개졌다고 낙뢰 빈도가 뻥튀기되지 않게).
+    // hitIndex:        멀티히트 서브히트 순번 — 데미지 숫자를 세로로 정렬해 쌓는 데 씀.
+    // forceShowNumber: 이미 죽은 뒤의 멀티히트 남은 서브히트도 데미지 숫자만은 띄운다(공격이 항상 같은 타수로 보이게).
+    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0, bool forceShowNumber = false)
     {
-        if (isDead) return; // Destroy()는 프레임 끝에 실행되므로, 같은 프레임 내 중복 피격으로 사망 처리가 두 번 도는 것을 막음
+        if (popping) return; // 팝콘 등장(튀어오르는) 중엔 무적 — 보스 분출 직후 광역기에 즉사해 "안 튀어나온 것처럼" 보이는 걸 막음
+        if (isDead)
+        {
+            // 같은 프레임 중복 사망 처리는 막되(Destroy는 프레임 끝 실행), 멀티히트의 남은 숫자는 계속 쌓아 보여준다.
+            if (forceShowNumber) SpawnDamageNumber(amount * vulnerableMultiplier, isCrit, hitIndex);
+            return;
+        }
 
         float actualDamage = amount * vulnerableMultiplier;
         // 스킬트리: 비행 적 추가피해(전역 + 독수리 전용)
@@ -260,15 +280,19 @@ public class Enemy : MonoBehaviour
         }
 
         if (deathSpawnPrefabs == null || deathSpawnPrefabs.Length == 0 || deathSpawnCount <= 0) return;
+
+        // 레인 기준선(스포너 Y) = 보스는 y로 움직이지 않으므로 자기 위치에서 자기 spawnYOffset을 빼면 역산된다.
+        // 각 팝콘은 (기준선 + 그 종류의 spawnYOffset)에 착지 → 레인이 y=0이 아니어도 종류별 자연 높이에 정확히 내려앉는다.
+        float laneBaselineY = transform.position.y - spawnYOffset;
         for (int i = 0; i < deathSpawnCount; i++)
         {
             GameObject prefab = deathSpawnPrefabs[Random.Range(0, deathSpawnPrefabs.Length)];
             if (prefab == null) continue;
             Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
             GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
-            // 팝콘처럼 위로 튀어올랐다가 바닥(y=0)에 착지 후 행진
+            // 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(UFO/종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.
             Enemy e = go.GetComponent<Enemy>();
-            if (e != null) e.PopIn(Random.Range(5f, 9f), Random.Range(-5f, 5f), 0f);
+            if (e != null) e.PopIn(Random.Range(5f, 9f), Random.Range(-5f, 5f), laneBaselineY + e.SpawnYOffset);
         }
     }
 
@@ -293,21 +317,25 @@ public class Enemy : MonoBehaviour
         {
             float d = PlayerPassives.ApplyCrit(per, critChance, out bool c);
             anyCrit |= c;
-            TakeDamage(d, isCrit: c, source: source, rollLightning: i == 0, hitIndex: i); // 첫 히트만 낙뢰 굴림
-            if (isDead) break;
+            // 적이 중간에 죽어도 끊지 않는다 — 남은 서브히트는 데미지만 무효(죽은 상태)이고 숫자는 계속 쌓아
+            // "3번 때렸다가 1번 때렸다가" 하는 들쭉날쭉함을 없앤다. 첫 히트만 낙뢰 굴림.
+            TakeDamage(d, isCrit: c, source: source, rollLightning: i == 0, hitIndex: i, forceShowNumber: true);
         }
         return anyCrit;
     }
+
+    // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는
+    // 가로 정렬(x 오프셋 0)로 세로로만 쌓는다(9/9/9). 뜬 자리에 월드 고정되어 위로만 올라간다.
+    private const float DamageNumberBaseHeight = 0.85f;
+    private const float DamageNumberStackStep = 0.42f;
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
         if (damageNumberPrefab == null) return;
 
         GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
-        // 멀티히트: 순번마다 위로 조금씩 올리고 좌우로 살짝 흔들어 "주루룩" 쌓이는 느낌 + 순번 비례 등장 딜레이로 순차 표시
-        Vector3 offset = new Vector3((hitIndex % 2 == 0 ? 1f : -1f) * 0.18f * ((hitIndex + 1) / 2), 0.32f * hitIndex, 0f);
-        float delay = 0.06f * hitIndex;
-        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset, delay);
+        Vector3 offset = new Vector3(0f, DamageNumberBaseHeight + DamageNumberStackStep * hitIndex, 0f);
+        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset);
     }
 
     private void SpawnHitParticles(float damage)

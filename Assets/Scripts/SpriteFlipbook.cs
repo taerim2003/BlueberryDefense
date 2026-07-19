@@ -8,15 +8,18 @@ public class SpriteFlipbook : MonoBehaviour
     [SerializeField] private Sprite[] frames;
     [SerializeField] private float fps = 16f;
     [SerializeField] private bool loop = false;
+    [SerializeField] private bool despawnOnFinish = true; // 비루프 재생이 끝나면 풀로 자동 반환 — 마지막 프레임이 얼어붙어 남는 잔상 방지
 
     private SpriteRenderer sr;
     private float timer;
+    private bool finished;
 
     private void Awake() => sr = GetComponent<SpriteRenderer>();
 
     private void OnEnable()
     {
         timer = 0f;
+        finished = false;
         if (frames != null && frames.Length > 0) sr.sprite = frames[0];
     }
 
@@ -25,7 +28,23 @@ public class SpriteFlipbook : MonoBehaviour
         if (frames == null || frames.Length == 0) return;
         timer += Time.deltaTime;
         int frame = Mathf.FloorToInt(timer * fps);
-        frame = loop ? frame % frames.Length : Mathf.Min(frame, frames.Length - 1);
+
+        if (loop)
+        {
+            sr.sprite = frames[frame % frames.Length];
+            return;
+        }
+
+        // 비루프: 마지막 프레임까지 재생한 뒤(= timer*fps가 프레임 수를 넘어서면) 자동 소멸.
+        if (frame >= frames.Length)
+        {
+            if (!finished)
+            {
+                finished = true;
+                if (despawnOnFinish) ObjectPool.Instance.Despawn(gameObject);
+            }
+            return;
+        }
         sr.sprite = frames[frame];
     }
 }

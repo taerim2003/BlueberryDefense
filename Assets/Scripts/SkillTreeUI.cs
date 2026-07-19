@@ -47,6 +47,11 @@ public class SkillTreeUI : MonoBehaviour
     [SerializeField] private TMP_Text crystalText;
     [SerializeField] private TMP_Text powderText;
 
+    [Header("Outgame Level (선택 — 패널 하단 경험치 바)")]
+    [SerializeField] private TMP_Text levelText;      // "Lv N"
+    [SerializeField] private Image levelXpFill;       // filled 이미지(fillAmount)
+    [SerializeField] private TMP_Text levelXpText;    // "현재/다음" 경험치
+
     [Header("Tooltip")]
     [SerializeField] private GameObject tooltipRoot;
     [SerializeField] private RectTransform tooltipRect;
@@ -272,8 +277,17 @@ public class SkillTreeUI : MonoBehaviour
         if (crystalText != null) { crystalText.text = cry + " 결정"; if (prevCrystal >= 0 && cry != prevCrystal) PunchCurrency(crystalText); }
         if (powderText != null) { powderText.text = pow + " 가루"; if (prevPowder >= 0 && pow != prevPowder) PunchCurrency(powderText); }
         prevEssence = ess; prevCrystal = cry; prevPowder = pow;
+        UpdateLevelBar();
         RefreshNodes();
         RefreshLines();
+    }
+
+    // 아웃게임 레벨 바(선택): 총정수 기반 레벨/진행도 표시. 레벨은 판 종료 때만 오르므로 패널 열 때 갱신으로 충분.
+    private void UpdateLevelBar()
+    {
+        if (levelText != null) levelText.text = "Lv " + SkillTreeSave.OutgameLevel;
+        if (levelXpFill != null) levelXpFill.fillAmount = SkillTreeSave.LevelProgress;
+        if (levelXpText != null) levelXpText.text = SkillTreeSave.XpIntoCurrentLevel + " / " + SkillTreeSave.XpForNextLevel;
     }
 
     private static void PunchCurrency(TMP_Text t)

@@ -14,6 +14,7 @@ public enum ActiveSkillId
     Sniping,  // 신규: 가장 체력 높은 적을 5회 저격
     Homing,   // 신규: 적 추적 미사일(성장형)
     Shotgun,  // 신규: 산탄 장착(타수 버프)
+    Rewind,   // 신규: 다른 스킬 쿨타임을 앞당김(되감기)
     // enum 끝에 추가 — 아이콘 인덱스/저장값 유지
 }
 
@@ -35,6 +36,7 @@ public class EquippedSkill
     public int ExtraProjectiles = 0; // 기본공격: 투사체 추가 발사 (1당 1발)
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
     public int GrowthStacks = 0; // 호밍 미사일: 사용할수록 누적되는 성장 스택(이번 판 한정)
+    public float RewindAmount = 1f; // 되감기: 다른 스킬 쿨타임을 앞당기는 시간(초). 레벨업마다 +0.1
 
     // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
     public readonly int[] PathTier = new int[3];
@@ -64,6 +66,9 @@ public class PlayerSkills : MonoBehaviour
     private static bool shotgunSingleTarget;
     private static ActiveSkillId shotgunTargetSkill;
 
+    // 되감기 Route2: 다음에 사용하는 스킬의 피해를 1회 증가시키는 보너스(ComputeBaseDamage가 소비)
+    private static float nextSkillDamageBonus;
+
     // Enemy.TakeSkillHit가 참조: 스킬 고유 타수(기본공격만 >1, 그 외 1)
     public static int NaturalHits(ActiveSkillId source) =>
         source == ActiveSkillId.BasicAttack ? Mathf.Max(1, BasicAttackHits) : 1;
@@ -74,6 +79,13 @@ public class PlayerSkills : MonoBehaviour
         if (shotgunTimer <= 0f) return 0;
         if (shotgunSingleTarget) return source == shotgunTargetSkill ? shotgunBonus : 0;
         return shotgunBonus;
+    }
+
+    // HUD가 참조: 이 스킬이 지금 산탄 타수버프를 받고 있는지(노란 테두리 하이라이트용)
+    public static bool IsShotgunBuffed(ActiveSkillId source)
+    {
+        if (shotgunTimer <= 0f || shotgunBonus <= 0) return false;
+        return !shotgunSingleTarget || source == shotgunTargetSkill;
     }
 
     // 리프레쉬(재사용 초기화)가 발동될 때 — HUD가 구독해 리프레쉬 패시브 아이콘에 보잉 연출
@@ -88,8 +100,10 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject orbAltarPrefab;
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
-    [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 타격 VFX(Effect_Sniping)
-    [SerializeField] private GameObject snipingSplashPrefab;      // 스나이핑 path1(Route2) 스플래시 VFX(Effect_SplashSniping). 호밍 폭발 VFX로도 재활용
+    [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 후속 타격 VFX(Effect_Sniping, 2~5번째 저격)
+    [SerializeField] private GameObject snipingSplashPrefab;      // 스나이핑 첫 타격 강조 VFX(Effect_SplashSniping — 기본 이펙트 화려 버전)
+    [SerializeField] private GameObject overkillSplashVfxPrefab;  // Route2 초과데미지 연쇄 전용 VFX(Vefects Impact Sparks)
+    [SerializeField] private float overkillSplashVfxScale = 0.5f;
     [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
@@ -116,6 +130,7 @@ public class PlayerSkills : MonoBehaviour
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
         shotgunTimer = 0f; // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
+        nextSkillDamageBonus = 0f;
         AcquireSkill(ActiveSkillId.BasicAttack);
         LightningStorm.OnProc += HandleThunderCooldown;
     }
@@ -213,6 +228,14 @@ public class PlayerSkills : MonoBehaviour
 
     private static void ApplyUpgradeEffect(EquippedSkill skill, int level)
     {
+        // 되감기: 레벨업마다 쿨타임 0.1초 감소 + 되감기 시간 0.1초 증가 (둘 다 매 레벨 조금씩)
+        if (skill.Id == ActiveSkillId.Rewind)
+        {
+            skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown - 0.1f);
+            skill.RewindAmount += 0.1f;
+            return;
+        }
+
         switch (level % 3)
         {
             case 1:
@@ -264,6 +287,8 @@ public class PlayerSkills : MonoBehaviour
 
     public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel)
     {
+        if (skill.Id == ActiveSkillId.Rewind) return "쿨타임 0.1초 감소, 되감기 0.1초 증가";
+
         switch (nextLevel % 3)
         {
             case 1: return skill.Id == ActiveSkillId.BasicAttack ? "피해량 13% 증가" : "피해량 20% 증가";
@@ -386,9 +411,12 @@ public class PlayerSkills : MonoBehaviour
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.6f); // 쿨감 40%
                 break;
 
-            // 스나이핑 (path0 타겟수·path1 T2 스플래시·path2 T2 자동시전은 Fire/Update에서 실시간 처리)
+            // 스나이핑 (path0 타겟수·path1 T2 초과데미지연쇄·path2 T2 자동시전은 Fire/Update에서 실시간 처리)
             case (ActiveSkillId.Sniping, 1, 1):
-                skill.Damage *= 1.3f; // Route2 T1: 피해 30%
+                skill.Damage *= 1.7f; // Route2 T1: 피해 70%
+                break;
+            case (ActiveSkillId.Sniping, 1, 3):
+                skill.Damage *= 2f; // Route2 T3: 피해 100% (초과 피해가 커져 연쇄도 강해짐)
                 break;
             case (ActiveSkillId.Sniping, 2, 1):
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.6f); // Route3 T1: 쿨감 40%
@@ -402,6 +430,13 @@ public class PlayerSkills : MonoBehaviour
                 skill.Damage *= 1.3f; // Route2 T1: 미사일 피해 30%
                 break;
             // 산탄(Shotgun)은 전부 FireShotgun에서 실시간 계산(영구 스탯 변경 없음)
+
+            // 되감기 Route3: 되감기 자체 쿨타임 감소 (T3의 글로벌 쿨감은 GlobalCooldownScale에서 실시간 처리)
+            case (ActiveSkillId.Rewind, 2, 1):
+            case (ActiveSkillId.Rewind, 2, 2):
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.7f); // 쿨감 30%
+                break;
+            // 되감기 Route1(되감기 정도)·Route2(다음 스킬 피해)는 FireRewind에서 실시간 계산
         }
     }
 
@@ -466,6 +501,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Sniping => "스나이핑",
         ActiveSkillId.Homing => "호밍 미사일",
         ActiveSkillId.Shotgun => "산탄 장착",
+        ActiveSkillId.Rewind => "되감기",
         _ => id.ToString(),
     };
 
@@ -556,9 +592,9 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Sniping, 0, 1) => "저격 타겟 1명 추가 (총 2명)",
         (ActiveSkillId.Sniping, 0, 2) => "저격 타겟 1명 추가 (총 3명)",
         (ActiveSkillId.Sniping, 0, 3) => "저격 타겟 2명 추가 (총 5명)",
-        (ActiveSkillId.Sniping, 1, 1) => "피해량 30% 증가",
-        (ActiveSkillId.Sniping, 1, 2) => "타격 시 주변 적에게 스플래시 피해 (40%)",
-        (ActiveSkillId.Sniping, 1, 3) => "스플래시 피해 80%로 증가, 범위 확대",
+        (ActiveSkillId.Sniping, 1, 1) => "피해량 70% 증가",
+        (ActiveSkillId.Sniping, 1, 2) => "처치 시 남은 초과 피해가 옆 적에게 흘러 연쇄 (0.3초마다 튐)",
+        (ActiveSkillId.Sniping, 1, 3) => "피해량 100% 증가, 초과 피해 연쇄 범위·분기 확대",
         (ActiveSkillId.Sniping, 2, 1) => "재사용 대기시간 40% 감소",
         (ActiveSkillId.Sniping, 2, 2) => "수동 사용 불가, 3초마다 가장 체력 높은 적에게 자동 시전",
         (ActiveSkillId.Sniping, 2, 3) => "자동 시전 간격 1.5초로 단축, 피해량 30% 증가",
@@ -584,6 +620,17 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Shotgun, 2, 1) => "버프 지속시간 2초 증가",
         (ActiveSkillId.Shotgun, 2, 2) => "사용 시 화면의 모든 적을 5회 공격",
         (ActiveSkillId.Shotgun, 2, 3) => "전체 공격이 적을 1.5초간 기절시킴",
+
+        // Rewind (Route1=path0 되감기 정도, Route2=path1 다음 스킬 피해, Route3=path2 쿨감+글로벌쿨감)
+        (ActiveSkillId.Rewind, 0, 1) => "되감기 시간 0.5초 증가",
+        (ActiveSkillId.Rewind, 0, 2) => "되감기 시간 0.5초 추가 증가",
+        (ActiveSkillId.Rewind, 0, 3) => "되감기 시간 1초 추가 증가",
+        (ActiveSkillId.Rewind, 1, 1) => "다음에 사용하는 스킬 피해 30% 증가",
+        (ActiveSkillId.Rewind, 1, 2) => "다음에 사용하는 스킬 피해 60% 증가",
+        (ActiveSkillId.Rewind, 1, 3) => "다음에 사용하는 스킬 피해 100% 증가",
+        (ActiveSkillId.Rewind, 2, 1) => "되감기 재사용 대기시간 30% 감소",
+        (ActiveSkillId.Rewind, 2, 2) => "되감기 재사용 대기시간 30% 추가 감소",
+        (ActiveSkillId.Rewind, 2, 3) => "전역 재사용 대기시간(GCD) 절반으로 감소",
 
         _ => "",
     };
@@ -645,8 +692,8 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Sniping, 0, 2) => "타겟 추가 II",
         (ActiveSkillId.Sniping, 0, 3) => "타겟 추가 III",
         (ActiveSkillId.Sniping, 1, 1) => "피해 강화",
-        (ActiveSkillId.Sniping, 1, 2) => "스플래시",
-        (ActiveSkillId.Sniping, 1, 3) => "스플래시 II",
+        (ActiveSkillId.Sniping, 1, 2) => "초과 연쇄",
+        (ActiveSkillId.Sniping, 1, 3) => "연쇄·피해 강화",
         (ActiveSkillId.Sniping, 2, 1) => "쿨타임 감소",
         (ActiveSkillId.Sniping, 2, 2) => "자동 조준",
         (ActiveSkillId.Sniping, 2, 3) => "자동 조준 II",
@@ -670,6 +717,16 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Shotgun, 2, 1) => "지속 증가",
         (ActiveSkillId.Shotgun, 2, 2) => "전체 산탄",
         (ActiveSkillId.Shotgun, 2, 3) => "기절 산탄",
+
+        (ActiveSkillId.Rewind, 0, 1) => "되감기 강화",
+        (ActiveSkillId.Rewind, 0, 2) => "되감기 강화 II",
+        (ActiveSkillId.Rewind, 0, 3) => "되감기 강화 III",
+        (ActiveSkillId.Rewind, 1, 1) => "다음 타 강화",
+        (ActiveSkillId.Rewind, 1, 2) => "다음 타 강화 II",
+        (ActiveSkillId.Rewind, 1, 3) => "다음 타 강화 III",
+        (ActiveSkillId.Rewind, 2, 1) => "쿨타임 감소",
+        (ActiveSkillId.Rewind, 2, 2) => "쿨타임 감소 II",
+        (ActiveSkillId.Rewind, 2, 3) => "글로벌 쿨감",
 
         _ => "",
     };
@@ -720,9 +777,12 @@ public class PlayerSkills : MonoBehaviour
             case ActiveSkillId.Shotgun:
                 FireShotgun(damage, critChance, skill);
                 break;
+            case ActiveSkillId.Rewind:
+                FireRewind(skill);
+                break;
         }
 
-        globalCooldownTimer = GlobalCooldown;
+        globalCooldownTimer = GlobalCooldown * GlobalCooldownScale(); // 되감기 Route3 T3: 전역 쿨타임 절반
         // 오브가 설치기(낙뢰 연계)로 대체된 상태에서는 훨씬 긴 별도 쿨타임을 사용
         // (메타 "쿨타임" 업그레이드가 전역 배율로 곱해짐)
         // 스나이핑 자동시전(path2 T2+)은 스킬 쿨타임 대신 고정 간격(T2=3초, T3=1.5초)으로 발동
@@ -793,6 +853,13 @@ public class PlayerSkills : MonoBehaviour
         // 건강 연계 path1(패시브): 최대체력에 비례한 전체 피해량 증가
         if (health != null && PlayerPassives.HealthDamagePerHp > 0f)
             damage *= 1f + PlayerPassives.HealthDamagePerHp * health.MaxHealth;
+
+        // 되감기 Route2: 되감기 직후 사용하는 스킬(되감기 제외)의 피해를 1회 증가시킨다.
+        if (skillId != ActiveSkillId.Rewind && nextSkillDamageBonus > 0f)
+        {
+            damage *= 1f + nextSkillDamageBonus;
+            nextSkillDamageBonus = 0f;
+        }
 
         return damage;
     }
@@ -876,42 +943,75 @@ public class PlayerSkills : MonoBehaviour
             .ToList();
         if (chosen.Count == 0) return false; // 조준할 적 없음 → 캐스트 실패
 
-        bool splash = skill.PathTier[1] >= 2;                     // Route2 T2: 스플래시
-        float splashRatio = skill.PathTier[1] >= 3 ? 0.8f : 0.4f; // T3: 스플래시 피해 강화
-        float splashRadius = skill.PathTier[1] >= 3 ? 2.5f : 1.5f;
+        bool overkillSplash = skill.PathTier[1] >= 2;                 // Route2 T2: 초과 피해 연쇄
+        float overkillRadius = skill.PathTier[1] >= 3 ? 3.5f : 2.5f;  // T3: 연쇄 탐색 범위 확대
+        int firstFanout = skill.PathTier[1] >= 3 ? 2 : 1;            // T3: 첫 튐부터 두 갈래
 
         animator.SetTrigger("Attack");
         foreach (Enemy target in chosen)
-            StartCoroutine(SnipeTarget(target, damage, critChance, splash, splashRatio, splashRadius));
+            StartCoroutine(SnipeTarget(target, damage, critChance, overkillSplash, overkillRadius, firstFanout));
         return true;
     }
 
-    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool splash, float splashRatio, float splashRadius)
+    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool overkillSplash, float overkillRadius, int firstFanout)
     {
-        // 이펙트는 타겟당 1회만 표시 — 5발이어도 이펙트는 한 번(데미지·스플래시 판정은 5회).
-        if (target != null && snipingEffectPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(snipingEffectPrefab, target.transform.position, Quaternion.identity), 0.6f);
-
         for (int i = 0; i < SnipingBaseShots; i++)
         {
             if (target == null) yield break;
             Vector3 pos = target.transform.position;
+
+            // 첫 타격은 화려한 스플래시-룩(Effect_SplashSniping), 나머지 저격은 기본 스파크(Effect_Sniping).
+            GameObject sparkPrefab = i == 0 ? snipingSplashPrefab : snipingEffectPrefab;
+            if (sparkPrefab != null)
+                ObjectPool.Instance.Spawn(sparkPrefab, pos, Quaternion.identity);
+
             target.TakeSkillHit(damage, critChance, ActiveSkillId.Sniping);
-            if (splash) SnipingSplash(pos, target, damage * splashRatio, critChance, splashRadius, showVfx: i == 0); // 스플래시 VFX도 1회만
+
+            // Route2: 이 저격이 적을 죽이고 초과 피해가 남으면, 남은 만큼을 옆 적에게 흘려보낸다.
+            if (overkillSplash && target != null && target.CurrentHealth <= 0f)
+            {
+                float overkill = -target.CurrentHealth; // 대상 체력을 넘겨 들어간 피해량
+                if (overkill > 0f)
+                    StartCoroutine(OverkillChain(pos, overkill, critChance, firstFanout, overkillRadius, target));
+                yield break; // 대상이 죽었으니 남은 저격은 종료 — 초과 피해가 이어받아 퍼진다
+            }
+
             yield return new WaitForSeconds(SnipingShotInterval);
         }
     }
 
-    private void SnipingSplash(Vector3 center, Enemy primary, float dmg, float critChance, float radius, bool showVfx)
+    // 초과 피해 연쇄: fromPos 근처의 산 적(들)에게 overkill을 흘려보내고, 그 적도 초과 피해를 내면 다시 옆 두 적으로 튕긴다.
+    // 초과 피해가 없거나 근처에 산 적이 없을 때까지 반복. 매 튐마다 0.3초 텀을 둬서 퍼지는 게 보이게 한다.
+    private IEnumerator OverkillChain(Vector3 fromPos, float overkill, float critChance, int fanout, float radius, Enemy exclude)
     {
-        if (showVfx && snipingSplashPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(snipingSplashPrefab, center, Quaternion.identity), 0.6f);
+        if (overkill <= 0f) yield break;
+        yield return new WaitForSeconds(0.3f);
 
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        List<Enemy> next = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
+            .Where(e => e != null && e != exclude && Vector2.Distance(fromPos, e.transform.position) <= radius)
+            .OrderBy(e => Vector2.Distance(fromPos, e.transform.position))
+            .Take(fanout)
+            .ToList();
+
+        foreach (Enemy e in next)
         {
-            if (e == null || e == primary) continue;
-            if (Vector2.Distance(center, e.transform.position) <= radius)
-                e.TakeSkillHit(dmg, critChance, ActiveSkillId.Sniping);
+            if (e == null) continue;
+            Vector3 pos = e.transform.position;
+            // 초과데미지 스플래시는 스나이핑 이펙트와 확실히 구분되는 전용 VFX(Impact Sparks)
+            if (overkillSplashVfxPrefab != null)
+            {
+                GameObject vfx = ObjectPool.Instance.Spawn(overkillSplashVfxPrefab, pos, Quaternion.identity);
+                vfx.transform.localScale = Vector3.one * overkillSplashVfxScale;
+                ObjectPool.Instance.Despawn(vfx, 1f);
+            }
+
+            e.TakeDamage(overkill, source: ActiveSkillId.Sniping, rollLightning: false); // 흘러들어간 초과 피해는 그대로 적용
+            if (e != null && e.CurrentHealth <= 0f)
+            {
+                float nextOverkill = -e.CurrentHealth;
+                if (nextOverkill > 0f)
+                    StartCoroutine(OverkillChain(pos, nextOverkill, critChance, 2, radius, e)); // 이후 튐은 두 갈래
+            }
         }
     }
 
@@ -943,7 +1043,7 @@ public class PlayerSkills : MonoBehaviour
             m.Explode = explode;
             m.ExplodeRadius = explodeRadius;
             m.ExplodeRatio = explodeRatio;
-            m.ExplodeVfx = snipingSplashPrefab; // 폭발 VFX 재활용
+            // 폭발 VFX는 HomingMissile 프리팹이 자체 보유(실제 폭발 에셋). 여기서 스나이핑 이펙트를 물리지 않는다.
             m.Init(dir);
         }
         animator.SetTrigger("Attack");
@@ -987,10 +1087,37 @@ public class PlayerSkills : MonoBehaviour
         float bestDmg = -1f;
         foreach (EquippedSkill s in equippedSkills)
         {
-            if (s.Id == ActiveSkillId.Shotgun) continue; // 자기 자신 제외
+            if (s.Id == ActiveSkillId.Shotgun || s.Id == ActiveSkillId.Rewind) continue; // 자신·피해 없는 유틸 제외
             if (s.Damage > bestDmg) { bestDmg = s.Damage; best = s.Id; }
         }
         return best;
+    }
+
+    // ── 되감기: 다른 스킬의 쿨타임을 앞당긴다 ──
+    private void FireRewind(EquippedSkill skill)
+    {
+        // 되감기 정도(앞당길 시간). Route1(path0)로 증가.
+        float amount = skill.RewindAmount;
+        if (skill.PathTier[0] >= 1) amount += 0.5f;
+        if (skill.PathTier[0] >= 2) amount += 0.5f;
+        if (skill.PathTier[0] >= 3) amount += 1f;
+
+        foreach (EquippedSkill s in equippedSkills)
+            if (s != skill) s.CooldownTimer = Mathf.Max(0f, s.CooldownTimer - amount);
+
+        // Route2(path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
+        if (skill.PathTier[1] >= 1)
+            nextSkillDamageBonus = skill.PathTier[1] >= 3 ? 1.0f : skill.PathTier[1] >= 2 ? 0.6f : 0.3f;
+
+        animator.SetTrigger("Attack");
+    }
+
+    // 되감기 Route3 T3을 보유하면 전역 쿨타임(GCD)이 절반이 된다.
+    private float GlobalCooldownScale()
+    {
+        foreach (EquippedSkill s in equippedSkills)
+            if (s.Id == ActiveSkillId.Rewind && s.PathTier[2] >= 3) return 0.5f;
+        return 1f;
     }
 
     private void FireWhirlwind(float damage, float critChance, EquippedSkill skill)
@@ -1230,6 +1357,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Sniping => 6f,
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 14f,
+        ActiveSkillId.Rewind => 6f,
         _ => 1f,
     };
 
@@ -1243,6 +1371,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Sniping => 9f,
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 12f, // Route3 전체공격용 기준 데미지
+        ActiveSkillId.Rewind => 0f,   // 되감기는 피해 없음(유틸)
         _ => 6f,
     };
 }

@@ -166,7 +166,7 @@ public class LevelUpUI : MonoBehaviour
 
         if (!skills.HasMaxSkills)
         {
-            foreach (ActiveSkillId id in new[] { ActiveSkillId.Whirlwind, ActiveSkillId.Orb, ActiveSkillId.Lightning, ActiveSkillId.EagleDrop, ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.Shotgun })
+            foreach (ActiveSkillId id in new[] { ActiveSkillId.Whirlwind, ActiveSkillId.Orb, ActiveSkillId.Lightning, ActiveSkillId.EagleDrop, ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.Shotgun, ActiveSkillId.Rewind })
             {
                 if (skills.HasSkill(id)) continue;
                 ActiveSkillId captured = id;
@@ -333,6 +333,7 @@ public class LevelUpUI : MonoBehaviour
         ActiveSkillId.Sniping => "가장 체력이 높은 적을 5회 저격해 큰 피해를 줌",
         ActiveSkillId.Homing => "적을 추적하는 미사일 5개를 발사. 사용할수록 미사일이 강해짐(이번 판 한정)",
         ActiveSkillId.Shotgun => "5초 동안 모든 스킬의 공격 횟수가 1회 증가",
+        ActiveSkillId.Rewind => "다른 모든 스킬의 재사용 대기시간을 1초 앞당김. 레벨업할수록 더 크게 되감음",
         _ => "",
     };
 
