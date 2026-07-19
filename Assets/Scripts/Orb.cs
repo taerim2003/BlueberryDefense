@@ -42,8 +42,7 @@ public class Orb : MonoBehaviour
             nextTickTime[enemy] = Time.time + tickInterval;
 
             float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
-            float tickDamage = PlayerPassives.ApplyCrit(baseDamage, CritChance, out bool isCrit);
-            enemy.TakeDamage(tickDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
+            enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb);
             enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
@@ -71,8 +70,7 @@ public class Orb : MonoBehaviour
         // 방패 블루베리: 오브도 통과하지 못하고 여기서 소멸 — 마지막으로 한 번 타격을 주고 사라진다
         if (enemy.BlocksProjectiles)
         {
-            float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-            enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
+            enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);
             if (impactVfxPrefab != null)
                 ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);
             Destroy(gameObject);

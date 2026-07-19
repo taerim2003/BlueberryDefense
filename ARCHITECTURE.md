@@ -10,7 +10,7 @@
 
 ## 한눈에 보기
 
-**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 왼쪽에 고정된 플레이어(움직이지 않음)를 향해 오른쪽에서 블루베리 몬스터들이 좌측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. Lv.5 단위로 **진화 트리**(스킬/패시브마다 3경로 × 3티어)가 열리며, 진화는 보물상자 블루베리 처치로 얻는다. 스테이지 20개를 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
+**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 왼쪽에 고정된 플레이어(움직이지 않음)를 향해 오른쪽에서 블루베리 몬스터들이 좌측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. Lv.5 단위로 **진화 트리**(스킬/패시브마다 3경로 × 3티어)가 열리며, 진화는 보물상자 블루베리 처치로 얻는다. 각 스테이지는 정해진 물량(`StageData.spawnCount`)을 다 스폰하고 잔몹이 전멸하면 클리어(타이머 아님) — **15스테이지(보스 블루베리)**까지 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
 
 **기술 스택**: Unity 6 (6000.4.4f1) · URP 2D · uGUI(+TextMeshPro) · DOTween(트위닝) · JuicyUI(UI 연출) · Vefects Pixel Craft VFX(파티클). 코드는 순수 MonoBehaviour + static 상태 홀더, DI 프레임워크 없음.
 
@@ -38,8 +38,8 @@
 
 | 이름 | 책임 | 누구를 부르나 |
 |---|---|---|
-| **GameManager** (싱글톤) | 스테이지 진행(타이머→클리어 대기→전환 텀), 게임오버/클리어 판정, `Time.timeScale` 종료 정지. Awake에서 `DamageMeter.Reset`·`DOTween` 전역설정 | `PlayerSkills.ResetAllCooldowns`, `Enemy` 수 폴링 |
-| **EnemySpawner** | `StageData` 기준으로 적 프리팹 선택·스폰, 스테이지별 HP/속도 스텝 보정 적용 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers` |
+| **GameManager** (싱글톤) | 스테이지 진행(물량 소진+잔몹 전멸→전환 텀), 게임오버/클리어(15) 판정, `Time.timeScale` 종료 정지. Awake에서 `DamageMeter.Reset`·`DOTween` 전역설정 | `EnemySpawner.StageSpawnComplete`·`PlayerSkills.ResetAllCooldowns`, `Enemy` 수 폴링 |
+| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행률(SpawnRatio) 소유 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers` |
 | **PlayerSkills** | 액티브 4종(Q/W/E/R) 캐스트 로직, 스킬 레벨업/진화 트리, 전투 오브젝트 스폰(투사체·회오리·오브·독수리·설치기), 낙뢰 파라미터 설정 | `LightningStorm`, `BuffTracker`, `PlayerPassives`(연계 조건·static 보너스), 모든 전투 프리팹, `ObjectPool` |
 | **PlayerPassives** | 패시브 4종 보유/레벨업/진화, **연계 효과의 static 상태 필드**(치명타·반격·경험치 배율 등) 소유, 체력재생·반격·낙뢰연계 이벤트 처리 | `PlayerSkills`/`PlayerHealth`/`PlayerExperience`(스탯 반영), `LightningStorm.OnProc` 구독 |
 | **PlayerHealth** | 현재체력/최대체력/오버힐(보호막), 피격 흡수, 게임오버 트리거, `OnDamageTaken` 이벤트 | `GameManager.GameOver` |
@@ -70,15 +70,17 @@
 
 ```
 [GameManager.Awake] DamageMeter 리셋 · 하트프리팹 주입 · DOTween unscaled 설정
-  → [EnemySpawner.Update] StageData 기준 간격마다 적 프리팹 선택·스폰 (HP/속도 스텝 보정)
+  → [EnemySpawner.Update] StageData.spawnCount 만큼 적 스폰하면 정지 (물량 기반, HP/속도 스텝 보정)
+                          · 스폰 진행률(SpawnRatio)로 보물상자 후반 등장·15라운드 마지막 물량=보스 판정
   → [Enemy.Update] 왼쪽으로 행진 · sortingOrder를 x좌표로 갱신(원근)
       ├─ 플레이어와 충돌 → PlayerHealth.TakeDamage → (체력0) GameManager.GameOver
-      └─ 스킬 피격 → Enemy.TakeDamage → 딜미터 기록·낙뢰/체인 판정·(체력0) 처치
+      └─ 스킬 피격 → Enemy.TakeSkillHit(멀티히트: 총뎀 유지·N분할·서브히트별 크리/첫히트만 낙뢰)
+                         → Enemy.TakeDamage → 딜미터 기록·낙뢰/체인 판정·(체력0) 처치·사망분출(보스)
                          → PlayerExperience.AddXP  (보물상자면 LevelUpUI.ShowTreasureReward)
   → [PlayerExperience] XP 임계 도달 → 레벨업 → LevelUpUI.Show → ModalPause(timeScale 0)
       → 플레이어가 3지선다 선택 → AcquireSkill / UpgradeLevel / Evolve / 스탯강화 → ModalPause 해제
-  → [GameManager.Update] stageTimer 만료 → 남은 적 전멸 대기 → CurrentStage++ → 전환 텀(스폰 정지)
-                          → 20스테이지 클리어 시 GameClear
+  → [GameManager.Update] EnemySpawner.StageSpawnComplete + 잔몹 0 → CurrentStage++ → 전환 텀(스폰 정지)
+                          → 15스테이지(보스) 클리어 시 GameClear
   → [DamageMeterUI] 게임오버/클리어 감지 → 딜미터 패널 표시
 ```
 

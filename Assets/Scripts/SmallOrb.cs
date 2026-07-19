@@ -32,8 +32,7 @@ public class SmallOrb : MonoBehaviour
         if (enemy == null) return;
 
         hasHit = true;
-        float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-        enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.Orb);
+        enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)

@@ -33,8 +33,8 @@ public class Projectile : MonoBehaviour
         if (enemy == null || (enemy.IsFlying && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
-        float hitDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-        enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.BasicAttack);
+        // 기본공격 멀티히트: baseDamage를 N회로 쪼개 각각 크리 개별 판정(총 데미지 유지). 반환=서브히트 중 크리 있었는지
+        bool isCrit = enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.BasicAttack);
         if (ApplyGemSlow) enemy.ApplySlow(0.3f, 3f);
         if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
         OnHitBonus?.Invoke(enemy, isCrit);

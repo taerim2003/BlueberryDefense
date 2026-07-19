@@ -23,6 +23,18 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool isFlying = false;
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
+    [Header("사망 시 분출(대왕 블루베리 = BTD 비행선 방식)")]
+    [SerializeField] private GameObject[] deathSpawnPrefabs; // 사망 시 흩뿌릴 적들(마리마다 랜덤 선택). 대왕: 일반+리젠트+UFO
+    [SerializeField] private int deathSpawnCount = 0;         // 흩뿌릴 총 마릿수(0=없음)
+    [SerializeField] private float deathSpawnRadius = 0.6f;   // 초기 흩뿌림 반경
+    [SerializeField] private GameObject deathBurstVfxPrefab;  // 분출 시 대형 VFX(폭발)
+    [SerializeField] private float deathBurstVfxScale = 1f;
+
+    [Header("팝콘 등장(사망분출로 튀어나온 잡몹)")]
+    [SerializeField] private float popGravity = 30f;
+    private bool popping;
+    private float popVelY, popVelX, popGroundY;
+
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
     // 하트(체력회복) 드랍은 스킬트리 루트(root_hp) 해금 시에만 발동 — 확률은 MetaBonuses.HealDropChanceBonus로 전적으로 결정
@@ -63,8 +75,29 @@ public class Enemy : MonoBehaviour
         damage = Mathf.RoundToInt(damage * damageMultiplier);
     }
 
+    // 사망분출로 튀어나온 잡몹이 팝콘처럼 위로 튀어올랐다가 착지할 때까지의 연출. 착지 전엔 행진하지 않는다.
+    public void PopIn(float upVel, float sideVel, float groundY)
+    {
+        popping = true;
+        popVelY = upVel;
+        popVelX = sideVel;
+        popGroundY = groundY;
+    }
+
     private void Update()
     {
+        if (popping)
+        {
+            popVelY -= popGravity * Time.deltaTime;
+            Vector3 p = transform.position;
+            p.x += popVelX * Time.deltaTime;
+            p.y += popVelY * Time.deltaTime;
+            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; }
+            transform.position = p;
+            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
+            return;
+        }
+
         if (slowTimer > 0f)
         {
             slowTimer -= Time.deltaTime;
@@ -97,7 +130,10 @@ public class Enemy : MonoBehaviour
 
     private const int MaxLightningChain = 4;
 
-    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null)
+    // rollLightning: 이 타격이 낙뢰 발동을 굴릴지. 멀티히트(TakeSkillHit)에선 첫 서브히트만 true로 넘겨
+    //                공격당 낙뢰 기회를 1회로 유지한다(히트가 쪼개졌다고 낙뢰 빈도가 뻥튀기되지 않게).
+    // hitIndex:     멀티히트 서브히트 순번. 데미지 숫자를 위로 주루룩 쌓는 데 씀.
+    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0)
     {
         if (isDead) return; // Destroy()는 프레임 끝에 실행되므로, 같은 프레임 내 중복 피격으로 사망 처리가 두 번 도는 것을 막음
 
@@ -108,7 +144,7 @@ public class Enemy : MonoBehaviour
                 + (source == ActiveSkillId.EagleDrop ? MetaBonuses.EagleFlyDamageBonus : 0f);
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
-        SpawnDamageNumber(actualDamage, isCrit);
+        SpawnDamageNumber(actualDamage, isCrit, hitIndex);
         SpawnHitParticles(actualDamage);
 
         // 체인 라이트닝으로 전이된 타격은 연결선(beam)으로 이미 시각화되므로,
@@ -125,7 +161,7 @@ public class Enemy : MonoBehaviour
         if (isLightningProc && lightningChainDepth == 1 && LightningStorm.ChainEnabled)
             ChainLightningToNearby();
 
-        bool canChainAgain = !isLightningProc || (LightningStorm.RecursiveProcEnabled && lightningChainDepth < MaxLightningChain);
+        bool canChainAgain = (!isLightningProc && rollLightning) || (LightningStorm.RecursiveProcEnabled && lightningChainDepth < MaxLightningChain);
         if (canChainAgain)
         {
             // 낙뢰 버프는 스택형이라 살아있는 스택 수만큼 발동 확률을 독립적으로 판정한다 (스택 2개=최대 2번 발동).
@@ -169,6 +205,8 @@ public class Enemy : MonoBehaviour
             if (HeartPickupPrefab != null && Random.value < MetaBonuses.HealDropChanceBonus)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
 
+            SpawnDeathBurst();
+
             Destroy(gameObject);
         }
     }
@@ -210,12 +248,66 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void SpawnDamageNumber(float amount, bool isCrit = false)
+    // 보스 사망 시 잡몹 블루베리들을 사방으로 흩뿌린다(BTD 비행선처럼). 흩뿌린 잡몹은 그냥 Enemy라
+    // GameManager의 "잔몹 0" 클리어 조건에 자연히 포함된다. 무한 연쇄를 막으려 흩뿌린 잡몹 프리팹엔 deathSpawnCount=0.
+    private void SpawnDeathBurst()
+    {
+        if (deathBurstVfxPrefab != null)
+        {
+            GameObject vfx = ObjectPool.Instance.Spawn(deathBurstVfxPrefab, transform.position, Quaternion.identity);
+            vfx.transform.localScale = Vector3.one * deathBurstVfxScale;
+            ObjectPool.Instance.Despawn(vfx, 2f);
+        }
+
+        if (deathSpawnPrefabs == null || deathSpawnPrefabs.Length == 0 || deathSpawnCount <= 0) return;
+        for (int i = 0; i < deathSpawnCount; i++)
+        {
+            GameObject prefab = deathSpawnPrefabs[Random.Range(0, deathSpawnPrefabs.Length)];
+            if (prefab == null) continue;
+            Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
+            GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
+            // 팝콘처럼 위로 튀어올랐다가 바닥(y=0)에 착지 후 행진
+            Enemy e = go.GetComponent<Enemy>();
+            if (e != null) e.PopIn(Random.Range(5f, 9f), Random.Range(-5f, 5f), 0f);
+        }
+    }
+
+    // 공격당 타격횟수(멀티히트) 진입점. baseDamage를 hits회로 쪼개 각각 크리를 개별 판정하고
+    // 위로 주루룩 데미지 숫자를 띄운다. 기본공격만 hits>1(PlayerSkills.BasicAttackHits), 그 외 스킬은 1회.
+    // 반환값 = 서브히트 중 하나라도 치명타였는지(호출부 OnHitBonus 등 크리 연동용).
+    public bool TakeSkillHit(float baseDamage, float critChance, ActiveSkillId source)
+    {
+        int natural = Mathf.Max(1, PlayerSkills.NaturalHits(source)); // 스킬 고유 타수(기본공격=BasicAttackHits, 그 외 1)
+        int total = natural + PlayerSkills.GlobalBonusHits(source);   // 산탄(타수) 버프로 추가된 타격 수
+        float per = baseDamage / natural;                             // 자연 타수 기준 1히트 크기 → 보너스 히트는 추가 데미지
+
+        if (total <= 1)
+        {
+            float d0 = PlayerPassives.ApplyCrit(per, critChance, out bool c0);
+            TakeDamage(d0, isCrit: c0, source: source);
+            return c0;
+        }
+
+        bool anyCrit = false;
+        for (int i = 0; i < total; i++)
+        {
+            float d = PlayerPassives.ApplyCrit(per, critChance, out bool c);
+            anyCrit |= c;
+            TakeDamage(d, isCrit: c, source: source, rollLightning: i == 0, hitIndex: i); // 첫 히트만 낙뢰 굴림
+            if (isDead) break;
+        }
+        return anyCrit;
+    }
+
+    private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
         if (damageNumberPrefab == null) return;
 
         GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
-        obj.GetComponent<DamageNumber>().Init(amount, isCrit);
+        // 멀티히트: 순번마다 위로 조금씩 올리고 좌우로 살짝 흔들어 "주루룩" 쌓이는 느낌 + 순번 비례 등장 딜레이로 순차 표시
+        Vector3 offset = new Vector3((hitIndex % 2 == 0 ? 1f : -1f) * 0.18f * ((hitIndex + 1) / 2), 0.32f * hitIndex, 0f);
+        float delay = 0.06f * hitIndex;
+        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset, delay);
     }
 
     private void SpawnHitParticles(float damage)

@@ -15,31 +15,29 @@
 
 ---
 
-## 현재 상태 (2026-07-15 세션 2)
+## 현재 상태 (2026-07-19)
 
-**빌드**: 컴파일 에러 없음. 데이터/저장/효과/런타임 통합은 **script-execute + 플레이모드 스모크로 검증됨**. 단, **사용자 실플레이(트리 UI 조작감·색감·밸런스)는 아직 미검증**.
+**빌드**: 컴파일 에러 없음. 아래 전부 **script-execute 로직테스트 + 플레이모드 스모크로 검증됨**. **사용자 실플레이(체감·밸런스)는 미검증** — 수치는 감으로 잡은 초기값.
 
-### 이번 세션(2)에 한 것 — 스킬트리 런타임 전체 구축
-설계 확정 문서 = **`SKILLTREE_DESIGN.md`** (일회성 개방·2자원·게이팅·리스펙·빌드셋·효과훅 매핑).
-1. **저장/진행 계층** `SkillTreeSave`(SkillTreeData.cs 하단) — 정수/태양결정 earned, `available=earned−Σ해금비용` 파생, prereq+게이트 게이팅, 리스펙 환급, 빌드셋 저장/로드. 검증 완료.
-2. **효과 적용** `SkillEffects`(Meta.cs) + `MetaRunApplier` 트리 기반 교체. **28노드 전부 실동작**(스텁 0):
-   - 단순스탯(공/체/치명/경험/부유/쿨) + 비행피해/힐드랍 + 스킬개별강화(화살시작레벨·오브비행·독수리·회오리쿨감1.5배·낙뢰쿨감) + 리프레시확률 + 리롤(LevelUpUI 버튼).
-3. **태양결정 획득** `GameManager` 스15/스20 클리어 +1.
-4. **인게임 트리 UI** `SkillTreeUI`/`TreePanDrag`/`BuildSlotUI` + Title 씬 `SkillTreeRoot` 패널·프리팹 3종(`Assets/SkillTree/UI/`)·전참조 와이어링. 팬 O/줌 X. 노드28·선27·빌드슬롯5 렌더 확인.
-5. **리롤 버튼** SampleScene `LevelUpPanel/Dialog`에 추가·와이어링.
-6. **리스트 상점 완전 제거**: `UpgradeShopUI`/`UpgradeCell`(.cs+prefab), `Meta.cs`의 `MetaUpgradeDef`/`MetaUpgrades`/`MetaSave`, Title 씬 `ShopRoot`. (`MetaUpgradeId` enum은 SkillNode·에디터가 쓰니 존치.)
+### 밸런스/시스템 4건
+1. **코어 루프 타이머→물량 기반**: `StageData.spawnCount`만큼 스폰 후 정지, **쿼터 소진+잔몹 0이면 클리어**(타이머 폐기). `EnemySpawner`가 SpawnRatio 소유, `GameManager` 폴링.
+2. **클리어 20→15 + 대왕블루베리 보스**: `FinalStage=15`, 태양결정 15클리어만. 15라운드 마지막 물량으로 보스 1회 등장. **대왕블루베리 스프라이트 적용 완료**(3프레임 플립북·HP1500·이속0.6·flipX off). 죽으면 **일반+리젠트+UFO 30마리 팝콘 분출**(`Enemy.PopIn` 중력 아크) + **폭발 VFX**(`VFX_2D_Explosion_Big_01_Color`). `Enemy.deathSpawnPrefabs[]`/`deathSpawnCount`/`deathBurstVfxPrefab`.
+3. **멀티히트 + 메이플식 데미지**: `Enemy.TakeSkillHit(base,crit,source)` — 자연타수+산탄버프, perHit=base/자연타수(버프 히트는 **추가 데미지**), 서브히트별 크리·첫 히트만 낙뢰. **전 스킬(Orb·Whirlwind·EagleDrop·Sniping·Homing)이 TakeSkillHit 통일**. `DamageNumber` 순번 오프셋+딜레이로 위로 주루룩.
+4. **스탯 노드 레벨제**: `SkillTreeSave` HashSet→레벨맵(id:level, 구버전 lv1 흡수). Normal만 레벨(에셋 maxLevel), Gate/ActiveSkill 1회. 좌클릭 레벨업/우클릭 레벨환불. 다음레벨=기본×1.5^현재레벨.
 
-### 이어서 — 사용자 피드백 반영(트리 UI v2 + 인게임 배치)
-7. **스킬트리 UI v2**: **3자원**(정수/태양결정/**가루**—ActiveSkill 노드용, 스테이지 클리어마다 +1) · 정수비용 **깊이별 스케일**(루트30, ×1.4^depth) · 상태색 마스크 · **인접 노드만 공개**(나머지 "?") · **호버 툴팁**(노드 위) · **좌클릭 구매/우클릭 환불(자식 캐스케이드)** · **휠 줌** · 리셋 명칭. root_hp 힐드랍은 해금 시에만 1%.
-8. **인게임 배치 10건**(전부 코드/에셋, 씬無): 오버힐 표시+쉴드 최대 200 / **ESC 일시정지+스킬요약**(`PauseMenu` 자동부트스트랩) / 리프레시 보잉 / 정수 스프라이트=토파즈 / 독수리 흡혈 문구 / 오브 0-1-0 높이제거 / 방패블베 스폰↑ / **기본공격 너프**(base16·레벨업×1.13·힘P3 반토막) / 레벨업 진화강조 / **후반 스테이지 길이 절반**(519→267초, `StageTable`).
-9. **치트 창**: 메타 자원(정수/결정/가루) 버튼 추가 — Title 씬·비플레이에서도 동작.
+### 신규 액티브 스킬 3종 (enum Sniping=5, Homing=6, Shotgun=7)
+- **스나이핑**: 최고체력 적 5회 저격. Route1 타겟수↑ / Route2 피해+스플래시(`Effect_SplashSniping`) / Route3 자동시전. 이펙트는 타겟당 1회.
+- **호밍 미사일**(`HomingMissile.cs`): 추적 미사일 5발·성장형(`EquippedSkill.GrowthStacks`, 판 한정). Route1 개수N배 / Route2 폭발 / Route3 성장률↑. 명중 즉시 소멸(수명 2.5s).
+- **산탄 장착**: 5초 타수버프(`PlayerSkills.GlobalBonusHits`). Route1 타수추가 / Route2 최고공격력 1개·2배 / Route3 전체5회공격+기절.
+- VFX 프리팹(`Effect_Sniping`/`Effect_SplashSniping`/`Homing_Missile`, `SpriteFlipbook.cs`)·아이콘 배열(LevelUpUI·HUD `activeIcons[5..7]`)·LevelUpUI 후보 배선 완료. 진화 연계조건 없음(`HasPathPrereq`가 연계 미지정 시 true).
 
 ---
 
-## ★ 다음 세션 — 실플레이 검증 & 밸런스 튜닝 (전부 미검증 동적결과)
-- [ ] **트리 UI 조작감**: 색/마스크/툴팁 위치/줌 감/우클릭 환불/빌드셋. `posScale`(0.55)·`minZoom/maxZoom`.
-- [ ] **인게임 체감**: 기본공격 너프(만렙 ~70% 의도, 실측 필요)·스테이지 길이·방패 빈도·오버힐 표시·ESC 요약·정수 스프라이트 가시성·리프레시 보잉·진화 강조.
-- [ ] 밸런스 수치(노드 비용/효과·가루/결정 희소성·스테이지 duration)는 감으로 잡음 → 조정.
+## ★ 다음 세션 — 실플레이 밸런스 튜닝 (전부 미검증 초기값)
+- [ ] **신규 스킬 밸런스**: 3종 데미지/쿨(`GetDefaultDamage/Cooldown`)·진화 **T1/T3 수치**(내가 채운 값, `DescribePathEffect`/`ApplyPathTierEffect`)·호밍 성장률·산탄 타수/지속.
+- [ ] **호밍 아이콘 임시**(`Icon_Rewind`) — 전용 아이콘 없어 대체. 확정/교체 필요(`activeIcons[6]`).
+- [ ] **밸런스 노브**: `spawnCount`(StageTable)·보스 HP1500/분출30/이속0.6·`BasicAttackHits=3`·`LevelCostGrowth=1.5`·per-level 효과.
+- [ ] (기존) 트리 UI 조작감·인게임 체감(오버힐/ESC요약/방패빈도 등) 실플레이 확인.
 
 ---
 

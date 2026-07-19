@@ -104,48 +104,51 @@ public static class SkillEffects
     public static Totals Compute()
     {
         var t = new Totals();
-        foreach (string id in SkillTreeSave.UnlockedIds())
+        // 스탯 노드(Normal)는 노드 레벨(lv)만큼 효과가 누적된다. Gate/ActiveSkill 토글 노드는 lv가 항상 1이라 ×1.
+        foreach (var kv in SkillTreeSave.Levels())
         {
+            string id = kv.Key;
+            int lv = kv.Value;
             switch (id)
             {
                 // 공격력
-                case "atk_1": t.DamagePct += 5f; break;
-                case "atk_2": t.DamagePct += 8f; break;
-                case "atk_3": t.DamagePct += 10f; break;
+                case "atk_1": t.DamagePct += 5f * lv; break;
+                case "atk_2": t.DamagePct += 8f * lv; break;
+                case "atk_3": t.DamagePct += 10f * lv; break;
                 // 체력
-                case "hp_1": t.HpAdd += 10; break;
-                case "hp_2": t.HpAdd += 15; break;
+                case "hp_1": t.HpAdd += 10 * lv; break;
+                case "hp_2": t.HpAdd += 15 * lv; break;
                 // 치명타
                 case "gate_crit": t.CritPct += 10f; break;
-                case "crit_1": t.CritPct += 3f; break;
-                case "crit_2": t.CritPct += 5f; break;
+                case "crit_1": t.CritPct += 3f * lv; break;
+                case "crit_2": t.CritPct += 5f * lv; break;
                 // 경험치
-                case "exp_1": t.XpPct += 5f; break;
-                case "exp_2": t.XpPct += 8f; break;
+                case "exp_1": t.XpPct += 5f * lv; break;
+                case "exp_2": t.XpPct += 8f * lv; break;
                 // 정수 획득
-                case "gold_1": t.CurrencyPct += 10f; break;
-                case "gold_2": t.CurrencyPct += 15f; break;
-                case "gold_3": t.CurrencyPct += 25f; break;
+                case "gold_1": t.CurrencyPct += 10f * lv; break;
+                case "gold_2": t.CurrencyPct += 15f * lv; break;
+                case "gold_3": t.CurrencyPct += 25f * lv; break;
                 // 쿨타임 감소
                 case "gate_cooldown": t.CdReducePct += 10f; break;
-                case "cool_1": t.CdReducePct += 3f; break;
-                case "cool_2": t.CdReducePct += 5f; break;
+                case "cool_1": t.CdReducePct += 3f * lv; break;
+                case "cool_2": t.CdReducePct += 5f * lv; break;
                 // 비행 추가피해
                 case "gate_fly": t.FlyDmgPct += 20f; break;
-                case "fly_1": t.FlyDmgPct += 5f; break;
-                case "fly_2": t.FlyDmgPct += 10f; break;
+                case "fly_1": t.FlyDmgPct += 5f * lv; break;
+                case "fly_2": t.FlyDmgPct += 10f * lv; break;
                 case "eagle_fly": t.EagleFlyDmgPct += 30f; break;
-                // 체력회복 드랍(루트) — 이 노드 해금 시에만 하트 드랍 발동, 약 1%
-                case "root_hp": t.HealDropPct += 1f; break;
-                // 스킬 개별강화
+                // 체력회복 드랍(루트) — 레벨당 +1%
+                case "root_hp": t.HealDropPct += 1f * lv; break;
+                // 스킬 개별강화(토글, maxLevel 1)
                 case "orb_BasicFly": t.OrbFly = true; break;
                 case "tornado_CoolDownBonus": t.WhirlwindCdBonus = true; break;
-                case "refresh_bonus": t.RefreshPct += 5f; break;
+                case "refresh_bonus": t.RefreshPct += 5f * lv; break;
                 case "thunder_Cooldown": t.ThunderCdPerStrike += 0.1f; break;
                 case "arrow_StartLev": t.ArrowStartLevel = 3; break;
-                // 레벨업 리롤 (reroll_2는 reroll_1 선행이라 둘 다 +1)
-                case "reroll_1": t.RerollCount += 1; break;
-                case "reroll_2": t.RerollCount += 1; break;
+                // 레벨업 리롤 — 레벨당 +1 (reroll_1/reroll_2 각각)
+                case "reroll_1": t.RerollCount += 1 * lv; break;
+                case "reroll_2": t.RerollCount += 1 * lv; break;
             }
         }
         return t;

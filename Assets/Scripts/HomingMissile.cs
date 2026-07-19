@@ -1,0 +1,85 @@
+using UnityEngine;
+
+// 호밍 미사일: 가장 가까운 적을 추적해 명중 시 피해(+선택적 폭발). PlayerSkills.FireHoming이 스폰·설정한다.
+[RequireComponent(typeof(Collider2D))]
+public class HomingMissile : MonoBehaviour
+{
+    [SerializeField] private float moveSpeed = 9f;
+    [SerializeField] private float turnDegPerSec = 360f;
+    [SerializeField] private float lifetime = 4f;
+
+    public float Damage { get; set; }
+    public float CritChance { get; set; }
+    public bool Explode { get; set; }
+    public float ExplodeRadius { get; set; } = 1.5f;
+    public float ExplodeRatio { get; set; } = 0.4f;
+    public GameObject ExplodeVfx { get; set; }
+
+    private Enemy target;
+    private Vector2 dir = Vector2.right;
+    private bool hit;
+
+    public void Init(Vector2 initialDir)
+    {
+        if (initialDir.sqrMagnitude > 0.0001f) dir = initialDir.normalized;
+        FaceDir();
+    }
+
+    private void Start() => Destroy(gameObject, lifetime);
+
+    private void Update()
+    {
+        if (target == null) target = AcquireTarget();
+        if (target != null)
+        {
+            Vector2 desired = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+            float maxRad = turnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
+            dir = ((Vector2)Vector3.RotateTowards(dir, desired, maxRad, 0f)).normalized;
+            FaceDir();
+        }
+        transform.Translate(dir * moveSpeed * Time.deltaTime, Space.World);
+    }
+
+    private void FaceDir()
+    {
+        float ang = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, ang);
+    }
+
+    private Enemy AcquireTarget()
+    {
+        Enemy best = null;
+        float bestSqr = float.MaxValue;
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (e == null) continue;
+            float sqr = ((Vector2)e.transform.position - (Vector2)transform.position).sqrMagnitude;
+            if (sqr < bestSqr) { bestSqr = sqr; best = e; }
+        }
+        return best;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (hit) return;
+        Enemy e = other.GetComponent<Enemy>();
+        if (e == null) return;
+        hit = true;
+
+        Vector3 pos = transform.position;
+        e.TakeSkillHit(Damage, CritChance, ActiveSkillId.Homing);
+
+        if (Explode)
+        {
+            if (ExplodeVfx != null)
+                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(ExplodeVfx, pos, Quaternion.identity), 0.6f);
+            foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            {
+                if (o == null || o == e) continue;
+                if (Vector2.Distance(pos, o.transform.position) <= ExplodeRadius)
+                    o.TakeSkillHit(Damage * ExplodeRatio, CritChance, ActiveSkillId.Homing);
+            }
+        }
+        Destroy(gameObject);
+    }
+}

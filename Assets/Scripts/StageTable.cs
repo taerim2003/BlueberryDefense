@@ -4,7 +4,8 @@ using UnityEngine;
 public class StageData
 {
     public int stageNumber = 1;
-    public float duration = 45f;
+    public int spawnCount = 20;   // 이 스테이지에 스폰할 총 적 수(물량 기반 클리어). 쿼터 소진 + 잔몹 0 → 클리어
+    public float duration = 45f;  // (레거시) 물량 기반 전환으로 미사용 — 참고용으로만 남김
     public float spawnInterval = 1.5f;
     public float eliteChance = 0f;
     public float paperPlaneChance = 0f;

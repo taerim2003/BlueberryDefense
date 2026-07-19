@@ -48,8 +48,7 @@ public class Whirlwind : MonoBehaviour
             if (enemy == null || (enemy.IsFlying && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
-            float tickDamage = PlayerPassives.ApplyCrit(Damage, CritChance, out bool isCrit);
-            enemy.TakeDamage(tickDamage, isCrit: isCrit, source: ActiveSkillId.Whirlwind);
+            enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
             if (ApplyGemSlow) enemy.ApplySlow(0.3f, SlowDuration);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 

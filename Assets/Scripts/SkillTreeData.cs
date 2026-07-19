@@ -78,10 +78,25 @@ public static class SkillTreeSave
         PlayerPrefs.Save();
     }
 
-    // ── 현재 해금 집합 ──
-    public static HashSet<string> UnlockedIds() => ReadSet(CurrentKey);
+    // ── 노드별 레벨 (id→level, level≥1이면 보유). 저장 포맷 CSV "id:level,id:level" ──
+    // 구버전 저장값(콜론 없는 순수 id)은 level 1로 흡수(마이그레이션).
+    public static Dictionary<string, int> Levels() => ReadLevels(CurrentKey);
 
-    public static bool IsUnlocked(string id) => UnlockedIds().Contains(id);
+    public static int LevelOf(string id) => Levels().TryGetValue(id, out int lv) ? lv : 0;
+
+    // 토폴로지/게이팅/빌드 코드가 그대로 쓰도록 "보유(level≥1) id 집합"을 파생 제공
+    public static HashSet<string> UnlockedIds()
+    {
+        var set = new HashSet<string>();
+        foreach (var kv in Levels()) if (kv.Value >= 1) set.Add(kv.Key);
+        return set;
+    }
+
+    public static bool IsUnlocked(string id) => LevelOf(id) >= 1;
+
+    // 노드 만렙: 스탯 노드(Normal)만 여러 레벨(에셋 maxLevel), Gate/ActiveSkill(결정/가루)은 1회 개방
+    public static int MaxLevelOf(SkillNode n) =>
+        n.type == SkillNodeType.Normal ? Mathf.Max(1, n.maxLevel) : 1;
 
     // ── 노드 비용/자원 종류 ──
     public static SkillResource ResourceOf(SkillNode n) =>
@@ -92,6 +107,13 @@ public static class SkillTreeSave
         n.type == SkillNodeType.Gate ? n.gateCost :
         n.type == SkillNodeType.ActiveSkill ? 1 :
         EssenceCost(tree, n);
+
+    // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐)
+    private const float LevelCostGrowth = 1.5f;
+
+    // 다음 레벨(현재 level → level+1) 구매 비용. 1레벨(cur 0)=기본비용, 이후 1.5배씩.
+    public static int NextLevelCost(SkillTreeData tree, SkillNode n) =>
+        Mathf.RoundToInt(CostOf(tree, n) * Mathf.Pow(LevelCostGrowth, LevelOf(n.id)));
 
     // 정수 비용: 루트로부터의 깊이가 깊을수록 비쌈. 30 · 1.4^depth
     public static int EssenceCost(SkillTreeData tree, SkillNode n) =>
@@ -127,11 +149,13 @@ public static class SkillTreeSave
     {
         if (tree == null) return 0;
         int sum = 0;
-        foreach (string id in UnlockedIds())
+        foreach (var kv in Levels())
         {
-            SkillNode n = tree.Find(id);
+            SkillNode n = tree.Find(kv.Key);
             if (n == null || ResourceOf(n) != res) continue;
-            sum += CostOf(tree, n);
+            int baseCost = CostOf(tree, n);
+            for (int L = 0; L < kv.Value; L++)
+                sum += Mathf.RoundToInt(baseCost * Mathf.Pow(LevelCostGrowth, L));
         }
         return sum;
     }
@@ -145,34 +169,47 @@ public static class SkillTreeSave
         return true;
     }
 
-    // ── 해금 가능 여부 / 실행 ──
-    public static bool CanUnlock(SkillTreeData tree, string id)
+    // ── 업그레이드(구매) 가능 여부 / 실행 ──
+    // 첫 레벨(cur 0) 구매엔 선행조건이 필요하고, 이미 보유(레벨업)면 만렙 미만 + 자원만 확인.
+    public static bool CanUpgrade(SkillTreeData tree, string id)
     {
         if (tree == null) return false;
         SkillNode node = tree.Find(id);
         if (node == null) return false;
 
-        HashSet<string> unlocked = UnlockedIds();
-        if (unlocked.Contains(id) || !PrereqMet(tree, node, unlocked)) return false;
+        int cur = LevelOf(id);
+        if (cur >= MaxLevelOf(node)) return false;
+        if (cur == 0 && !PrereqMet(tree, node)) return false;
 
-        return Available(tree, ResourceOf(node)) >= CostOf(tree, node);
+        return Available(tree, ResourceOf(node)) >= NextLevelCost(tree, node);
     }
 
-    public static bool TryUnlock(SkillTreeData tree, string id)
+    public static bool TryUpgrade(SkillTreeData tree, string id)
     {
-        if (!CanUnlock(tree, id)) return false;
-        HashSet<string> set = UnlockedIds();
-        set.Add(id);
-        WriteSet(CurrentKey, set);
+        if (!CanUpgrade(tree, id)) return false;
+        var levels = Levels();
+        levels.TryGetValue(id, out int cur);
+        levels[id] = cur + 1;
+        WriteLevels(CurrentKey, levels);
         return true;
     }
 
-    // ── 환불: 노드 + 그 노드에서 파생되는 모든 해금된 자식 노드를 함께 해제(자원 자동 환급) ──
+    // ── 환불(우클릭): 한 레벨 내림. 레벨이 0이 되면 그 노드에서 파생된 자식들도 함께 해제(캐스케이드) ──
+    public static bool RefundOneLevel(SkillTreeData tree, string id)
+    {
+        if (tree == null) return false;
+        var levels = Levels();
+        if (!levels.TryGetValue(id, out int cur) || cur <= 0) return false;
+        if (cur > 1) { levels[id] = cur - 1; WriteLevels(CurrentKey, levels); return true; }
+        return RefundNode(tree, id); // 마지막 레벨 → 완전 제거 + 자식 캐스케이드
+    }
+
+    // 노드 + 그 노드에서 파생되는 모든 보유 자식 노드를 통째로 해제(자원 자동 환급)
     public static bool RefundNode(SkillTreeData tree, string id)
     {
         if (tree == null) return false;
-        HashSet<string> set = UnlockedIds();
-        if (!set.Contains(id)) return false;
+        var levels = Levels();
+        if (!levels.ContainsKey(id)) return false;
 
         var toRemove = new HashSet<string>();
         var stack = new Stack<string>();
@@ -182,11 +219,11 @@ public static class SkillTreeSave
             string cur = stack.Pop();
             if (!toRemove.Add(cur)) continue;
             foreach (SkillNode n in tree.nodes)
-                if (set.Contains(n.id) && !toRemove.Contains(n.id) && n.prereqIds.Contains(cur))
+                if (levels.ContainsKey(n.id) && !toRemove.Contains(n.id) && n.prereqIds.Contains(cur))
                     stack.Push(n.id);
         }
-        set.ExceptWith(toRemove);
-        WriteSet(CurrentKey, set);
+        foreach (string r in toRemove) levels.Remove(r);
+        WriteLevels(CurrentKey, levels);
         return true;
     }
 
@@ -197,13 +234,13 @@ public static class SkillTreeSave
         PlayerPrefs.Save();
     }
 
-    // ── 빌드셋 슬롯(1~BuildSlots) ──
-    public static bool BuildEmpty(int slot) => ReadSet(BuildKey(slot)).Count == 0;
+    // ── 빌드셋 슬롯(1~BuildSlots) — 레벨까지 통째로 저장/로드 ──
+    public static bool BuildEmpty(int slot) => ReadLevels(BuildKey(slot)).Count == 0;
 
-    public static void SaveBuild(int slot) => WriteSet(BuildKey(slot), UnlockedIds());
+    public static void SaveBuild(int slot) => WriteLevels(BuildKey(slot), Levels());
 
     // 로드: 현재를 슬롯 내용으로 교체. earned 단조증가라 항상 afford 가능.
-    public static void LoadBuild(int slot) => WriteSet(CurrentKey, ReadSet(BuildKey(slot)));
+    public static void LoadBuild(int slot) => WriteLevels(CurrentKey, ReadLevels(BuildKey(slot)));
 
     // ── 치트/디버그: 전체 초기화 ──
     public static void ResetAll()
@@ -216,22 +253,30 @@ public static class SkillTreeSave
         PlayerPrefs.Save();
     }
 
-    // ── 내부 CSV 직렬화 ──
+    // ── 내부 CSV 직렬화 (id:level,id:level) ──
     private static string BuildKey(int slot) => BuildPrefix + slot;
 
-    private static HashSet<string> ReadSet(string key)
+    private static Dictionary<string, int> ReadLevels(string key)
     {
-        var set = new HashSet<string>();
+        var map = new Dictionary<string, int>();
         string csv = PlayerPrefs.GetString(key, "");
-        if (string.IsNullOrEmpty(csv)) return set;
-        foreach (string s in csv.Split(','))
-            if (!string.IsNullOrEmpty(s)) set.Add(s);
-        return set;
+        if (string.IsNullOrEmpty(csv)) return map;
+        foreach (string tok in csv.Split(','))
+        {
+            if (string.IsNullOrEmpty(tok)) continue;
+            int colon = tok.IndexOf(':');
+            if (colon < 0) { map[tok] = 1; continue; } // 구버전 순수 id → level 1
+            string id = tok.Substring(0, colon);
+            if (int.TryParse(tok.Substring(colon + 1), out int lv) && lv >= 1) map[id] = lv;
+        }
+        return map;
     }
 
-    private static void WriteSet(string key, HashSet<string> set)
+    private static void WriteLevels(string key, Dictionary<string, int> map)
     {
-        PlayerPrefs.SetString(key, string.Join(",", set));
+        var parts = new List<string>();
+        foreach (var kv in map) if (kv.Value >= 1) parts.Add(kv.Key + ":" + kv.Value);
+        PlayerPrefs.SetString(key, string.Join(",", parts));
         PlayerPrefs.Save();
     }
 }

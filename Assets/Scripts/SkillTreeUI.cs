@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using DG.Tweening;
 
 // 트리 노드 하나의 입력 처리. 런타임에 SkillTreeUI가 각 노드에 붙인다(씬/프리팹에 저장되지 않아 같은 파일 OK).
 // 좌클릭=구매, 우클릭=환불, 호버=툴팁.
@@ -72,12 +73,21 @@ public class SkillTreeUI : MonoBehaviour
     private static readonly Color RingUnlocked = new Color(0.4f, 1f, 0.5f, 1f);
     private static readonly Color RingBuyable = new Color(1f, 1f, 1f, 0.9f);
 
-    private class NodeView { public SkillNode node; public RectTransform rt; public Image bg; public Image ring; public TMP_Text label; }
+    private class NodeView
+    {
+        public SkillNode node; public RectTransform rt; public Image bg; public Image ring; public TMP_Text label;
+        public Tween scaleTween;  // 호버/구매/pop-in — 한 번에 하나(교체 전 Kill)
+        public Tween ringPulse;   // 구매 가능 대기 강조(링 알파 yoyo) — 스케일과 별도 채널
+    }
+    private class LineView { public string from; public string to; public Image img; public bool on; }
     private readonly Dictionary<string, NodeView> views = new();
-    private readonly List<(string from, string to, Image img)> lines = new();
+    private readonly List<LineView> lines = new();
 
     private string hoveredId;
     private bool built;
+
+    // 자원 텍스트 펀치용 직전값(첫 갱신엔 펀치 생략)
+    private int prevEssence = -1, prevCrystal = -1, prevPowder = -1;
 
     private void Awake()
     {
@@ -98,12 +108,40 @@ public class SkillTreeUI : MonoBehaviour
         if (panelRoot != null) panelRoot.SetActive(true);
         hoveredId = null;
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
+        prevEssence = prevCrystal = prevPowder = -1; // 재오픈 시 자원 펀치 생략
         RefreshAll();
+        PlayOpenStagger();
     }
 
     public void Close()
     {
+        KillAllTweens();
         if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    // 패널 열 때 노드 스태거 pop-in
+    private void PlayOpenStagger()
+    {
+        int i = 0;
+        foreach (NodeView v in views.Values)
+        {
+            if (v.rt == null) continue;
+            v.scaleTween?.Kill();
+            v.rt.localScale = Vector3.one * 0.4f;
+            v.scaleTween = v.rt.DOScale(1f, 0.35f).SetDelay(i * 0.015f).SetEase(Ease.OutBack).SetUpdate(true);
+            i++;
+        }
+    }
+
+    private void KillAllTweens()
+    {
+        foreach (NodeView v in views.Values)
+        {
+            v.scaleTween?.Kill(); v.scaleTween = null;
+            v.ringPulse?.Kill(); v.ringPulse = null;
+            if (v.rt != null) v.rt.localScale = Vector3.one;
+            if (v.ring != null) { Color rc = v.ring.color; rc.a = 1f; v.ring.color = rc; }
+        }
     }
 
     // ── 최초 1회: 노드·연결선·빌드슬롯 생성 ──
@@ -118,8 +156,9 @@ public class SkillTreeUI : MonoBehaviour
                 if (p == null || linePrefab == null) continue;
                 Image line = Instantiate(linePrefab, lineLayer);
                 line.gameObject.SetActive(true);
+                line.color = ColLineDim; // off 초기색 명시(RefreshLines가 변화 없으면 스킵하므로)
                 PlaceLine(line.rectTransform, ToLocal(p.editorPos), ToLocal(n.editorPos));
-                lines.Add((pre, n.id, line));
+                lines.Add(new LineView { from = pre, to = n.id, img = line, on = false });
             }
 
         foreach (SkillNode n in tree.nodes)
@@ -174,20 +213,37 @@ public class SkillTreeUI : MonoBehaviour
     {
         if (rightClick)
         {
-            if (SkillTreeSave.RefundNode(tree, id)) { RefreshAll(); RefreshTooltip(); }
+            if (SkillTreeSave.RefundOneLevel(tree, id)) { PlayNodePunch(id, -0.22f); RefreshAll(); RefreshTooltip(); }
             return;
         }
-        // 좌클릭 = 구매 (마스킹된 노드는 무시)
+        // 좌클릭 = 레벨업/구매 (마스킹된 노드는 무시)
         if (!IsRevealed(id, SkillTreeSave.UnlockedIds())) return;
-        if (SkillTreeSave.TryUnlock(tree, id)) { RefreshAll(); RefreshTooltip(); }
+        if (SkillTreeSave.TryUpgrade(tree, id)) { PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
     }
 
-    private void OnNodeHoverEnter(string id) { hoveredId = id; RefreshTooltip(); }
+    // 구매(+)/환불(-) 시 노드 펀치. 펀치는 스케일 채널이라 진행 중 pop-in/호버 트윈을 교체한다.
+    private void PlayNodePunch(string id, float strength)
+    {
+        if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
+        v.scaleTween?.Kill();
+        v.rt.localScale = Vector3.one;
+        v.scaleTween = v.rt.DOPunchScale(Vector3.one * strength, 0.45f, 8, 0.6f).SetUpdate(true);
+    }
+
+    private void OnNodeHoverEnter(string id) { hoveredId = id; RefreshTooltip(); AnimateHover(id, true); }
 
     private void OnNodeHoverExit(string id)
     {
         if (hoveredId == id) hoveredId = null;
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
+        AnimateHover(id, false);
+    }
+
+    private void AnimateHover(string id, bool entering)
+    {
+        if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
+        v.scaleTween?.Kill();
+        v.scaleTween = v.rt.DOScale(entering ? 1.12f : 1f, 0.18f).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
     private void OnRespec() { SkillTreeSave.Respec(); RefreshAll(); RefreshTooltip(); }
@@ -209,11 +265,22 @@ public class SkillTreeUI : MonoBehaviour
     // ── 갱신 ──
     private void RefreshAll()
     {
-        if (essenceText != null) essenceText.text = SkillTreeSave.AvailableEssence(tree) + " 정수";
-        if (crystalText != null) crystalText.text = SkillTreeSave.AvailableCrystal(tree) + " 결정";
-        if (powderText != null) powderText.text = SkillTreeSave.AvailablePowder(tree) + " 가루";
+        int ess = SkillTreeSave.AvailableEssence(tree);
+        int cry = SkillTreeSave.AvailableCrystal(tree);
+        int pow = SkillTreeSave.AvailablePowder(tree);
+        if (essenceText != null) { essenceText.text = ess + " 정수"; if (prevEssence >= 0 && ess != prevEssence) PunchCurrency(essenceText); }
+        if (crystalText != null) { crystalText.text = cry + " 결정"; if (prevCrystal >= 0 && cry != prevCrystal) PunchCurrency(crystalText); }
+        if (powderText != null) { powderText.text = pow + " 가루"; if (prevPowder >= 0 && pow != prevPowder) PunchCurrency(powderText); }
+        prevEssence = ess; prevCrystal = cry; prevPowder = pow;
         RefreshNodes();
         RefreshLines();
+    }
+
+    private static void PunchCurrency(TMP_Text t)
+    {
+        t.rectTransform.DOKill();
+        t.rectTransform.localScale = Vector3.one;
+        t.rectTransform.DOPunchScale(Vector3.one * 0.3f, 0.4f, 6, 0.6f).SetUpdate(true);
     }
 
     private void RefreshNodes()
@@ -223,7 +290,7 @@ public class SkillTreeUI : MonoBehaviour
         {
             bool isUnlocked = unlocked.Contains(v.node.id);
             bool revealed = IsRevealed(v.node.id, unlocked);
-            bool buyable = revealed && !isUnlocked && SkillTreeSave.CanUnlock(tree, v.node.id);
+            bool buyable = revealed && SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
 
             Color c;
             if (!revealed) c = ColMasked;                          // 물음표(잠김)
@@ -233,13 +300,30 @@ public class SkillTreeUI : MonoBehaviour
             c.a = 1f;
             if (v.bg != null) v.bg.color = c;
 
-            if (v.label != null) v.label.text = revealed ? v.node.displayName : "?";
+            if (v.label != null)
+            {
+                if (!revealed) v.label.text = "?";
+                else
+                {
+                    int lv = SkillTreeSave.LevelOf(v.node.id);
+                    int max = SkillTreeSave.MaxLevelOf(v.node);
+                    // 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기
+                    v.label.text = (lv >= 1 && max > 1)
+                        ? v.node.displayName + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
+                        : v.node.displayName;
+                }
+            }
 
             if (v.ring != null)
             {
                 bool show = isUnlocked || buyable;
                 v.ring.enabled = show;
                 v.ring.color = isUnlocked ? RingUnlocked : RingBuyable;
+
+                // 구매 가능 노드만 링 알파 펄스(스케일과 별도 채널). 상태 바뀔 때만 재구성.
+                v.ringPulse?.Kill(); v.ringPulse = null;
+                if (buyable)
+                    v.ringPulse = v.ring.DOFade(0.3f, 0.7f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true);
             }
         }
     }
@@ -247,9 +331,15 @@ public class SkillTreeUI : MonoBehaviour
     private void RefreshLines()
     {
         HashSet<string> unlocked = SkillTreeSave.UnlockedIds();
-        foreach (var l in lines)
-            if (l.img != null)
-                l.img.color = unlocked.Contains(l.from) && unlocked.Contains(l.to) ? ColLineOn : ColLineDim;
+        foreach (LineView l in lines)
+        {
+            if (l.img == null) continue;
+            bool on = unlocked.Contains(l.from) && unlocked.Contains(l.to);
+            if (on == l.on) continue;               // 변화 없으면 건드리지 않음
+            l.img.DOKill();
+            l.img.DOColor(on ? ColLineOn : ColLineDim, 0.3f).SetUpdate(true);
+            l.on = on;
+        }
     }
 
     // ── 툴팁 ──
@@ -276,9 +366,19 @@ public class SkillTreeUI : MonoBehaviour
             if (tooltipDesc != null) tooltipDesc.text = n.description;
             if (tooltipCost != null)
             {
-                if (isUnlocked) tooltipCost.text = "해금됨 (우클릭 환불)";
-                else tooltipCost.text = SkillTreeSave.CostOf(tree, n) + " " + ResLabel(SkillTreeSave.ResourceOf(n))
-                        + (SkillTreeSave.CanUnlock(tree, hoveredId) ? "  ▸ 클릭하여 구매" : "");
+                int lv = SkillTreeSave.LevelOf(hoveredId);
+                int max = SkillTreeSave.MaxLevelOf(n);
+                string resLabel = ResLabel(SkillTreeSave.ResourceOf(n));
+                bool canUp = SkillTreeSave.CanUpgrade(tree, hoveredId);
+                int nextCost = SkillTreeSave.NextLevelCost(tree, n);
+
+                if (!isUnlocked)
+                    tooltipCost.text = nextCost + " " + resLabel + (canUp ? "  ▸ 클릭하여 구매" : "");
+                else if (lv >= max)
+                    tooltipCost.text = (max > 1 ? "Lv " + lv + "/" + max + " (최대)" : "해금됨") + "  · 우클릭 환불";
+                else
+                    tooltipCost.text = "Lv " + lv + "/" + max + "  · 다음 " + nextCost + " " + resLabel
+                        + (canUp ? "  ▸ 클릭" : "") + "  · 우클릭 환불";
             }
         }
 

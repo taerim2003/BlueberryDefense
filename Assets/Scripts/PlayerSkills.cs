@@ -11,6 +11,10 @@ public enum ActiveSkillId
     Orb,
     Lightning,
     EagleDrop,
+    Sniping,  // 신규: 가장 체력 높은 적을 5회 저격
+    Homing,   // 신규: 적 추적 미사일(성장형)
+    Shotgun,  // 신규: 산탄 장착(타수 버프)
+    // enum 끝에 추가 — 아이콘 인덱스/저장값 유지
 }
 
 public class EquippedSkill
@@ -30,6 +34,7 @@ public class EquippedSkill
     public int ExtraPierce = 0; // 기본공격: 관통 +1
     public int ExtraProjectiles = 0; // 기본공격: 투사체 추가 발사 (1당 1발)
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
+    public int GrowthStacks = 0; // 호밍 미사일: 사용할수록 누적되는 성장 스택(이번 판 한정)
 
     // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
     public readonly int[] PathTier = new int[3];
@@ -46,6 +51,31 @@ public class PlayerSkills : MonoBehaviour
     // 회오리 path0(미니 회오리)와 독수리투하 path2(미니 회오리)가 공유하는 피해 배율 보너스 — 둘 중 어느 쪽에 투자해도 서로의 미니 회오리가 함께 강해진다.
     public static float MiniWhirlwindDamageBonus = 0f;
 
+    // 기본공격 공격당 타격횟수(멀티히트). 총 데미지는 유지한 채 N회로 쪼개 각각 크리를 개별 판정 → 메이플식 데미지 숫자. Enemy.TakeSkillHit가 읽음.
+    public static int BasicAttackHits = 3;
+
+    // 스나이핑: 타겟 1명당 저격 횟수, 저격 간격
+    private const int SnipingBaseShots = 5;
+    private const float SnipingShotInterval = 0.08f;
+
+    // 산탄(타수) 버프 — 5초간 스킬 공격 횟수 증가. 전역(모든 스킬) 또는 최고공격력 스킬 1개(Route2).
+    private static float shotgunTimer;
+    private static int shotgunBonus;
+    private static bool shotgunSingleTarget;
+    private static ActiveSkillId shotgunTargetSkill;
+
+    // Enemy.TakeSkillHit가 참조: 스킬 고유 타수(기본공격만 >1, 그 외 1)
+    public static int NaturalHits(ActiveSkillId source) =>
+        source == ActiveSkillId.BasicAttack ? Mathf.Max(1, BasicAttackHits) : 1;
+
+    // Enemy.TakeSkillHit가 참조: 산탄 버프로 추가되는 타격 수
+    public static int GlobalBonusHits(ActiveSkillId source)
+    {
+        if (shotgunTimer <= 0f) return 0;
+        if (shotgunSingleTarget) return source == shotgunTargetSkill ? shotgunBonus : 0;
+        return shotgunBonus;
+    }
+
     // 리프레쉬(재사용 초기화)가 발동될 때 — HUD가 구독해 리프레쉬 패시브 아이콘에 보잉 연출
     public static System.Action OnRefreshProc;
 
@@ -58,6 +88,9 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject orbAltarPrefab;
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
+    [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 타격 VFX(Effect_Sniping)
+    [SerializeField] private GameObject snipingSplashPrefab;      // 스나이핑 path1(Route2) 스플래시 VFX(Effect_SplashSniping). 호밍 폭발 VFX로도 재활용
+    [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
 
@@ -82,6 +115,7 @@ public class PlayerSkills : MonoBehaviour
     {
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
+        shotgunTimer = 0f; // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
         AcquireSkill(ActiveSkillId.BasicAttack);
         LightningStorm.OnProc += HandleThunderCooldown;
     }
@@ -108,10 +142,19 @@ public class PlayerSkills : MonoBehaviour
     private void Update()
     {
         globalCooldownTimer -= Time.deltaTime;
+        if (shotgunTimer > 0f) shotgunTimer -= Time.deltaTime;
 
         foreach (EquippedSkill skill in equippedSkills)
         {
             skill.CooldownTimer -= Time.deltaTime;
+
+            // 스나이핑 path2(Route3) T2+: 수동 사용 불가, 쿨타임마다 자동 시전
+            if (skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2)
+            {
+                if (skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f)
+                    TryUseSkill(skill);
+                continue;
+            }
 
             if (Keyboard.current[skill.Key].wasPressedThisFrame)
                 TryUseSkill(skill);
@@ -342,6 +385,23 @@ public class PlayerSkills : MonoBehaviour
             case (ActiveSkillId.EagleDrop, 2, 1):
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.6f); // 쿨감 40%
                 break;
+
+            // 스나이핑 (path0 타겟수·path1 T2 스플래시·path2 T2 자동시전은 Fire/Update에서 실시간 처리)
+            case (ActiveSkillId.Sniping, 1, 1):
+                skill.Damage *= 1.3f; // Route2 T1: 피해 30%
+                break;
+            case (ActiveSkillId.Sniping, 2, 1):
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.6f); // Route3 T1: 쿨감 40%
+                break;
+            case (ActiveSkillId.Sniping, 2, 3):
+                skill.Damage *= 1.3f; // Route3 T3: 자동시전 강화(피해 30%)
+                break;
+
+            // 호밍 미사일 (개수 path0·폭발 path1 T2·성장률 path2는 FireHoming에서 실시간)
+            case (ActiveSkillId.Homing, 1, 1):
+                skill.Damage *= 1.3f; // Route2 T1: 미사일 피해 30%
+                break;
+            // 산탄(Shotgun)은 전부 FireShotgun에서 실시간 계산(영구 스탯 변경 없음)
         }
     }
 
@@ -361,14 +421,15 @@ public class PlayerSkills : MonoBehaviour
         if (path == 1)
         {
             PassiveSkillId? req = GetPassivePrereq(skillId);
-            if (!req.HasValue || passives == null) return false;
+            if (!req.HasValue) return true; // 연계 미지정 스킬(신규)은 연계 조건 없이 자유 진화
+            if (passives == null) return false;
             EquippedPassive p = passives.GetPassive(req.Value);
             return p != null && p.Level >= 5;
         }
         if (path == 2)
         {
             ActiveSkillId? req = GetActivePrereq(skillId);
-            if (!req.HasValue) return false;
+            if (!req.HasValue) return true; // 연계 미지정 스킬(신규)은 자유 진화
             EquippedSkill s = equippedSkills.FirstOrDefault(x => x.Id == req.Value);
             return s != null && s.Level >= 5;
         }
@@ -402,6 +463,9 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => "오브",
         ActiveSkillId.Lightning => "낙뢰",
         ActiveSkillId.EagleDrop => "독수리 투하",
+        ActiveSkillId.Sniping => "스나이핑",
+        ActiveSkillId.Homing => "호밍 미사일",
+        ActiveSkillId.Shotgun => "산탄 장착",
         _ => id.ToString(),
     };
 
@@ -488,6 +552,39 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.EagleDrop, 2, 2) => "착탄 시 미니 회오리 생성 (피해량 25%, 최대 5회 타격)",
         (ActiveSkillId.EagleDrop, 2, 3) => "미니 회오리 피해량 35%로 증가, 최대 타격 횟수 +3회",
 
+        // Sniping (Route1=path0 타겟수, Route2=path1 피해+스플래시, Route3=path2 자동시전)
+        (ActiveSkillId.Sniping, 0, 1) => "저격 타겟 1명 추가 (총 2명)",
+        (ActiveSkillId.Sniping, 0, 2) => "저격 타겟 1명 추가 (총 3명)",
+        (ActiveSkillId.Sniping, 0, 3) => "저격 타겟 2명 추가 (총 5명)",
+        (ActiveSkillId.Sniping, 1, 1) => "피해량 30% 증가",
+        (ActiveSkillId.Sniping, 1, 2) => "타격 시 주변 적에게 스플래시 피해 (40%)",
+        (ActiveSkillId.Sniping, 1, 3) => "스플래시 피해 80%로 증가, 범위 확대",
+        (ActiveSkillId.Sniping, 2, 1) => "재사용 대기시간 40% 감소",
+        (ActiveSkillId.Sniping, 2, 2) => "수동 사용 불가, 3초마다 가장 체력 높은 적에게 자동 시전",
+        (ActiveSkillId.Sniping, 2, 3) => "자동 시전 간격 1.5초로 단축, 피해량 30% 증가",
+
+        // Homing (Route1=path0 미사일 수, Route2=path1 폭발, Route3=path2 성장률)
+        (ActiveSkillId.Homing, 0, 1) => "미사일 수 증가 (5 → 7)",
+        (ActiveSkillId.Homing, 0, 2) => "미사일 수 2배 (→ 10)",
+        (ActiveSkillId.Homing, 0, 3) => "미사일 수 3배 (→ 15)",
+        (ActiveSkillId.Homing, 1, 1) => "미사일 피해량 30% 증가",
+        (ActiveSkillId.Homing, 1, 2) => "미사일 타격 시 폭발, 주변 적에게 피해 (40%)",
+        (ActiveSkillId.Homing, 1, 3) => "폭발 피해 60%로 증가, 범위 확대",
+        (ActiveSkillId.Homing, 2, 1) => "성장률 소폭 강화",
+        (ActiveSkillId.Homing, 2, 2) => "성장률 강화 (사용할수록 더 빨리 강해짐)",
+        (ActiveSkillId.Homing, 2, 3) => "성장률 대폭 강화",
+
+        // Shotgun (Route1=path0 타수, Route2=path1 집중산탄, Route3=path2 전체산탄+기절)
+        (ActiveSkillId.Shotgun, 0, 1) => "공격 횟수 추가 (버프 중 +2)",
+        (ActiveSkillId.Shotgun, 0, 2) => "공격 횟수 추가 (버프 중 +3)",
+        (ActiveSkillId.Shotgun, 0, 3) => "공격 횟수 추가 (버프 중 +5)",
+        (ActiveSkillId.Shotgun, 1, 1) => "버프 지속시간 2초 증가",
+        (ActiveSkillId.Shotgun, 1, 2) => "가장 공격력 높은 스킬 1개에만 적용, 공격 횟수 추가 2배",
+        (ActiveSkillId.Shotgun, 1, 3) => "그 스킬 공격 횟수 추가 3배",
+        (ActiveSkillId.Shotgun, 2, 1) => "버프 지속시간 2초 증가",
+        (ActiveSkillId.Shotgun, 2, 2) => "사용 시 화면의 모든 적을 5회 공격",
+        (ActiveSkillId.Shotgun, 2, 3) => "전체 공격이 적을 1.5초간 기절시킴",
+
         _ => "",
     };
 
@@ -544,6 +641,36 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.EagleDrop, 2, 2) => "미니 회오리",
         (ActiveSkillId.EagleDrop, 2, 3) => "미니 회오리 강화",
 
+        (ActiveSkillId.Sniping, 0, 1) => "타겟 추가",
+        (ActiveSkillId.Sniping, 0, 2) => "타겟 추가 II",
+        (ActiveSkillId.Sniping, 0, 3) => "타겟 추가 III",
+        (ActiveSkillId.Sniping, 1, 1) => "피해 강화",
+        (ActiveSkillId.Sniping, 1, 2) => "스플래시",
+        (ActiveSkillId.Sniping, 1, 3) => "스플래시 II",
+        (ActiveSkillId.Sniping, 2, 1) => "쿨타임 감소",
+        (ActiveSkillId.Sniping, 2, 2) => "자동 조준",
+        (ActiveSkillId.Sniping, 2, 3) => "자동 조준 II",
+
+        (ActiveSkillId.Homing, 0, 1) => "미사일 증가",
+        (ActiveSkillId.Homing, 0, 2) => "미사일 증가 II",
+        (ActiveSkillId.Homing, 0, 3) => "미사일 증가 III",
+        (ActiveSkillId.Homing, 1, 1) => "피해 강화",
+        (ActiveSkillId.Homing, 1, 2) => "폭발",
+        (ActiveSkillId.Homing, 1, 3) => "폭발 II",
+        (ActiveSkillId.Homing, 2, 1) => "성장 강화",
+        (ActiveSkillId.Homing, 2, 2) => "성장 강화 II",
+        (ActiveSkillId.Homing, 2, 3) => "성장 강화 III",
+
+        (ActiveSkillId.Shotgun, 0, 1) => "타수 증가",
+        (ActiveSkillId.Shotgun, 0, 2) => "타수 증가 II",
+        (ActiveSkillId.Shotgun, 0, 3) => "타수 증가 III",
+        (ActiveSkillId.Shotgun, 1, 1) => "지속 증가",
+        (ActiveSkillId.Shotgun, 1, 2) => "집중 산탄",
+        (ActiveSkillId.Shotgun, 1, 3) => "집중 산탄 II",
+        (ActiveSkillId.Shotgun, 2, 1) => "지속 증가",
+        (ActiveSkillId.Shotgun, 2, 2) => "전체 산탄",
+        (ActiveSkillId.Shotgun, 2, 3) => "기절 산탄",
+
         _ => "",
     };
 
@@ -584,12 +711,24 @@ public class PlayerSkills : MonoBehaviour
             case ActiveSkillId.EagleDrop:
                 StartCoroutine(EagleDropRoutine(damage, critChance, skill));
                 break;
+            case ActiveSkillId.Sniping:
+                if (!FireSniping(damage, critChance, skill)) return; // 조준할 적이 없으면 캐스트 실패(쿨 소모 안 함)
+                break;
+            case ActiveSkillId.Homing:
+                if (!FireHoming(damage, critChance, skill)) return;
+                break;
+            case ActiveSkillId.Shotgun:
+                FireShotgun(damage, critChance, skill);
+                break;
         }
 
         globalCooldownTimer = GlobalCooldown;
         // 오브가 설치기(낙뢰 연계)로 대체된 상태에서는 훨씬 긴 별도 쿨타임을 사용
         // (메타 "쿨타임" 업그레이드가 전역 배율로 곱해짐)
-        float baseCd = (skill.Id == ActiveSkillId.Orb && skill.PathTier[2] >= 2) ? OrbAltarCooldown : skill.Cooldown;
+        // 스나이핑 자동시전(path2 T2+)은 스킬 쿨타임 대신 고정 간격(T2=3초, T3=1.5초)으로 발동
+        float baseCd = (skill.Id == ActiveSkillId.Orb && skill.PathTier[2] >= 2) ? OrbAltarCooldown
+            : (skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2) ? (skill.PathTier[2] >= 3 ? 1.5f : 3f)
+            : skill.Cooldown;
         float cdMult = MetaBonuses.CooldownMult;
         // 스킬트리 "신속한 회오리": 회오리는 쿨타임 감소분(1-CooldownMult)을 1.5배로 받음
         if (skill.Id == ActiveSkillId.Whirlwind && MetaBonuses.WhirlwindCooldownBonus)
@@ -720,6 +859,138 @@ public class PlayerSkills : MonoBehaviour
 
         foreach (Enemy e in nearby)
             StartCoroutine(MiniEagleBonus(e, damage, critChance, scale));
+    }
+
+    // ── 스나이핑: 가장 체력 높은 적(들)을 5회씩 저격 ──
+    private bool FireSniping(float damage, float critChance, EquippedSkill skill)
+    {
+        int targets = 1;
+        if (skill.PathTier[0] >= 1) targets += 1; // Route1 T1: +1 (총 2)
+        if (skill.PathTier[0] >= 2) targets += 1; // T2(타겟수++): +1 (총 3)
+        if (skill.PathTier[0] >= 3) targets += 2; // T3: +2 (총 5)
+
+        List<Enemy> chosen = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
+            .Where(e => e != null)
+            .OrderByDescending(e => e.CurrentHealth)
+            .Take(targets)
+            .ToList();
+        if (chosen.Count == 0) return false; // 조준할 적 없음 → 캐스트 실패
+
+        bool splash = skill.PathTier[1] >= 2;                     // Route2 T2: 스플래시
+        float splashRatio = skill.PathTier[1] >= 3 ? 0.8f : 0.4f; // T3: 스플래시 피해 강화
+        float splashRadius = skill.PathTier[1] >= 3 ? 2.5f : 1.5f;
+
+        animator.SetTrigger("Attack");
+        foreach (Enemy target in chosen)
+            StartCoroutine(SnipeTarget(target, damage, critChance, splash, splashRatio, splashRadius));
+        return true;
+    }
+
+    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool splash, float splashRatio, float splashRadius)
+    {
+        // 이펙트는 타겟당 1회만 표시 — 5발이어도 이펙트는 한 번(데미지·스플래시 판정은 5회).
+        if (target != null && snipingEffectPrefab != null)
+            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(snipingEffectPrefab, target.transform.position, Quaternion.identity), 0.6f);
+
+        for (int i = 0; i < SnipingBaseShots; i++)
+        {
+            if (target == null) yield break;
+            Vector3 pos = target.transform.position;
+            target.TakeSkillHit(damage, critChance, ActiveSkillId.Sniping);
+            if (splash) SnipingSplash(pos, target, damage * splashRatio, critChance, splashRadius, showVfx: i == 0); // 스플래시 VFX도 1회만
+            yield return new WaitForSeconds(SnipingShotInterval);
+        }
+    }
+
+    private void SnipingSplash(Vector3 center, Enemy primary, float dmg, float critChance, float radius, bool showVfx)
+    {
+        if (showVfx && snipingSplashPrefab != null)
+            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(snipingSplashPrefab, center, Quaternion.identity), 0.6f);
+
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (e == null || e == primary) continue;
+            if (Vector2.Distance(center, e.transform.position) <= radius)
+                e.TakeSkillHit(dmg, critChance, ActiveSkillId.Sniping);
+        }
+    }
+
+    // ── 호밍 미사일: 적 추적 미사일 5개(성장형) ──
+    private bool FireHoming(float damage, float critChance, EquippedSkill skill)
+    {
+        if (homingMissilePrefab == null) return false;
+
+        // 성장: 사용할수록 강해짐(이번 판 한정). Route3(path2)로 성장률 강화.
+        float growthPerCast = 0.08f + (skill.PathTier[2] >= 1 ? 0.04f : 0f) + (skill.PathTier[2] >= 2 ? 0.06f : 0f) + (skill.PathTier[2] >= 3 ? 0.1f : 0f);
+        skill.GrowthStacks++;
+        float missileDamage = damage * (1f + growthPerCast * skill.GrowthStacks);
+
+        // Route1(path0): 미사일 개수 N배
+        int count = skill.PathTier[0] >= 3 ? 15 : skill.PathTier[0] >= 2 ? 10 : skill.PathTier[0] >= 1 ? 7 : 5;
+        // Route2(path1): T2 폭발, T3 폭발 강화
+        bool explode = skill.PathTier[1] >= 2;
+        float explodeRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
+        float explodeRadius = skill.PathTier[1] >= 3 ? 2.5f : 1.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float spread = count > 1 ? Mathf.Lerp(-60f, 60f, i / (float)(count - 1)) : 0f;
+            Vector2 dir = Quaternion.Euler(0f, 0f, spread) * Vector2.right; // 적 방향(오른쪽) 부채꼴
+            GameObject obj = Instantiate(homingMissilePrefab, transform.position + Vector3.up * 0.2f, Quaternion.identity);
+            HomingMissile m = obj.GetComponent<HomingMissile>();
+            m.Damage = missileDamage;
+            m.CritChance = critChance;
+            m.Explode = explode;
+            m.ExplodeRadius = explodeRadius;
+            m.ExplodeRatio = explodeRatio;
+            m.ExplodeVfx = snipingSplashPrefab; // 폭발 VFX 재활용
+            m.Init(dir);
+        }
+        animator.SetTrigger("Attack");
+        return true;
+    }
+
+    // ── 산탄 장착: 5초간 스킬 공격 횟수 증가(타수 버프) ──
+    private bool FireShotgun(float damage, float critChance, EquippedSkill skill)
+    {
+        float duration = 5f + (skill.PathTier[1] >= 1 ? 2f : 0f) + (skill.PathTier[2] >= 1 ? 2f : 0f);
+        // Route1(path0): 공격 횟수 추가
+        int bonus = 1 + (skill.PathTier[0] >= 1 ? 1 : 0) + (skill.PathTier[0] >= 2 ? 1 : 0) + (skill.PathTier[0] >= 3 ? 2 : 0);
+        // Route2(path1) T2: 최고 공격력 스킬 1개에만, 보너스 2배(T3=3배)
+        bool single = skill.PathTier[1] >= 2;
+        if (single) bonus *= skill.PathTier[1] >= 3 ? 3 : 2;
+
+        shotgunTimer = duration;
+        shotgunBonus = bonus;
+        shotgunSingleTarget = single;
+        if (single) shotgunTargetSkill = HighestDamageSkill();
+
+        // Route3(path2) T2: 사용 시 화면 모든 적 5회 공격, T3: 1.5초 기절
+        if (skill.PathTier[2] >= 2)
+        {
+            bool stun = skill.PathTier[2] >= 3;
+            foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            {
+                if (e == null) continue;
+                for (int i = 0; i < 5; i++) e.TakeSkillHit(damage, critChance, ActiveSkillId.Shotgun);
+                if (stun) e.ApplySlow(0f, 1.5f); // 기절 = 이동 정지
+            }
+        }
+
+        BuffTracker.Set("Shotgun", Time.time + duration);
+        return true;
+    }
+
+    private ActiveSkillId HighestDamageSkill()
+    {
+        ActiveSkillId best = ActiveSkillId.BasicAttack;
+        float bestDmg = -1f;
+        foreach (EquippedSkill s in equippedSkills)
+        {
+            if (s.Id == ActiveSkillId.Shotgun) continue; // 자기 자신 제외
+            if (s.Damage > bestDmg) { bestDmg = s.Damage; best = s.Id; }
+        }
+        return best;
     }
 
     private void FireWhirlwind(float damage, float critChance, EquippedSkill skill)
@@ -896,8 +1167,7 @@ public class PlayerSkills : MonoBehaviour
             foreach (Enemy enemy in enemies)
             {
                 Vector3 pos = enemy.transform.position;
-                float hitDamage = PlayerPassives.ApplyCrit(dropDamage, critChance, out bool isCrit);
-                enemy.TakeDamage(hitDamage, isCrit: isCrit, source: ActiveSkillId.EagleDrop);
+                enemy.TakeSkillHit(dropDamage, critChance, ActiveSkillId.EagleDrop);
 
                 if (overhealPerHit > 0 && health != null) health.AddOverheal(overhealPerHit);
                 if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * 0.4f, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
@@ -957,6 +1227,9 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => 12f,
         ActiveSkillId.EagleDrop => 15f,
+        ActiveSkillId.Sniping => 6f,
+        ActiveSkillId.Homing => 8f,
+        ActiveSkillId.Shotgun => 14f,
         _ => 1f,
     };
 
@@ -967,6 +1240,9 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => LightningStorm.ProcDamage,
         ActiveSkillId.EagleDrop => 11f,
+        ActiveSkillId.Sniping => 9f,
+        ActiveSkillId.Homing => 8f,
+        ActiveSkillId.Shotgun => 12f, // Route3 전체공격용 기준 데미지
         _ => 6f,
     };
 }

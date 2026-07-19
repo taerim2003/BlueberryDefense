@@ -3976,7 +3976,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2bcef3cc083e5c438b3fc6137cfca04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  stageDuration: 45
   stageBreakDuration: 2.5
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
   heartPickupPrefab: {fileID: 8256105624388431671, guid: 513016e82fbf3b0479cb1793e0e5422a, type: 3}
@@ -7814,7 +7813,10 @@ MonoBehaviour:
   paperPlaneEnemyPrefab: {fileID: 2450170008170281, guid: cc51a7d5446e5f64faa618a4e06e8744, type: 3}
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
   shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
+  bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}
+  bossStage: 15
   spawnInterval: 1.5
+  defaultSpawnCount: 20
   treasureSpawnRatio: 0.85
   treasureGapAfter: 1.5
 --- !u!4 &984900548
@@ -11554,6 +11556,9 @@ MonoBehaviour:
   - {fileID: -5657532419524129085, guid: 9c5c0501abcdf054e9773e631af7798f, type: 3}
   - {fileID: 5052037539827192933, guid: fed774b2ef99fad46999ac5aa8e1b2db, type: 3}
   - {fileID: -7527278547198261715, guid: 2ec07df7e663e4f44a441707583b3ff0, type: 3}
+  - {fileID: 21300000, guid: 61009159887bb664d9e658ab43caeafb, type: 3}
+  - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   passiveIcons:
   - {fileID: 6929312441436723685, guid: 20aa78e88f1917048bd470c011e76354, type: 3}
   - {fileID: -5499187749238686383, guid: 881e17147270f7141ab54205b1b2f26a, type: 3}
@@ -14506,6 +14511,9 @@ MonoBehaviour:
   - {fileID: -5657532419524129085, guid: 9c5c0501abcdf054e9773e631af7798f, type: 3}
   - {fileID: 5052037539827192933, guid: fed774b2ef99fad46999ac5aa8e1b2db, type: 3}
   - {fileID: -7527278547198261715, guid: 2ec07df7e663e4f44a441707583b3ff0, type: 3}
+  - {fileID: 21300000, guid: 61009159887bb664d9e658ab43caeafb, type: 3}
+  - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   gemIconSprites:
   - {fileID: 6613588427734777530, guid: a0edddfd4847ab5428cd00cea6a70ca8, type: 3}
   - {fileID: 1592231510907667000, guid: 6b1b0bbcc1e04d842bdbb96f08bbceb9, type: 3}
@@ -17273,6 +17281,9 @@ MonoBehaviour:
   orbAltarPrefab: {fileID: 9115850515498546779, guid: 8b00a56b7e34de04fa99c150d454f9b1, type: 3}
   eagleDropPrefab: {fileID: 9157304669273838960, guid: 20af74ddf124cc5408f927b8792f8b33, type: 3}
   eagleImpactVfxPrefab: {fileID: 4748681987041982144, guid: 69f9c1460d45c5a4bb7a014ad125a17f, type: 3}
+  snipingEffectPrefab: {fileID: 6341454868045255947, guid: 29ebc5a5461bbda489328264bcce8a32, type: 3}
+  snipingSplashPrefab: {fileID: 4541086124990004514, guid: 686b719a63328a441a5b94fe20cdb3ab, type: 3}
+  homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
   animator: {fileID: 2031227614}
   evolutionTextOverrides: {fileID: 11400000, guid: 82f64ce823e197443ae5ae43db44ee1f, type: 2}
   whirlwindCastSfx: {fileID: 8300000, guid: d67f03353b0af11458c48b58c4fb6643, type: 3}

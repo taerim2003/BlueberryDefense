@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageTable
   stages:
   - stageNumber: 1
+    spawnCount: 14
     duration: 14
     spawnInterval: 1
     eliteChance: 0
@@ -24,6 +25,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1
     enemyDamageMultiplier: 1
   - stageNumber: 2
+    spawnCount: 22
     duration: 15
     spawnInterval: 0.68
     eliteChance: 0.035
@@ -34,6 +36,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.03
     enemyDamageMultiplier: 1.08
   - stageNumber: 3
+    spawnCount: 26
     duration: 17
     spawnInterval: 0.62
     eliteChance: 0.05
@@ -44,6 +47,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.06
     enemyDamageMultiplier: 1.15
   - stageNumber: 4
+    spawnCount: 34
     duration: 18
     spawnInterval: 0.52
     eliteChance: 0.07
@@ -54,6 +58,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.09
     enemyDamageMultiplier: 1.24
   - stageNumber: 5
+    spawnCount: 42
     duration: 20
     spawnInterval: 0.48
     eliteChance: 0.09
@@ -64,6 +69,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.13
     enemyDamageMultiplier: 1.32
   - stageNumber: 6
+    spawnCount: 50
     duration: 16
     spawnInterval: 0.32
     eliteChance: 0.18
@@ -74,6 +80,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.16
     enemyDamageMultiplier: 1.4
   - stageNumber: 7
+    spawnCount: 38
     duration: 15
     spawnInterval: 0.4
     eliteChance: 0.305
@@ -84,6 +91,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.19
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
+    spawnCount: 56
     duration: 14
     spawnInterval: 0.24
     eliteChance: 0.27
@@ -94,6 +102,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.22
     enemyDamageMultiplier: 1.6
   - stageNumber: 9
+    spawnCount: 58
     duration: 13
     spawnInterval: 0.22
     eliteChance: 0.3
@@ -104,6 +113,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.25
     enemyDamageMultiplier: 1.7
   - stageNumber: 10
+    spawnCount: 64
     duration: 13
     spawnInterval: 0.2
     eliteChance: 0.35
@@ -114,6 +124,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.8
   - stageNumber: 11
+    spawnCount: 62
     duration: 12
     spawnInterval: 0.192
     eliteChance: 0.458
@@ -124,6 +135,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.32
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
+    spawnCount: 68
     duration: 12
     spawnInterval: 0.174
     eliteChance: 0.509
@@ -134,6 +146,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.35
     enemyDamageMultiplier: 2.16
   - stageNumber: 13
+    spawnCount: 70
     duration: 11
     spawnInterval: 0.156
     eliteChance: 0.56000006
@@ -144,6 +157,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.38
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
+    spawnCount: 78
     duration: 11
     spawnInterval: 0.13800001
     eliteChance: 0.61100006
@@ -154,6 +168,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.37
   - stageNumber: 15
+    spawnCount: 90
     duration: 12
     spawnInterval: 0.11
     eliteChance: 0.7
@@ -163,53 +178,3 @@ MonoBehaviour:
     enemyHpMultiplier: 5.3
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 2.7
-  - stageNumber: 16
-    duration: 10
-    spawnInterval: 0.1
-    eliteChance: 0.72
-    paperPlaneChance: 0.12
-    ufoChance: 0.1
-    shieldChance: 0.22
-    enemyHpMultiplier: 6
-    enemySpeedMultiplier: 1.47
-    enemyDamageMultiplier: 2.85
-  - stageNumber: 17
-    duration: 10
-    spawnInterval: 0.09
-    eliteChance: 0.75
-    paperPlaneChance: 0.13
-    ufoChance: 0.1
-    shieldChance: 0.22
-    enemyHpMultiplier: 6.8
-    enemySpeedMultiplier: 1.51
-    enemyDamageMultiplier: 3
-  - stageNumber: 18
-    duration: 10
-    spawnInterval: 0.08
-    eliteChance: 0.78
-    paperPlaneChance: 0.13
-    ufoChance: 0.11
-    shieldChance: 0.22
-    enemyHpMultiplier: 7.7
-    enemySpeedMultiplier: 1.54
-    enemyDamageMultiplier: 3.15
-  - stageNumber: 19
-    duration: 10
-    spawnInterval: 0.07
-    eliteChance: 0.8
-    paperPlaneChance: 0.14
-    ufoChance: 0.11
-    shieldChance: 0.22
-    enemyHpMultiplier: 8.7
-    enemySpeedMultiplier: 1.57
-    enemyDamageMultiplier: 3.3
-  - stageNumber: 20
-    duration: 14
-    spawnInterval: 0.07
-    eliteChance: 0.8
-    paperPlaneChance: 0.15
-    ufoChance: 0.12
-    shieldChance: 0.22
-    enemyHpMultiplier: 9.8
-    enemySpeedMultiplier: 1.6
-    enemyDamageMultiplier: 3.5

@@ -155,6 +155,7 @@ public class HUDController : MonoBehaviour
         "Lightning" => GetIcon(activeIcons, (int)ActiveSkillId.Lightning),
         "OrbAltar" => GetIcon(activeIcons, (int)ActiveSkillId.Orb),
         "LightningDamageBuff" => GetIcon(passiveIcons, (int)PassiveSkillId.Strength),
+        "Shotgun" => GetIcon(activeIcons, (int)ActiveSkillId.Shotgun),
         _ => null,
     };
 
