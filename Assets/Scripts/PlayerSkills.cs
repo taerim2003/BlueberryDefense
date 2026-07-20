@@ -36,7 +36,7 @@ public class EquippedSkill
     public int ExtraProjectiles = 0; // 기본공격: 투사체 추가 발사 (1당 1발)
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
     public int GrowthStacks = 0; // 호밍 미사일: 사용할수록 누적되는 성장 스택(이번 판 한정)
-    public float RewindAmount = 1f; // 되감기: 다른 스킬 쿨타임을 앞당기는 시간(초). 레벨업마다 +0.1
+    public float RewindAmount = 1f; // 되감기: 다른 스킬 쿨타임을 앞당기는 시간(초). 짝수 레벨업마다 +0.15
 
     // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
     public readonly int[] PathTier = new int[3];
@@ -171,7 +171,8 @@ public class PlayerSkills : MonoBehaviour
                 continue;
             }
 
-            if (Keyboard.current[skill.Key].wasPressedThisFrame)
+            // 꾹 누르고 있어도 쿨이 끝나면 재발동(TryUseSkill이 쿨 통과 여부를 판정)
+            if (Keyboard.current[skill.Key].isPressed)
                 TryUseSkill(skill);
         }
     }
@@ -228,11 +229,13 @@ public class PlayerSkills : MonoBehaviour
 
     private static void ApplyUpgradeEffect(EquippedSkill skill, int level)
     {
-        // 되감기: 레벨업마다 쿨타임 0.1초 감소 + 되감기 시간 0.1초 증가 (둘 다 매 레벨 조금씩)
+        // 되감기: 레벨업마다 쿨감/되감기강화를 번갈아 적용 (홀수 레벨=쿨타임 0.15초 감소, 짝수 레벨=되감기 시간 0.15초 증가)
         if (skill.Id == ActiveSkillId.Rewind)
         {
-            skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown - 0.1f);
-            skill.RewindAmount += 0.1f;
+            if (level % 2 == 1)
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown - 0.15f);
+            else
+                skill.RewindAmount += 0.15f;
             return;
         }
 
@@ -287,7 +290,7 @@ public class PlayerSkills : MonoBehaviour
 
     public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel)
     {
-        if (skill.Id == ActiveSkillId.Rewind) return "쿨타임 0.1초 감소, 되감기 0.1초 증가";
+        if (skill.Id == ActiveSkillId.Rewind) return nextLevel % 2 == 1 ? "재사용 대기시간 0.15초 감소" : "되감기 시간 0.15초 증가";
 
         switch (nextLevel % 3)
         {
@@ -504,6 +507,40 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Rewind => "되감기",
         _ => id.ToString(),
     };
+
+    // 일시정지(ESC) 요약용: 이 스킬이 1레벨 기본값 대비 레벨업으로 얼마나 강해졌는지 항목별로 정리.
+    // (진화 효과는 PauseMenu가 PathTier 제목으로 따로 표시하므로 여기선 레벨업 성장분만 다룬다)
+    public static List<string> DescribeLevelUpGains(EquippedSkill s)
+    {
+        var lines = new List<string>();
+
+        float baseDmg = GetDefaultDamage(s.Id);
+        if (baseDmg > 0f)
+        {
+            int dmgPct = Mathf.RoundToInt((s.Damage / baseDmg - 1f) * 100f);
+            if (dmgPct != 0) lines.Add($"피해 {(dmgPct > 0 ? "+" : "")}{dmgPct}%  ({baseDmg:0.#}→{s.Damage:0.#})");
+        }
+
+        float baseCd = GetDefaultCooldown(s.Id);
+        if (baseCd > 0f)
+        {
+            int cdPct = Mathf.RoundToInt((1f - s.Cooldown / baseCd) * 100f);
+            if (cdPct != 0) lines.Add($"재사용 대기시간 {(cdPct > 0 ? "-" : "+")}{Mathf.Abs(cdPct)}%  ({baseCd:0.#}→{s.Cooldown:0.#}초)");
+        }
+
+        if (s.ProjectileSpeedMultiplier > 1.0001f)
+            lines.Add($"투사체 속도 +{Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)}%");
+        if (s.ExtraPierce > 0) lines.Add($"관통 +{s.ExtraPierce}회");
+        if (s.ExtraProjectiles > 0) lines.Add($"투사체 +{s.ExtraProjectiles}발");
+        if (s.ProcChanceBonus > 0f) lines.Add($"발동 확률 +{Mathf.RoundToInt(s.ProcChanceBonus * 100f)}%p");
+        if (s.ExtraWhirlwindDuration > 0f) lines.Add($"지속시간 +{s.ExtraWhirlwindDuration:0.#}초");
+        if (s.Scale > 1.0001f) lines.Add($"크기 +{Mathf.RoundToInt((s.Scale - 1f) * 100f)}%");
+        if (s.Id == ActiveSkillId.Rewind) lines.Add($"되감기 시간 {s.RewindAmount:0.#}초");
+        if (s.Id == ActiveSkillId.Homing && s.GrowthStacks > 0)
+            lines.Add($"성장 스택 {s.GrowthStacks} (사용할수록 강해짐)");
+
+        return lines;
+    }
 
     public static string GetPassiveSkillName(PassiveSkillId id) => id switch
     {
@@ -1027,6 +1064,8 @@ public class PlayerSkills : MonoBehaviour
 
         // Route1(path0): 미사일 개수 N배
         int count = skill.PathTier[0] >= 3 ? 15 : skill.PathTier[0] >= 2 ? 10 : skill.PathTier[0] >= 1 ? 7 : 5;
+        // 15번 사용할 때마다 미사일 +1발 (GrowthStacks = 이번 판 누적 사용 횟수)
+        count += skill.GrowthStacks / 15;
         // Route2(path1): T2 폭발, T3 폭발 강화
         bool explode = skill.PathTier[1] >= 2;
         float explodeRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
@@ -1349,12 +1388,12 @@ public class PlayerSkills : MonoBehaviour
 
     private static float GetDefaultCooldown(ActiveSkillId id) => id switch
     {
-        ActiveSkillId.BasicAttack => 1f,
+        ActiveSkillId.BasicAttack => 1.5f,
         ActiveSkillId.Whirlwind => 5f,
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => 12f,
         ActiveSkillId.EagleDrop => 15f,
-        ActiveSkillId.Sniping => 6f,
+        ActiveSkillId.Sniping => 5f,
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 14f,
         ActiveSkillId.Rewind => 6f,
@@ -1368,7 +1407,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => LightningStorm.ProcDamage,
         ActiveSkillId.EagleDrop => 11f,
-        ActiveSkillId.Sniping => 9f,
+        ActiveSkillId.Sniping => 18f,
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 12f, // Route3 전체공격용 기준 데미지
         ActiveSkillId.Rewind => 0f,   // 되감기는 피해 없음(유틸)

@@ -114,6 +114,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 364fe3a9926159e4cab137905e233a65, type: 3}
   fps: 16
   loop: 1
+  despawnOnFinish: 1
 --- !u!58 &4900317826285674586
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -194,3 +195,5 @@ MonoBehaviour:
   lifetime: 2.5
   explodeVfxPrefab: {fileID: 4748681987041982144, guid: 3e01d91f8713f0642b74a8180d67b988, type: 3}
   explodeVfxScale: 0.6
+  hitVfxPrefab: {fileID: 4748681987041982144, guid: 52d6661fa75ab2d44b85fd7cbc945860, type: 3}
+  hitVfxScale: 0.5

@@ -21,7 +21,7 @@ MonoBehaviour:
     hasEffect: 1
     effect: 1
     perLevel: 20
-    maxLevel: 5
+    maxLevel: 1
     cost: 40
     costGrowth: 1.5
     gateCost: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
     hasEffect: 0
     effect: 0
     perLevel: 5
-    maxLevel: 5
+    maxLevel: 1
     cost: 50
     costGrowth: 1.5
     gateCost: 1

@@ -138,8 +138,8 @@ public static class SkillEffects
                 case "fly_1": t.FlyDmgPct += 5f * lv; break;
                 case "fly_2": t.FlyDmgPct += 10f * lv; break;
                 case "eagle_fly": t.EagleFlyDmgPct += 30f; break;
-                // 체력회복 드랍(루트) — 레벨당 +1%
-                case "root_hp": t.HealDropPct += 1f * lv; break;
+                // 체력회복 드랍(루트) — 레벨당 +4%
+                case "root_hp": t.HealDropPct += 4f * lv; break;
                 // 스킬 개별강화(토글, maxLevel 1)
                 case "orb_BasicFly": t.OrbFly = true; break;
                 case "tornado_CoolDownBonus": t.WhirlwindCdBonus = true; break;

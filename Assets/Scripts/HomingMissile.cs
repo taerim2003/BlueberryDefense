@@ -9,6 +9,8 @@ public class HomingMissile : MonoBehaviour
     [SerializeField] private float lifetime = 4f;
     [SerializeField] private GameObject explodeVfxPrefab; // 폭발(Route2) VFX — 프로젝트의 실제 폭발 에셋을 프리팹에 배선
     [SerializeField] private float explodeVfxScale = 0.6f;
+    [SerializeField] private GameObject hitVfxPrefab;     // 매 명중 시 타격 VFX
+    [SerializeField] private float hitVfxScale = 0.5f;
 
     public float Damage { get; set; }
     public float CritChance { get; set; }
@@ -51,11 +53,14 @@ public class HomingMissile : MonoBehaviour
     {
         Enemy best = null;
         float bestSqr = float.MaxValue;
+        bool bestFlying = false;
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
         {
             if (e == null) continue;
             float sqr = ((Vector2)e.transform.position - (Vector2)transform.position).sqrMagnitude;
-            if (sqr < bestSqr) { bestSqr = sqr; best = e; }
+            // 비행 유닛 우선: 비행 후보가 하나라도 있으면 지상보다 항상 먼저 노린다. 같은 부류 안에선 가장 가까운 것.
+            bool better = (e.IsFlying && !bestFlying) || (e.IsFlying == bestFlying && sqr < bestSqr);
+            if (best == null || better) { best = e; bestSqr = sqr; bestFlying = e.IsFlying; }
         }
         return best;
     }
@@ -69,6 +74,13 @@ public class HomingMissile : MonoBehaviour
 
         Vector3 pos = transform.position;
         e.TakeSkillHit(Damage, CritChance, ActiveSkillId.Homing);
+
+        if (hitVfxPrefab != null)
+        {
+            GameObject hv = ObjectPool.Instance.Spawn(hitVfxPrefab, pos, Quaternion.identity);
+            hv.transform.localScale = Vector3.one * hitVfxScale;
+            ObjectPool.Instance.Despawn(hv, 1f);
+        }
 
         if (Explode)
         {

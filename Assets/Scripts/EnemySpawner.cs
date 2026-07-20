@@ -34,6 +34,26 @@ public class EnemySpawner : MonoBehaviour
     public bool StageSpawnComplete => SpawnedThisStage >= SpawnTarget;
     public float SpawnRatio => SpawnTarget > 0 ? Mathf.Clamp01(SpawnedThisStage / (float)SpawnTarget) : 1f;
 
+    // 첫 프레임에 GameManager.Update가 EnemySpawner.Update보다 먼저 돌면 SpawnTarget이 0이라
+    // StageSpawnComplete가 참이 되어 1스테이지가 즉시 넘어가버린다(첫 판이 2스테이지에서 시작).
+    // Start(모든 Awake 이후·첫 Update 이전)에서 현재 스테이지 물량을 미리 셋업해 방지.
+    private void Start()
+    {
+        BeginStageCount(GameManager.Instance);
+    }
+
+    private void BeginStageCount(GameManager gm)
+    {
+        StageData stage = gm != null ? gm.CurrentStageData : null;
+        stageBeingCounted = gm != null ? gm.CurrentStage : 1;
+        SpawnedThisStage = 0;
+        SpawnTarget = stage != null ? stage.spawnCount : defaultSpawnCount;
+        treasureSpawnedForStage = 0;
+        bossSpawnedThisStage = false;
+        timer = 0f;
+        treasureDelayTimer = 0f;
+    }
+
     private void Update()
     {
         GameManager gm = GameManager.Instance;
@@ -43,13 +63,7 @@ public class EnemySpawner : MonoBehaviour
         // 스테이지가 바뀌면(전환 텀 진입 시점 포함) 이 스테이지의 물량 카운트를 리셋 — 정지 체크보다 먼저 돌아야 함
         if (currentStage != stageBeingCounted)
         {
-            stageBeingCounted = currentStage;
-            SpawnedThisStage = 0;
-            SpawnTarget = stage != null ? stage.spawnCount : defaultSpawnCount;
-            treasureSpawnedForStage = 0;
-            bossSpawnedThisStage = false;
-            timer = 0f;
-            treasureDelayTimer = 0f;
+            BeginStageCount(gm);
         }
 
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지

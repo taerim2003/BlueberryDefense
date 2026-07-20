@@ -65,6 +65,10 @@ public class PauseMenu : MonoBehaviour
             foreach (var s in skills.EquippedSkills)
             {
                 sb.AppendLine($"<b>{PlayerSkills.GetActiveSkillName(s.Id)}</b>  <color=#AECBFF>Lv.{s.Level}</color>");
+                // 1레벨 기본값 대비 레벨업 누적 성장분
+                foreach (var g in PlayerSkills.DescribeLevelUpGains(s))
+                    sb.AppendLine($"    <color=#9FE0A0>·</color> {g}");
+                // 진화 트리 효과
                 AppendPaths(sb, s.PathTier, (p, t) => PlayerSkills.GetPathTierTitle(s.Id, p, t));
             }
 

@@ -15,29 +15,31 @@
 
 ---
 
-## 현재 상태 (2026-07-20, 세션 3)
+## 현재 상태 (2026-07-20, 세션 4)
 
-**빌드**: 컴파일 에러 없음(script-execute로 새 API resolve·동작 확인). 아래 전부 **로직/컴파일만 검증** — **사용자 실플레이 미검증**.
+**빌드**: 컴파일 에러 없음. Title·SampleScene 저장 완료. 아래는 실플레이 피드백 13건 반영 — **대부분 코드 검증만, 신규 수정분 재플레이 대기**.
 
-### 이번 세션 수정 (플레이 검증 대기)
-- **데미지 숫자 재작성**: (세션2 큐 폐기) 이제 적 머리 위(`DamageNumberBaseHeight 0.85`)에서 **가로 완전정렬·세로 스택**(`hitIndex`별 `+0.42`), 뜬 자리에 월드 고정되어 위로만 상승. `DamageNumber`는 단순 상승+페이드.
-- **밸런스 초반 완화**: `StageTable` 1~10 spawnInterval ↑(예: 6스테 0.32→0.52). 후반(11~15) 유지.
-- **보물상자**: 일반 몹 전부 스폰 후 **5초 텀**(`TreasureDelay`) 두고 등장(`EnemySpawner`, 그동안 스폰 정지 → 잔몹 정리하고 확실히 먹음). 스폰 로직 `SpawnEnemies()`로 리팩터.
-- **스나이핑**: 이펙트 애니 2배 길이(`Effect_Sniping` fps 18→9). Route2 T1 피해 +30%→**+70%**, T3 **+100%** 추가. **첫 저격=화려한 스플래시룩(Effect_SplashSniping), 2~5번째=기본 스파크**. 초과데미지 연쇄는 **전용 VFX**(`overkillSplashVfxPrefab`=`VFX_2D_Projectile_Burst_Impact_01`, 씬 배선 완료).
-- **보스**: `spawnYOffset 1→1.4` + BoxCollider2D offset y **-0.4**(지상 기본공격 계속 맞도록). 분출 팝콘은 **종류별 자연 높이로 착지** — 레인 기준선을 보스 위치에서 역산(`laneBaselineY + e.SpawnYOffset`, 레인이 y≠0이어도 정확).
-- **아웃게임 경제**: 정수 노드 가격 **절반**(`EssenceCost` 30→15). **가루는 스테이지 클리어 지급 폐지** → 오직 **아웃게임 레벨업**으로만.
-- **아웃게임 레벨(신규)**: `EssenceEarned`(누적 총정수)=경험치. `SkillTreeSave.OutgameLevel`/`EssenceForLevel(L)=20·L·(L-1)`/`LevelProgress`. `AddEssence`가 레벨업 시 가루 지급. **Title 패널 하단 레벨 바 UI 생성·배선 완료**(`OutgameLevelBar`, 기존 통화 UI 위로 52px 이동).
-- **되감기 스킬(신규, enum `Rewind`=8)**: 쿨6s, 다른 스킬 쿨 `RewindAmount`(기본1s)만큼 앞당김. 레벨업마다 쿨-0.1·되감기+0.1. Route1=되감기정도↑, Route2=다음스킬 피해↑(`nextSkillDamageBonus`), Route3=되감기 쿨감+T3 전역쿨 절반(`GlobalCooldownScale`). **HUD/LevelUpUI `activeIcons[8]=Icon_Rewind` 배선 완료, LevelUpUI 후보 추가 완료.**
+### 이번 세션 수정 (플레이 피드백 반영, 재검증 대기)
+- **2스테이지 시작 버그 수정**: 첫 프레임 `GameManager.Update`가 `EnemySpawner`보다 먼저 돌면 `SpawnTarget`=0→`StageSpawnComplete` 참→즉시 스테이지 넘어감. `EnemySpawner.Start()`에서 물량 카운트 선-세팅(`BeginStageCount`)해 방지.
+- **스킬 입력**: `wasPressedThisFrame`→`isPressed` (꾹 눌러도 쿨마다 재발동).
+- **되감기 레벨업**: 매 레벨 쿨감+되감기 동시 → **홀수 레벨 쿨-0.15 / 짝수 레벨 되감기+0.15 교차**. 미리보기 텍스트도 맞춤.
+- **밸런스**: 기본공격 쿨 1→1.5s. 스나이핑 데미지 9→18(2배)·쿨 6→5s. 데미지숫자 세로간격 0.42→0.62.
+- **호밍 미사일**(`HomingMissile`/`FireHoming`): ①비행 유닛 우선 타격(`AcquireTarget` 2-tier) ②`GrowthStacks/15` 만큼 발사수 +1 ③명중 시 `hitVfxPrefab`(=`Impact_Sparks_01`, 프리팹 배선 완료).
+- **산탄 아이콘 하이라이트**: uGUI `Outline`(이미지 4방향 복제, 덧씌운 느낌) 폐기 → 아이콘 뒤 별도 노란 프레임을 **런타임 생성**(`HUDController.CreateShotgunFrame`, `ActiveSlot.shotgunFrame`). 씬 배선 불필요.
+- **아웃게임 경제(스킬트리)**: `root_hp`(체력회복) 드랍 레벨당 +1%→**+4%** 그리고 **maxLevel 1**(단일 개방, 4% 고정). `reroll_1`(리롤 해금) maxLevel 5→**1**. (에셋 `Assets/SkillTree/MainSkillTree.asset`)
+- **Title 레이아웃**: 통화 텍스트(Essence/Crystal/Powder) 44px씩 아래로(EssenceText 화면 밖 잘림 해결). RespecButton·BuildBar를 레벨바 위(y 62)로 올려 겹침 해소. 씬 저장 완료.
+- **ESC 일시정지 요약 강화**: 기존 `PauseMenu`(자동 부트스트랩, ESC)에 **레벨업 누적 증가치** 추가 — `PlayerSkills.DescribeLevelUpGains()`가 1렙 기본값 대비 피해·쿨·투사체속도·관통·투사체수·발동확률·지속·크기·되감기·호밍성장을 뽑아 스킬별로 진화 티어 제목 위에 표시. (한때 별도 `SkillDetailPanel`을 만들었다가 ESC 충돌로 제거·기존 PauseMenu에 통합)
 
-**참고**: 세션2 수정(호밍·산탄·기절·초과연쇄·기본공격타수 등)도 아직 플레이 미검증. 기존 시스템 상세는 git `09150dc`.
+**참고**: 세션3분(데미지숫자 재작성·보물상자 5초텀·스나이핑 재작업·보스 위치/팝콘·아웃게임 레벨바·되감기 신규)은 이번 세션 실플레이로 사용자 확인 완료. 기존 시스템 상세는 git.
 
 ---
 
-## ★ 다음 세션 — 실플레이 검증 (씬 배선 전부 완료)
-- [ ] **이번 세션 검증**: 초반 1~10 난이도·보물상자 5초 텀·데미지 숫자 정렬(9/9/9)·스나이핑 애니/데미지/첫타격 스플래시룩·초과연쇄 전용VFX·보스 위치/팝콘 착지·되감기 동작·정수 가격·**아웃게임 레벨 바 표시**·레벨업 가루.
-- [ ] **레벨 바 레이아웃 확인**: 통화 UI 52px 위로 이동시켰는데 겹침/위치 어긋나면 조정.
-- [ ] **호밍 아이콘**: 현재 호밍`activeIcons[6]`이 되감기와 **Icon_Rewind 공유**(임시). 호밍 전용 아이콘 그리면 `[6]` 교체.
-- [ ] 세션2분(호밍 방향·산탄·기절·기본공격 타수, 보스 분출) 검증.
+## ★ 다음 세션 — 재검증 대상 (전부 씬 저장·컴파일 완료)
+- [ ] **ESC 요약 표시** 실확인: 항목/표현/줄넘침(4스킬 다 찼을 때).
+- [ ] **Title 레이아웃** 실확인: 통화 텍스트 위치·리셋/빌드바 간격(y값 감으로 잡음).
+- [ ] **체력회복 4% 단일개방** 체감 확인(낮으면 상향).
+- [ ] **호밍 타격 VFX**(Impact Sparks)가 미사일에 어울리는지.
+- [ ] **호밍 아이콘**: 여전히 되감기와 `Icon_Rewind` 공유(임시). 전용 아이콘 그리면 `activeIcons[6]` 교체.
 
 ---
 

@@ -14,6 +14,7 @@ public class HUDController : MonoBehaviour
         public TMP_Text cooldownText;
         public TMP_Text levelLabel;
         public Image[] gemIcons;
+        [System.NonSerialized] public Image shotgunFrame; // 산탄 버프 시 아이콘 뒤에 켜지는 노란 하이라이트 프레임(런타임 생성)
     }
 
     [System.Serializable]
@@ -282,8 +283,7 @@ public class HUDController : MonoBehaviour
                 slot.cooldownText.enabled = false;
                 if (slot.levelLabel != null) slot.levelLabel.enabled = false;
                 SetPathIcons(slot, null);
-                Outline emptyOutline = slot.icon.GetComponent<Outline>();
-                if (emptyOutline != null) emptyOutline.enabled = false;
+                if (slot.shotgunFrame != null) slot.shotgunFrame.enabled = false;
                 activeSlotWasFilled[i] = false;
                 activeSlotWasOnCooldown[i] = false;
                 continue;
@@ -316,20 +316,43 @@ public class HUDController : MonoBehaviour
         }
     }
 
-    // 산탄 타수버프를 받는 동안 해당 스킬 아이콘에 노란 테두리를 켠다 (버프가 실제로 걸렸는지 눈에 보이게).
+    // 산탄 타수버프를 받는 동안 해당 스킬 아이콘 "테두리 바깥"에 노란 하이라이트 프레임을 켠다.
+    // (예전엔 아이콘 이미지에 uGUI Outline을 붙여 스프라이트가 4방향으로 복제돼 이미지 위에 뭔가 덧씌운 것처럼 보였음)
     private void UpdateShotgunHighlight(ActiveSlot slot, ActiveSkillId id)
     {
         if (slot.icon == null) return;
         bool buffed = PlayerSkills.IsShotgunBuffed(id);
-        Outline outline = slot.icon.GetComponent<Outline>();
-        if (outline == null)
+
+        // 예전 방식(아이콘 위 Outline 효과)이 남아 있으면 제거
+        Outline legacy = slot.icon.GetComponent<Outline>();
+        if (legacy != null) Destroy(legacy);
+
+        if (slot.shotgunFrame == null)
         {
-            if (!buffed) return; // 필요할 때만 컴포넌트를 붙인다
-            outline = slot.icon.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(1f, 0.85f, 0.1f, 1f);
-            outline.effectDistance = new Vector2(4f, 4f);
+            if (!buffed) return; // 필요할 때만 생성
+            slot.shotgunFrame = CreateShotgunFrame(slot.icon);
         }
-        outline.enabled = buffed;
+        slot.shotgunFrame.enabled = buffed;
+    }
+
+    // 아이콘의 부모 아래, 아이콘보다 한 사이즈 크게 뒤(첫 형제)에 깔리는 노란 프레임을 만든다.
+    private Image CreateShotgunFrame(Image icon)
+    {
+        GameObject go = new GameObject("ShotgunFrame", typeof(RectTransform), typeof(Image));
+        RectTransform rt = go.GetComponent<RectTransform>();
+        RectTransform iconRt = icon.rectTransform;
+        rt.SetParent(iconRt.parent, false);
+        rt.anchorMin = iconRt.anchorMin;
+        rt.anchorMax = iconRt.anchorMax;
+        rt.pivot = iconRt.pivot;
+        rt.anchoredPosition = iconRt.anchoredPosition;
+        rt.sizeDelta = iconRt.sizeDelta + new Vector2(12f, 12f); // 테두리 바깥으로 6px씩 삐져나오게
+        rt.SetAsFirstSibling(); // 아이콘·키라벨·쿨오버레이 뒤에 깔림
+
+        Image frame = go.GetComponent<Image>();
+        frame.color = new Color(1f, 0.85f, 0.1f, 1f);
+        frame.raycastTarget = false;
+        return frame;
     }
 
     private void SetPathIcons(ActiveSlot slot, EquippedSkill skill)

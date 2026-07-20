@@ -327,7 +327,7 @@ public class Enemy : MonoBehaviour
     // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는
     // 가로 정렬(x 오프셋 0)로 세로로만 쌓는다(9/9/9). 뜬 자리에 월드 고정되어 위로만 올라간다.
     private const float DamageNumberBaseHeight = 0.85f;
-    private const float DamageNumberStackStep = 0.42f;
+    private const float DamageNumberStackStep = 0.62f;
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
