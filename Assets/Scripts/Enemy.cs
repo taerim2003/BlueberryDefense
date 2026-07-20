@@ -4,13 +4,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private int damage = 10;
-    [SerializeField] private float maxHealth = 20f;
-    [SerializeField] private int xpValue = 5;
+    [SerializeField] private EnemyDefinition definition; // 밸런스 스탯(속도·피해·체력·xp·정수드랍). Awake에서 런타임 필드로 복사
     [SerializeField] private bool isTreasure;
-    [SerializeField] private float essenceDropChance = 0.15f; // 처치 시 정수(태양빛) 드랍 확률
-    [SerializeField] private int essenceDropAmount = 2;        // 드랍 시 지급 정수량(보물은 확률 무시·확정 드랍)
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
     [SerializeField] private GameObject chainLightningVfxPrefab;
@@ -53,6 +48,14 @@ public class Enemy : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public float SpawnYOffset => spawnYOffset; // 이 종류가 서는 자연 높이(레인 y=0 기준). 분출 팝콘의 착지 높이로 사용
 
+    // definition에서 복사한 런타임 스탯 — 스테이지 배율(ApplyStageMultipliers)이 여기에만 곱해져 공유 SO를 오염시키지 않음.
+    private float moveSpeed;
+    private int damage;
+    private float maxHealth;
+    private int xpValue;
+    private float essenceDropChance;
+    private int essenceDropAmount;
+
     private float currentHealth;
     private bool isDead;
     private float slowMultiplier = 1f;
@@ -64,6 +67,13 @@ public class Enemy : MonoBehaviour
 
     private void Awake()
     {
+        moveSpeed = definition.moveSpeed;
+        damage = definition.damage;
+        maxHealth = definition.maxHealth;
+        xpValue = definition.xpValue;
+        essenceDropChance = definition.essenceDropChance;
+        essenceDropAmount = definition.essenceDropAmount;
+
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();

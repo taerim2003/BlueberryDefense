@@ -60,36 +60,41 @@
 | 스나이핑 저격수/간격 | :60-61 | 5 / 0.08 |
 | 비행타격 발사점 상승 | :95 | 0.65 |
 
-### D. 적 기본 스탯 — Tier A → `EnemyDefinition` (Phase 1, ②에서 이관)
+### D. 적 기본 스탯 — ✅ **Phase 1 완료: `EnemyDefinition` SO로 완전 이관**
 | 항목 | 현위치 | 값 |
 |---|---|---|
-| 이속·피해·최대체력·XP | [Enemy.cs:7-10](Assets/Scripts/Enemy.cs#L7-L10) | 2 / 10 / 20 / 5 (프리팹별 상이) |
-| 정수 드랍 확률·량 | [Enemy.cs:12-13](Assets/Scripts/Enemy.cs#L12-L13) | 0.15 / 2 |
-| 사망분출(대왕) 구성·팝콘 중력 | [Enemy.cs:27-34](Assets/Scripts/Enemy.cs#L27-L34) | 프리팹별 |
+| 이속·피해·최대체력·XP·정수드랍 | `Assets/Data/Enemies/EnemyDef_*.asset` (7종) | 프리팹별 상이 (아래) |
+| 사망분출(대왕) 구성·팝콘 중력·플래그(isFlying/isTreasure/blocksProjectiles)·VFX·스프라이트 | Enemy.cs 프리팹 SerializeField 잔류 | 프리팹 결합이라 이관 안 함 |
 
-> 결정필요: EnemyDefinition SO로 완전 이관 vs 프리팹 SerializeField 유지 + 대시보드에서 집계. 프로토 단계면 후자가 이관 리스크 적음.
+> **결정(2026-07-20)**: 완전 이관 선택. Enemy.cs가 `EnemyDefinition definition`을 참조, Awake에서 런타임 필드로 복사(공유 SO 오염 방지 — ApplyStageMultipliers는 복사본에만 곱함).
+> 이관 대상 = 순수 밸런스 스칼라 6개뿐. 행동/연출 필드는 프리팹에 남김.
+> **실효값(이관됨)**: Blueberry 2/10/14/5, Treasure 2/10/14/5, PaperPlane 5/6/6/5, Regent(elite) 1.6/15/80/15, Shield 1.5/10/68/8, Ufo 1/16/68/12, Boss 0.6/30/1500/200. 정수드랍은 Boss만 1/8, 나머지 0.15/2.
 
-### E. 후반 스케일링 — Tier A → `ScalingTable` (Phase 1)
+### E. 후반 스케일링 — ✅ **Phase 1 완료: `ScalingTable` SO** (`Assets/Data/ScalingTable.asset`)
 | 항목 | 현위치 | 값 |
 |---|---|---|
-| HP 스텝 배열 | [EnemySpawner.cs:17](Assets/Scripts/EnemySpawner.cs#L17) | {0,.06,.16,.30,.48,.72,1.0} |
-| 이속 스텝 배열 | :18 | {0,.025,.06,.11,.17,.24,.33} |
-| 스텝 분모 (3스테이지마다) | :133 `currentStage/3` | 3 (**B: 구조**) |
+| HP 스텝 배열 | `ScalingTable.hpStepBonus` | {0,.06,.16,.30,.48,.72,1.0} |
+| 이속 스텝 배열 | `ScalingTable.speedStepBonus` | {0,.025,.06,.11,.17,.24,.33} |
+| 스텝 분모 (3스테이지마다) | [EnemySpawner.cs](Assets/Scripts/EnemySpawner.cs) `currentStage / 3` | 3 (**B: 구조 — 코드 잔류**) |
 
-### F. XP 커브 — 값=Tier A → `ScalingTable` (Phase 1)
+> EnemySpawner/PlayerExperience는 `scaling` SerializeField(=ScalingTable) 참조. 미할당 시 `ScalingTable.Default`(코드 기본값=현행) 폴백.
+
+### F. XP 커브 — ✅ **Phase 1 완료: `ScalingTable` SO**
 | 항목 | 현위치 | 값 |
 |---|---|---|
-| 초기 필요 XP·레벨당 증가 | [PlayerExperience.cs:9,43](Assets/Scripts/PlayerExperience.cs#L43) | 18 / +9 |
-| 후반 XP 감쇠 (스테이지1=100%→20=50%) | [PlayerExperience.cs:31-35](Assets/Scripts/PlayerExperience.cs#L31-L35) | 1.0→0.5, 기준스테이지 20 (양끝값 A / lerp 형태 B) |
+| 초기 필요 XP·레벨당 증가 | `ScalingTable.xpToNextLevelBase` / `xpToNextLevelPerLevel` | 18 / +9 |
+| 후반 XP 감쇠 양끝값·기준스테이지 | `ScalingTable.xpFactorMax` / `xpFactorMin` / `xpDecayReferenceStage` | 1.0 / 0.5 / 20 |
+| 감쇠 lerp 형태 | `ScalingTable.XpStageFactor()` | 코드 (**B: lerp 형태**) |
 
-### G. 스폰·스테이지 구조 — 일부 Tier A → `MapDefinition`/`ScalingTable` (Phase 1)
+### G. 스폰·스테이지 구조 — 일부 ✅ **Phase 1 완료: `MapDefinition`**
 | 항목 | 현위치 | 값 | Tier |
 |---|---|---|---|
-| 폴백 물량·간격 | [EnemySpawner.cs:13-14](Assets/Scripts/EnemySpawner.cs#L13) | 1.5 / 20 | A |
-| 보물상자 등장 텀 | :23 `TreasureDelay` | 5 | A |
-| 보스 스테이지 번호 | :12 `bossStage` | 15 | A |
-| 11스테이지+ 보물 2개 / 7스테이지 종이비행기 전용 | :72, :92 | — | **B(구조)** |
-| 스테이지별 물량·확률·배율 | `StageTable` 에셋 | — | ① 이미 SO |
+| 폴백 물량·간격 | `MapDefinition.defaultSpawnCount` / `spawnInterval` | 20 / 1.5 | A ✅ |
+| 보스 스테이지 번호 | `MapDefinition.bossStage` | 15 | A ✅ |
+| 적 로스터(7종 프리팹) | `MapDefinition.*EnemyPrefab` | — | A ✅ |
+| 보물상자 등장 텀 | [EnemySpawner.cs](Assets/Scripts/EnemySpawner.cs) `TreasureDelay` | 5 | A (아직 코드 — 필요 시 MapDefinition으로) |
+| 11스테이지+ 보물 2개 / 7스테이지 종이비행기 전용 | EnemySpawner.Update | — | **B(구조 — 코드 잔류)** |
+| 스테이지별 물량·확률·배율 | `StageTable` 에셋 (MapDefinition이 참조) | — | ① 이미 SO |
 
 ### H. 아웃게임/기타 — Tier A(낮은 우선순위) 또는 유지
 | 항목 | 현위치 | 비고 |
@@ -112,7 +117,11 @@
 
 → 이들의 *값*은 Tier A로 빼되, *흐름*은 `BalanceConstants` 상수 참조로 정리.
 
+## 결정 완료 (Phase 1, 2026-07-20)
+- `RunConfig` id 타입 = **SO 직접참조** (`RunConfig.Map = MapDefinition`). 씬 로드 넘어 유지, 타입안전, 룩업 불필요. null이면 RunBootstrap의 `defaultMap` 폴백.
+- EnemyDefinition = **완전 이관** (D 참고).
+- BGM = **필드 + 최소 재생** (MapDefinition.bgm 있으면 RunBootstrap이 AudioSource 루프 재생. 기본맵 null=무음).
+
 ## 다음 세션 열린 결정
-- `RunConfig`의 id 타입: string(에셋 이름) vs enum vs SO 직접참조 → Phase 1에서 RunBootstrap 만들며 확정.
-- EnemyDefinition 완전 이관 vs 프리팹 유지(D 참고).
 - 진화/패시브 수치 추출 범위(H) — Phase 3에서 항목별 A/B 재판정.
+- ScalingTable을 전역 유지 vs MapDefinition이 참조(맵별 스케일링) — 현재 전역 1개. 맵별로 후반 난이도를 다르게 하고 싶으면 MapDefinition에 ScalingTable 참조 추가.

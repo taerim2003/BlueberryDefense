@@ -23,6 +23,9 @@ public class GameManager : MonoBehaviour
 
     public StageData CurrentStageData => stageTable != null ? stageTable.GetStage(CurrentStage) : null;
 
+    // RunBootstrap이 판 시작 시 선택된 맵의 StageTable을 주입(기본맵이면 기존 값과 동일).
+    public void SetStageTable(StageTable table) => stageTable = table;
+
     private float stageBreakTimer;
     private EnemySpawner spawner;
 

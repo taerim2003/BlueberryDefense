@@ -15,9 +15,9 @@
 
 ---
 
-## 현재 상태 (2026-07-20, 세션 4)
+## 현재 상태 (2026-07-20, 세션 5)
 
-**빌드**: 컴파일 에러 없음. Title·SampleScene 저장 완료. 아래는 실플레이 피드백 13건 반영 — **대부분 코드 검증만, 신규 수정분 재플레이 대기**.
+**빌드**: 컴파일 에러 없음. SampleScene 저장 완료. **세션5 = 리팩토링 Phase 1 완료(맵/적 데이터화)** — 아래 로드맵 §1 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
 
 ### 이번 세션 수정 (플레이 피드백 반영, 재검증 대기)
 - **2스테이지 시작 버그 수정**: 첫 프레임 `GameManager.Update`가 `EnemySpawner`보다 먼저 돌면 `SpawnTarget`=0→`StageSpawnComplete` 참→즉시 스테이지 넘어감. `EnemySpawner.Start()`에서 물량 카운트 선-세팅(`BeginStageCount`)해 방지.
@@ -51,8 +51,8 @@
 - 문서: `SCENE_MAP.md`(씬 오브젝트·배선 지도, MCP 정찰), `BALANCE_MAP.md`(하드코딩 수치→목표 SO 매핑표).
 
 **Phase 순서** (맵 먼저 = 결합 얕음. 매 Phase 완료조건에 "기본값 선택 시 현재와 동일" + "SCENE_MAP 갱신"):
-0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신. (RunConfig는 읽는쪽이 없어 Phase 1로 이동 — §2). 주요 발견: RunBootstrap 부착점=SampleScene `GameManager`(MetaRunApplier 형제), 캐릭터=`Player` 단일 오브젝트, 맵=`Background`+`GameManager.stageTable`+`EnemySpawner`, **BGM 시스템 없음(신규 추가 필요)**, 선택화면은 Title `SkillTreeRoot` 패턴 복제.
-1. **맵/적 데이터**: RunConfig(static, id타입 확정) + MapDefinition + RunBootstrap(GameManager에 부착) + 적 스탯·후반 스케일링·XP커브를 EnemyDefinition/ScalingTable로 추출. 상세 매핑=BALANCE_MAP.md.
+0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신.
+1. **맵/적 데이터** ✅ **완료(2026-07-20 세션5)**: `RunConfig`(static, SO직접참조) + `MapDefinition`(배경·BGM·stageTable·적로스터·스폰파라미터) + `RunBootstrap`(GameManager 형제) + `ScalingTable`(HP/이속스텝·XP커브) + `EnemyDefinition` 7종(적 스탯 완전이관). 기본맵 `Map_BlueberryField` 선택 시 현재와 동일 검증 완료(플레이모드 스모크: stage1, 물량스폰 정상, Blueberry spd2/hp14, XP18, 무예외). 신규 파일: RunConfig/ScalingTable/EnemyDefinition/MapDefinition/RunBootstrap.cs, `Assets/Data/*`.
 2. **맵 선택 화면**: Title 내 패널 → RunConfig.MapId.
 3. **캐릭터/스킬 데이터**: CharacterDefinition + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition으로(Tier A), 로직엮인 값은 `BalanceConstants`로(Tier B).
 4. **캐릭터 선택 화면**: Phase 2와 대칭.
@@ -61,9 +61,9 @@
 
 **밸런스 툴 원칙**: Tier A(깔끔한 스칼라, 자주 튜닝)=SO 추출 / Tier B(레벨업 순환·되감기 홀짝 등 로직모양)=코드에 남기고 한 곳에 모음. 경계선은 Phase 0의 BALANCE_MAP.md에서 항목별 확정 후 진행.
 
-**현 밸런스 위치**: ①이미 SO=StageTable(스테이지 구성)·LevelUpStatOptionSO / ②프리팹=[Enemy.cs:7-13](Assets/Scripts/Enemy.cs#L7-L13) 적 스탯 / ③코드 하드코딩=[PlayerSkills.cs:1389](Assets/Scripts/PlayerSkills.cs#L1389)(기본쿨뎀)·[:259](Assets/Scripts/PlayerSkills.cs#L259)(레벨증가)·진화티어·[EnemySpawner.cs:17](Assets/Scripts/EnemySpawner.cs#L17)(스케일링)·[PlayerExperience.cs:43](Assets/Scripts/PlayerExperience.cs#L43)(XP)·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). ③을 빼는 게 본체.
+**현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·**ScalingTable(신규)**·**EnemyDefinition 7종(신규)**·**MapDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출(스탯은 SO로 이관됨) / ③코드 하드코딩=[PlayerSkills.cs:1389](Assets/Scripts/PlayerSkills.cs#L1389)(기본쿨뎀)·[:259](Assets/Scripts/PlayerSkills.cs#L259)(레벨증가)·진화티어·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **적 스탯·스케일링·XP는 ③에서 빠졌음(Phase 1)**. 남은 ③ 본체 = 스킬/진화 수치(Phase 3).
 
-**착수점**: Phase 1 (Phase 0 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고).
+**착수점**: **Phase 2 (맵 선택 화면)** — Title `Canvas` 아래 신규 패널(SkillTreeRoot 패턴 복제) + `Controllers`에 컨트롤러 → 선택 시 `RunConfig.Map = 해당 MapDefinition`. 현재 맵은 `Map_BlueberryField` 하나뿐이라, 화면을 만들되 2번째 맵 에셋을 만들지 여부는 Phase 2 착수 시 사용자 확인. (Phase 0·1 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고.)
 
 ---
 

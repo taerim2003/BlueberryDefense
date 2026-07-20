@@ -180,10 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 141f47d1b376d254b9b07fb7ec8992e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  moveSpeed: 1.5
-  damage: 10
-  maxHealth: 68
-  xpValue: 8
+  definition: {fileID: 11400000, guid: a2d7dc61761699d42924f8df9c6609cf, type: 2}
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}
@@ -200,6 +197,12 @@ MonoBehaviour:
   alwaysBackLayer: 0
   isFlying: 0
   blocksProjectiles: 1
+  deathSpawnPrefabs: []
+  deathSpawnCount: 0
+  deathSpawnRadius: 0.6
+  deathBurstVfxPrefab: {fileID: 0}
+  deathBurstVfxScale: 1
+  popGravity: 30
 --- !u!95 &8227646567395739538
 Animator:
   serializedVersion: 7

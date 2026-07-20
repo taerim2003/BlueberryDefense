@@ -180,13 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 141f47d1b376d254b9b07fb7ec8992e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  moveSpeed: 0.6
-  damage: 30
-  maxHealth: 1500
-  xpValue: 200
+  definition: {fileID: 11400000, guid: 1b552ad88b9dad344ae86d85f6b53aad, type: 2}
   isTreasure: 0
-  essenceDropChance: 1
-  essenceDropAmount: 8
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}
   chainLightningVfxPrefab: {fileID: 2139788027143211048, guid: 07ab3add344a1a746a3ea6c4012db20f, type: 3}
@@ -229,3 +224,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9ca63202e7f86e04ea34716a7192a9a5, type: 3}
   fps: 5
   loop: 1
+  despawnOnFinish: 1

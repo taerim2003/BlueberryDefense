@@ -51,8 +51,8 @@ Main Camera
 Global Light 2D
 Player  [tag=Player]   ← SpriteRenderer · BoxCollider2D · Animator
                           + PlayerHealth · PlayerSkills · PlayerExperience · PlayerPassives
-EnemySpawner           ← EnemySpawner
-GameManager            ← GameManager + MetaRunApplier
+EnemySpawner           ← EnemySpawner (fallbackMap=Map_BlueberryField, scaling=ScalingTable)
+GameManager            ← GameManager + MetaRunApplier + RunBootstrap(defaultMap=Map_BlueberryField)
 Canvas                 ← LevelUpUI · EvolutionTreeUI · DamageMeterUI  (+Canvas/Scaler/Raycaster)
  ├─ LevelUpPanel/Dialog
  ├─ HUD                ← HUDController
@@ -67,11 +67,12 @@ Background
 
 **핵심 배선:**
 - **`Player`** = 캐릭터 정체성이 **단일 오브젝트에 전부** 모여 있음. SpriteRenderer(스프라이트) + Animator(컨트롤러) + PlayerSkills/PlayerPassives(스킬·패시브) + PlayerHealth/PlayerExperience(스탯). → **캐릭터 스왑은 이 오브젝트 하나를 갈아끼우거나 재구성하는 문제.**
-- **`GameManager`** = GameManager + **MetaRunApplier**가 함께. MetaRunApplier가 판 시작 시 아웃게임 보너스를 적용(Awake/Start). → **RunBootstrap(Phase 1 신규)은 여기 형제로 붙인다** — MetaRunApplier와 같은 생명주기·순서 정렬.
-- `GameManager` SerializeField: `stageTable`(→ 맵별 스왑 대상), `heartPickupPrefab`, `essencePickupPrefab`, `stageBreakDuration`.
+- **`GameManager`** = GameManager + **MetaRunApplier** + **RunBootstrap**(Phase 1 신규, 형제로 붙음). RunBootstrap.Awake가 판 시작 시 선택된 맵(`RunConfig.Map`, 없으면 `defaultMap`)을 씬에 적용 — GameManager.stageTable 주입·EnemySpawner.ActiveMap 세팅·Background 스프라이트 교체·BGM 재생. **EnemySpawner.Start(물량 세팅) 전에 도는 Awake라 순서 안전.**
+- `GameManager` SerializeField: `stageTable`(RunBootstrap이 맵값으로 덮음, 기본맵이면 동일), `heartPickupPrefab`, `essencePickupPrefab`, `stageBreakDuration`.
 - **`Canvas` 루트에 UI 싱글톤 3개**(LevelUpUI/EvolutionTreeUI/DamageMeterUI)가 컴포넌트로 직접 붙음. 패널 오브젝트(LevelUpPanel/EvolutionPanel/DamageMeterPanel)는 각 UI가 제어하는 뷰.
-- `Background` = 맵 배경(단일 오브젝트). → **맵 스왑 대상.**
-- **BGM 없음**: 씬에 음악 AudioSource가 없다(오디오는 SfxPlayer/ObjectPool의 효과음뿐). → MapDefinition의 "BGM"은 기존 스왑이 아니라 **신규 시스템 추가**(Phase 1 스코프 주의).
+- `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
+- **BGM = 신규(Phase 1)**: `MapDefinition.bgm`(AudioClip) 있으면 RunBootstrap이 런타임 AudioSource를 GameManager에 추가해 루프 재생. 기본맵은 bgm=null → 무음(현행 유지). SfxPlayer/ObjectPool 효과음은 그대로.
+- **적 로스터·스폰 파라미터는 EnemySpawner가 아니라 `MapDefinition`이 소유**(Phase 1). EnemySpawner는 `ActiveMap`(RunBootstrap이 세팅) 또는 `fallbackMap`(씬 단독 실행용, =Map_BlueberryField)에서 7종 프리팹·bossStage·spawnInterval·defaultSpawnCount를 읽는다.
 
 ---
 
@@ -81,7 +82,7 @@ Background
 |---|---|
 | **RunBootstrap** 부착 | SampleScene `GameManager` 오브젝트 (MetaRunApplier 형제) |
 | **캐릭터 스왑** | SampleScene `Player`: SpriteRenderer·Animator·PlayerSkills/Passives 구성 (RunBootstrap이 CharacterDefinition으로 적용) |
-| **맵 스왑** | SampleScene `Background`(배경), `GameManager.stageTable`, `EnemySpawner`(적 프리팹), + BGM 신규. RunBootstrap이 MapDefinition으로 적용 |
+| **맵 스왑** | ✅ Phase 1 완료 — `MapDefinition` SO 하나가 배경·BGM·stageTable·적 로스터·스폰파라미터 소유. RunBootstrap이 `RunConfig.Map`(선택 화면이 세팅)을 씬에 적용. 새 맵 = 새 MapDefinition 에셋 만들어 RunConfig에 넣기만 하면 됨 |
 | **맵/캐릭터 선택 화면** | Title `Canvas` 아래 신규 패널(SkillTreeRoot 패턴 복제) + `Controllers`에 컨트롤러 스크립트 |
 
 ## "X를 씬에 추가하려면 어디"

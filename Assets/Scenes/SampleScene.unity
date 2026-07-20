@@ -3957,6 +3957,7 @@ GameObject:
   - component: {fileID: 487568133}
   - component: {fileID: 487568132}
   - component: {fileID: 487568134}
+  - component: {fileID: 487568135}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4007,6 +4008,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8eb5aeb3ee3c4a84e9d9f1c487e56cd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRunApplier
+--- !u!114 &487568135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 487568131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd7be08770c7877438be7cb81883268d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunBootstrap
+  defaultMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -7807,16 +7821,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef61b7459383cf044b37890bebfdcdf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
-  enemyPrefab: {fileID: 2590007705602640116, guid: aca1e7fdf80f4c04f91136455ad76b45, type: 3}
-  treasureEnemyPrefab: {fileID: 4347352733146565175, guid: 9a1cec269855780459fa3c4dcbc67512, type: 3}
-  eliteEnemyPrefab: {fileID: 1348368236079402333, guid: 017ef458e4ed6be41aeea56d842438bc, type: 3}
-  paperPlaneEnemyPrefab: {fileID: 2450170008170281, guid: cc51a7d5446e5f64faa618a4e06e8744, type: 3}
-  ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
-  shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
-  bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}
-  bossStage: 15
-  spawnInterval: 1.5
-  defaultSpawnCount: 20
+  fallbackMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
+  scaling: {fileID: 11400000, guid: 9484fa5d921a29d43820bf2806a38679, type: 2}
 --- !u!4 &984900548
 Transform:
   m_ObjectHideFlags: 0
@@ -17332,6 +17338,7 @@ MonoBehaviour:
   currentXP: 0
   xpToNextLevel: 18
   levelUpVfxPrefab: {fileID: 4748681987041982144, guid: e896e353751e25a4ab545a268625c0df, type: 3}
+  scaling: {fileID: 11400000, guid: 9484fa5d921a29d43820bf2806a38679, type: 2}
 --- !u!114 &2031227616
 MonoBehaviour:
   m_ObjectHideFlags: 0
