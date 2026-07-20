@@ -5,5 +5,5 @@
 public static class RunConfig
 {
     public static MapDefinition Map;
-    // Character는 Phase 3(캐릭터/스킬 데이터)에서 CharacterDefinition과 함께 추가.
+    public static CharacterDefinition Character; // 선택 화면이 채움. null이면 프리팹 기본값(현행)으로 동작
 }

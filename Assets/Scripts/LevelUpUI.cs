@@ -163,12 +163,14 @@ public class LevelUpUI : MonoBehaviour
     private Option[] BuildOptions(PlayerSkills skills, PlayerHealth health, PlayerPassives passives)
     {
         List<Option> candidates = new List<Option>();
+        CharacterDefinition character = RunConfig.Character; // 후보 풀 게이팅(null이면 전체 허용 = 현행)
 
         if (!skills.HasMaxSkills)
         {
             foreach (ActiveSkillId id in new[] { ActiveSkillId.Whirlwind, ActiveSkillId.Orb, ActiveSkillId.Lightning, ActiveSkillId.EagleDrop, ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.Shotgun, ActiveSkillId.Rewind })
             {
                 if (skills.HasSkill(id)) continue;
+                if (character != null && !character.AllowsActive(id)) continue;
                 ActiveSkillId captured = id;
                 candidates.Add(new Option
                 {
@@ -186,6 +188,7 @@ public class LevelUpUI : MonoBehaviour
             foreach (PassiveSkillId id in new[] { PassiveSkillId.Strength, PassiveSkillId.Health, PassiveSkillId.Knowledge, PassiveSkillId.Assassinate, PassiveSkillId.Refresh })
             {
                 if (passives.HasPassive(id)) continue;
+                if (character != null && !character.AllowsPassive(id)) continue;
                 PassiveSkillId captured = id;
                 candidates.Add(new Option
                 {

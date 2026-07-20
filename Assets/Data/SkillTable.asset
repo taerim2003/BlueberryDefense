@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6fdfcdc4749752845920606e99f4f060, type: 3}
+  m_Name: SkillTable
+  m_EditorClassIdentifier: Assembly-CSharp::SkillTable
+  skills:
+  - id: 0
+    baseCooldown: 1.5
+    baseDamage: 16
+    levelDamageMultiplier: 1.13
+    levelCooldownMultiplier: 0.95
+  - id: 1
+    baseCooldown: 5
+    baseDamage: 7
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 2
+    baseCooldown: 7
+    baseDamage: 7
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 3
+    baseCooldown: 12
+    baseDamage: 0
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 4
+    baseCooldown: 15
+    baseDamage: 11
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 5
+    baseCooldown: 5
+    baseDamage: 18
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 6
+    baseCooldown: 8
+    baseDamage: 8
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 7
+    baseCooldown: 14
+    baseDamage: 12
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95
+  - id: 8
+    baseCooldown: 6
+    baseDamage: 0
+    levelDamageMultiplier: 1.2
+    levelCooldownMultiplier: 0.95

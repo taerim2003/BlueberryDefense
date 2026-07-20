@@ -45,20 +45,21 @@ public class EquippedSkill
 
 public class PlayerSkills : MonoBehaviour
 {
-    private const float GlobalCooldown = 0.4f;
-    private const float OrbAltarCooldown = 15f;
-    private const float MaxCritChance = 0.7f; // 치명타 확률 상한 — 100% 상시 크리(크리 배율이 상시 전역 배율로 굳는 문제)를 막는다
+    // 전역 상수는 BalanceConstants에 모여 있고 여기선 별칭으로 참조(호출부 이름 유지). 값 편집은 BalanceConstants에서.
+    private const float GlobalCooldown = BalanceConstants.GlobalCooldown;
+    private const float OrbAltarCooldown = BalanceConstants.OrbAltarCooldown;
+    private const float MaxCritChance = BalanceConstants.MaxCritChance;
     private static readonly Key[] SlotKeys = { Key.Q, Key.W, Key.E, Key.R };
 
     // 회오리 path0(미니 회오리)와 독수리투하 path2(미니 회오리)가 공유하는 피해 배율 보너스 — 둘 중 어느 쪽에 투자해도 서로의 미니 회오리가 함께 강해진다.
     public static float MiniWhirlwindDamageBonus = 0f;
 
     // 기본공격 공격당 타격횟수(멀티히트). 총 데미지는 유지한 채 N회로 쪼개 각각 크리를 개별 판정 → 메이플식 데미지 숫자. Enemy.TakeSkillHit가 읽음.
-    public static int BasicAttackHits = 3;
+    public static int BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
 
     // 스나이핑: 타겟 1명당 저격 횟수, 저격 간격
-    private const int SnipingBaseShots = 5;
-    private const float SnipingShotInterval = 0.08f;
+    private const int SnipingBaseShots = BalanceConstants.SnipingBaseShots;
+    private const float SnipingShotInterval = BalanceConstants.SnipingShotInterval;
 
     // 산탄(타수) 버프 — 5초간 스킬 공격 횟수 증가. 전역(모든 스킬) 또는 최고공격력 스킬 1개(Route2).
     private static float shotgunTimer;
@@ -92,7 +93,7 @@ public class PlayerSkills : MonoBehaviour
     public static System.Action OnRefreshProc;
 
     [SerializeField] private GameObject basicAttackProjectilePrefab;
-    private const float FlyingArrowSpawnRaise = 0.65f; // 비행 적 타격 진화 시 발사점을 이만큼 위로 올린다. 세로로 긴 히트박스와 합쳐 지상(y=0)·비행(y≈1.1) 띠를 한 발이 동시에 커버.
+    private const float FlyingArrowSpawnRaise = BalanceConstants.FlyingArrowSpawnRaise; // 비행 적 타격 진화 시 발사점 상승(세로 긴 히트박스와 합쳐 지상/비행 동시 커버)
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject bigTornadoPrefab;
     [SerializeField] private GameObject orbPrefab;
@@ -107,6 +108,11 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
+    [SerializeField] private SkillTable skillTable; // 스킬 기본 수치(Tier A). 미할당 시 SkillTable.Default(현행값) 폴백
+
+    // 정적 GetDefaultCooldown/Damage 등이 인스턴스 필드를 못 읽으므로 Awake에서 static으로 승격.
+    private static SkillTable activeTable;
+    private static SkillTable Table => activeTable != null ? activeTable : SkillTable.Default;
 
     [SerializeField] private AudioClip whirlwindCastSfx;
     [SerializeField] private AudioClip orbCastSfx;
@@ -129,9 +135,11 @@ public class PlayerSkills : MonoBehaviour
     {
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
+        activeTable = skillTable; // 정적 Table 접근용 승격(null이면 Default 폴백). AcquireSkill 전에 세팅해야 기본 수치가 채워짐
         shotgunTimer = 0f; // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
         nextSkillDamageBonus = 0f;
-        AcquireSkill(ActiveSkillId.BasicAttack);
+        // 시작 스킬은 선택된 캐릭터에서(없으면 기본공격 = 현행). RunConfig 직접 참조라 RunBootstrap 순서에 무의존.
+        AcquireSkill(RunConfig.Character != null ? RunConfig.Character.startingSkill : ActiveSkillId.BasicAttack);
         LightningStorm.OnProc += HandleThunderCooldown;
     }
 
@@ -239,14 +247,15 @@ public class PlayerSkills : MonoBehaviour
             return;
         }
 
+        SkillTable.Entry stats = Table.Get(skill.Id);
         switch (level % 3)
         {
             case 1:
-                // 기본공격은 레벨업 피해 증가폭을 낮춰 후반 과성장을 억제
-                skill.Damage *= skill.Id == ActiveSkillId.BasicAttack ? 1.13f : 1.2f;
+                // 기본공격은 레벨업 피해 증가폭을 낮춰 후반 과성장을 억제 (배율은 SkillTable)
+                skill.Damage *= stats.levelDamageMultiplier;
                 break;
             case 2:
-                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.95f);
+                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * stats.levelCooldownMultiplier);
                 break;
             default:
                 ApplyThirdUpgradeEffect(skill);
@@ -292,10 +301,11 @@ public class PlayerSkills : MonoBehaviour
     {
         if (skill.Id == ActiveSkillId.Rewind) return nextLevel % 2 == 1 ? "재사용 대기시간 0.15초 감소" : "되감기 시간 0.15초 증가";
 
+        SkillTable.Entry stats = Table.Get(skill.Id);
         switch (nextLevel % 3)
         {
-            case 1: return skill.Id == ActiveSkillId.BasicAttack ? "피해량 13% 증가" : "피해량 20% 증가";
-            case 2: return "재사용 대기시간 5% 감소";
+            case 1: return $"피해량 {Mathf.RoundToInt((stats.levelDamageMultiplier - 1f) * 100f)}% 증가";
+            case 2: return $"재사용 대기시간 {Mathf.RoundToInt((1f - stats.levelCooldownMultiplier) * 100f)}% 감소";
             default: return DescribeThirdUpgradeEffect(skill);
         }
     }
@@ -1386,31 +1396,9 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    private static float GetDefaultCooldown(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.BasicAttack => 1.5f,
-        ActiveSkillId.Whirlwind => 5f,
-        ActiveSkillId.Orb => 7f,
-        ActiveSkillId.Lightning => 12f,
-        ActiveSkillId.EagleDrop => 15f,
-        ActiveSkillId.Sniping => 5f,
-        ActiveSkillId.Homing => 8f,
-        ActiveSkillId.Shotgun => 14f,
-        ActiveSkillId.Rewind => 6f,
-        _ => 1f,
-    };
+    private static float GetDefaultCooldown(ActiveSkillId id) => Table.Get(id).baseCooldown;
 
-    private static float GetDefaultDamage(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.BasicAttack => 16f,
-        ActiveSkillId.Whirlwind => 7f,
-        ActiveSkillId.Orb => 7f,
-        ActiveSkillId.Lightning => LightningStorm.ProcDamage,
-        ActiveSkillId.EagleDrop => 11f,
-        ActiveSkillId.Sniping => 18f,
-        ActiveSkillId.Homing => 8f,
-        ActiveSkillId.Shotgun => 12f, // Route3 전체공격용 기준 데미지
-        ActiveSkillId.Rewind => 0f,   // 되감기는 피해 없음(유틸)
-        _ => 6f,
-    };
+    // 낙뢰 피해만 LightningStorm.ProcDamage에서 온다(SkillTable에 담기 부적합한 동적 값) — 나머지는 테이블 참조.
+    private static float GetDefaultDamage(ActiveSkillId id) =>
+        id == ActiveSkillId.Lightning ? LightningStorm.ProcDamage : Table.Get(id).baseDamage;
 }

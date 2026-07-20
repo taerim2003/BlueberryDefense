@@ -71,7 +71,9 @@ Background
 
 **핵심 배선:**
 - **`Player`** = 캐릭터 정체성이 **단일 오브젝트에 전부** 모여 있음. SpriteRenderer(스프라이트) + Animator(컨트롤러) + PlayerSkills/PlayerPassives(스킬·패시브) + PlayerHealth/PlayerExperience(스탯). → **캐릭터 스왑은 이 오브젝트 하나를 갈아끼우거나 재구성하는 문제.**
-- **`GameManager`** = GameManager + **MetaRunApplier** + **RunBootstrap**(Phase 1 신규, 형제로 붙음). RunBootstrap.Awake가 판 시작 시 선택된 맵(`RunConfig.Map`, 없으면 `defaultMap`)을 씬에 적용 — GameManager.stageTable 주입·EnemySpawner.ActiveMap 세팅·Background 스프라이트 교체·BGM 재생. **EnemySpawner.Start(물량 세팅) 전에 도는 Awake라 순서 안전.**
+  - **PlayerSkills.skillTable**(Phase 3) = `Assets/Data/SkillTable.asset` 배선(스킬 9종 기본 쿨/뎀·레벨업 배율). 미배선이어도 `SkillTable.Default`(현행값) 폴백.
+  - **캐릭터 데이터(Phase 3)**: 시작스킬·기본체력은 `PlayerSkills.Awake`/`PlayerHealth.Awake`가 `RunConfig.Character`를 **직접** 읽어 반영(null이면 프리팹값=현행). 외형(스프라이트·애니메이터)은 RunBootstrap이 얹음. → 스탯은 컴포넌트가, 외형은 RunBootstrap이 담당해 Awake 순서 의존 없음.
+- **`GameManager`** = GameManager + **MetaRunApplier** + **RunBootstrap**(Phase 1 신규, 형제로 붙음). RunBootstrap.Awake가 판 시작 시 선택된 맵(`RunConfig.Map`, 없으면 `defaultMap`)을 씬에 적용 — GameManager.stageTable 주입·EnemySpawner.ActiveMap 세팅·Background 스프라이트 교체·BGM 재생. **+ 선택된 캐릭터(`RunConfig.Character`)의 외형(스프라이트/애니메이터, null이면 스킵)도 적용**(Phase 3). **EnemySpawner.Start(물량 세팅) 전에 도는 Awake라 순서 안전.**
 - `GameManager` SerializeField: `stageTable`(RunBootstrap이 맵값으로 덮음, 기본맵이면 동일), `heartPickupPrefab`, `essencePickupPrefab`, `stageBreakDuration`.
 - **`Canvas` 루트에 UI 싱글톤 3개**(LevelUpUI/EvolutionTreeUI/DamageMeterUI)가 컴포넌트로 직접 붙음. 패널 오브젝트(LevelUpPanel/EvolutionPanel/DamageMeterPanel)는 각 UI가 제어하는 뷰.
 - `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
@@ -85,7 +87,7 @@ Background
 | 대상 | 씬 지점 |
 |---|---|
 | **RunBootstrap** 부착 | SampleScene `GameManager` 오브젝트 (MetaRunApplier 형제) |
-| **캐릭터 스왑** | SampleScene `Player`: SpriteRenderer·Animator·PlayerSkills/Passives 구성 (RunBootstrap이 CharacterDefinition으로 적용) |
+| **캐릭터 스왑** | ✅ Phase 3(인프라) 완료 — `CharacterDefinition` SO(시작스킬·허용풀·기본체력·외형). 스탯은 `PlayerSkills`/`PlayerHealth`가 `RunConfig.Character` 직접 읽음, 외형은 RunBootstrap. 기본 에셋 `Assets/Data/Characters/Char_Strawberry.asset`(=현행값). 새 캐릭터 = 새 CharacterDefinition 만들어 RunConfig에 넣기. **캐릭터 선택 화면은 Phase 4(미착수).** |
 | **맵 스왑** | ✅ Phase 1 완료 — `MapDefinition` SO 하나가 배경·BGM·stageTable·적 로스터·스폰파라미터 소유. RunBootstrap이 `RunConfig.Map`(선택 화면이 세팅)을 씬에 적용. 새 맵 = 새 MapDefinition 에셋 만들어 RunConfig에 넣기만 하면 됨 |
 | **맵 선택 화면** | ✅ Phase 2 완료 — Title `Canvas/MapSelectRoot` + `Controllers/MapSelectUI`. `Btn_플레이`가 엶 |
 | **캐릭터 선택 화면** | Title `Canvas` 아래 신규 패널(SkillTreeRoot/MapSelectRoot 패턴 복제) + `Controllers`에 컨트롤러 스크립트 |

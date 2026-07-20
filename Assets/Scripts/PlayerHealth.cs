@@ -17,6 +17,8 @@ public class PlayerHealth : MonoBehaviour
 
     private void Awake()
     {
+        // 선택된 캐릭터의 기본 체력을 반영(없으면 프리팹 SerializeField = 현행). MetaRunApplier의 추가체력은 Start에서 얹힘.
+        if (RunConfig.Character != null) maxHealth = RunConfig.Character.baseHealth;
         CurrentHealth = maxHealth;
     }
 

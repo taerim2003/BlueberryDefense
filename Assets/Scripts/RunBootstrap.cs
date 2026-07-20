@@ -11,6 +11,34 @@ public class RunBootstrap : MonoBehaviour
 
     private void Awake()
     {
+        ApplyCharacterVisuals();
+        ApplyMap();
+    }
+
+    // 캐릭터 외형만 여기서 적용(스탯=시작스킬/체력은 플레이어 컴포넌트가 자기 Awake에서 직접 읽음).
+    // 스프라이트/애니메이터가 null이면 스킵 → 프리팹 기본 유지(기본 캐릭터=현행과 동일).
+    private void ApplyCharacterVisuals()
+    {
+        CharacterDefinition character = RunConfig.Character;
+        if (character == null) return;
+
+        PlayerSkills player = FindAnyObjectByType<PlayerSkills>();
+        if (player == null) return;
+
+        if (character.sprite != null)
+        {
+            SpriteRenderer sr = player.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null) sr.sprite = character.sprite;
+        }
+        if (character.animatorController != null)
+        {
+            Animator anim = player.GetComponentInChildren<Animator>();
+            if (anim != null) anim.runtimeAnimatorController = character.animatorController;
+        }
+    }
+
+    private void ApplyMap()
+    {
         MapDefinition map = RunConfig.Map != null ? RunConfig.Map : defaultMap;
         if (map == null) return;
 

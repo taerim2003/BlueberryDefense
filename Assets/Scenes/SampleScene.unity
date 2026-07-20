@@ -17294,6 +17294,7 @@ MonoBehaviour:
   homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
   animator: {fileID: 2031227614}
   evolutionTextOverrides: {fileID: 11400000, guid: 82f64ce823e197443ae5ae43db44ee1f, type: 2}
+  skillTable: {fileID: 0}
   whirlwindCastSfx: {fileID: 8300000, guid: d67f03353b0af11458c48b58c4fb6643, type: 3}
   orbCastSfx: {fileID: 8300000, guid: 8128e2ee266d24e44a191ae9c3c17422, type: 3}
   eagleDropCastSfx: {fileID: 8300000, guid: 083749770b551ea4788c541137ab631b, type: 3}

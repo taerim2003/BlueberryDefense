@@ -15,9 +15,16 @@
 
 ---
 
-## 현재 상태 (2026-07-20, 세션 6)
+## 현재 상태 (2026-07-20, 세션 7)
 
-**빌드**: 컴파일 에러 없음. Title 저장 완료. **세션6 = 리팩토링 Phase 2 완료(맵 선택 화면)** — 아래 로드맵 §2 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). SampleScene 저장 완료. **세션7 = 리팩토링 Phase 3 완료(캐릭터/스킬 데이터화, 인프라)** — 아래 로드맵 §3 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+
+### 세션7 — Phase 3 (캐릭터/스킬 데이터화)
+- **신규 SO**: `SkillTable`(스킬 9종 기본쿨·기본뎀·레벨업 배율, `Assets/Data/SkillTable.asset`) / `CharacterDefinition`(시작스킬·허용풀·기본체력·외형, 기본 에셋 `Assets/Data/Characters/Char_Strawberry.asset`) / `BalanceConstants`(전역 상수 집결, 코드).
+- **배선**: SampleScene `Player.PlayerSkills.skillTable` = SkillTable.asset. Char_Strawberry는 아직 런타임 미참조(캐릭터 선택 화면 = Phase 4 대기) — 현재 `RunConfig.Character`=null이라 프리팹 기본값(현행)으로 동작.
+- **데이터화**: `PlayerSkills.Awake`가 `RunConfig.Character?.startingSkill`, `PlayerHealth.Awake`가 `baseHealth` 직접 읽음(순서 안전). 외형은 RunBootstrap이 적용. LevelUpUI 신규스킬·패시브 후보를 `allowedActivePool`/`allowedPassivePool`로 필터(빈 풀=전체=현행).
+- **검증(플레이모드 스모크)**: 기본(RunConfig.Character=null) 진입 시 hp=110(기본100+메타10), BasicAttack L3(메타 화살시작) cd1.43(=1.5×0.95)·dmg16 — 리팩토링 전과 정확히 동일, 게임플레이 예외 0. SkillTable 에셋 9종 값이 기존 하드코딩과 전부 일치 확인.
+- **재판정**: 3번째 슬롯 개별강화·되감기 값은 스케줄에 박혀 있어 SO 추출 안 함(코드 잔류, Tier B). BALANCE_MAP §B 참고.
 
 ### 세션6 — Phase 2 (맵 선택 화면)
 - 흐름: `Btn_플레이` → `MapSelectUI.Open()`(패널) → 맵 카드 클릭=**선택(Frame 하이라이트)** → 하단 **`시작` 버튼(확인 단계)** → `RunConfig.Map=선택맵` + `SampleScene` 로드. 뒤로 버튼=닫기.
@@ -61,17 +68,18 @@
 0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신.
 1. **맵/적 데이터** ✅ **완료(2026-07-20 세션5)**: `RunConfig`(static, SO직접참조) + `MapDefinition`(배경·BGM·stageTable·적로스터·스폰파라미터) + `RunBootstrap`(GameManager 형제) + `ScalingTable`(HP/이속스텝·XP커브) + `EnemyDefinition` 7종(적 스탯 완전이관). 기본맵 `Map_BlueberryField` 선택 시 현재와 동일 검증 완료(플레이모드 스모크: stage1, 물량스폰 정상, Blueberry spd2/hp14, XP18, 무예외). 신규 파일: RunConfig/ScalingTable/EnemyDefinition/MapDefinition/RunBootstrap.cs, `Assets/Data/*`.
 2. **맵 선택 화면** ✅ **완료(2026-07-20 세션6)**: Title `Canvas/MapSelectRoot` 패널 + `Controllers/MapSelectUI`(카드=`CardTemplate` 런타임 복제, 클릭=선택·`시작`=확인). `Btn_플레이`→`Play()`→`Open()`. 선택 시 `RunConfig.Map=선택맵`→`SampleScene`. 로스터는 `maps[]`(현재 1장). 신규: MapSelectUI.cs, MapDefinition.displayName/description.
-3. **캐릭터/스킬 데이터**: CharacterDefinition + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition으로(Tier A), 로직엮인 값은 `BalanceConstants`로(Tier B).
-4. **캐릭터 선택 화면**: Phase 2와 대칭.
+3. **캐릭터/스킬 데이터** ✅ **완료(2026-07-20 세션7)**: `SkillTable`(스킬 기본쿨·뎀·레벨업 배율) + `CharacterDefinition`(시작스킬·허용풀·기본체력·외형) + `BalanceConstants`(전역 상수). 시작스킬/기본체력=플레이어 컴포넌트가 `RunConfig.Character` 직접 읽기, 외형=RunBootstrap, LevelUpUI 후보=허용풀 필터. 기본 캐릭터(null) 동일 검증 완료. 신규: SkillTable/CharacterDefinition/BalanceConstants.cs, `Assets/Data/SkillTable.asset`·`Assets/Data/Characters/Char_Strawberry.asset`. 3번째슬롯·되감기 값은 코드 잔류(Tier B 재판정).
+4. **캐릭터 선택 화면**: Phase 2(맵 선택)와 대칭. Title `Canvas`에 신규 패널 + `Controllers`에 컨트롤러 → 선택 시 `RunConfig.Character` 세팅. **2번째 캐릭터 실 에셋은 아직 없음**(Char_Strawberry 1종) — 새 CharacterDefinition 만들어 로스터에 추가.
 5. **Balance Dashboard**(선택): 위 SO들을 탭으로 묶는 커스텀 EditorWindow(CheatWindow 전례 있음). 데이터 먼저, 대시보드는 UX 레이어.
 6. **PlayerSkills 분리**(선택): 수치 추출 후 남은 로직 분리.
 
 **밸런스 툴 원칙**: Tier A(깔끔한 스칼라, 자주 튜닝)=SO 추출 / Tier B(레벨업 순환·되감기 홀짝 등 로직모양)=코드에 남기고 한 곳에 모음. 경계선은 Phase 0의 BALANCE_MAP.md에서 항목별 확정 후 진행.
 
-**현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·**ScalingTable(신규)**·**EnemyDefinition 7종(신규)**·**MapDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출(스탯은 SO로 이관됨) / ③코드 하드코딩=[PlayerSkills.cs:1389](Assets/Scripts/PlayerSkills.cs#L1389)(기본쿨뎀)·[:259](Assets/Scripts/PlayerSkills.cs#L259)(레벨증가)·진화티어·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **적 스탯·스케일링·XP는 ③에서 빠졌음(Phase 1)**. 남은 ③ 본체 = 스킬/진화 수치(Phase 3).
+**현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·ScalingTable·EnemyDefinition 7종·MapDefinition·**SkillTable(신규)**·**CharacterDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출 / ③코드 하드코딩=**BalanceConstants(신규, 전역 상수 집결)**·진화티어(Tier B 보류)·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **스킬 기본수치·캐릭터 스탯은 ③에서 빠졌음(Phase 3)**. 남은 ③ = 진화/패시브 티어(보류)·메타노드.
 
-**착수점**: **Phase 3 (캐릭터/스킬 데이터)** — `CharacterDefinition` SO + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition(Tier A)/BalanceConstants(Tier B)로. 씬 스왑 지점 = SampleScene `Player`(SpriteRenderer·Animator·PlayerSkills/Passives). RunBootstrap이 CharacterDefinition 적용(MapDefinition과 대칭). (Phase 0·1·2 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고.)
-- **2번째 맵 에셋**: 아직 없음(사용자 결정 — Phase 2는 UI 인프라만). 새 맵 = 새 MapDefinition 만들어 `MapSelectUI.maps[]`에 추가하면 카드 자동 생성. 배경/BGM/적 로스터/기믹은 그때 설계.
+**착수점**: **Phase 4 (캐릭터 선택 화면)** — Phase 2(맵 선택)와 대칭. Title `Canvas`에 신규 패널 + `Controllers`에 컨트롤러 스크립트(MapSelectUI 복제) → 카드 선택 시 `RunConfig.Character` 세팅 후 SampleScene 로드. 씬 배선은 `SCENE_MAP.md`(Title 섹션·캐릭터 선택 화면 행). **선행 필요**: 2번째 CharacterDefinition 에셋 디자인(고유 시작스킬·허용풀·외형) — 사용자와 캐릭터 콘셉트 먼저 확정. (Phase 0·1·2·3 완료.)
+- **2번째 맵 에셋**: 아직 없음(Phase 2는 UI 인프라만). 새 맵 = 새 MapDefinition 만들어 `MapSelectUI.maps[]`에 추가하면 카드 자동 생성.
+- **밸런스 편집 지금 가능**: `Assets/Data/SkillTable.asset`(스킬 쿨/뎀/성장), `EnemyDefinition`, `MapDefinition`, `ScalingTable`을 인스펙터에서 직접 조절. 전역 상수는 `BalanceConstants.cs`.
 
 ---
 
