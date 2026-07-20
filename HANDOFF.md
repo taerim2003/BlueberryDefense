@@ -34,6 +34,39 @@
 
 ---
 
+## ★★ 다음 대작업 — 리팩토링 로드맵 (여러 세션)
+
+> **목표**: 캐릭터/맵 선택 화면 + 유니티 내 밸런스 편집을 대비해, "단일 캐릭터·단일 맵·코드 하드코딩 수치"를 **데이터(SO)로 분리**한다. 상세 근거는 이 세션 대화 참고.
+
+**확정 결정** (재논의 불필요):
+- 새 캐릭터 = **고유 신규 스킬**을 Q에 갖고 시작 (스킬 구현은 오늘처럼 enum+Fire 추가, 캐릭터별 `allowedSkillPool`로 게이팅).
+- 새 맵 = **적 로스터·기믹까지** 다름.
+- **씬 복제 안 함** — 단일 게임 씬 + SO 스왑. 기존 `MetaBonuses`/`MetaRunApplier` 패턴 확장.
+- **PlayerSkills 플러그인화는 지금 안 함**(과설계). 단, 수치 SO 추출로 파일이 자연히 줄어듦.
+
+**핵심 신규 조각**:
+- `RunConfig`(static, Phase 1 생성): 선택된 CharacterId+MapId. 씬 로드로 초기화 **금지**(선택값 유지). `MetaBonuses` 등은 판마다 리셋. 문서: `SCENE_MAP.md`(씬 배선)·`BALANCE_MAP.md`(수치→SO 매핑).
+- `RunBootstrap`(MonoBehaviour): 판 시작 시 Character/MapDefinition을 씬에 적용(MetaRunApplier 형제, 순서 정렬 주의).
+- SO: `CharacterDefinition`(startingSkill·allowedSkillPool·패시브셋·기본스탯·스프라이트), `MapDefinition`(배경·BGM·StageTable·enemyRoster·기믹), `SkillDefinition`(기본쿨/뎀·레벨증가·진화수치), `EnemyDefinition`, `ScalingTable`(후반 배열·XP커브).
+- 문서: `SCENE_MAP.md`(씬 오브젝트·배선 지도, MCP 정찰), `BALANCE_MAP.md`(하드코딩 수치→목표 SO 매핑표).
+
+**Phase 순서** (맵 먼저 = 결합 얕음. 매 Phase 완료조건에 "기본값 선택 시 현재와 동일" + "SCENE_MAP 갱신"):
+0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신. (RunConfig는 읽는쪽이 없어 Phase 1로 이동 — §2). 주요 발견: RunBootstrap 부착점=SampleScene `GameManager`(MetaRunApplier 형제), 캐릭터=`Player` 단일 오브젝트, 맵=`Background`+`GameManager.stageTable`+`EnemySpawner`, **BGM 시스템 없음(신규 추가 필요)**, 선택화면은 Title `SkillTreeRoot` 패턴 복제.
+1. **맵/적 데이터**: RunConfig(static, id타입 확정) + MapDefinition + RunBootstrap(GameManager에 부착) + 적 스탯·후반 스케일링·XP커브를 EnemyDefinition/ScalingTable로 추출. 상세 매핑=BALANCE_MAP.md.
+2. **맵 선택 화면**: Title 내 패널 → RunConfig.MapId.
+3. **캐릭터/스킬 데이터**: CharacterDefinition + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition으로(Tier A), 로직엮인 값은 `BalanceConstants`로(Tier B).
+4. **캐릭터 선택 화면**: Phase 2와 대칭.
+5. **Balance Dashboard**(선택): 위 SO들을 탭으로 묶는 커스텀 EditorWindow(CheatWindow 전례 있음). 데이터 먼저, 대시보드는 UX 레이어.
+6. **PlayerSkills 분리**(선택): 수치 추출 후 남은 로직 분리.
+
+**밸런스 툴 원칙**: Tier A(깔끔한 스칼라, 자주 튜닝)=SO 추출 / Tier B(레벨업 순환·되감기 홀짝 등 로직모양)=코드에 남기고 한 곳에 모음. 경계선은 Phase 0의 BALANCE_MAP.md에서 항목별 확정 후 진행.
+
+**현 밸런스 위치**: ①이미 SO=StageTable(스테이지 구성)·LevelUpStatOptionSO / ②프리팹=[Enemy.cs:7-13](Assets/Scripts/Enemy.cs#L7-L13) 적 스탯 / ③코드 하드코딩=[PlayerSkills.cs:1389](Assets/Scripts/PlayerSkills.cs#L1389)(기본쿨뎀)·[:259](Assets/Scripts/PlayerSkills.cs#L259)(레벨증가)·진화티어·[EnemySpawner.cs:17](Assets/Scripts/EnemySpawner.cs#L17)(스케일링)·[PlayerExperience.cs:43](Assets/Scripts/PlayerExperience.cs#L43)(XP)·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). ③을 빼는 게 본체.
+
+**착수점**: Phase 1 (Phase 0 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고).
+
+---
+
 ## ★ 다음 세션 — 재검증 대상 (전부 씬 저장·컴파일 완료)
 - [ ] **ESC 요약 표시** 실확인: 항목/표현/줄넘침(4스킬 다 찼을 때).
 - [ ] **Title 레이아웃** 실확인: 통화 텍스트 위치·리셋/빌드바 간격(y값 감으로 잡음).
