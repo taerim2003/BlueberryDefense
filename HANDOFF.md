@@ -17,7 +17,15 @@
 
 ## 현재 상태 (2026-07-20, 세션 7)
 
-**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). SampleScene 저장 완료. **세션7 = 리팩토링 Phase 3 완료(캐릭터/스킬 데이터화, 인프라)** — 아래 로드맵 §3 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). Title 씬 저장 완료. **세션8 = 리팩토링 Phase 4 완료(캐릭터 선택 화면)** — 아래 로드맵 §4 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+
+### 세션8 — Phase 4 (캐릭터 선택 화면)
+- **흐름**: `Btn_플레이`→맵 선택 화면 안에 **현재 캐릭터 이름(`CharNameLabel`)+`캐릭터 변경` 버튼** 표시 → 버튼 클릭 시 **`CharacterSelectRoot` 팝업**(맵 화면 위) → 캐릭터 카드 클릭=**즉시 선택+팝업 닫힘**(맵과 달리 확인 단계 없음) → 맵 `시작` 시 `RunConfig.Map`+`RunConfig.Character` 함께 세팅 후 `SampleScene`.
+- **신규**: `CharacterSelectUI.cs`(Controllers 부착, 카드=`CardTemplate` 런타임 복제, `OnSelectionChanged` 이벤트). 씬: `Canvas/CharacterSelectRoot`(MapSelectRoot 복제·StartButton 제거) + MapSelectRoot 안 `CharNameLabel`/`ChangeCharButton`.
+- **수정**: `MapSelectUI`에 캐릭터 표시/변경 필드 4개 추가(characterSelect·changeCharacterButton·characterNameText·characterPortrait), `Confirm()`이 `RunConfig.Character`도 세팅, `Open()`이 `RefreshCharacter()` 호출.
+- **로스터**: `characters[]`에 CharacterDefinition 드래그(현재 `Char_Strawberry` 1종="딸기").
+- **초상화(임시)**: `Char_Strawberry.portrait`=`Assets/Sprites/Player.png`(딸기 게임 스프라이트 임시 전용) → 팝업 카드 Thumb + 맵 화면 `CharPortrait`(이름 위, `preserveAspect`)에 표시. 전용 초상화 그리면 `portrait` 필드만 교체.
+- **검증(플레이모드 스모크)**: 맵Open→`CharNameLabel`="딸기", `ChangeCharButton`→팝업 활성·카드 1장, `Selected`="딸기", 카드 클릭→팝업 닫힘·선택 유지, 예외 0.
 
 ### 세션7 — Phase 3 (캐릭터/스킬 데이터화)
 - **신규 SO**: `SkillTable`(스킬 9종 기본쿨·기본뎀·레벨업 배율, `Assets/Data/SkillTable.asset`) / `CharacterDefinition`(시작스킬·허용풀·기본체력·외형, 기본 에셋 `Assets/Data/Characters/Char_Strawberry.asset`) / `BalanceConstants`(전역 상수 집결, 코드).
@@ -69,7 +77,7 @@
 1. **맵/적 데이터** ✅ **완료(2026-07-20 세션5)**: `RunConfig`(static, SO직접참조) + `MapDefinition`(배경·BGM·stageTable·적로스터·스폰파라미터) + `RunBootstrap`(GameManager 형제) + `ScalingTable`(HP/이속스텝·XP커브) + `EnemyDefinition` 7종(적 스탯 완전이관). 기본맵 `Map_BlueberryField` 선택 시 현재와 동일 검증 완료(플레이모드 스모크: stage1, 물량스폰 정상, Blueberry spd2/hp14, XP18, 무예외). 신규 파일: RunConfig/ScalingTable/EnemyDefinition/MapDefinition/RunBootstrap.cs, `Assets/Data/*`.
 2. **맵 선택 화면** ✅ **완료(2026-07-20 세션6)**: Title `Canvas/MapSelectRoot` 패널 + `Controllers/MapSelectUI`(카드=`CardTemplate` 런타임 복제, 클릭=선택·`시작`=확인). `Btn_플레이`→`Play()`→`Open()`. 선택 시 `RunConfig.Map=선택맵`→`SampleScene`. 로스터는 `maps[]`(현재 1장). 신규: MapSelectUI.cs, MapDefinition.displayName/description.
 3. **캐릭터/스킬 데이터** ✅ **완료(2026-07-20 세션7)**: `SkillTable`(스킬 기본쿨·뎀·레벨업 배율) + `CharacterDefinition`(시작스킬·허용풀·기본체력·외형) + `BalanceConstants`(전역 상수). 시작스킬/기본체력=플레이어 컴포넌트가 `RunConfig.Character` 직접 읽기, 외형=RunBootstrap, LevelUpUI 후보=허용풀 필터. 기본 캐릭터(null) 동일 검증 완료. 신규: SkillTable/CharacterDefinition/BalanceConstants.cs, `Assets/Data/SkillTable.asset`·`Assets/Data/Characters/Char_Strawberry.asset`. 3번째슬롯·되감기 값은 코드 잔류(Tier B 재판정).
-4. **캐릭터 선택 화면**: Phase 2(맵 선택)와 대칭. Title `Canvas`에 신규 패널 + `Controllers`에 컨트롤러 → 선택 시 `RunConfig.Character` 세팅. **2번째 캐릭터 실 에셋은 아직 없음**(Char_Strawberry 1종) — 새 CharacterDefinition 만들어 로스터에 추가.
+4. **캐릭터 선택 화면** ✅ **완료(2026-07-20 세션8)**: 맵 선택 화면 안에 현재 캐릭터 표시(`CharNameLabel`)+`캐릭터 변경` 버튼 → `CharacterSelectRoot` 팝업(카드 클릭=즉시 선택). 맵 확정 시 `RunConfig.Map`+`RunConfig.Character` 동시 세팅. 신규 `CharacterSelectUI.cs`, `MapSelectUI` 캐릭터 필드 확장. 현재 `Char_Strawberry` 1종. 새 캐릭터 = 새 CharacterDefinition 만들어 `CharacterSelectUI.characters[]`에 추가.
 5. **Balance Dashboard**(선택): 위 SO들을 탭으로 묶는 커스텀 EditorWindow(CheatWindow 전례 있음). 데이터 먼저, 대시보드는 UX 레이어.
 6. **PlayerSkills 분리**(선택): 수치 추출 후 남은 로직 분리.
 
@@ -77,7 +85,7 @@
 
 **현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·ScalingTable·EnemyDefinition 7종·MapDefinition·**SkillTable(신규)**·**CharacterDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출 / ③코드 하드코딩=**BalanceConstants(신규, 전역 상수 집결)**·진화티어(Tier B 보류)·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **스킬 기본수치·캐릭터 스탯은 ③에서 빠졌음(Phase 3)**. 남은 ③ = 진화/패시브 티어(보류)·메타노드.
 
-**착수점**: **Phase 4 (캐릭터 선택 화면)** — Phase 2(맵 선택)와 대칭. Title `Canvas`에 신규 패널 + `Controllers`에 컨트롤러 스크립트(MapSelectUI 복제) → 카드 선택 시 `RunConfig.Character` 세팅 후 SampleScene 로드. 씬 배선은 `SCENE_MAP.md`(Title 섹션·캐릭터 선택 화면 행). **선행 필요**: 2번째 CharacterDefinition 에셋 디자인(고유 시작스킬·허용풀·외형) — 사용자와 캐릭터 콘셉트 먼저 확정. (Phase 0·1·2·3 완료.)
+**착수점**: **Phase 5 (Balance Dashboard, 선택)** 또는 **Phase 6 (PlayerSkills 분리, 선택)** — 둘 다 옵션. 대신 콘텐츠 확장(2번째 맵·2번째 캐릭터)으로 넘어가도 됨: 2번째 캐릭터 = 새 CharacterDefinition(고유 시작스킬·허용풀·외형) 만들어 `CharacterSelectUI.characters[]`에 드래그하면 카드 자동 생성. **선행 필요**: 사용자와 캐릭터/맵 콘셉트 확정. (Phase 0·1·2·3·4 완료.)
 - **2번째 맵 에셋**: 아직 없음(Phase 2는 UI 인프라만). 새 맵 = 새 MapDefinition 만들어 `MapSelectUI.maps[]`에 추가하면 카드 자동 생성.
 - **밸런스 편집 지금 가능**: `Assets/Data/SkillTable.asset`(스킬 쿨/뎀/성장), `EnemyDefinition`, `MapDefinition`, `ScalingTable`을 인스펙터에서 직접 조절. 전역 상수는 `BalanceConstants.cs`.
 

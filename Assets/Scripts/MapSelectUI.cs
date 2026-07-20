@@ -21,6 +21,12 @@ public class MapSelectUI : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button backButton;
 
+    [Header("Character (팝업으로 변경)")]
+    [SerializeField] private CharacterSelectUI characterSelect;   // "캐릭터 변경"이 여는 팝업
+    [SerializeField] private Button changeCharacterButton;        // 캐릭터 변경 팝업 열기
+    [SerializeField] private TMP_Text characterNameText;          // 현재 선택된 캐릭터 이름
+    [SerializeField] private Image characterPortrait;             // 현재 캐릭터 초상화(선택, 없으면 숨김)
+
     private readonly List<GameObject> cardFrames = new List<GameObject>();
     private int selectedIndex = -1;
     private bool built;
@@ -31,6 +37,9 @@ public class MapSelectUI : MonoBehaviour
     {
         if (startButton != null) startButton.onClick.AddListener(Confirm);
         if (backButton != null) backButton.onClick.AddListener(Close);
+        if (changeCharacterButton != null && characterSelect != null)
+            changeCharacterButton.onClick.AddListener(characterSelect.Open);
+        if (characterSelect != null) characterSelect.OnSelectionChanged += RefreshCharacter;
         if (cardTemplate != null) cardTemplate.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -40,6 +49,22 @@ public class MapSelectUI : MonoBehaviour
         if (!built) BuildCards();
         if (panelRoot != null) panelRoot.SetActive(true);
         Select(maps != null && maps.Length > 0 ? 0 : -1);
+        RefreshCharacter();
+    }
+
+    // 현재 선택된 캐릭터를 맵 화면 하단에 표시(이름·초상화). 초상화 없으면 숨김.
+    private void RefreshCharacter()
+    {
+        var chr = characterSelect != null ? characterSelect.Selected : null;
+        if (characterNameText != null)
+            characterNameText.text = chr == null ? "" :
+                (string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName);
+        if (characterPortrait != null)
+        {
+            bool hasPortrait = chr != null && chr.portrait != null;
+            if (hasPortrait) characterPortrait.sprite = chr.portrait;
+            characterPortrait.enabled = hasPortrait;
+        }
     }
 
     public void Close()
@@ -87,6 +112,7 @@ public class MapSelectUI : MonoBehaviour
     {
         if (maps == null || selectedIndex < 0 || selectedIndex >= maps.Length) return;
         RunConfig.Map = maps[selectedIndex];
+        RunConfig.Character = characterSelect != null ? characterSelect.Selected : null;
         SceneManager.LoadScene(GameSceneName);
     }
 }
