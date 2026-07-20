@@ -5,6 +5,10 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "MapDefinition", menuName = "BlueberryDefense/Map Definition")]
 public class MapDefinition : ScriptableObject
 {
+    [Header("선택 화면")]
+    public string displayName;            // 맵 선택 카드에 표시되는 이름 (예: "블루베리 밭")
+    [TextArea] public string description; // 카드 하단/툴팁 설명 (선택)
+
     [Header("표시")]
     public Sprite background;
     public AudioClip bgm; // null이면 무음(현재 상태). RunBootstrap이 있으면 루프 재생

@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5472d9ee116515744b91d63ab2a416d5, type: 3}
   m_Name: Map_BlueberryField
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
+  displayName: "\uBE14\uB8E8\uBCA0\uB9AC \uBC2D"
+  description: 
   background: {fileID: 21300000, guid: b530523d617fd474491f904c69d0917d, type: 3}
   bgm: {fileID: 0}
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}

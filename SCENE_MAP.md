@@ -30,17 +30,21 @@ EventSystem
 Canvas
  ├─ Background · TitleImage · CurrencyText
  ├─ Btn_플레이 · Btn_업그레이드 · Btn_컬렉션 · Btn_설정 · Btn_종료   (각 +Text 자식)
- └─ SkillTreeRoot  [activeSelf=false — 버튼으로 여는 전체화면 패널]
-      Viewport/Content · Title · EssenceText · CrystalText · CloseButton
-      · RespecButton · BuildBar · PowderText · Tooltip(Name/Desc/Cost)
-      · OutgameLevelBar(Fill/LevelText/XpText)
-Controllers   ← TitleController + SkillTreeUI
+ ├─ SkillTreeRoot  [activeSelf=false — 버튼으로 여는 전체화면 패널]
+ │    Viewport/Content · Title · EssenceText · CrystalText · CloseButton
+ │    · RespecButton · BuildBar · PowderText · Tooltip(Name/Desc/Cost)
+ │    · OutgameLevelBar(Fill/LevelText/XpText)
+ └─ MapSelectRoot  [activeSelf=false — Btn_플레이가 여는 맵 선택 패널, Phase 2]
+      Title · CardContainer(HorizontalLayoutGroup) · CardTemplate(비활성 원본:
+      Frame/Bg/Thumb/Name 자식) · StartButton · BackButton
+Controllers   ← TitleController + SkillTreeUI + MapSelectUI
 ```
 
 **핵심 배선:**
-- **`Controllers`** = 씬의 로직 허브. `TitleController`(메뉴 버튼→씬 로드), `SkillTreeUI`(SkillTreeRoot 패널 제어)가 여기 함께 붙어 있음. **새 화면 컨트롤러(맵/캐릭터 선택)도 여기 붙이는 게 일관적.**
-- **`SkillTreeRoot`** = "버튼으로 토글하는 전체화면 패널"의 **모범 사례**. 기본 비활성, `Controllers`의 컨트롤러가 On/Off. → 맵/캐릭터 선택 화면을 이 패턴으로 복제(Canvas 아래 형제 패널 + Controllers에 컨트롤러).
-- `Btn_컬렉션`·`Btn_설정`은 현재 리스너 미연결(Phase 2 자리).
+- **`Controllers`** = 씬의 로직 허브. `TitleController`(메뉴 버튼), `SkillTreeUI`(SkillTreeRoot 패널), `MapSelectUI`(MapSelectRoot 패널)가 여기 함께 붙어 있음. **새 화면 컨트롤러(캐릭터 선택)도 여기 붙이는 게 일관적.**
+- **`SkillTreeRoot`** = "버튼으로 토글하는 전체화면 패널"의 **모범 사례**. 기본 비활성, `Controllers`의 컨트롤러가 On/Off. → 캐릭터 선택 화면을 이 패턴으로 복제(Canvas 아래 형제 패널 + Controllers에 컨트롤러).
+- **`MapSelectRoot`**(Phase 2) = 맵 선택 패널. `Btn_플레이`→`TitleController.Play()`→`MapSelectUI.Open()`. 카드는 `CardTemplate`(자식 Frame/Bg/Thumb/Name)을 맵 수만큼 런타임 복제. 카드 클릭=선택(Frame 하이라이트), **`StartButton`이 확인 단계** — `RunConfig.Map=선택맵` 후 `SampleScene` 로드. `maps[]`(SerializeField)에 MapDefinition 드래그로 로스터 확장(현재 `Map_BlueberryField` 1장).
+- `Btn_컬렉션`·`Btn_설정`은 현재 리스너 미연결(향후 자리).
 
 ---
 
@@ -83,7 +87,8 @@ Background
 | **RunBootstrap** 부착 | SampleScene `GameManager` 오브젝트 (MetaRunApplier 형제) |
 | **캐릭터 스왑** | SampleScene `Player`: SpriteRenderer·Animator·PlayerSkills/Passives 구성 (RunBootstrap이 CharacterDefinition으로 적용) |
 | **맵 스왑** | ✅ Phase 1 완료 — `MapDefinition` SO 하나가 배경·BGM·stageTable·적 로스터·스폰파라미터 소유. RunBootstrap이 `RunConfig.Map`(선택 화면이 세팅)을 씬에 적용. 새 맵 = 새 MapDefinition 에셋 만들어 RunConfig에 넣기만 하면 됨 |
-| **맵/캐릭터 선택 화면** | Title `Canvas` 아래 신규 패널(SkillTreeRoot 패턴 복제) + `Controllers`에 컨트롤러 스크립트 |
+| **맵 선택 화면** | ✅ Phase 2 완료 — Title `Canvas/MapSelectRoot` + `Controllers/MapSelectUI`. `Btn_플레이`가 엶 |
+| **캐릭터 선택 화면** | Title `Canvas` 아래 신규 패널(SkillTreeRoot/MapSelectRoot 패턴 복제) + `Controllers`에 컨트롤러 스크립트 |
 
 ## "X를 씬에 추가하려면 어디"
 

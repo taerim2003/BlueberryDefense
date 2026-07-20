@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 // 타이틀 씬의 메인 메뉴. Play/업그레이드/컬렉션/설정/종료.
@@ -12,9 +11,8 @@ public class TitleController : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button quitButton;
     [SerializeField] private SkillTreeUI skillTree;
+    [SerializeField] private MapSelectUI mapSelect;
     [SerializeField] private TMP_Text currencyText;
-
-    private const string GameSceneName = "SampleScene";
 
     private void Start()
     {
@@ -32,7 +30,11 @@ public class TitleController : MonoBehaviour
         if (currencyText != null) currencyText.text = SkillTreeSave.EssenceEarned + " 정수";
     }
 
-    private void Play() => SceneManager.LoadScene(GameSceneName);
+    private void Play()
+    {
+        // 바로 씬 로드하지 않고 맵 선택 패널을 연다. 실제 로드는 MapSelectUI가 "시작" 버튼으로 처리.
+        if (mapSelect != null) mapSelect.Open();
+    }
 
     private void OpenUpgrade()
     {

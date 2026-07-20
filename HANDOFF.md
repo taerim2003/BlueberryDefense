@@ -15,11 +15,18 @@
 
 ---
 
-## 현재 상태 (2026-07-20, 세션 5)
+## 현재 상태 (2026-07-20, 세션 6)
 
-**빌드**: 컴파일 에러 없음. SampleScene 저장 완료. **세션5 = 리팩토링 Phase 1 완료(맵/적 데이터화)** — 아래 로드맵 §1 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+**빌드**: 컴파일 에러 없음. Title 저장 완료. **세션6 = 리팩토링 Phase 2 완료(맵 선택 화면)** — 아래 로드맵 §2 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
 
-### 이번 세션 수정 (플레이 피드백 반영, 재검증 대기)
+### 세션6 — Phase 2 (맵 선택 화면)
+- 흐름: `Btn_플레이` → `MapSelectUI.Open()`(패널) → 맵 카드 클릭=**선택(Frame 하이라이트)** → 하단 **`시작` 버튼(확인 단계)** → `RunConfig.Map=선택맵` + `SampleScene` 로드. 뒤로 버튼=닫기.
+- 신규: `MapSelectUI.cs`(Controllers 부착, 카드는 `CardTemplate` 런타임 복제). `MapDefinition`에 `displayName`/`description` 필드 추가. `Map_BlueberryField.displayName="블루베리 밭"`.
+- 수정: `TitleController.Play()`가 씬 직접 로드 대신 패널을 엶(`mapSelect` 참조 추가, 미사용 `using SceneManagement` 제거).
+- 로스터 확장 = `MapSelectUI.maps[]`에 MapDefinition 드래그(현재 1장). 씬 배선은 `SCENE_MAP.md` Title 섹션.
+- **검증(플레이모드 스모크)**: Play→패널 오픈, 카드1장(이름 "블루베리 밭"), 시작 활성/selectedIndex=0, Confirm→`RunConfig.Map=블루베리밭`+씬로드. SampleScene+BlueberryField 동작은 Phase1에서 검증됨.
+
+### 세션5 이전 수정 (플레이 피드백 반영, 재검증 대기)
 - **2스테이지 시작 버그 수정**: 첫 프레임 `GameManager.Update`가 `EnemySpawner`보다 먼저 돌면 `SpawnTarget`=0→`StageSpawnComplete` 참→즉시 스테이지 넘어감. `EnemySpawner.Start()`에서 물량 카운트 선-세팅(`BeginStageCount`)해 방지.
 - **스킬 입력**: `wasPressedThisFrame`→`isPressed` (꾹 눌러도 쿨마다 재발동).
 - **되감기 레벨업**: 매 레벨 쿨감+되감기 동시 → **홀수 레벨 쿨-0.15 / 짝수 레벨 되감기+0.15 교차**. 미리보기 텍스트도 맞춤.
@@ -53,7 +60,7 @@
 **Phase 순서** (맵 먼저 = 결합 얕음. 매 Phase 완료조건에 "기본값 선택 시 현재와 동일" + "SCENE_MAP 갱신"):
 0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신.
 1. **맵/적 데이터** ✅ **완료(2026-07-20 세션5)**: `RunConfig`(static, SO직접참조) + `MapDefinition`(배경·BGM·stageTable·적로스터·스폰파라미터) + `RunBootstrap`(GameManager 형제) + `ScalingTable`(HP/이속스텝·XP커브) + `EnemyDefinition` 7종(적 스탯 완전이관). 기본맵 `Map_BlueberryField` 선택 시 현재와 동일 검증 완료(플레이모드 스모크: stage1, 물량스폰 정상, Blueberry spd2/hp14, XP18, 무예외). 신규 파일: RunConfig/ScalingTable/EnemyDefinition/MapDefinition/RunBootstrap.cs, `Assets/Data/*`.
-2. **맵 선택 화면**: Title 내 패널 → RunConfig.MapId.
+2. **맵 선택 화면** ✅ **완료(2026-07-20 세션6)**: Title `Canvas/MapSelectRoot` 패널 + `Controllers/MapSelectUI`(카드=`CardTemplate` 런타임 복제, 클릭=선택·`시작`=확인). `Btn_플레이`→`Play()`→`Open()`. 선택 시 `RunConfig.Map=선택맵`→`SampleScene`. 로스터는 `maps[]`(현재 1장). 신규: MapSelectUI.cs, MapDefinition.displayName/description.
 3. **캐릭터/스킬 데이터**: CharacterDefinition + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition으로(Tier A), 로직엮인 값은 `BalanceConstants`로(Tier B).
 4. **캐릭터 선택 화면**: Phase 2와 대칭.
 5. **Balance Dashboard**(선택): 위 SO들을 탭으로 묶는 커스텀 EditorWindow(CheatWindow 전례 있음). 데이터 먼저, 대시보드는 UX 레이어.
@@ -63,7 +70,8 @@
 
 **현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·**ScalingTable(신규)**·**EnemyDefinition 7종(신규)**·**MapDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출(스탯은 SO로 이관됨) / ③코드 하드코딩=[PlayerSkills.cs:1389](Assets/Scripts/PlayerSkills.cs#L1389)(기본쿨뎀)·[:259](Assets/Scripts/PlayerSkills.cs#L259)(레벨증가)·진화티어·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **적 스탯·스케일링·XP는 ③에서 빠졌음(Phase 1)**. 남은 ③ 본체 = 스킬/진화 수치(Phase 3).
 
-**착수점**: **Phase 2 (맵 선택 화면)** — Title `Canvas` 아래 신규 패널(SkillTreeRoot 패턴 복제) + `Controllers`에 컨트롤러 → 선택 시 `RunConfig.Map = 해당 MapDefinition`. 현재 맵은 `Map_BlueberryField` 하나뿐이라, 화면을 만들되 2번째 맵 에셋을 만들지 여부는 Phase 2 착수 시 사용자 확인. (Phase 0·1 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고.)
+**착수점**: **Phase 3 (캐릭터/스킬 데이터)** — `CharacterDefinition` SO + [PlayerSkills.cs:134](Assets/Scripts/PlayerSkills.cs#L134) 시작스킬 하드코딩 제거 + LevelUpUI 후보를 allowedSkillPool로 필터 + 스킬 수치를 SkillDefinition(Tier A)/BalanceConstants(Tier B)로. 씬 스왑 지점 = SampleScene `Player`(SpriteRenderer·Animator·PlayerSkills/Passives). RunBootstrap이 CharacterDefinition 적용(MapDefinition과 대칭). (Phase 0·1·2 완료 — SCENE_MAP.md·BALANCE_MAP.md 참고.)
+- **2번째 맵 에셋**: 아직 없음(사용자 결정 — Phase 2는 UI 인프라만). 새 맵 = 새 MapDefinition 만들어 `MapSelectUI.maps[]`에 추가하면 카드 자동 생성. 배경/BGM/적 로스터/기믹은 그때 설계.
 
 ---
 
