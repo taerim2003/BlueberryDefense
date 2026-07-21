@@ -7,6 +7,7 @@ using TMPro;
 
 // ESC로 게임 일시정지 + 현재 획득한 스킬/패시브의 레벨·진화 효과 요약 표시.
 // 씬에 배치할 필요 없이 게임 시작 시 자동 부트스트랩되어 자체 Canvas/UI를 런타임 생성한다.
+// 레이아웃: 넓은 창을 2열로 — 왼쪽=액티브 스킬, 오른쪽=패시브. 각 항목에 스킬 아이콘 표시.
 public class PauseMenu : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -18,7 +19,9 @@ public class PauseMenu : MonoBehaviour
     }
 
     private GameObject panel;
-    private TMP_Text bodyText;
+    private Transform leftColumn;
+    private Transform rightColumn;
+    private TMP_FontAsset font;
     private bool paused;
 
     private void Awake() => BuildUI();
@@ -42,7 +45,7 @@ public class PauseMenu : MonoBehaviour
     {
         paused = true;
         ModalPause.Push();
-        bodyText.text = BuildSummary();
+        PopulateColumns();
         panel.SetActive(true);
     }
 
@@ -53,38 +56,53 @@ public class PauseMenu : MonoBehaviour
         ModalPause.Pop();
     }
 
-    // ── 스킬/패시브 요약 ──
-    private static string BuildSummary()
+    // ── 스킬/패시브 요약 채우기 (열 때마다 갱신) ──
+    private void PopulateColumns()
     {
-        var sb = new StringBuilder();
+        ClearChildren(leftColumn);
+        ClearChildren(rightColumn);
+
         var skills = Object.FindAnyObjectByType<PlayerSkills>();
         var passives = Object.FindAnyObjectByType<PlayerPassives>();
+        var levelUp = LevelUpUI.Instance;
 
-        sb.AppendLine("<b>[ 액티브 스킬 ]</b>");
+        BuildEntry(leftColumn, null, "<b>[ 액티브 스킬 ]</b>", null);
         if (skills != null)
             foreach (var s in skills.EquippedSkills)
-            {
-                sb.AppendLine($"<b>{PlayerSkills.GetActiveSkillName(s.Id)}</b>  <color=#AECBFF>Lv.{s.Level}</color>");
-                // 1레벨 기본값 대비 레벨업 누적 성장분
-                foreach (var g in PlayerSkills.DescribeLevelUpGains(s))
-                    sb.AppendLine($"    <color=#9FE0A0>·</color> {g}");
-                // 진화 트리 효과
-                AppendPaths(sb, s.PathTier, (p, t) => PlayerSkills.GetPathTierTitle(s.Id, p, t));
-            }
+                BuildEntry(leftColumn,
+                    levelUp != null ? levelUp.GetActiveIcon(s.Id) : null,
+                    TitleLine(PlayerSkills.GetActiveSkillName(s.Id), s.Level),
+                    BuildActiveDetail(s));
 
-        sb.AppendLine();
-        sb.AppendLine("<b>[ 패시브 ]</b>");
+        BuildEntry(rightColumn, null, "<b>[ 패시브 ]</b>", null);
         if (passives != null)
             foreach (var pv in passives.EquippedPassives)
-            {
-                sb.AppendLine($"<b>{PlayerSkills.GetPassiveSkillName(pv.Id)}</b>  <color=#AECBFF>Lv.{pv.Level}</color>");
-                AppendPaths(sb, pv.PathTier, (p, t) => PlayerPassives.GetPathTierTitle(pv.Id, p, t));
-            }
-
-        return sb.ToString();
+                BuildEntry(rightColumn,
+                    levelUp != null ? levelUp.GetPassiveIcon(pv.Id) : null,
+                    TitleLine(PlayerSkills.GetPassiveSkillName(pv.Id), pv.Level),
+                    BuildPassiveDetail(pv));
     }
 
-    private static void AppendPaths(StringBuilder sb, int[] pathTier, System.Func<int, int, string> titleFn)
+    private static string TitleLine(string name, int level) =>
+        $"<b>{name}</b>  <color=#AECBFF>Lv.{level}</color>";
+
+    private static string BuildActiveDetail(EquippedSkill s)
+    {
+        var sb = new StringBuilder();
+        foreach (var g in PlayerSkills.DescribeLevelUpGains(s))
+            sb.AppendLine($"<color=#9FE0A0>·</color> {g}");
+        AppendPathLines(sb, s.PathTier, (p, t) => PlayerSkills.GetPathTierTitle(s.Id, p, t));
+        return sb.ToString().TrimEnd();
+    }
+
+    private static string BuildPassiveDetail(EquippedPassive pv)
+    {
+        var sb = new StringBuilder();
+        AppendPathLines(sb, pv.PathTier, (p, t) => PlayerPassives.GetPathTierTitle(pv.Id, p, t));
+        return sb.ToString().TrimEnd();
+    }
+
+    private static void AppendPathLines(StringBuilder sb, int[] pathTier, System.Func<int, int, string> titleFn)
     {
         for (int p = 0; p < pathTier.Length; p++)
         {
@@ -96,14 +114,46 @@ public class PauseMenu : MonoBehaviour
                 string title = titleFn(p, t);
                 if (!string.IsNullOrEmpty(title)) parts.Add(title);
             }
-            if (parts.Count > 0) sb.AppendLine("    <color=#FFC864>▸</color> " + string.Join(", ", parts));
+            if (parts.Count > 0) sb.AppendLine("<color=#FFC864>▸</color> " + string.Join(", ", parts));
         }
     }
 
-    // ── 런타임 UI 생성 ──
+    // 한 항목 = 아이콘 + (제목 / 상세). icon null이면 아이콘 없이(섹션 헤더용), detail 비면 상세 생략.
+    private void BuildEntry(Transform column, Sprite icon, string titleRich, string detailRich)
+    {
+        var entry = NewUI("Entry", column);
+        var h = entry.AddComponent<HorizontalLayoutGroup>();
+        h.spacing = 12;
+        h.childAlignment = TextAnchor.UpperLeft;
+        h.childControlWidth = true; h.childControlHeight = true;
+        h.childForceExpandWidth = false; h.childForceExpandHeight = false;
+
+        if (icon != null)
+        {
+            var iconGo = NewUI("Icon", entry.transform);
+            var img = iconGo.AddComponent<Image>();
+            img.sprite = icon; img.preserveAspect = true; img.raycastTarget = false;
+            var le = iconGo.AddComponent<LayoutElement>();
+            le.minWidth = le.preferredWidth = 46;
+            le.minHeight = le.preferredHeight = 46;
+        }
+
+        var textCol = NewUI("Text", entry.transform);
+        var v = textCol.AddComponent<VerticalLayoutGroup>();
+        v.spacing = 2;
+        v.childAlignment = TextAnchor.UpperLeft;
+        v.childControlWidth = true; v.childControlHeight = true;
+        v.childForceExpandWidth = true; v.childForceExpandHeight = false;
+        textCol.AddComponent<LayoutElement>().flexibleWidth = 1;
+
+        AddWrapText(textCol.transform, titleRich, 26, new Color(0.95f, 0.95f, 0.95f));
+        if (!string.IsNullOrEmpty(detailRich))
+            AddWrapText(textCol.transform, detailRich, 20, new Color(0.82f, 0.82f, 0.82f));
+    }
+
+    // ── 런타임 UI 생성 (정적 셸: 창/제목/2열 컨테이너/힌트) ──
     private void BuildUI()
     {
-        TMP_FontAsset font = null;
         foreach (var t in Object.FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (t.font != null) { font = t.font; break; }
 
@@ -121,25 +171,58 @@ public class PauseMenu : MonoBehaviour
         AddImage(panel, new Color(0f, 0f, 0f, 0.8f), true);
 
         var box = NewUI("Box", panel.transform);
-        Center(box, new Vector2(1000, 760));
+        Center(box, new Vector2(1760, 940));
         AddImage(box, new Color(0.06f, 0.06f, 0.1f, 0.98f), true);
 
         var title = NewUI("Title", box.transform);
-        Top(title, new Vector2(0, -22), new Vector2(960, 64));
+        Top(title, new Vector2(0, -22), new Vector2(1680, 64));
         AddText(title, font, "일시정지", 46, TextAlignmentOptions.Center, Color.white);
 
-        var body = NewUI("Body", box.transform);
-        var bodyRt = body.GetComponent<RectTransform>();
-        bodyRt.anchorMin = Vector2.zero; bodyRt.anchorMax = Vector2.one;
-        bodyRt.offsetMin = new Vector2(48, 70); bodyRt.offsetMax = new Vector2(-48, -104);
-        bodyText = AddText(body, font, "", 24, TextAlignmentOptions.TopLeft, new Color(0.9f, 0.9f, 0.9f));
-        bodyText.enableWordWrapping = true;
+        // 2열 컨테이너 — 제목과 힌트 사이 영역을 채움
+        var columns = NewUI("Columns", box.transform);
+        var colRt = columns.GetComponent<RectTransform>();
+        colRt.anchorMin = Vector2.zero; colRt.anchorMax = Vector2.one;
+        colRt.offsetMin = new Vector2(44, 64); colRt.offsetMax = new Vector2(-44, -104);
+        var hg = columns.AddComponent<HorizontalLayoutGroup>();
+        hg.spacing = 48;
+        hg.childAlignment = TextAnchor.UpperLeft;
+        hg.childControlWidth = true; hg.childControlHeight = true;
+        hg.childForceExpandWidth = true; hg.childForceExpandHeight = true;
+
+        leftColumn = MakeColumn(columns.transform);
+        rightColumn = MakeColumn(columns.transform);
 
         var hint = NewUI("Hint", box.transform);
-        Bottom(hint, new Vector2(0, 18), new Vector2(960, 40));
+        Bottom(hint, new Vector2(0, 18), new Vector2(1680, 40));
         AddText(hint, font, "ESC — 계속하기", 22, TextAlignmentOptions.Center, new Color(0.7f, 0.8f, 1f));
 
         panel.SetActive(false);
+    }
+
+    private static Transform MakeColumn(Transform parent)
+    {
+        var col = NewUI("Column", parent);
+        var v = col.AddComponent<VerticalLayoutGroup>();
+        v.spacing = 10;
+        v.childAlignment = TextAnchor.UpperLeft;
+        v.childControlWidth = true; v.childControlHeight = true;
+        v.childForceExpandWidth = true; v.childForceExpandHeight = false;
+        col.AddComponent<LayoutElement>().flexibleWidth = 1;
+        return col.transform;
+    }
+
+    private static void ClearChildren(Transform parent)
+    {
+        for (int i = parent.childCount - 1; i >= 0; i--)
+            Destroy(parent.GetChild(i).gameObject);
+    }
+
+    private TMP_Text AddWrapText(Transform parent, string txt, int size, Color c)
+    {
+        var go = NewUI("Line", parent);
+        var t = AddText(go, font, txt, size, TextAlignmentOptions.TopLeft, c);
+        t.enableWordWrapping = true;
+        return t;
     }
 
     private static GameObject NewUI(string name, Transform parent)

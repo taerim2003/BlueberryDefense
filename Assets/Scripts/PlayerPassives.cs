@@ -24,14 +24,12 @@ public class EquippedPassive
 public class PlayerPassives : MonoBehaviour
 {
     private const int MaxPassives = 4;
-    private const float StrengthDamageBonus = 0.07f;
-    private const float KnowledgeXPBonus = 0.08f;
-    private const int HealthBonus = 20;
 
     // 아래 값들은 진화/레벨업으로 계속 갱신되는 정적 상태 — 플레이어가 한 명뿐이라 LightningStorm과 같은 방식으로 관리한다.
-    public static float AssassinateCritChance = 0.15f;
+    // 치명타 확률·재사용 초기화 확률의 '기본값'은 PassiveProgression(SO)이 소유 → 획득 시 적용하므로 0에서 시작하고 Awake에서 판마다 리셋.
+    public static float AssassinateCritChance = 0f;
     public static float AssassinateCritMultiplier = 3f;
-    public static float RefreshChance = 0.1f;
+    public static float RefreshChance = 0f;
     public static float AssassinateKillXpMultiplier = 1f; // 암살 연계 path1: 치명타 처치 시 경험치 배율
     public static float RefreshHealOnResetAmount = 0f; // 리프레쉬 연계 path1: 쿨타임 초기화시 회복량
     public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path2: 낙뢰 발동시 전체 쿨타임 감소 확률
@@ -41,6 +39,10 @@ public class PlayerPassives : MonoBehaviour
     public static float AssassinateWhirlwindCritBonus = 0f; // 암살 연계 path2: 회오리 전용 추가 치명타 확률
     public static bool AssassinateWhirlwindTargetHighest = false; // 암살 연계 path2: 회오리가 최고 체력 적을 타겟팅
     public static int EagleDropCastXpBonus = 0; // 지식 연계 path2: 독수리 투하 시전마다 즉시 획득하는 경험치
+
+    [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
+
+    private static System.Collections.Generic.Dictionary<PassiveSkillId, PassiveProgression> progressionLookup;
 
     private readonly List<EquippedPassive> equippedPassives = new List<EquippedPassive>();
     private PlayerSkills skills;
@@ -62,6 +64,34 @@ public class PlayerPassives : MonoBehaviour
         health = GetComponent<PlayerHealth>();
         if (health != null) health.OnDamageTaken += HandleDamageTaken;
         LightningStorm.OnProc += HandleLightningProc;
+
+        BuildProgressionLookup();   // 정적 조회맵 승격 — AcquirePassive 전에 세팅
+        AssassinateCritChance = 0f; // 판마다 리셋 — 기본값은 획득 시 SO에서 채워짐
+        RefreshChance = 0f;
+    }
+
+    // 직렬화된 progressions[]를 id→SO 조회맵으로 승격. 미포함 패시브는 조회 실패 → 코드 기본값 폴백.
+    private void BuildProgressionLookup()
+    {
+        progressionLookup = new System.Collections.Generic.Dictionary<PassiveSkillId, PassiveProgression>();
+        if (progressions == null) return;
+        foreach (var p in progressions)
+            if (p != null) progressionLookup[p.passive] = p;
+    }
+
+    private static PassiveProgression Prog(PassiveSkillId id) =>
+        progressionLookup != null && progressionLookup.TryGetValue(id, out var p) ? p : null;
+
+    public static float BaseValue(PassiveSkillId id)
+    {
+        PassiveProgression p = Prog(id);
+        return p != null ? p.baseValue : PassiveProgression.DefaultBaseValue(id);
+    }
+
+    public static float PerLevelBonus(PassiveSkillId id)
+    {
+        PassiveProgression p = Prog(id);
+        return p != null ? p.perLevelBonus : PassiveProgression.DefaultPerLevelBonus(id);
     }
 
     private void Update()
@@ -104,19 +134,7 @@ public class PlayerPassives : MonoBehaviour
         if (HasMaxPassives || HasPassive(id)) return;
 
         equippedPassives.Add(new EquippedPassive { Id = id });
-
-        switch (id)
-        {
-            case PassiveSkillId.Strength:
-                skills.IncreaseDamageMultiplier(StrengthDamageBonus);
-                break;
-            case PassiveSkillId.Health:
-                health.IncreaseMaxHealth(HealthBonus);
-                break;
-            case PassiveSkillId.Knowledge:
-                PlayerExperience.Instance.IncreaseXPMultiplier(KnowledgeXPBonus);
-                break;
-        }
+        ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
     }
 
     public bool CanUpgradePassive(EquippedPassive passive) => passive.TotalEvolutionTier >= passive.Level / 5;
@@ -132,35 +150,63 @@ public class PlayerPassives : MonoBehaviour
 
     private void ApplyPassiveLevelEffect(EquippedPassive passive)
     {
-        switch (passive.Id)
+        ApplyPassiveValue(passive.Id, PerLevelBonus(passive.Id)); // 레벨업 = 레벨당 상승값 적용
+    }
+
+    // 패시브별 대상 스탯에 값을 더한다(획득=기본값·레벨업=상승값 공통 경로).
+    private void ApplyPassiveValue(PassiveSkillId id, float amount)
+    {
+        switch (id)
         {
             case PassiveSkillId.Strength:
-                skills.IncreaseDamageMultiplier(StrengthDamageBonus);
+                skills.IncreaseDamageMultiplier(amount);
                 break;
             case PassiveSkillId.Health:
-                health.IncreaseMaxHealth(HealthBonus);
+                health.IncreaseMaxHealth(Mathf.RoundToInt(amount));
                 break;
             case PassiveSkillId.Knowledge:
-                PlayerExperience.Instance.IncreaseXPMultiplier(KnowledgeXPBonus);
+                PlayerExperience.Instance.IncreaseXPMultiplier(amount);
                 break;
             case PassiveSkillId.Assassinate:
-                AssassinateCritChance += 0.04f;
+                AssassinateCritChance += amount;
                 break;
             case PassiveSkillId.Refresh:
-                RefreshChance += 0.02f;
+                RefreshChance += amount;
                 break;
         }
     }
 
-    public static string DescribePassiveLevelEffect(PassiveSkillId id) => id switch
+    // 레벨업 카드 설명 — 레벨당 상승값(SO) 반영
+    public static string DescribePassiveLevelEffect(PassiveSkillId id)
     {
-        PassiveSkillId.Strength => "피해량 7% 증가",
-        PassiveSkillId.Health => "최대 체력 20 증가",
-        PassiveSkillId.Knowledge => "경험치 획득량 8% 증가",
-        PassiveSkillId.Assassinate => "치명타 확률 4%p 증가",
-        PassiveSkillId.Refresh => "재사용 초기화 확률 2%p 증가",
-        _ => "",
-    };
+        float v = PerLevelBonus(id);
+        return id switch
+        {
+            PassiveSkillId.Strength => $"피해량 {Pct(v)}% 증가",
+            PassiveSkillId.Health => $"최대 체력 {v:0} 증가",
+            PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(v)}% 증가",
+            PassiveSkillId.Assassinate => $"치명타 확률 {Pct(v)}%p 증가",
+            PassiveSkillId.Refresh => $"재사용 초기화 확률 {Pct(v)}%p 증가",
+            _ => "",
+        };
+    }
+
+    // 획득(신규) 카드 설명 — 기본값(SO) 반영
+    public static string DescribePassiveAcquire(PassiveSkillId id)
+    {
+        float b = BaseValue(id);
+        return id switch
+        {
+            PassiveSkillId.Strength => $"피해량 {Pct(b)}% 증가",
+            PassiveSkillId.Health => $"최대 체력 {b:0} 증가",
+            PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(b)}% 증가",
+            PassiveSkillId.Assassinate => $"모든 피해가 {Pct(b)}% 확률로 3배 피해",
+            PassiveSkillId.Refresh => $"스킬 사용 시 {Pct(b)}% 확률로 쿨타임 초기화",
+            _ => "",
+        };
+    }
+
+    private static string Pct(float f) => (f * 100f).ToString("0.#");
 
     // path: 0=기본(무의존), 1=패시브 연계, 2=액티브 연계
     public bool CanEvolvePath(EquippedPassive passive, int path)

@@ -11,7 +11,8 @@ public static class LightningStorm
 
     public const float BaseProcChance = 0.6f;
     public static float ProcChance = BaseProcChance;
-    public static float ProcDamage = 12f;
+    public const float BaseProcDamage = 12f;          // 낙뢰 기본 피해(레벨업 성장 표시의 기준값)
+    public static float ProcDamage = BaseProcDamage;  // 캐스트마다 배율 적용된 '현재' 피해로 갱신됨
     public static bool RecursiveProcEnabled;
     public static float RecursiveDamageGrowth; // 힘 연계 path0 T3: 재귀 단계마다 이 비율만큼 낙뢰 피해량 누적 증가
 

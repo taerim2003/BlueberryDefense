@@ -38,7 +38,6 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Image iconC;
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
-    [SerializeField] private LevelUpStatOptionSO[] statOptions;
     [SerializeField] private Button rerollButton;   // 스킬트리 리롤 해금 시 노출
     [SerializeField] private TMP_Text rerollLabel;
 
@@ -47,6 +46,8 @@ public class LevelUpUI : MonoBehaviour
     private static readonly Color EvolveTagColor = new Color(1f, 0.55f, 0.1f, 1f); // 진화 가능 강조(주황)
 
     private Outline[] optionOutlines;
+
+    private const int EssenceReward = 10; // 레벨업할 게 없을 때 대체로 지급하는 정수량
 
     private Option[] currentOptions;
     private int rerollsRemaining;  // 게임당 남은 리롤 횟수
@@ -83,11 +84,10 @@ public class LevelUpUI : MonoBehaviour
     public void Show()
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
-        PlayerHealth health = FindAnyObjectByType<PlayerHealth>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
         rerollable = true;
-        currentOptions = BuildOptions(skills, health, passives);
+        currentOptions = BuildOptions(skills, passives);
         ShowOptions();
     }
 
@@ -102,18 +102,24 @@ public class LevelUpUI : MonoBehaviour
     {
         bool alreadyOpen = panel.activeSelf;
 
-        SetRow(titleA, levelA, descA, iconA, currentOptions[0]);
-        SetRow(titleB, levelB, descB, iconB, currentOptions[1]);
-        SetRow(titleC, levelC, descC, iconC, currentOptions[2]);
-
-        if (optionOutlines != null)
-            for (int i = 0; i < optionOutlines.Length; i++)
-                if (optionOutlines[i] != null) optionOutlines[i].enabled = currentOptions[i].UnlocksEvolution;
+        // 선택지는 1~3개로 가변 — 남는 슬롯의 옵션 카드(버튼)는 통째로 숨긴다.
+        int count = currentOptions.Length;
+        SetSlot(0, optionButtonA, titleA, levelA, descA, iconA, count > 0 ? currentOptions[0] : null);
+        SetSlot(1, optionButtonB, titleB, levelB, descB, iconB, count > 1 ? currentOptions[1] : null);
+        SetSlot(2, optionButtonC, titleC, levelC, descC, iconC, count > 2 ? currentOptions[2] : null);
 
         UpdateRerollButton();
 
         panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
+    }
+
+    private void SetSlot(int index, Button button, TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
+    {
+        if (button != null) button.gameObject.SetActive(option != null);
+        if (optionOutlines != null && optionOutlines[index] != null)
+            optionOutlines[index].enabled = option != null && option.UnlocksEvolution;
+        if (option != null) SetRow(title, level, desc, icon, option);
     }
 
     private void UpdateRerollButton()
@@ -160,7 +166,7 @@ public class LevelUpUI : MonoBehaviour
         image.sprite = sprite;
     }
 
-    private Option[] BuildOptions(PlayerSkills skills, PlayerHealth health, PlayerPassives passives)
+    private Option[] BuildOptions(PlayerSkills skills, PlayerPassives passives)
     {
         List<Option> candidates = new List<Option>();
         CharacterDefinition character = RunConfig.Character; // 후보 풀 게이팅(null이면 전체 허용 = 현행)
@@ -234,16 +240,21 @@ public class LevelUpUI : MonoBehaviour
         Shuffle(candidates);
         List<Option> options = candidates.Take(3).ToList();
 
-        int statIndex = 0;
-        while (options.Count < 3 && statOptions != null && statOptions.Length > 0)
-        {
-            LevelUpStatOptionSO so = statOptions[statIndex % statOptions.Length];
-            options.Add(new Option { Title = so.title, Description = so.description, Apply = () => ApplyStatEffect(so, skills, health) });
-            statIndex++;
-        }
+        // 레벨업 가능한 후보가 3개보다 적으면 '정수 +10' 선택지를 하나만 끼운다.
+        // 후보가 0~1개면 선택지 자체가 1~2개만 뜬다.
+        if (options.Count < 3)
+            options.Add(EssenceOption());
 
         return options.ToArray();
     }
+
+    // 레벨업할 스킬이 부족할 때 자리를 메우는 대체 보상: 이번 판 정수 +10
+    private static Option EssenceOption() => new Option
+    {
+        Title = "정수 획득",
+        Description = "정수 +" + EssenceReward,
+        Apply = () => MetaRun.Collect(EssenceReward),
+    };
 
     public void ShowTreasureReward()
     {
@@ -305,27 +316,12 @@ public class LevelUpUI : MonoBehaviour
         ShowOptions();
     }
 
-    private static void ApplyStatEffect(LevelUpStatOptionSO so, PlayerSkills skills, PlayerHealth health)
-    {
-        switch (so.effect)
-        {
-            case LevelUpStatEffect.BasicAttackDamageFlat:
-                skills.UpgradeSkillDamage(ActiveSkillId.BasicAttack, so.value);
-                break;
-            case LevelUpStatEffect.BasicAttackCooldownPercent:
-                skills.UpgradeSkillCooldown(ActiveSkillId.BasicAttack, 1f - so.value / 100f);
-                break;
-            case LevelUpStatEffect.MaxHealthFlat:
-                health.IncreaseMaxHealth((int)so.value);
-                break;
-            case LevelUpStatEffect.XpMultiplierPercent:
-                PlayerExperience.Instance.IncreaseXPMultiplier(so.value / 100f);
-                break;
-        }
-    }
-
     private static Sprite GetIcon(Sprite[] icons, int index) =>
         icons != null && index >= 0 && index < icons.Length ? icons[index] : null;
+
+    // 다른 UI(일시정지 요약 등)가 스킬 아이콘을 재사용할 수 있도록 노출.
+    public Sprite GetActiveIcon(ActiveSkillId id) => GetIcon(activeIcons, (int)id);
+    public Sprite GetPassiveIcon(PassiveSkillId id) => GetIcon(passiveIcons, (int)id);
 
     private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
     {
@@ -340,15 +336,7 @@ public class LevelUpUI : MonoBehaviour
         _ => "",
     };
 
-    private static string GetPassiveSkillDescription(PassiveSkillId id) => id switch
-    {
-        PassiveSkillId.Strength => "피해량 7% 증가",
-        PassiveSkillId.Health => "최대 체력 20 증가",
-        PassiveSkillId.Knowledge => "경험치 획득량 8% 증가",
-        PassiveSkillId.Assassinate => "모든 피해가 15% 확률로 3배 피해",
-        PassiveSkillId.Refresh => "스킬 사용 시 10% 확률로 쿨타임 초기화",
-        _ => "",
-    };
+    private static string GetPassiveSkillDescription(PassiveSkillId id) => PlayerPassives.DescribePassiveAcquire(id);
 
     private void Choose(int index)
     {

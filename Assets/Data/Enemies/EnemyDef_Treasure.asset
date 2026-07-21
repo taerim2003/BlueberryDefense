@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: EnemyDef_Treasure
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 2
-  damage: 10
-  maxHealth: 14
+  damage: 0
+  maxHealth: 1
   xpValue: 5
   essenceDropChance: 0.15
   essenceDropAmount: 2

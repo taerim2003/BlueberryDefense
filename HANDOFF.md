@@ -15,105 +15,43 @@
 
 ---
 
-## 현재 상태 (2026-07-20, 세션 7)
+## 현재 상태 (2026-07-21, 세션 10)
 
-**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). Title 씬 저장 완료. **세션8 = 리팩토링 Phase 4 완료(캐릭터 선택 화면)** — 아래 로드맵 §4 참고. 세션4의 실플레이 피드백 13건은 여전히 재검증 대기(맨 아래 목록).
+**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). SampleScene 저장 완료. **리팩토링 로드맵(Phase 0~5) 완료** — 게임은 이제 단일 씬 + SO 스왑 구조. 세션10은 밸런스/UI 다듬기.
 
-### 세션8 — Phase 4 (캐릭터 선택 화면)
-- **흐름**: `Btn_플레이`→맵 선택 화면 안에 **현재 캐릭터 이름(`CharNameLabel`)+`캐릭터 변경` 버튼** 표시 → 버튼 클릭 시 **`CharacterSelectRoot` 팝업**(맵 화면 위) → 캐릭터 카드 클릭=**즉시 선택+팝업 닫힘**(맵과 달리 확인 단계 없음) → 맵 `시작` 시 `RunConfig.Map`+`RunConfig.Character` 함께 세팅 후 `SampleScene`.
-- **신규**: `CharacterSelectUI.cs`(Controllers 부착, 카드=`CardTemplate` 런타임 복제, `OnSelectionChanged` 이벤트). 씬: `Canvas/CharacterSelectRoot`(MapSelectRoot 복제·StartButton 제거) + MapSelectRoot 안 `CharNameLabel`/`ChangeCharButton`.
-- **수정**: `MapSelectUI`에 캐릭터 표시/변경 필드 4개 추가(characterSelect·changeCharacterButton·characterNameText·characterPortrait), `Confirm()`이 `RunConfig.Character`도 세팅, `Open()`이 `RefreshCharacter()` 호출.
-- **로스터**: `characters[]`에 CharacterDefinition 드래그(현재 `Char_Strawberry` 1종="딸기").
-- **초상화(임시)**: `Char_Strawberry.portrait`=`Assets/Sprites/Player.png`(딸기 게임 스프라이트 임시 전용) → 팝업 카드 Thumb + 맵 화면 `CharPortrait`(이름 위, `preserveAspect`)에 표시. 전용 초상화 그리면 `portrait` 필드만 교체.
-- **검증(플레이모드 스모크)**: 맵Open→`CharNameLabel`="딸기", `ChangeCharButton`→팝업 활성·카드 1장, `Selected`="딸기", 카드 클릭→팝업 닫힘·선택 유지, 예외 0.
-
-### 세션7 — Phase 3 (캐릭터/스킬 데이터화)
-- **신규 SO**: `SkillTable`(스킬 9종 기본쿨·기본뎀·레벨업 배율, `Assets/Data/SkillTable.asset`) / `CharacterDefinition`(시작스킬·허용풀·기본체력·외형, 기본 에셋 `Assets/Data/Characters/Char_Strawberry.asset`) / `BalanceConstants`(전역 상수 집결, 코드).
-- **배선**: SampleScene `Player.PlayerSkills.skillTable` = SkillTable.asset. Char_Strawberry는 아직 런타임 미참조(캐릭터 선택 화면 = Phase 4 대기) — 현재 `RunConfig.Character`=null이라 프리팹 기본값(현행)으로 동작.
-- **데이터화**: `PlayerSkills.Awake`가 `RunConfig.Character?.startingSkill`, `PlayerHealth.Awake`가 `baseHealth` 직접 읽음(순서 안전). 외형은 RunBootstrap이 적용. LevelUpUI 신규스킬·패시브 후보를 `allowedActivePool`/`allowedPassivePool`로 필터(빈 풀=전체=현행).
-- **검증(플레이모드 스모크)**: 기본(RunConfig.Character=null) 진입 시 hp=110(기본100+메타10), BasicAttack L3(메타 화살시작) cd1.43(=1.5×0.95)·dmg16 — 리팩토링 전과 정확히 동일, 게임플레이 예외 0. SkillTable 에셋 9종 값이 기존 하드코딩과 전부 일치 확인.
-- **재판정**: 3번째 슬롯 개별강화·되감기 값은 스케줄에 박혀 있어 SO 추출 안 함(코드 잔류, Tier B). BALANCE_MAP §B 참고.
-
-### 세션6 — Phase 2 (맵 선택 화면)
-- 흐름: `Btn_플레이` → `MapSelectUI.Open()`(패널) → 맵 카드 클릭=**선택(Frame 하이라이트)** → 하단 **`시작` 버튼(확인 단계)** → `RunConfig.Map=선택맵` + `SampleScene` 로드. 뒤로 버튼=닫기.
-- 신규: `MapSelectUI.cs`(Controllers 부착, 카드는 `CardTemplate` 런타임 복제). `MapDefinition`에 `displayName`/`description` 필드 추가. `Map_BlueberryField.displayName="블루베리 밭"`.
-- 수정: `TitleController.Play()`가 씬 직접 로드 대신 패널을 엶(`mapSelect` 참조 추가, 미사용 `using SceneManagement` 제거).
-- 로스터 확장 = `MapSelectUI.maps[]`에 MapDefinition 드래그(현재 1장). 씬 배선은 `SCENE_MAP.md` Title 섹션.
-- **검증(플레이모드 스모크)**: Play→패널 오픈, 카드1장(이름 "블루베리 밭"), 시작 활성/selectedIndex=0, Confirm→`RunConfig.Map=블루베리밭`+씬로드. SampleScene+BlueberryField 동작은 Phase1에서 검증됨.
-
-### 세션5 이전 수정 (플레이 피드백 반영, 재검증 대기)
-- **2스테이지 시작 버그 수정**: 첫 프레임 `GameManager.Update`가 `EnemySpawner`보다 먼저 돌면 `SpawnTarget`=0→`StageSpawnComplete` 참→즉시 스테이지 넘어감. `EnemySpawner.Start()`에서 물량 카운트 선-세팅(`BeginStageCount`)해 방지.
-- **스킬 입력**: `wasPressedThisFrame`→`isPressed` (꾹 눌러도 쿨마다 재발동).
-- **되감기 레벨업**: 매 레벨 쿨감+되감기 동시 → **홀수 레벨 쿨-0.15 / 짝수 레벨 되감기+0.15 교차**. 미리보기 텍스트도 맞춤.
-- **밸런스**: 기본공격 쿨 1→1.5s. 스나이핑 데미지 9→18(2배)·쿨 6→5s. 데미지숫자 세로간격 0.42→0.62.
-- **호밍 미사일**(`HomingMissile`/`FireHoming`): ①비행 유닛 우선 타격(`AcquireTarget` 2-tier) ②`GrowthStacks/15` 만큼 발사수 +1 ③명중 시 `hitVfxPrefab`(=`Impact_Sparks_01`, 프리팹 배선 완료).
-- **산탄 아이콘 하이라이트**: uGUI `Outline`(이미지 4방향 복제, 덧씌운 느낌) 폐기 → 아이콘 뒤 별도 노란 프레임을 **런타임 생성**(`HUDController.CreateShotgunFrame`, `ActiveSlot.shotgunFrame`). 씬 배선 불필요.
-- **아웃게임 경제(스킬트리)**: `root_hp`(체력회복) 드랍 레벨당 +1%→**+4%** 그리고 **maxLevel 1**(단일 개방, 4% 고정). `reroll_1`(리롤 해금) maxLevel 5→**1**. (에셋 `Assets/SkillTree/MainSkillTree.asset`)
-- **Title 레이아웃**: 통화 텍스트(Essence/Crystal/Powder) 44px씩 아래로(EssenceText 화면 밖 잘림 해결). RespecButton·BuildBar를 레벨바 위(y 62)로 올려 겹침 해소. 씬 저장 완료.
-- **ESC 일시정지 요약 강화**: 기존 `PauseMenu`(자동 부트스트랩, ESC)에 **레벨업 누적 증가치** 추가 — `PlayerSkills.DescribeLevelUpGains()`가 1렙 기본값 대비 피해·쿨·투사체속도·관통·투사체수·발동확률·지속·크기·되감기·호밍성장을 뽑아 스킬별로 진화 티어 제목 위에 표시. (한때 별도 `SkillDetailPanel`을 만들었다가 ESC 충돌로 제거·기존 PauseMenu에 통합)
-
-**참고**: 세션3분(데미지숫자 재작성·보물상자 5초텀·스나이핑 재작업·보스 위치/팝콘·아웃게임 레벨바·되감기 신규)은 이번 세션 실플레이로 사용자 확인 완료. 기존 시스템 상세는 git.
+### 세션10 — 밸런스/UI 다듬기 (전부 컴파일·저장 완료, 실플레이 확인만 대기)
+- **패시브 데이터화**: `PassiveProgression.cs`(SO, 액티브 SkillProgression 미러링) + `Assets/Data/Skills/Passive_<5종>.asset`(기본값·레벨업당 상승값). `PlayerPassives`가 하드코딩 상수 대신 SO 참조(공통경로 `ApplyPassiveValue`, 정적 조회맵). 치명타/초기화 기본값도 SO 이관 + Awake 판마다 리셋. 카드 설명은 SO값 기반 동적 생성. 진화 트리는 현행 하드코딩 유지(범위 밖).
+- **낙뢰 표시버그 수정**: 일시정지 요약 낙뢰 피해 음수 표기. 원인=`GetDefaultDamage(Lightning)`가 실시간 `ProcDamage`(배율 적용값) 반환. `LightningStorm.BaseProcDamage=12f` 고정상수로 교체. (실제 피해는 원래 정상)
+- **일시정지 창 2열 개편**: `PauseMenu` 1760×940, 왼쪽=액티브·오른쪽=패시브, 항목별 스킬 아이콘. **스크롤 없음 — 후반 액티브 다 모으면 한 열 넘칠 수 있음(그때 스크롤 추가)**.
+- **레벨업 대체보상 = 정수 +10**: `LevelUpStatOptionSO` 폐기 → 레벨업 후보 3개 미만이면 '정수 +10' 1개 끼움, 그래도 모자라면 선택지 1~2개만 뜸.
+- **종이비행기 전용 스테이지 SO화**: `EnemySpawner` `currentStage==7`·`>=5` 게이트 제거 → StageTable 데이터(7스테이지 `paperPlaneChance=1`)로 표현.
+- **호밍 아이콘**: `Icon_Homing.png` 추가·배선(`activeIcons[6]` 2곳)·임포트 설정(Point·Uncompressed·PPU32).
 
 ---
 
-## ★★ 다음 대작업 — 리팩토링 로드맵 (여러 세션)
-
-> **목표**: 캐릭터/맵 선택 화면 + 유니티 내 밸런스 편집을 대비해, "단일 캐릭터·단일 맵·코드 하드코딩 수치"를 **데이터(SO)로 분리**한다. 상세 근거는 이 세션 대화 참고.
-
-**확정 결정** (재논의 불필요):
-- 새 캐릭터 = **고유 신규 스킬**을 Q에 갖고 시작 (스킬 구현은 오늘처럼 enum+Fire 추가, 캐릭터별 `allowedSkillPool`로 게이팅).
-- 새 맵 = **적 로스터·기믹까지** 다름.
-- **씬 복제 안 함** — 단일 게임 씬 + SO 스왑. 기존 `MetaBonuses`/`MetaRunApplier` 패턴 확장.
-- **PlayerSkills 플러그인화는 지금 안 함**(과설계). 단, 수치 SO 추출로 파일이 자연히 줄어듦.
-
-**핵심 신규 조각**:
-- `RunConfig`(static, Phase 1 생성): 선택된 CharacterId+MapId. 씬 로드로 초기화 **금지**(선택값 유지). `MetaBonuses` 등은 판마다 리셋. 문서: `SCENE_MAP.md`(씬 배선)·`BALANCE_MAP.md`(수치→SO 매핑).
-- `RunBootstrap`(MonoBehaviour): 판 시작 시 Character/MapDefinition을 씬에 적용(MetaRunApplier 형제, 순서 정렬 주의).
-- SO: `CharacterDefinition`(startingSkill·allowedSkillPool·패시브셋·기본스탯·스프라이트), `MapDefinition`(배경·BGM·StageTable·enemyRoster·기믹), `SkillDefinition`(기본쿨/뎀·레벨증가·진화수치), `EnemyDefinition`, `ScalingTable`(후반 배열·XP커브).
-- 문서: `SCENE_MAP.md`(씬 오브젝트·배선 지도, MCP 정찰), `BALANCE_MAP.md`(하드코딩 수치→목표 SO 매핑표).
-
-**Phase 순서** (맵 먼저 = 결합 얕음. 매 Phase 완료조건에 "기본값 선택 시 현재와 동일" + "SCENE_MAP 갱신"):
-0. **기반&정찰** ✅ **완료(2026-07-20 세션4)**: `SCENE_MAP.md`·`BALANCE_MAP.md` 작성, CLAUDE.md §7 갱신.
-1. **맵/적 데이터** ✅ **완료(2026-07-20 세션5)**: `RunConfig`(static, SO직접참조) + `MapDefinition`(배경·BGM·stageTable·적로스터·스폰파라미터) + `RunBootstrap`(GameManager 형제) + `ScalingTable`(HP/이속스텝·XP커브) + `EnemyDefinition` 7종(적 스탯 완전이관). 기본맵 `Map_BlueberryField` 선택 시 현재와 동일 검증 완료(플레이모드 스모크: stage1, 물량스폰 정상, Blueberry spd2/hp14, XP18, 무예외). 신규 파일: RunConfig/ScalingTable/EnemyDefinition/MapDefinition/RunBootstrap.cs, `Assets/Data/*`.
-2. **맵 선택 화면** ✅ **완료(2026-07-20 세션6)**: Title `Canvas/MapSelectRoot` 패널 + `Controllers/MapSelectUI`(카드=`CardTemplate` 런타임 복제, 클릭=선택·`시작`=확인). `Btn_플레이`→`Play()`→`Open()`. 선택 시 `RunConfig.Map=선택맵`→`SampleScene`. 로스터는 `maps[]`(현재 1장). 신규: MapSelectUI.cs, MapDefinition.displayName/description.
-3. **캐릭터/스킬 데이터** ✅ **완료(2026-07-20 세션7)**: `SkillTable`(스킬 기본쿨·뎀·레벨업 배율) + `CharacterDefinition`(시작스킬·허용풀·기본체력·외형) + `BalanceConstants`(전역 상수). 시작스킬/기본체력=플레이어 컴포넌트가 `RunConfig.Character` 직접 읽기, 외형=RunBootstrap, LevelUpUI 후보=허용풀 필터. 기본 캐릭터(null) 동일 검증 완료. 신규: SkillTable/CharacterDefinition/BalanceConstants.cs, `Assets/Data/SkillTable.asset`·`Assets/Data/Characters/Char_Strawberry.asset`. 3번째슬롯·되감기 값은 코드 잔류(Tier B 재판정).
-4. **캐릭터 선택 화면** ✅ **완료(2026-07-20 세션8)**: 맵 선택 화면 안에 현재 캐릭터 표시(`CharNameLabel`)+`캐릭터 변경` 버튼 → `CharacterSelectRoot` 팝업(카드 클릭=즉시 선택). 맵 확정 시 `RunConfig.Map`+`RunConfig.Character` 동시 세팅. 신규 `CharacterSelectUI.cs`, `MapSelectUI` 캐릭터 필드 확장. 현재 `Char_Strawberry` 1종. 새 캐릭터 = 새 CharacterDefinition 만들어 `CharacterSelectUI.characters[]`에 추가.
-5. **Balance Dashboard**(선택): 위 SO들을 탭으로 묶는 커스텀 EditorWindow(CheatWindow 전례 있음). 데이터 먼저, 대시보드는 UX 레이어.
-6. **PlayerSkills 분리**(선택): 수치 추출 후 남은 로직 분리.
-
-**밸런스 툴 원칙**: Tier A(깔끔한 스칼라, 자주 튜닝)=SO 추출 / Tier B(레벨업 순환·되감기 홀짝 등 로직모양)=코드에 남기고 한 곳에 모음. 경계선은 Phase 0의 BALANCE_MAP.md에서 항목별 확정 후 진행.
-
-**현 밸런스 위치**: ①이미 SO=StageTable·LevelUpStatOptionSO·ScalingTable·EnemyDefinition 7종·MapDefinition·**SkillTable(신규)**·**CharacterDefinition(신규)** / ②프리팹=Enemy 플래그·VFX·사망분출 / ③코드 하드코딩=**BalanceConstants(신규, 전역 상수 집결)**·진화티어(Tier B 보류)·[Meta.cs:115](Assets/Scripts/Meta.cs#L115)(메타노드). **스킬 기본수치·캐릭터 스탯은 ③에서 빠졌음(Phase 3)**. 남은 ③ = 진화/패시브 티어(보류)·메타노드.
-
-**착수점**: **Phase 5 (Balance Dashboard, 선택)** 또는 **Phase 6 (PlayerSkills 분리, 선택)** — 둘 다 옵션. 대신 콘텐츠 확장(2번째 맵·2번째 캐릭터)으로 넘어가도 됨: 2번째 캐릭터 = 새 CharacterDefinition(고유 시작스킬·허용풀·외형) 만들어 `CharacterSelectUI.characters[]`에 드래그하면 카드 자동 생성. **선행 필요**: 사용자와 캐릭터/맵 콘셉트 확정. (Phase 0·1·2·3·4 완료.)
-- **2번째 맵 에셋**: 아직 없음(Phase 2는 UI 인프라만). 새 맵 = 새 MapDefinition 만들어 `MapSelectUI.maps[]`에 추가하면 카드 자동 생성.
-- **밸런스 편집 지금 가능**: `Assets/Data/SkillTable.asset`(스킬 쿨/뎀/성장), `EnemyDefinition`, `MapDefinition`, `ScalingTable`을 인스펙터에서 직접 조절. 전역 상수는 `BalanceConstants.cs`.
-
----
-
-## ★ 다음 세션 — 재검증 대상 (전부 씬 저장·컴파일 완료)
-- [ ] **ESC 요약 표시** 실확인: 항목/표현/줄넘침(4스킬 다 찼을 때).
-- [ ] **Title 레이아웃** 실확인: 통화 텍스트 위치·리셋/빌드바 간격(y값 감으로 잡음).
-- [ ] **체력회복 4% 단일개방** 체감 확인(낮으면 상향).
-- [ ] **호밍 타격 VFX**(Impact Sparks)가 미사일에 어울리는지.
-- [ ] **호밍 아이콘**: 여전히 되감기와 `Icon_Rewind` 공유(임시). 전용 아이콘 그리면 `activeIcons[6]` 교체.
+## 🧩 콘텐츠 확장 = 순수 데이터 (리팩토링 완료)
+- **밸런스 편집**: `Window > Blueberry Defense > Balance Dashboard` 또는 인스펙터 — `Prog_*.asset`(액티브)·`Passive_*.asset`(패시브)·`EnemyDefinition`·`MapDefinition`·`StageTable`·`ScalingTable`·`CharacterDefinition`. 전역 상수는 `BalanceConstants.cs`. **진화 티어 수치는 아직 코드**(PlayerSkills/PlayerPassives 하드코딩, Tier B 보류).
+- **새 맵**: `MapDefinition` 에셋 만들어 `MapSelectUI.maps[]`에 드래그 → 카드 자동 생성. (현재 `Map_BlueberryField` 1장)
+- **새 캐릭터**: `CharacterDefinition`(고유 시작스킬·허용풀·기본체력·외형) 만들어 `CharacterSelectUI.characters[]`에 드래그. (현재 `Char_Strawberry` 1종)
+- **새 스킬**: `ActiveSkillId` enum + `Fire*` 메서드 추가, 캐릭터 `allowedPool`로 게이팅.
+- **미착수(선택)**: Phase 6 = `PlayerSkills.cs` 분리(약 1400줄, 과설계 우려로 보류). 콘텐츠 확장(2번째 맵·캐릭터)으로 넘어가도 됨 — 선행: 사용자와 콘셉트 확정.
 
 ---
 
 ## ⚠️ 미해결 이슈 / 주의
-- **씬 직접 조작 OK**(사용자 승인, 2026-07-20): MCP로 씬 열기/수정/저장 자유롭게. 과거 "씬 손대지 말 것" 원칙·메모리는 폐기됨.
-- **에디터 인스펙터 예외(무해)**: 플레이 진입 시 `ObjectPreview.DrawPreview ... Image destroyed` — 인스펙터 프리뷰 표시 오류로 게임/빌드 무관. 하이라키 선택 해제 시 사라짐.
+- **씬 직접 조작 OK**(사용자 승인): MCP로 씬 열기/수정/저장 자유. 과거 "씬 손대지 말 것" 원칙은 폐기.
+- **에디터 인스펙터 예외(무해)**: 플레이 진입 시 `ObjectPreview.DrawPreview ... Image destroyed` — 인스펙터 프리뷰 오류, 게임/빌드 무관.
 - **노션 토큰 노출**(기존): 폐기·재발급 권장.
-- (기존) **사운드 볼륨 이중곱** — 우선순위 낮음. `SfxPlayer`/`AudioThrottle`/`ObjectPool`/Vefects.
-- (참고) ONBOARDING의 `홈\.mcp.json` 노션 방식 자동로드 안 됨 → user scope 등록이 정답. 정정 필요.
+- (기존) **사운드 볼륨 이중곱** — 우선순위 낮음(`SfxPlayer`/`AudioThrottle`/`ObjectPool`/Vefects).
+- (참고) ONBOARDING의 `홈\.mcp.json` 노션 자동로드 안 됨 → user scope 등록이 정답. 정정 필요.
 
 ---
 
 ## 🎨 스킬 이펙트 픽셀 크기 컨벤션
-스킬 이펙트 스프라이트는 배경과 픽셀 밀도가 안 맞아, **그림은 작게 그리고 엔진에서 1.5배로 표시**한다(플레이어 딸기 프리팹 `localScale=1.5`에 맞춤).
+스킬 이펙트 스프라이트는 배경과 픽셀 밀도가 안 맞아, **그림은 작게 그리고 엔진에서 1.5배로 표시**(플레이어 딸기 프리팹 `localScale=1.5`에 맞춤).
 - 새 이펙트 프리팹은 기존값에 곱하지 말고 `localScale`을 **직접 (1.5,1.5,1.5)로** 세팅.
 - PPU **32**, Main Camera Orthographic Size 5(화면 세로 = 10유닛).
-- 공식: `원본 그림 px = (목표 월드 유닛 × 32) ÷ 1.5` (예: 화면 세로 꽉 채우는 세로형 = 64 × 213px)
+- 공식: `원본 그림 px = (목표 월드 유닛 × 32) ÷ 1.5` (예: 화면 세로 꽉 = 64 × 213px)
 - 카메라 Size나 플레이어 localScale이 바뀌면 이 배율을 전부 다시 계산할 것.
 
 ---
@@ -123,3 +61,4 @@
 - 배포(itch.io 등)는 아직 진행 안 함
 - 아웃게임 컬렉션(캐릭터/스킬 해금) = 스킬트리 이후 Phase
 - 진화 시스템·메타 신규 수치는 감으로 잡은 값 — 플레이테스트로 조정 필요
+- 딸기 전용 초상화 도트 미완(`Player.png` 임시) — 그리면 `Char_Strawberry.portrait`만 교체

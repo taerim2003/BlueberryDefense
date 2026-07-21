@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EnemyDef_Blueberry
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 2
-  damage: 10
+  damage: 8
   maxHealth: 14
   xpValue: 5
   essenceDropChance: 0.15

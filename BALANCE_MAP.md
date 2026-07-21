@@ -12,7 +12,7 @@
 ---
 
 ## 현재 밸런스 3계층 (복습)
-- **① 이미 SO**: `StageTable`(스테이지별 물량·간격·적종류 확률·hp/속도/피해 배율), `LevelUpStatOptionSO`. → 유지.
+- **① 이미 SO**: `StageTable`(스테이지별 물량·간격·적종류 확률·hp/속도/피해 배율). → 유지.
 - **② 프리팹 SerializeField**: 적별 스탯([Enemy.cs:7-13](Assets/Scripts/Enemy.cs#L7-L13)), 플레이어 기본체력(PlayerHealth). → 편집 가능하나 흩어짐.
 - **③ 코드 하드코딩**: 아래 표의 대부분. → **추출 본체.**
 
@@ -35,24 +35,20 @@
 
 ## 전수조사표
 
-### A. 스킬 기본값 — ✅ **Phase 3 완료: `SkillTable` SO** (`Assets/Data/SkillTable.asset`)
+### A. 스킬 기본값 — ✅ **세션9: `SkillProgression` SO 9종** (`Assets/Data/Skills/Prog_*.asset`, SkillTable 대체)
 | 항목 | 현위치 | 값 |
 |---|---|---|
-| 기본 쿨타임 (스킬 9종) | `SkillTable.Entry.baseCooldown` (PlayerSkills가 조회) | 기본1.5/회오리5/오브7/낙뢰12/독수리15/스나5/호밍8/산탄14/되감기6 |
-| 기본 피해 (스킬 9종) | `SkillTable.Entry.baseDamage` | 16/7/7/(낙뢰=LightningStorm, 코드 특수)/11/18/8/12/0 |
+| 기본 쿨타임 (스킬 9종) | `SkillProgression.baseCooldown` (PlayerSkills가 조회) | 기본1.5/회오리5/오브7/낙뢰12/독수리15/스나5/호밍8/산탄14/되감기6 |
+| 기본 피해 (스킬 9종) | `SkillProgression.baseDamage` | 16/7/7/(낙뢰=LightningStorm, 코드 특수)/11/18/8/12/0 |
 
-> 단일 테이블(enum 인덱스) 1개. `GetDefaultCooldown/Damage`가 테이블 조회로 대체. 미할당 시 `SkillTable.Default`(코드 기본값=현행) 폴백. 낙뢰 피해만 `LightningStorm.ProcDamage`(동적값) — 코드 특수 유지.
+> 스킬 1종당 SO 1개. `GetDefaultCooldown/Damage`가 조회맵으로 대체. 미포함 스킬은 `SkillProgression.DefaultBase*`(코드 기본값=현행) 폴백. 낙뢰 피해만 `LightningStorm.ProcDamage`(동적값) — 코드 특수 유지.
 
-### B. 레벨업 증가치 — ✅ **Phase 3(값 일부): `SkillTable`** / 스케줄=Tier B(코드)
+### B. 레벨업 증가치 — ✅ **세션9 완전 데이터화: `SkillProgression.levels[]`** (Tier B→A 승격)
 | 항목 | 현위치 | Tier |
 |---|---|---|
-| 피해 배율 (%3==1): 기본1.13·기타1.2 | ✅ `SkillTable.Entry.levelDamageMultiplier` | A(값) |
-| 쿨감 배율 (%3==2): 0.95 | ✅ `SkillTable.Entry.levelCooldownMultiplier` | A(값) |
-| 3번째 슬롯 개별강화 값들(투속+0.1·관통+1·투사체+1·지속+0.5·크기+0.05·발동+0.03·독수리쿨×0.95) | [PlayerSkills.cs](Assets/Scripts/PlayerSkills.cs) `ApplyThirdUpgradeEffect` | **B(코드 잔류)** ※ |
-| **3번째 슬롯 순환 순서**(occurrence%4·%2) | 같은 함수 | **B(스케줄)** |
-| 되감기 ±0.15, **홀짝 교차** | `ApplyUpgradeEffect`(Rewind 분기) | **B(코드 잔류)** ※ |
+| 레벨별 강화 전체(피해 배율·쿨감·투속·관통·투사체·지속·크기·발동·되감기·순환 순서·홀짝 교차) | `SkillProgression.levels[레벨].{stat,op,amount}` (인덱스=레벨) | **A(완전 데이터)** |
 
-> ※ **Phase 3 재판정(2026-07-20)**: 3번째 슬롯 개별강화·되감기 값은 당초 Tier A였으나, 값이 `occurrence%N` 스위치/홀짝 분기 **안에** 박혀 있어(값≠깨끗한 스칼라) SO로 빼면 그랩백 필드만 늘고 편집이 더 어려워짐 → **스케줄과 함께 코드 잔류**로 확정. 깨끗한 두 배율만 SkillTable로. Describe/Apply가 같은 배율 필드를 읽어 미리보기·실제 일치.
+> **세션9 재판정**: 스킬별 세부 튜닝 요구로, 3번째 슬롯 순환·되감기 홀짝을 포함한 **레벨업 전체를 스킬별 SO의 명시적 레벨 배열로 이관**. `SkillStat`+`StatOp(Add/Multiply)`로 "어느 스탯을 어떻게 얼마" 표현 → occurrence%N 스위치·홀짝 분기 같은 코드 스케줄이 배열 순서로 대체됨(Tier B 소멸). `ApplyThirdUpgradeEffect`·`DescribeThirdUpgradeEffect`·`ThirdSlotCount` 제거. Describe도 같은 스텝 데이터에서 생성 → 미리보기·실제 일치. 범위 밖 레벨은 `DefaultStep`(=현행 규칙) 폴백. **현행 재현 검증 완료**(구 로직 vs 신 로직 9종×레벨2~49 전 필드 일치).
 
 ### C. 전역 스킬 상수 — ✅ **Phase 3 완료: `BalanceConstants`** (`Assets/Scripts/BalanceConstants.cs`)
 | 항목 | 값 |
@@ -115,13 +111,12 @@
 
 ## Tier B로 코드에 남기는 것 (명시)
 로직 모양이라 데이터화하면 오히려 편집 난이도↑:
-1. 레벨업 3번째 슬롯 **순환 순서**(occurrence%N)
-2. 되감기 **홀짝 교차**
-3. 진화 트리 **경로/티어 분기 + 실시간 기믹**(관통/분열/재귀) — 스칼라 티어값만 선별 추출
-4. XP 감쇠 **lerp 형태**, 스텝 **3스테이지 분모**
-5. 11+/7 스테이지 **특수 케이스** 구조
+1. 진화 트리 **경로/티어 분기 + 실시간 기믹**(관통/분열/재귀) — 스칼라 티어값만 선별 추출
+2. XP 감쇠 **lerp 형태**, 스텝 **3스테이지 분모**
+3. 11+/7 스테이지 **특수 케이스** 구조
 
 → 이들의 *값*은 Tier A로 빼되, *흐름*은 `BalanceConstants` 상수 참조로 정리.
+> ~~레벨업 3번째 슬롯 순환·되감기 홀짝~~ → **세션9에 SkillProgression 배열로 데이터화 완료**(스킬별 세부 튜닝 요구로 Tier A 승격). §B 참고.
 
 ## 결정 완료 (Phase 1, 2026-07-20)
 - `RunConfig` id 타입 = **SO 직접참조** (`RunConfig.Map = MapDefinition`). 씬 로드 넘어 유지, 타입안전, 룩업 불필요. null이면 RunBootstrap의 `defaultMap` 폴백.
@@ -131,4 +126,4 @@
 ## 다음 세션 열린 결정
 - **진화/패시브 티어 수치(H)** — Phase 3에서 **보류 확정**(경로/티어 분기 + 실시간 기믹과 엮여 데이터화 이득 낮음). 추후 순수 스칼라 티어만 선별 추출하려면 `PlayerSkills.ApplyPathTierEffect`/`PlayerPassives` 항목별 A/B 재판정 필요.
 - ScalingTable을 전역 유지 vs MapDefinition이 참조(맵별 스케일링) — 현재 전역 1개. 맵별로 후반 난이도를 다르게 하고 싶으면 MapDefinition에 ScalingTable 참조 추가.
-- Balance Dashboard(Phase 5, 선택): 이제 SkillTable·CharacterDefinition·MapDefinition·EnemyDefinition·ScalingTable·BalanceConstants가 다 모였으니 EditorWindow 탭으로 묶을 재료 완비.
+- ~~Balance Dashboard(Phase 5)~~ → **세션9 완료**: `Assets/Editor/BalanceDashboardWindow.cs`(6탭, SkillProgression·CharacterDefinition·MapDefinition·EnemyDefinition·ScalingTable·BalanceConstants 자동 발견).

@@ -15,42 +15,42 @@ MonoBehaviour:
   stages:
   - stageNumber: 1
     spawnCount: 14
-    duration: 14
-    spawnInterval: 1
+    duration: 10
+    spawnInterval: 0.8
     eliteChance: 0
-    paperPlaneChance: 0.08
+    paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
     enemyHpMultiplier: 1
     enemySpeedMultiplier: 1
     enemyDamageMultiplier: 1
   - stageNumber: 2
-    spawnCount: 22
-    duration: 15
-    spawnInterval: 0.9
+    spawnCount: 18
+    duration: 11
+    spawnInterval: 0.65
     eliteChance: 0.035
-    paperPlaneChance: 0.08
+    paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
     enemyHpMultiplier: 1.08
     enemySpeedMultiplier: 1.03
     enemyDamageMultiplier: 1.08
   - stageNumber: 3
-    spawnCount: 26
-    duration: 17
-    spawnInterval: 0.82
-    eliteChance: 0.05
-    paperPlaneChance: 0.08
+    spawnCount: 23
+    duration: 12
+    spawnInterval: 0.55
+    eliteChance: 0.07
+    paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
     enemyHpMultiplier: 1.2
     enemySpeedMultiplier: 1.06
     enemyDamageMultiplier: 1.15
   - stageNumber: 4
-    spawnCount: 34
-    duration: 18
-    spawnInterval: 0.72
-    eliteChance: 0.07
+    spawnCount: 30
+    duration: 13
+    spawnInterval: 0.5
+    eliteChance: 0.1
     paperPlaneChance: 0.08
     ufoChance: 0
     shieldChance: 0
@@ -58,44 +58,44 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.09
     enemyDamageMultiplier: 1.24
   - stageNumber: 5
-    spawnCount: 42
-    duration: 20
-    spawnInterval: 0.64
-    eliteChance: 0.09
-    paperPlaneChance: 0.08
+    spawnCount: 38
+    duration: 14
+    spawnInterval: 0.5
+    eliteChance: 0.1
+    paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0
     enemyHpMultiplier: 1.55
     enemySpeedMultiplier: 1.13
     enemyDamageMultiplier: 1.32
   - stageNumber: 6
-    spawnCount: 50
-    duration: 16
-    spawnInterval: 0.52
+    spawnCount: 45
+    duration: 15
+    spawnInterval: 0.5
     eliteChance: 0.18
-    paperPlaneChance: 0.08
+    paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0
     enemyHpMultiplier: 1.8
     enemySpeedMultiplier: 1.16
     enemyDamageMultiplier: 1.4
   - stageNumber: 7
-    spawnCount: 38
+    spawnCount: 30
     duration: 15
-    spawnInterval: 0.52
-    eliteChance: 0.305
-    paperPlaneChance: 0.08
+    spawnInterval: 0.45
+    eliteChance: 0
+    paperPlaneChance: 1
     ufoChance: 0
-    shieldChance: 0.05
+    shieldChance: 0
     enemyHpMultiplier: 2.1
     enemySpeedMultiplier: 1.19
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
-    spawnCount: 56
+    spawnCount: 50
     duration: 14
     spawnInterval: 0.44
     eliteChance: 0.27
-    paperPlaneChance: 0.08
+    paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0.07
     enemyHpMultiplier: 2.4
@@ -125,8 +125,8 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.8
   - stageNumber: 11
     spawnCount: 62
-    duration: 12
-    spawnInterval: 0.192
+    duration: 15
+    spawnInterval: 0.3
     eliteChance: 0.458
     paperPlaneChance: 0.1
     ufoChance: 0.06
@@ -136,8 +136,8 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
     spawnCount: 68
-    duration: 12
-    spawnInterval: 0.174
+    duration: 15
+    spawnInterval: 0.25
     eliteChance: 0.509
     paperPlaneChance: 0.1
     ufoChance: 0.07
@@ -147,8 +147,8 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.16
   - stageNumber: 13
     spawnCount: 70
-    duration: 11
-    spawnInterval: 0.156
+    duration: 15
+    spawnInterval: 0.2
     eliteChance: 0.56000006
     paperPlaneChance: 0.11
     ufoChance: 0.08
@@ -158,8 +158,8 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
     spawnCount: 78
-    duration: 11
-    spawnInterval: 0.13800001
+    duration: 15
+    spawnInterval: 0.18
     eliteChance: 0.61100006
     paperPlaneChance: 0.11
     ufoChance: 0.08
@@ -169,8 +169,8 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.37
   - stageNumber: 15
     spawnCount: 90
-    duration: 12
-    spawnInterval: 0.11
+    duration: 15
+    spawnInterval: 0.2
     eliteChance: 0.7
     paperPlaneChance: 0.12
     ufoChance: 0.09

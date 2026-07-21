@@ -29,7 +29,6 @@ public class EquippedSkill
     public float Scale = 1f;
     public float ProjectileSpeedMultiplier = 1f;
     public float ProcChanceBonus = 0f;
-    public int ThirdSlotCount = 0; // 레벨업 3번째 슬롯(스킬 고유 강화)이 몇 번째로 발동됐는지 — 스킬별 순환 스케줄에 사용
 
     // 레벨업 전용 고유 강화치 (진화 트리와 별개)
     public int ExtraPierce = 0; // 기본공격: 관통 +1
@@ -108,11 +107,12 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
-    [SerializeField] private SkillTable skillTable; // 스킬 기본 수치(Tier A). 미할당 시 SkillTable.Default(현행값) 폴백
+    [SerializeField] private SkillProgression[] progressions; // 스킬별 시작값+레벨 커브(Tier A). 미할당/미포함 스킬은 코드 기본 규칙 폴백(=현행)
 
-    // 정적 GetDefaultCooldown/Damage 등이 인스턴스 필드를 못 읽으므로 Awake에서 static으로 승격.
-    private static SkillTable activeTable;
-    private static SkillTable Table => activeTable != null ? activeTable : SkillTable.Default;
+    // 정적 GetDefault*/Apply/Describe가 인스턴스 필드를 못 읽으므로 Awake에서 static 조회맵으로 승격.
+    private static System.Collections.Generic.Dictionary<ActiveSkillId, SkillProgression> progressionLookup;
+    private static SkillProgression Prog(ActiveSkillId id) =>
+        progressionLookup != null && progressionLookup.TryGetValue(id, out var p) ? p : null;
 
     [SerializeField] private AudioClip whirlwindCastSfx;
     [SerializeField] private AudioClip orbCastSfx;
@@ -135,7 +135,7 @@ public class PlayerSkills : MonoBehaviour
     {
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
-        activeTable = skillTable; // 정적 Table 접근용 승격(null이면 Default 폴백). AcquireSkill 전에 세팅해야 기본 수치가 채워짐
+        BuildProgressionLookup(); // 정적 조회맵 승격. AcquireSkill 전에 세팅해야 기본 수치가 채워짐
         shotgunTimer = 0f; // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
         nextSkillDamageBonus = 0f;
         // 시작 스킬은 선택된 캐릭터에서(없으면 기본공격 = 현행). RunConfig 직접 참조라 RunBootstrap 순서에 무의존.
@@ -146,6 +146,15 @@ public class PlayerSkills : MonoBehaviour
     private void OnDestroy()
     {
         LightningStorm.OnProc -= HandleThunderCooldown;
+    }
+
+    // 직렬화된 progressions[]를 id→SO 조회맵으로 승격(정적 메서드용). 미포함 스킬은 조회 실패 → 코드 기본 규칙 폴백.
+    private void BuildProgressionLookup()
+    {
+        progressionLookup = new System.Collections.Generic.Dictionary<ActiveSkillId, SkillProgression>();
+        if (progressions == null) return;
+        foreach (var p in progressions)
+            if (p != null) progressionLookup[p.skill] = p;
     }
 
     // 스킬트리 "낙뢰 쿨타임 감소": 낙뢰가 칠 때마다 낙뢰 스킬 쿨타임을 조금씩 당긴다.
@@ -235,102 +244,59 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
+    // 레벨업 강화는 스킬별 SkillProgression(SO)이 정의한다. 미할당 스킬은 코드 기본 규칙(SkillProgression.DefaultStep=현행)으로 폴백.
+    private static LevelUpStep StepFor(ActiveSkillId id, int level)
+    {
+        SkillProgression p = Prog(id);
+        return p != null ? p.StepForLevel(level) : SkillProgression.DefaultStep(id, level);
+    }
+
     private static void ApplyUpgradeEffect(EquippedSkill skill, int level)
     {
-        // 되감기: 레벨업마다 쿨감/되감기강화를 번갈아 적용 (홀수 레벨=쿨타임 0.15초 감소, 짝수 레벨=되감기 시간 0.15초 증가)
-        if (skill.Id == ActiveSkillId.Rewind)
-        {
-            if (level % 2 == 1)
-                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown - 0.15f);
-            else
-                skill.RewindAmount += 0.15f;
-            return;
-        }
+        ApplyStep(skill, StepFor(skill.Id, level));
+    }
 
-        SkillTable.Entry stats = Table.Get(skill.Id);
-        switch (level % 3)
+    private static float Op(float cur, LevelUpStep s) => s.op == StatOp.Multiply ? cur * s.amount : cur + s.amount;
+
+    private static void ApplyStep(EquippedSkill skill, LevelUpStep s)
+    {
+        switch (s.stat)
         {
-            case 1:
-                // 기본공격은 레벨업 피해 증가폭을 낮춰 후반 과성장을 억제 (배율은 SkillTable)
-                skill.Damage *= stats.levelDamageMultiplier;
-                break;
-            case 2:
-                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * stats.levelCooldownMultiplier);
-                break;
-            default:
-                ApplyThirdUpgradeEffect(skill);
-                break;
+            case SkillStat.Damage: skill.Damage = Op(skill.Damage, s); break;
+            case SkillStat.Cooldown: skill.Cooldown = Mathf.Max(GlobalCooldown, Op(skill.Cooldown, s)); break;
+            case SkillStat.ProjectileSpeed: skill.ProjectileSpeedMultiplier = Op(skill.ProjectileSpeedMultiplier, s); break;
+            case SkillStat.Pierce: skill.ExtraPierce = Mathf.RoundToInt(Op(skill.ExtraPierce, s)); break;
+            case SkillStat.ProjectileCount: skill.ExtraProjectiles = Mathf.RoundToInt(Op(skill.ExtraProjectiles, s)); break;
+            case SkillStat.ProcChance: skill.ProcChanceBonus = Op(skill.ProcChanceBonus, s); break;
+            case SkillStat.Duration: skill.ExtraWhirlwindDuration = Op(skill.ExtraWhirlwindDuration, s); break;
+            case SkillStat.Scale: skill.Scale = Op(skill.Scale, s); break;
+            case SkillStat.RewindAmount: skill.RewindAmount = Op(skill.RewindAmount, s); break;
         }
     }
 
-    // 스킬별 3번째 슬롯 고유 강화는 ThirdSlotCount(몇 번째 발동인지)를 기준으로 순환한다.
-    // Describe와 Apply가 같은 occurrence(=ThirdSlotCount, 아직 증가 전 값)를 참조해야 미리보기 텍스트와 실제 적용이 일치한다.
-    private static void ApplyThirdUpgradeEffect(EquippedSkill skill)
-    {
-        int occurrence = skill.ThirdSlotCount;
-        switch (skill.Id)
-        {
-            case ActiveSkillId.BasicAttack:
-                // 저성능 업그레이드(투사체 속도)를 더 자주 배치해 기본공격 성장 완화
-                switch (occurrence % 4)
-                {
-                    case 0: skill.ProjectileSpeedMultiplier += 0.1f; break;
-                    case 1: skill.ExtraPierce += 1; break;
-                    case 2: skill.ProjectileSpeedMultiplier += 0.1f; break;
-                    default: skill.ExtraProjectiles += 1; break;
-                }
-                break;
-            case ActiveSkillId.Lightning:
-                skill.ProcChanceBonus += 0.03f;
-                break;
-            case ActiveSkillId.Whirlwind:
-                if (occurrence % 2 == 0) skill.ExtraWhirlwindDuration += 0.5f;
-                else skill.Scale += 0.05f;
-                break;
-            case ActiveSkillId.EagleDrop:
-                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.95f);
-                break;
-            default: // Orb
-                skill.Scale += 0.05f;
-                break;
-        }
-        skill.ThirdSlotCount++;
-    }
+    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel) => DescribeStep(StepFor(skill.Id, nextLevel));
 
-    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel)
+    // 미리보기 텍스트를 스텝 데이터에서 생성 → 미리보기·실제 적용이 항상 일치. (Apply와 같은 StepFor 참조)
+    private static string DescribeStep(LevelUpStep s)
     {
-        if (skill.Id == ActiveSkillId.Rewind) return nextLevel % 2 == 1 ? "재사용 대기시간 0.15초 감소" : "되감기 시간 0.15초 증가";
-
-        SkillTable.Entry stats = Table.Get(skill.Id);
-        switch (nextLevel % 3)
+        switch (s.stat)
         {
-            case 1: return $"피해량 {Mathf.RoundToInt((stats.levelDamageMultiplier - 1f) * 100f)}% 증가";
-            case 2: return $"재사용 대기시간 {Mathf.RoundToInt((1f - stats.levelCooldownMultiplier) * 100f)}% 감소";
-            default: return DescribeThirdUpgradeEffect(skill);
-        }
-    }
-
-    private static string DescribeThirdUpgradeEffect(EquippedSkill skill)
-    {
-        int occurrence = skill.ThirdSlotCount;
-        switch (skill.Id)
-        {
-            case ActiveSkillId.BasicAttack:
-                return (occurrence % 4) switch
-                {
-                    0 => "투사체 속도 10% 증가",
-                    1 => "관통 1회 추가",
-                    2 => "투사체 속도 10% 증가",
-                    _ => "투사체 +1",
-                };
-            case ActiveSkillId.Lightning:
-                return "발동 확률 3%p 증가";
-            case ActiveSkillId.Whirlwind:
-                return occurrence % 2 == 0 ? "지속시간 0.5초 증가" : "크기 5% 증가";
-            case ActiveSkillId.EagleDrop:
-                return "재사용 대기시간 5% 감소";
-            default: // Orb
-                return "크기 5% 증가";
+            case SkillStat.Damage:
+                return s.op == StatOp.Multiply
+                    ? $"피해량 {Mathf.RoundToInt((s.amount - 1f) * 100f)}% 증가"
+                    : $"피해량 {s.amount:0.##} 증가";
+            case SkillStat.Cooldown:
+                return s.op == StatOp.Multiply
+                    ? $"재사용 대기시간 {Mathf.RoundToInt((1f - s.amount) * 100f)}% 감소"
+                    : $"재사용 대기시간 {-s.amount:0.##}초 감소";
+            case SkillStat.ProjectileSpeed: return $"투사체 속도 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
+            case SkillStat.Pierce: return $"관통 {Mathf.RoundToInt(s.amount)}회 추가";
+            case SkillStat.ProjectileCount: return $"투사체 +{Mathf.RoundToInt(s.amount)}";
+            case SkillStat.ProcChance: return $"발동 확률 {Mathf.RoundToInt(s.amount * 100f)}%p 증가";
+            case SkillStat.Duration: return $"지속시간 {s.amount:0.##}초 증가";
+            case SkillStat.Scale: return $"크기 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
+            case SkillStat.RewindAmount: return $"되감기 시간 {s.amount:0.##}초 증가";
+            default: return "";
         }
     }
 
@@ -1396,9 +1362,18 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    private static float GetDefaultCooldown(ActiveSkillId id) => Table.Get(id).baseCooldown;
+    private static float GetDefaultCooldown(ActiveSkillId id)
+    {
+        SkillProgression p = Prog(id);
+        return p != null ? p.baseCooldown : SkillProgression.DefaultBaseCooldown(id);
+    }
 
-    // 낙뢰 피해만 LightningStorm.ProcDamage에서 온다(SkillTable에 담기 부적합한 동적 값) — 나머지는 테이블 참조.
-    private static float GetDefaultDamage(ActiveSkillId id) =>
-        id == ActiveSkillId.Lightning ? LightningStorm.ProcDamage : Table.Get(id).baseDamage;
+    // 낙뢰 기본 피해는 고정 상수(BaseProcDamage)를 쓴다 — 실시간 ProcDamage는 배율이 적용된 '현재값'이라
+    // 레벨업 성장 표시의 기준(기본값)으로 쓰면 부호가 뒤집힌다. 나머지 스킬은 progression 참조.
+    private static float GetDefaultDamage(ActiveSkillId id)
+    {
+        if (id == ActiveSkillId.Lightning) return LightningStorm.BaseProcDamage;
+        SkillProgression p = Prog(id);
+        return p != null ? p.baseDamage : SkillProgression.DefaultBaseDamage(id);
+    }
 }

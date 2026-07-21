@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: EnemyDef_Shield
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 1.5
-  damage: 10
-  maxHealth: 68
+  damage: 15
+  maxHealth: 45
   xpValue: 8
   essenceDropChance: 0.15
   essenceDropAmount: 2

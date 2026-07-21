@@ -28,7 +28,7 @@
 | `Assets/Plugins/Demigiant/DOTween/` | 트위닝 라이브러리 | 손대지 말 것 (외부) |
 | `Assets/Vefects/` | 픽셀 VFX 프리팹 팩 (`VFX_2D_*`) | 손대지 말 것 (외부) |
 
-> ScriptableObject **정의**(`StageTable`, `LevelUpStatOptionSO`, `EvolutionTierTextTableSO`)는 `Scripts/`에, 실제 **에셋 인스턴스**는 프로젝트 데이터 폴더에 있고 씬/매니저가 SerializeField로 참조.
+> ScriptableObject **정의**(`StageTable`, `EvolutionTierTextTableSO`)는 `Scripts/`에, 실제 **에셋 인스턴스**는 프로젝트 데이터 폴더에 있고 씬/매니저가 SerializeField로 참조.
 
 ---
 
@@ -102,7 +102,7 @@
 | **새 스테이지 / 밸런스** | `StageTable` 에셋의 `StageData` 배열 (코드 X). 스텝 배율은 `EnemySpawner`의 `HpStepBonus`/`SpeedStepBonus` |
 | **새 진화 티어 효과** | 영구 스탯이면 `PlayerSkills.ApplyPathTierEffect`/`PlayerPassives.ApplyPassivePathTierEffect`, 실시간 기믹(관통·분열·재귀 등)이면 해당 `Fire*`/`TakeDamage`에서 `PathTier` 직접 읽기 + 설명/제목 표. 표시 텍스트만 바꿀 땐 `EvolutionTierTextTableSO` 에셋 |
 | **새 HUD 버프 표시** | 발생측에서 `BuffTracker.Set(key,...)` 호출 + `HUDController.GetBuffIcon`에 key→아이콘 한 줄 (슬롯은 자동 채워짐) |
-| **새 레벨업 스탯강화 선택지** | `LevelUpStatOptionSO` 에셋 추가(기존 effect면 코드 X). 새 effect 타입이면 `LevelUpStatEffect` enum + `LevelUpUI.ApplyStatEffect` |
+| **레벨업 선택지 부족 시 대체 보상** | 레벨업 가능한 후보가 3개 미만이면 `LevelUpUI`가 '정수 +10' 선택지를 하나 끼우고, 그래도 모자라면 선택지 자체가 1~2개만 뜸. 지급량은 `LevelUpUI.EssenceReward` |
 | **새 VFX/파티클** | 프리팹 준비 후 `ObjectPool.Instance.Spawn/Despawn` 호출 (풀링·오디오 자동 처리) |
 
 ---

@@ -86,14 +86,13 @@ public class EnemySpawner : MonoBehaviour
         float paperPlaneChance = stage != null ? stage.paperPlaneChance : 0f;
         float ufoChance = stage != null ? stage.ufoChance : 0f;
         float shieldChance = stage != null ? stage.shieldChance : 0f;
-        bool paperPlaneOnlyStage = currentStage == 7;
 
         timer += Time.deltaTime;
         if (timer < interval) return;
 
         timer = 0f;
 
-        GameObject prefabToSpawn = paperPlaneOnlyStage && map.paperPlaneEnemyPrefab != null ? map.paperPlaneEnemyPrefab : map.enemyPrefab;
+        GameObject prefabToSpawn = map.enemyPrefab;
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어)
         if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
         {
@@ -102,13 +101,13 @@ public class EnemySpawner : MonoBehaviour
         }
         else if (map.treasureEnemyPrefab != null && ExtraTreasureChance > 0f && Random.value < ExtraTreasureChance)
             prefabToSpawn = map.treasureEnemyPrefab;
-        else if (!paperPlaneOnlyStage && map.eliteEnemyPrefab != null && Random.value < eliteChance)
+        else if (map.eliteEnemyPrefab != null && Random.value < eliteChance)
             prefabToSpawn = map.eliteEnemyPrefab;
-        else if (!paperPlaneOnlyStage && map.paperPlaneEnemyPrefab != null && currentStage >= 5 && Random.value < paperPlaneChance)
+        else if (map.paperPlaneEnemyPrefab != null && Random.value < paperPlaneChance)
             prefabToSpawn = map.paperPlaneEnemyPrefab;
-        else if (!paperPlaneOnlyStage && map.ufoEnemyPrefab != null && currentStage >= 11 && Random.value < ufoChance)
+        else if (map.ufoEnemyPrefab != null && currentStage >= 11 && Random.value < ufoChance)
             prefabToSpawn = map.ufoEnemyPrefab;
-        else if (!paperPlaneOnlyStage && map.shieldEnemyPrefab != null && Random.value < shieldChance)
+        else if (map.shieldEnemyPrefab != null && Random.value < shieldChance)
             prefabToSpawn = map.shieldEnemyPrefab;
 
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage);

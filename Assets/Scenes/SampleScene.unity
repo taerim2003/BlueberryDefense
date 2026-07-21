@@ -11561,7 +11561,7 @@ MonoBehaviour:
   - {fileID: 5052037539827192933, guid: fed774b2ef99fad46999ac5aa8e1b2db, type: 3}
   - {fileID: -7527278547198261715, guid: 2ec07df7e663e4f44a441707583b3ff0, type: 3}
   - {fileID: 21300000, guid: 61009159887bb664d9e658ab43caeafb, type: 3}
-  - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 8771009198065084442, guid: 3e6314f2f3d7b5a4a8da49ab70c55f13, type: 3}
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   passiveIcons:
@@ -11570,10 +11570,6 @@ MonoBehaviour:
   - {fileID: -768345814793887488, guid: 194cbbfdd0d21f64f90d796207aef564, type: 3}
   - {fileID: 4071282061374129999, guid: 4816b78f2aa8b2849ac35270c9be130b, type: 3}
   - {fileID: -112224647317780986, guid: a29d6d0715caf4f4eb81847fd66c8ce4, type: 3}
-  statOptions:
-  - {fileID: 11400000, guid: a450d358dc24f4a4186be8dcb11ceb21, type: 2}
-  - {fileID: 11400000, guid: 397afef764b251d478d52c03cdb67230, type: 2}
-  - {fileID: 11400000, guid: 310de18501c244249bd37cae96f00d22, type: 2}
   rerollButton: {fileID: 1230292640}
   rerollLabel: {fileID: 897104643}
 --- !u!114 &1464816410
@@ -14517,7 +14513,7 @@ MonoBehaviour:
   - {fileID: 5052037539827192933, guid: fed774b2ef99fad46999ac5aa8e1b2db, type: 3}
   - {fileID: -7527278547198261715, guid: 2ec07df7e663e4f44a441707583b3ff0, type: 3}
   - {fileID: 21300000, guid: 61009159887bb664d9e658ab43caeafb, type: 3}
-  - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 8771009198065084442, guid: 3e6314f2f3d7b5a4a8da49ab70c55f13, type: 3}
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   gemIconSprites:
@@ -17294,7 +17290,16 @@ MonoBehaviour:
   homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
   animator: {fileID: 2031227614}
   evolutionTextOverrides: {fileID: 11400000, guid: 82f64ce823e197443ae5ae43db44ee1f, type: 2}
-  skillTable: {fileID: 0}
+  progressions:
+  - {fileID: 11400000, guid: 2d193ef8697aa854ca6671efb0a07774, type: 2}
+  - {fileID: 11400000, guid: 27b910c8d2cb0e9458a74b0dcf84b52d, type: 2}
+  - {fileID: 11400000, guid: 9f4d1f8170ae2a44898b056c4060ff76, type: 2}
+  - {fileID: 11400000, guid: f109b43e0d411d84c87210c04521ad7e, type: 2}
+  - {fileID: 11400000, guid: 3ca8571018f1e564da9cf1496b37a420, type: 2}
+  - {fileID: 11400000, guid: 9e5f2b6be0a3c964e8493eb97bb3355c, type: 2}
+  - {fileID: 11400000, guid: 921380bd38169c04ca2e3e79b5c98768, type: 2}
+  - {fileID: 11400000, guid: ba822b78bc448064092ed4d90b5ebc22, type: 2}
+  - {fileID: 11400000, guid: fd55d38797e584443a8fb2f5dbae2b2b, type: 2}
   whirlwindCastSfx: {fileID: 8300000, guid: d67f03353b0af11458c48b58c4fb6643, type: 3}
   orbCastSfx: {fileID: 8300000, guid: 8128e2ee266d24e44a191ae9c3c17422, type: 3}
   eagleDropCastSfx: {fileID: 8300000, guid: 083749770b551ea4788c541137ab631b, type: 3}
@@ -17352,6 +17357,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76701affd3003454aad79a2c79f74bb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPassives
+  progressions:
+  - {fileID: 11400000, guid: 760113379c046a247b05ecc4d59597d0, type: 2}
+  - {fileID: 11400000, guid: 1375eead12bf98349b3e5fd2aa252f62, type: 2}
+  - {fileID: 11400000, guid: 539acc0b7adf86244bb99f8357bc109f, type: 2}
+  - {fileID: 11400000, guid: 90315abe00229b542a19af257bf9cd08, type: 2}
+  - {fileID: 11400000, guid: a74d1aa4199dd814097b5547390dc80a, type: 2}
 --- !u!1 &2038761906
 GameObject:
   m_ObjectHideFlags: 0

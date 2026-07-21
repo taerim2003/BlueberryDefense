@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: EnemyDef_Boss
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 0.6
-  damage: 30
-  maxHealth: 1500
+  damage: 200
+  maxHealth: 1200
   xpValue: 200
   essenceDropChance: 1
   essenceDropAmount: 8
