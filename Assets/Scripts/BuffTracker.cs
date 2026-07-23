@@ -24,6 +24,9 @@ public static class BuffTracker
 
     public static void Clear(string key) => entries.Remove(key);
 
+    // 판 시작 시 지난 판의 버프 표시가 남아 있지 않도록 비운다 (RunState에서 호출)
+    public static void ResetRunState() => entries.Clear();
+
     public static List<Entry> GetActive()
     {
         List<Entry> result = new List<Entry>();

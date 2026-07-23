@@ -117,7 +117,7 @@ public class SkillTreeUI : MonoBehaviour
         int i = 0;
         foreach (NodeView v in views.Values)
         {
-            if (v.rt == null) continue;
+            if (v.rt == null || !v.rt.gameObject.activeSelf) continue; // 안개에 가려진 노드는 건너뜀
             v.scaleTween?.Kill();
             v.rt.localScale = Vector3.one * 0.4f;
             v.scaleTween = v.rt.DOScale(1f, 0.35f).SetDelay(i * 0.015f).SetEase(Ease.OutBack).SetUpdate(true);
@@ -195,7 +195,7 @@ public class SkillTreeUI : MonoBehaviour
     // ── 입력 ── 좌클릭 = 해금(마스킹된 노드는 무시). 되돌리기 없음.
     private void OnNodeClick(string id)
     {
-        if (!IsRevealed(id, SkillTreeSave.UnlockedIds())) return;
+        if (FogOf(id, SkillTreeSave.UnlockedIds()) == Fog.Hidden) return; // '?' 노드는 내용을 몰라도 살 수 있다
         if (SkillTreeSave.TryUpgrade(tree, id)) { PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
     }
 
@@ -224,16 +224,25 @@ public class SkillTreeUI : MonoBehaviour
         v.scaleTween = v.rt.DOScale(entering ? 1.12f : 1f, 0.18f).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
-    // ── 인접/공개 판정: 해금됨 or 선행 중 하나라도 해금됨 or 루트(선행 없음) ──
-    private bool IsRevealed(string id, HashSet<string> unlocked)
+    // ── 안개(공개 범위) ──
+    // 트리 전체 규모가 처음부터 보이면 재미가 없으므로, 내가 연 노드 바로 옆까지만 '?'로 보여주고
+    // 그보다 먼 노드는 존재 자체를 감춘다(노드·연결선 모두 비활성).
+    private enum Fog
     {
-        if (unlocked.Contains(id)) return true;
+        Hidden,   // 아예 안 보임
+        Hinted,   // '?'만 — 이름/효과는 해금해야 공개. 구매는 가능
+        Revealed, // 해금됨 — 전부 표시
+    }
+
+    private Fog FogOf(string id, HashSet<string> unlocked)
+    {
+        if (unlocked.Contains(id)) return Fog.Revealed;
         SkillNode n = tree.Find(id);
-        if (n == null) return false;
-        if (n.prereqIds.Count == 0) return true;
+        if (n == null) return Fog.Hidden;
+        if (n.prereqIds.Count == 0) return Fog.Hinted; // 루트는 항상 시작점으로 보인다
         foreach (string pre in n.prereqIds)
-            if (unlocked.Contains(pre)) return true;
-        return false;
+            if (unlocked.Contains(pre)) return Fog.Hinted; // 해금 노드와 인접
+        return Fog.Hidden;
     }
 
     // ── 갱신 ──
@@ -258,21 +267,29 @@ public class SkillTreeUI : MonoBehaviour
         HashSet<string> unlocked = SkillTreeSave.UnlockedIds();
         foreach (NodeView v in views.Values)
         {
-            bool isUnlocked = unlocked.Contains(v.node.id);
-            bool revealed = IsRevealed(v.node.id, unlocked);
-            bool buyable = revealed && SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
+            Fog fog = FogOf(v.node.id, unlocked);
 
-            Color c;
-            if (!revealed) c = ColMasked;                          // 물음표(잠김)
-            else if (isUnlocked) c = BaseColor(v.node.type);       // 활성: 원색
-            else if (buyable) c = BaseColor(v.node.type) * 0.82f;  // 구매 가능: 살짝 어둡게(선명)
-            else c = BaseColor(v.node.type) * 0.32f;               // 구매 불가: 많이 어둡게
+            // 안개 밖 노드는 통째로 감춘다(연결선도 RefreshLines에서 함께 숨김)
+            if (v.rt != null && v.rt.gameObject.activeSelf != (fog != Fog.Hidden))
+            {
+                if (fog == Fog.Hidden) { v.scaleTween?.Kill(); v.scaleTween = null; v.ringPulse?.Kill(); v.ringPulse = null; }
+                v.rt.gameObject.SetActive(fog != Fog.Hidden);
+            }
+            if (fog == Fog.Hidden) continue;
+
+            bool isUnlocked = fog == Fog.Revealed;
+            bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
+
+            // '?' 노드는 타입 색을 쓰지 않는다 — 색만 봐도 해금/강화 노드인지 드러나 버리므로 무채색으로 통일.
+            Color c = isUnlocked
+                ? BaseColor(v.node.type)                 // 활성: 원색
+                : (buyable ? ColMasked * 1.6f : ColMasked); // 물음표(구매 가능하면 살짝 밝게)
             c.a = 1f;
             if (v.bg != null) v.bg.color = c;
 
             if (v.label != null)
             {
-                if (!revealed) v.label.text = "?";
+                if (!isUnlocked) v.label.text = "?"; // 이름·효과는 해금해야 공개
                 else
                 {
                     int lv = SkillTreeSave.LevelOf(v.node.id);
@@ -304,6 +321,12 @@ public class SkillTreeUI : MonoBehaviour
         foreach (LineView l in lines)
         {
             if (l.img == null) continue;
+
+            // 양쪽 끝이 모두 보이는 선만 그린다 — 안 보이는 노드로 이어지는 선이 존재를 알려주면 안 되므로
+            bool visible = FogOf(l.from, unlocked) != Fog.Hidden && FogOf(l.to, unlocked) != Fog.Hidden;
+            if (l.img.gameObject.activeSelf != visible) l.img.gameObject.SetActive(visible);
+            if (!visible) continue;
+
             bool on = unlocked.Contains(l.from) && unlocked.Contains(l.to);
             if (on == l.on) continue;               // 변화 없으면 건드리지 않음
             l.img.DOKill();
@@ -321,14 +344,22 @@ public class SkillTreeUI : MonoBehaviour
         if (n == null) { tooltipRoot.SetActive(false); return; }
 
         HashSet<string> unlocked = SkillTreeSave.UnlockedIds();
-        bool revealed = IsRevealed(hoveredId, unlocked);
-        bool isUnlocked = unlocked.Contains(hoveredId);
+        Fog fog = FogOf(hoveredId, unlocked);
+        bool isUnlocked = fog == Fog.Revealed;
 
-        if (!revealed)
+        if (fog == Fog.Hidden) { tooltipRoot.SetActive(false); return; }
+
+        if (!isUnlocked)
         {
+            // 이름·효과는 감추되 값은 알려준다 — 가격도 모르면 살지 말지 판단할 수 없다
             if (tooltipName != null) tooltipName.text = "???";
-            if (tooltipDesc != null) tooltipDesc.text = "인접 노드를 먼저 열어야 정보를 볼 수 있습니다";
-            if (tooltipCost != null) tooltipCost.text = "";
+            if (tooltipDesc != null) tooltipDesc.text = "해금하면 효과가 공개됩니다";
+            if (tooltipCost != null)
+            {
+                int cost = SkillTreeSave.NextLevelCost(tree, n);
+                bool can = SkillTreeSave.CanUpgrade(tree, hoveredId);
+                tooltipCost.text = cost + " 정수" + (can ? "  ▸ 클릭하여 해금" : "");
+            }
         }
         else
         {
@@ -341,9 +372,7 @@ public class SkillTreeUI : MonoBehaviour
                 bool canUp = SkillTreeSave.CanUpgrade(tree, hoveredId);
                 int nextCost = SkillTreeSave.NextLevelCost(tree, n);
 
-                if (!isUnlocked)
-                    tooltipCost.text = nextCost + " 정수" + (canUp ? "  ▸ 클릭하여 해금" : "");
-                else if (lv >= max)
+                if (lv >= max)
                     tooltipCost.text = max > 1 ? "Lv " + lv + "/" + max + " (최대)" : "해금됨";
                 else
                     tooltipCost.text = "Lv " + lv + "/" + max + "  · 다음 " + nextCost + " 정수" + (canUp ? "  ▸ 클릭" : "");

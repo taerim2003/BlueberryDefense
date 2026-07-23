@@ -98,7 +98,8 @@ public class MapSelectUI : MonoBehaviour
         else
         {
             AscensionTier t = AscTable.Get(level);
-            body = $"적 체력 +{Pct(t.hpMult)}   이동속도 +{Pct(t.speedMult)}   피해 +{Pct(t.damageMult)}";
+            body = $"적 체력 +{Pct(t.hpMult)}   이동속도 +{Pct(t.speedMult)}   피해 +{Pct(t.damageMult)}"
+                 + $"\n<color=#8FE38A>정수 획득 +{Pct(t.essenceMult)}</color>";
         }
 
         if (level >= max && max < AscTable.MaxLevel)

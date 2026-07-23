@@ -80,7 +80,7 @@ public class PauseMenu : MonoBehaviour
                 BuildEntry(rightColumn,
                     levelUp != null ? levelUp.GetPassiveIcon(pv.Id) : null,
                     TitleLine(PlayerSkills.GetPassiveSkillName(pv.Id), pv.Level),
-                    BuildPassiveDetail(pv));
+                    BuildPassiveDetail(passives, pv));
     }
 
     private static string TitleLine(string name, int level) =>
@@ -95,19 +95,40 @@ public class PauseMenu : MonoBehaviour
         return sb.ToString().TrimEnd();
     }
 
-    private static string BuildPassiveDetail(EquippedPassive pv)
+    // 패시브는 "지금 적용 중인 수치"(현재값) + 진화 효과를 효과 설명까지 펼쳐서 보여준다.
+    private static string BuildPassiveDetail(PlayerPassives passives, EquippedPassive pv)
     {
         var sb = new StringBuilder();
-        AppendPathLines(sb, pv.PathTier, (p, t) => PlayerPassives.GetPathTierTitle(pv.Id, p, t));
+        foreach (var g in passives.DescribeCurrentEffect(pv))
+            sb.AppendLine($"<color=#9FE0A0>·</color> {g}");
+        AppendPathLines(sb, pv.PathTier,
+            (p, t) => PlayerPassives.GetPathTierTitle(pv.Id, p, t),
+            (p, t) => PlayerPassives.DescribePathEffect(pv.Id, p, t));
         return sb.ToString().TrimEnd();
     }
 
-    private static void AppendPathLines(StringBuilder sb, int[] pathTier, System.Func<int, int, string> titleFn)
+    // effectFn을 주면 진화 티어를 "제목 — 효과" 한 줄씩으로, 없으면 제목만 한 줄에 모아 표시.
+    private static void AppendPathLines(StringBuilder sb, int[] pathTier, System.Func<int, int, string> titleFn,
+        System.Func<int, int, string> effectFn = null)
     {
         for (int p = 0; p < pathTier.Length; p++)
         {
             int tier = pathTier[p];
             if (tier <= 0) continue;
+
+            if (effectFn != null)
+            {
+                for (int t = 1; t <= tier; t++)
+                {
+                    string title = titleFn(p, t);
+                    string effect = effectFn(p, t);
+                    if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(effect)) continue;
+                    sb.AppendLine("<color=#FFC864>▸</color> " + (string.IsNullOrEmpty(title) ? effect
+                        : string.IsNullOrEmpty(effect) ? title : $"{title} — {effect}"));
+                }
+                continue;
+            }
+
             var parts = new List<string>();
             for (int t = 1; t <= tier; t++)
             {

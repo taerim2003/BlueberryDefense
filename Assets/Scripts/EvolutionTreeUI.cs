@@ -42,6 +42,7 @@ public class EvolutionTreeUI : MonoBehaviour
     private EquippedPassive currentPassive;
     private bool isPassiveMode;
     private System.Action onClosed; // 진화 완료(모달 닫힘) 후 1회 콜백 — 보물상자 연쇄 레벨업이 대기
+    private bool isOpen;            // 닫힘 연출 중에도 panel.activeSelf는 true라 ModalPause 짝을 이 플래그로 맞춘다
 
     // 진화 노드 카드에 붙는 juice 연출(등장 pop-in, 진화 가능 노드 강조 펄스)용 트윈 — 재오픈/닫기 시 정리
     private readonly List<Tween> nodeTweens = new List<Tween>();
@@ -83,7 +84,7 @@ public class EvolutionTreeUI : MonoBehaviour
 
     private void ShowInternal()
     {
-        bool alreadyOpen = panel.activeSelf;
+        bool alreadyOpen = isOpen;
         KillNodeTweens();
 
         string name = isPassiveMode ? PlayerSkills.GetPassiveSkillName(currentPassive.Id) : PlayerSkills.GetActiveSkillName(currentSkill.Id);
@@ -133,7 +134,8 @@ public class EvolutionTreeUI : MonoBehaviour
                 {
                     // 연계 대상 진화(path1/path2)는 대상 스킬/패시브가 Lv.5 이상이어야 함
                     string reason = (tier == 2 && path != 0) ? GetPathName(path) + " Lv.5 필요 · " : "";
-                    node.description.text = "🔒 " + reason + effect;
+                    // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
+                    node.description.text = "[잠김] " + reason + effect;
                 }
                 else
                 {
@@ -152,8 +154,11 @@ public class EvolutionTreeUI : MonoBehaviour
             }
         }
 
-        panel.SetActive(true);
+        // 닫힘 연출 중에 다시 열리는 경우 SetActive(true)만으로는 연출이 되돌아오지 않는다 (LevelUpUI와 동일)
+        if (panelTransition != null) panelTransition.Show();
+        else panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
+        isOpen = true;
     }
 
     private bool CanEvolvePath(int path) =>
@@ -199,6 +204,7 @@ public class EvolutionTreeUI : MonoBehaviour
 
     private void Close()
     {
+        isOpen = false;
         KillNodeTweens();
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();

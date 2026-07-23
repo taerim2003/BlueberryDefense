@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
   m_Name: EnemyDef_Blueberry
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 2
+  moveSpeed: 3
   damage: 8
-  maxHealth: 14
+  maxHealth: 12
   xpValue: 5
   essenceDropChance: 0.15
   essenceDropAmount: 2

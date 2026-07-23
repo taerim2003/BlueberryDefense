@@ -67,9 +67,33 @@ public class PlayerPassives : MonoBehaviour
         LightningStorm.OnProc += HandleLightningProc;
 
         BuildProgressionLookup();   // 정적 조회맵 승격 — AcquirePassive 전에 세팅
-        AssassinateCritChance = 0f; // 판마다 리셋 — 기본값은 획득 시 SO에서 채워짐
+        ResetRunState();            // 판마다 리셋 — 기본값은 획득 시 SO에서 채워짐
+    }
+
+    private void OnDestroy()
+    {
+        // 구독을 풀지 않으면 판이 바뀔 때마다 죽은 인스턴스의 핸들러가 계속 쌓인다.
+        if (health != null) health.OnDamageTaken -= HandleDamageTaken;
+        LightningStorm.OnProc -= HandleLightningProc;
+    }
+
+    // 이 판에서만 유효한 static 효과 전부 초기화. 진화로 붙는 값이 대부분이라
+    // 하나라도 빠지면 다음 판에 지난 판의 진화 효과가 남는다(RunState에서 호출).
+    public static void ResetRunState()
+    {
+        AssassinateCritChance = 0f;
+        AssassinateCritMultiplier = 3f;
         RefreshChance = 0f;
+        AssassinateKillXpMultiplier = 1f;
+        RefreshHealOnResetAmount = 0f;
+        RefreshLightningCooldownProcChance = 0f;
         BuffSkillCooldownMult = 1f;
+        HealthDamagePerHp = 0f;
+        HealthRetaliationMultiplier = 0f;
+        BasicAttackDamageMultiplierBonus = 0f;
+        AssassinateWhirlwindCritBonus = 0f;
+        AssassinateWhirlwindTargetHighest = false;
+        EagleDropCastXpBonus = 0;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격. 미포함 패시브는 조회 실패 → 코드 기본값 폴백.
@@ -209,6 +233,49 @@ public class PlayerPassives : MonoBehaviour
     }
 
     private static string Pct(float f) => (f * 100f).ToString("0.#");
+
+    // 일시정지(ESC) 요약용: 이 패시브가 **지금 실제로** 얼마나 적용되고 있는지.
+    // 레벨업 누적분과 진화로 붙은 보정이 이미 반영된 현재 수치를 그대로 읽어 보여준다.
+    public List<string> DescribeCurrentEffect(EquippedPassive p)
+    {
+        var lines = new List<string>();
+        switch (p.Id)
+        {
+            case PassiveSkillId.Strength:
+                if (skills != null) lines.Add($"전체 피해량 +{Pct(skills.PassiveDamageMultiplier - 1f)}%");
+                if (BasicAttackDamageMultiplierBonus > 0f) lines.Add($"기본 공격 피해량 +{Pct(BasicAttackDamageMultiplierBonus)}%");
+                break;
+
+            case PassiveSkillId.Health:
+                if (health != null) lines.Add($"최대 체력 {health.MaxHealth}");
+                if (regenInterval > 0f && regenAmount > 0f) lines.Add($"{regenInterval:0.#}초마다 체력 {regenAmount:0.#} 재생");
+                if (HealthDamagePerHp > 0f) lines.Add($"최대 체력 1당 피해량 +{Pct(HealthDamagePerHp)}%");
+                if (HealthRetaliationMultiplier > 0f) lines.Add($"피격 시 받은 피해의 {Pct(HealthRetaliationMultiplier)}%를 전체 적에게");
+                break;
+
+            case PassiveSkillId.Knowledge:
+                if (PlayerExperience.Instance != null) lines.Add($"경험치 획득량 +{Pct(PlayerExperience.Instance.XpMultiplier - 1f)}%");
+                if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add($"블루베리가 {Pct(EnemySpawner.ExtraTreasureChance)}% 확률로 보물상자로 등장");
+                if (EagleDropCastXpBonus > 0) lines.Add($"독수리 투하 시전마다 경험치 +{EagleDropCastXpBonus}");
+                break;
+
+            case PassiveSkillId.Assassinate:
+                lines.Add($"치명타 확률 {Pct(AssassinateCritChance)}%");
+                lines.Add($"치명타 피해 배율 x{AssassinateCritMultiplier:0.##}");
+                if (AssassinateWhirlwindCritBonus > 0f) lines.Add($"회오리 치명타 확률 +{Pct(AssassinateWhirlwindCritBonus)}%");
+                if (AssassinateWhirlwindTargetHighest) lines.Add("회오리가 최고 체력 적을 우선 추격");
+                if (AssassinateKillXpMultiplier > 1f) lines.Add($"치명타 처치 시 경험치 x{AssassinateKillXpMultiplier:0.##}");
+                break;
+
+            case PassiveSkillId.Refresh:
+                lines.Add($"스킬 사용 시 {Pct(RefreshChance)}% 확률로 쿨타임 초기화");
+                if (RefreshHealOnResetAmount > 0f) lines.Add($"초기화될 때마다 체력 {RefreshHealOnResetAmount:0.#} 회복");
+                if (BuffSkillCooldownMult < 1f) lines.Add($"버프류 스킬(산탄·낙뢰) 쿨타임 -{Pct(1f - BuffSkillCooldownMult)}%");
+                if (RefreshLightningCooldownProcChance > 0f) lines.Add($"낙뢰 발동 시 {Pct(RefreshLightningCooldownProcChance)}% 확률로 전체 쿨타임 -0.5초");
+                break;
+        }
+        return lines;
+    }
 
     // path: 0=기본(무의존), 1=패시브 연계, 2=액티브 연계
     public bool CanEvolvePath(EquippedPassive passive, int path)

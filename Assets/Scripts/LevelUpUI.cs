@@ -60,6 +60,12 @@ public class LevelUpUI : MonoBehaviour
     private bool rerollable;        // 이번 모달이 리롤 가능한가(진화 선택 모달은 불가)
     private bool treasureMode;      // 이번 모달이 보물상자 에스컬레이션 보상인가
 
+    // 모달이 열려 있는 동안 들어온 레벨업/보물상자 요청 — 닫힐 때 하나씩 이어서 띄운다.
+    // (보물상자 블루베리 2마리를 연달아 먹으면 두 번째 보상이 첫 번째를 덮어써 사라지던 문제)
+    private bool isOpen;
+    private int pendingLevelUps;
+    private int pendingTreasures;
+
     private Button[] optionButtons;
     private TMP_Text[] optionLevelTexts;
 
@@ -100,6 +106,12 @@ public class LevelUpUI : MonoBehaviour
 
     public void Show()
     {
+        if (isOpen) { pendingLevelUps++; return; }
+        ShowLevelUp();
+    }
+
+    private void ShowLevelUp()
+    {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
@@ -109,16 +121,32 @@ public class LevelUpUI : MonoBehaviour
         ShowOptions();
     }
 
+    // 밀려 있던 보상을 하나 이어서 연다(보물상자 우선). 닫힘 연출(UITransition.Hide)이 끝난 뒤에
+    // 열어야 연출이 새 모달을 다시 꺼버리지 않는다.
+    private void QueueNextPending()
+    {
+        if (pendingTreasures <= 0 && pendingLevelUps <= 0) return;
+        StartCoroutine(ShowNextPendingWhenClosed());
+    }
+
+    private IEnumerator ShowNextPendingWhenClosed()
+    {
+        yield return new WaitWhile(() => panel.activeSelf);
+
+        if (pendingTreasures > 0) { pendingTreasures--; ShowTreasure(); }
+        else if (pendingLevelUps > 0) { pendingLevelUps--; ShowLevelUp(); }
+    }
+
     private void OnReroll()
     {
         if (!rerollable || rerollsRemaining <= 0) return;
         rerollsRemaining--;
-        Show(); // 후보 재구성 + 재셔플 (rerollable 다시 true)
+        ShowLevelUp(); // 후보 재구성 + 재셔플 (이미 열려 있으므로 대기열을 거치지 않는다)
     }
 
     private void ShowOptions()
     {
-        bool alreadyOpen = panel.activeSelf;
+        bool alreadyOpen = isOpen;
 
         // 선택지는 1~3개로 가변 — 남는 슬롯의 옵션 카드(버튼)는 통째로 숨긴다.
         int count = currentOptions.Length;
@@ -128,8 +156,12 @@ public class LevelUpUI : MonoBehaviour
 
         UpdateRerollButton();
 
-        panel.SetActive(true);
+        // 닫힘 연출이 아직 돌고 있으면 panel.activeSelf가 true라 SetActive(true)로는 다시 열리지 않는다
+        // (연출이 끝나며 패널을 꺼버려 '보이지 않는 모달 + timeScale 0' 상태가 됨) — Show()로 연출을 되돌린다.
+        if (panelTransition != null) panelTransition.Show();
+        else panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
+        isOpen = true;
     }
 
     private void SetSlot(int index, Button button, TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
@@ -203,7 +235,7 @@ public class LevelUpUI : MonoBehaviour
                 ActiveSkillId captured = id;
                 candidates.Add(new Option
                 {
-                    Title = PlayerSkills.GetActiveSkillBadge(captured) + PlayerSkills.GetActiveSkillName(captured),
+                    Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                     IsNew = true,
                     Description = GetActiveSkillDescription(captured),
                     Icon = GetIcon(activeIcons, (int)captured),
@@ -222,7 +254,7 @@ public class LevelUpUI : MonoBehaviour
                 PassiveSkillId captured = id;
                 candidates.Add(new Option
                 {
-                    Title = PlayerSkills.GetPassiveSkillName(captured),
+                    Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                     IsNew = true,
                     Description = GetPassiveSkillDescription(captured),
                     Icon = GetIcon(passiveIcons, (int)captured),
@@ -238,7 +270,7 @@ public class LevelUpUI : MonoBehaviour
             EquippedSkill captured = equipped;
             candidates.Add(new Option
             {
-                Title = PlayerSkills.GetActiveSkillBadge(captured.Id) + PlayerSkills.GetActiveSkillName(captured.Id),
+                Title = PlayerSkills.GetActiveSkillTitleWithTags(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
                 UnlocksEvolution = (captured.Level + 1) % 5 == 0,
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
@@ -254,7 +286,7 @@ public class LevelUpUI : MonoBehaviour
             EquippedPassive captured = equipped;
             candidates.Add(new Option
             {
-                Title = PlayerSkills.GetPassiveSkillName(captured.Id),
+                Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
                 UnlocksEvolution = (captured.Level + 1) % 5 == 0,
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
@@ -288,6 +320,20 @@ public class LevelUpUI : MonoBehaviour
     // 0.3초 간격으로 보상이 랜덤하게 강화(최대 4업)되는 에스컬레이션 연출로 파워 스파이크를 준다.
     // (진화는 더 이상 보물상자가 아니라 '진화 가능 레벨 도달' 시 즉시 열린다.)
     public void ShowTreasureReward()
+    {
+        // 보물상자 블루베리는 경험치가 커서 Enemy.Die가 ShowTreasureReward보다 먼저 AddXP를 호출하면
+        // 같은 프레임에 '일반 레벨업' 모달이 먼저 열려 버린다. 그 상태로 대기열에 넣으면 플레이어는
+        // 에스컬레이션 없는 평범한 카드부터 고르게 된다(= 보물 보너스가 안 터지는 것처럼 보임).
+        // 그래서 아직 아무것도 안 고른 레벨업 모달은 뒤로 미루고 보물 보상을 먼저 띄운다.
+        if (isOpen)
+        {
+            if (treasureMode) { pendingTreasures++; return; } // 보물 모달이 이미 떠 있으면 순서대로
+            pendingLevelUps++;
+        }
+        ShowTreasure();
+    }
+
+    private void ShowTreasure()
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
@@ -333,11 +379,13 @@ public class LevelUpUI : MonoBehaviour
 
         opt.Apply?.Invoke();
         Close();
-        if (opt.UnlocksEvolution) OpenEvolutionAfterLevelUp(opt);
+        // 진화창이 열리면 그게 닫힌 뒤에, 아니면 곧바로 밀려 있던 보상을 이어서 연다.
+        if (!(opt.UnlocksEvolution && OpenEvolutionAfterLevelUp(opt, QueueNextPending)))
+            QueueNextPending();
     }
 
-    // (2A) 레벨업으로 5의 배수 레벨(진화 해금 레벨)에 도달하면 곧바로 진화창을 연다.
-    private void OpenEvolutionAfterLevelUp(Option opt)
+    // (2A) 레벨업으로 5의 배수 레벨(진화 해금 레벨)에 도달하면 곧바로 진화창을 연다. 열었으면 true.
+    private bool OpenEvolutionAfterLevelUp(Option opt, System.Action closed)
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
@@ -346,14 +394,22 @@ public class LevelUpUI : MonoBehaviour
         {
             EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == opt.SkillId.Value);
             if (s != null && !skills.CanUpgradeSkill(s) && s.TotalEvolutionTier < 4 && skills.CanEvolveAnyPath(s))
-                EvolutionTreeUI.Instance.Show(skills, s);
+            {
+                EvolutionTreeUI.Instance.Show(skills, s, closed);
+                return true;
+            }
         }
         else if (opt.PassiveId.HasValue)
         {
             EquippedPassive p = passives.GetPassive(opt.PassiveId.Value);
             if (p != null && !passives.CanUpgradePassive(p) && p.TotalEvolutionTier < 4 && passives.CanEvolveAnyPath(p))
-                EvolutionTreeUI.Instance.Show(passives, p);
+            {
+                EvolutionTreeUI.Instance.Show(passives, p, closed);
+                return true;
+            }
         }
+
+        return false;
     }
 
     // 보물상자 에스컬레이션: 고른 선택지 셀만 남기고, 0.3초 간격으로 랜덤하게 레벨업 수치를 강화(최대 4업).
@@ -391,9 +447,12 @@ public class LevelUpUI : MonoBehaviour
         yield return ApplyTreasureReward(opt, levels);
 
         // 보물 모달 종료 (ShowOptions에서 Push한 참조 1개 해제)
+        isOpen = false;
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);
+
+        QueueNextPending();
     }
 
     // 고른 보상을 levels만큼 부여. 정수는 배수로, 그 외에는 첫 적용(획득/1레벨업) 후 나머지를 연쇄 레벨업.
@@ -468,6 +527,7 @@ public class LevelUpUI : MonoBehaviour
 
     private void Close()
     {
+        isOpen = false;
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);

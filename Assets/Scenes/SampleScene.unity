@@ -4009,6 +4009,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRunApplier
   tree: {fileID: 11400000, guid: 8d2930d273fbc9445bc944154bf9ba8d, type: 2}
+  ascension: {fileID: 11400000, guid: 8273c9a8898f0b1409cbf7b89b9b86ff, type: 2}
 --- !u!114 &487568135
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -49,6 +49,20 @@ public static class LightningStorm
         }
     }
 
+    // 이 판에서만 유효한 static 상태 초기화 (RunState에서 호출).
+    // OnProc 구독은 각 컴포넌트가 Awake/OnDestroy로 관리하므로 여기서 건드리지 않는다.
+    public static void ResetRunState()
+    {
+        stackEndTimes.Clear();
+        ProcChance = BaseProcChance;
+        ProcDamage = BaseProcDamage;
+        RecursiveProcEnabled = false;
+        RecursiveDamageGrowth = 0f;
+        ChainEnabled = false;
+        ChainCount = 3;
+        StackDamageEnabled = false;
+    }
+
     // 낙뢰 시전: 기존 스택을 지우지 않고 새 스택을 추가한다(평소엔 이전 스택이 이미 만료된 상태라 사실상 1개).
     public static void AddStack(float duration)
     {

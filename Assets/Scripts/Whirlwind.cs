@@ -14,6 +14,10 @@ public class Whirlwind : MonoBehaviour
 
     private float fallVelocity;
 
+    // 스프라이트 피벗이 중앙이라 groundY는 "중심 높이"다. 크기가 작은 미니 회오리는 같은 groundY에서
+    // 바닥선이 위로 뜨므로, 소환하는 쪽에서 큰 회오리 바닥선에 맞춘 값을 넣어준다.
+    public float GroundY { set => groundY = value; }
+
     public float Damage { get; set; }
     public bool ApplyGemSlow { get; set; }
     public bool ApplyGemVulnerable { get; set; }
@@ -86,6 +90,7 @@ public class Whirlwind : MonoBehaviour
             float highestHealth = float.NegativeInfinity;
             foreach (Enemy enemy in enemies)
             {
+                if (enemy.IsFlying && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
                 if (enemy.CurrentHealth > highestHealth)
                 {
                     highestHealth = enemy.CurrentHealth;
@@ -98,6 +103,7 @@ public class Whirlwind : MonoBehaviour
             float nearestSqrDist = float.MaxValue;
             foreach (Enemy enemy in enemies)
             {
+                if (enemy.IsFlying && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
                 float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
                 if (sqrDist < nearestSqrDist)
                 {

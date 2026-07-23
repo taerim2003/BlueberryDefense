@@ -305,7 +305,10 @@ public class HUDController : MonoBehaviour
 
             bool onCooldown = skill.CooldownTimer > 0f;
             float ownCooldownRatio = skill.Cooldown > 0f ? Mathf.Clamp01(skill.CooldownTimer / skill.Cooldown) : 0f;
-            slot.cooldownOverlay.fillAmount = Mathf.Max(ownCooldownRatio, playerSkills.GlobalCooldownRatio);
+            // 자동 시전 전용 스킬은 수동으로 못 쓴다는 걸 강조하려고 마스크를 항상 100%로 덮는다.
+            slot.cooldownOverlay.fillAmount = PlayerSkills.IsAutoCastOnly(skill)
+                ? 1f
+                : Mathf.Max(ownCooldownRatio, playerSkills.GlobalCooldownRatio);
             slot.cooldownText.enabled = onCooldown;
             if (onCooldown) slot.cooldownText.text = skill.CooldownTimer.ToString("F1");
 

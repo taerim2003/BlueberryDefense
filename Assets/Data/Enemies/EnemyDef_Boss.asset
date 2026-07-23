@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
   m_Name: EnemyDef_Boss
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 0.6
+  moveSpeed: 0.5
   damage: 200
   maxHealth: 1200
   xpValue: 200

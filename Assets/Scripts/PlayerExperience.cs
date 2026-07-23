@@ -24,6 +24,8 @@ public class PlayerExperience : MonoBehaviour
         xpToNextLevel = Scaling.xpToNextLevelBase;
     }
 
+    public float XpMultiplier => xpMultiplier; // ESC 요약에서 현재 경험치 획득 배율 표기용
+
     public void IncreaseXPMultiplier(float amount)
     {
         xpMultiplier += amount;

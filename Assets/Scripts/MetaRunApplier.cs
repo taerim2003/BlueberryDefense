@@ -8,6 +8,9 @@ public class MetaRunApplier : MonoBehaviour
     // 어떤 스킬을 해금 노드가 열어주는지는 트리 데이터가 있어야 안다). MainSkillTree.asset을 배선.
     [SerializeField] private SkillTreeData tree;
 
+    // 승천 등급별 정수 획득 배율표. 미할당이면 코드 기본표 폴백(EnemySpawner와 같은 방식).
+    [SerializeField] private AscensionTable ascension;
+
     private SkillEffects.Totals totals;
 
     private void Awake()
@@ -38,7 +41,9 @@ public class MetaRunApplier : MonoBehaviour
     {
         MetaBonuses.CooldownMult = 1f - 0.01f * totals.CdReducePct;
         MetaBonuses.CritBonus = 0.01f * totals.CritPct;
-        MetaBonuses.CurrencyMult = 1f + 0.01f * totals.CurrencyPct;
+        // 정수 획득량 = 스킬트리(부유) 보너스 × 승천 등급 보상 배율
+        AscensionTable ascTable = ascension != null ? ascension : AscensionTable.Default;
+        MetaBonuses.CurrencyMult = (1f + 0.01f * totals.CurrencyPct) * ascTable.Get(RunConfig.AscensionLevel).essenceMult;
         MetaBonuses.FlyDamageBonus = 0.01f * totals.FlyDmgPct;
         MetaBonuses.EagleFlyDamageBonus = 0.01f * totals.EagleFlyDmgPct;
         MetaBonuses.HealDropChanceBonus = 0.01f * totals.HealDropPct;

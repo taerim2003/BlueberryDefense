@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
         // JuicyUI(DOTween) 애니메이션이 그 상태에서도 재생되도록 전역 기본값을 unscaled로 설정.
         DOTween.defaultTimeScaleIndependent = true;
 
-        DamageMeter.Reset();
+        RunState.ResetAll(); // 지난 판의 static 효과(진화 보정·낙뢰 상태 등)가 넘어오지 않도록 전부 초기화
         Enemy.HeartPickupPrefab = heartPickupPrefab;
         EssencePickup.Prefab = essencePickupPrefab;
     }

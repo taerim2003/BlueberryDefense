@@ -19,12 +19,11 @@ MonoBehaviour:
       \uC544\uC774\uD15C\uC744 \uB4DC\uB78D"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 1
     effect: 1
     perLevel: 20
     maxLevel: 1
-    cost: 40
-    costGrowth: 1.5
     prereqIds: []
     editorPos: {x: -132.9878, y: -148.2221}
   - id: atk_1
@@ -32,12 +31,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 5% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 1
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - root_hp
     editorPos: {x: -528.9878, y: -157.22131}
@@ -46,12 +44,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 8% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 1
     effect: 0
     perLevel: 8
     maxLevel: 5
-    cost: 120
-    costGrowth: 1.5
     prereqIds:
     - atk_1
     editorPos: {x: -876.9878, y: -294.22058}
@@ -60,12 +57,11 @@ MonoBehaviour:
     description: "\uCD5C\uB300 \uCCB4\uB825\uC774 10 \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 1
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - root_hp
     editorPos: {x: 292.51233, y: -293.6222}
@@ -74,12 +70,11 @@ MonoBehaviour:
     description: "\uCD5C\uB300 \uCCB4\uB825\uC774 15 \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - hp_1
     editorPos: {x: 538.7632, y: -544.4304}
@@ -89,12 +84,11 @@ MonoBehaviour:
       1\uD68C \uB9AC\uB864\uD560 \uC218 \uC788\uB294 \uAE30\uB2A5 \uD574\uAE08"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 1
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - root_hp
     editorPos: {x: 234.76318, y: 97.56958}
@@ -103,12 +97,11 @@ MonoBehaviour:
     description: "\uAC8C\uC784\uB2F9 \uB9AC\uB864 +1"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - reroll_1
     editorPos: {x: 619.7632, y: 203.56958}
@@ -117,12 +110,11 @@ MonoBehaviour:
     description: "\uCE58\uBA85\uD0C0 \uD655\uB960 3% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gate_crit
     editorPos: {x: -557.2368, y: 205.56958}
@@ -131,12 +123,11 @@ MonoBehaviour:
     description: "\uCE58\uBA85\uD0C0 \uD655\uB960 5% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - crit_1
     editorPos: {x: -392.23682, y: 441.56958}
@@ -145,12 +136,11 @@ MonoBehaviour:
     description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +5%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - reroll_1
     editorPos: {x: 51.763184, y: 342.56958}
@@ -159,12 +149,11 @@ MonoBehaviour:
     description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +8%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - exp_1
     editorPos: {x: -107.23682, y: 602.5696}
@@ -173,12 +162,11 @@ MonoBehaviour:
     description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 \uC99D\uAC00 +10%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - hp_1
     editorPos: {x: 36.763184, y: -532.4304}
@@ -187,12 +175,11 @@ MonoBehaviour:
     description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 15%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gold_1
     editorPos: {x: -180.23682, y: -782.4304}
@@ -201,12 +188,11 @@ MonoBehaviour:
     description: "\uAE30\uBCF8 \uCE58\uBA85\uD0C0 \uD655\uB960 10% \uC99D\uAC00"
     type: 1
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - atk_1
     editorPos: {x: -826.2368, y: 18.56958}
@@ -216,12 +202,11 @@ MonoBehaviour:
       \uC2DC\uC791"
     type: 2
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - crit_1
     editorPos: {x: -872.2368, y: 431.56958}
@@ -230,12 +215,11 @@ MonoBehaviour:
     description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +20%"
     type: 1
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - exp_1
     editorPos: {x: 437.76318, y: 490.56958}
@@ -245,12 +229,11 @@ MonoBehaviour:
       \uC218 \uC788\uAC8C \uB428"
     type: 2
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gate_fly
     editorPos: {x: 766.7632, y: 505.56958}
@@ -259,12 +242,11 @@ MonoBehaviour:
     description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +5%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gate_fly
     editorPos: {x: 347.76318, y: 722.5696}
@@ -274,12 +256,11 @@ MonoBehaviour:
       \uD53C\uD574 +30%"
     type: 2
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - fly_1
     editorPos: {x: 699.7632, y: 905.5696}
@@ -288,12 +269,11 @@ MonoBehaviour:
     description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +10%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - fly_1
     editorPos: {x: 223.76318, y: 946.5696}
@@ -302,12 +282,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -10%"
     type: 1
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - hp_1
     editorPos: {x: 648.7632, y: -263.43042}
@@ -316,12 +295,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -3%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gate_cooldown
     editorPos: {x: 973.7632, y: -275.43042}
@@ -330,12 +308,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -5%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - cool_1
     editorPos: {x: 1283.7632, y: -380.43042}
@@ -345,12 +322,11 @@ MonoBehaviour:
       \uD6A8\uACFC\uB97C 1.5\uBC30\uB85C \uBC1B\uC74C"
     type: 2
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - cool_1
     editorPos: {x: 1075.7632, y: -634.4304}
@@ -360,12 +336,11 @@ MonoBehaviour:
       \uD655\uB960 5% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gate_cooldown
     editorPos: {x: 805.7632, y: -32.43042}
@@ -375,12 +350,11 @@ MonoBehaviour:
       -0.1\uCD08"
     type: 2
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - refresh_bonus
     editorPos: {x: 1102.7632, y: 54.56958}
@@ -389,12 +363,11 @@ MonoBehaviour:
     description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - atk_2
     editorPos: {x: -1149.2368, y: -447.43042}
@@ -403,12 +376,11 @@ MonoBehaviour:
     description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 25%"
     type: 0
     skill: 0
+    tier: 1
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
-    cost: 50
-    costGrowth: 1.5
     prereqIds:
     - gold_2
     editorPos: {x: -403.23688, y: -979.4304}

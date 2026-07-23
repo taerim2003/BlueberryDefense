@@ -56,6 +56,8 @@ public class PlayerSkills : MonoBehaviour
     // 회오리 path0(미니 회오리)와 독수리투하 path2(미니 회오리)가 공유하는 피해 배율 보너스 — 둘 중 어느 쪽에 투자해도 서로의 미니 회오리가 함께 강해진다.
     public static float MiniWhirlwindDamageBonus = 0f;
 
+    private const float MiniWhirlwindScale = 0.4f; // 미니 회오리 크기 배율(바닥선 보정 계산에도 쓰임)
+
     // 기본공격 공격당 타격횟수(멀티히트). 총 데미지는 유지한 채 N회로 쪼개 각각 크리를 개별 판정 → 메이플식 데미지 숫자. Enemy.TakeSkillHit가 읽음.
     public static int BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
 
@@ -155,8 +157,7 @@ public class PlayerSkills : MonoBehaviour
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
         BuildProgressionLookup(); // 정적 조회맵 승격. AcquireSkill 전에 세팅해야 기본 수치가 채워짐
-        shotgunTimer = 0f; // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
-        nextSkillDamageBonus = 0f;
+        ResetRunState();          // static 상태 — 판 시작 시 초기화(도메인 리로드 없이도)
         // 시작 스킬은 선택된 캐릭터에서(없으면 기본공격 = 현행). RunConfig 직접 참조라 RunBootstrap 순서에 무의존.
         AcquireSkill(RunConfig.Character != null ? RunConfig.Character.startingSkill : ActiveSkillId.BasicAttack);
         LightningStorm.OnProc += HandleThunderCooldown;
@@ -165,6 +166,17 @@ public class PlayerSkills : MonoBehaviour
     private void OnDestroy()
     {
         LightningStorm.OnProc -= HandleThunderCooldown;
+    }
+
+    // 이 판에서만 유효한 static 상태 초기화 (RunState에서도 호출)
+    public static void ResetRunState()
+    {
+        MiniWhirlwindDamageBonus = 0f;
+        BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
+        shotgunTimer = 0f;
+        shotgunBonus = 0;
+        shotgunSingleTarget = false;
+        nextSkillDamageBonus = 0f;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격(정적 메서드용). 미포함 스킬은 조회 실패 → 코드 기본 규칙 폴백.
@@ -185,6 +197,8 @@ public class PlayerSkills : MonoBehaviour
             lightning.CooldownTimer = Mathf.Max(0f, lightning.CooldownTimer - MetaBonuses.ThunderCooldownPerStrike);
     }
 
+    public float PassiveDamageMultiplier => passiveDamageMultiplier; // ESC 요약에서 현재 적용 중인 총 피해 배율 표기용
+
     public void IncreaseDamageMultiplier(float amount)
     {
         passiveDamageMultiplier += amount;
@@ -200,7 +214,7 @@ public class PlayerSkills : MonoBehaviour
             skill.CooldownTimer -= Time.deltaTime;
 
             // 스나이핑 path2(Route3) T2+: 수동 사용 불가, 쿨타임마다 자동 시전
-            if (skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2)
+            if (IsAutoCastOnly(skill))
             {
                 if (skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f)
                     TryUseSkill(skill);
@@ -212,6 +226,10 @@ public class PlayerSkills : MonoBehaviour
                 TryUseSkill(skill);
         }
     }
+
+    // 수동 시전이 막히고 자동으로만 나가는 스킬(스나이핑 Route3 T2+). HUD가 쿨타임 마스크를 계속 씌워 표시한다.
+    public static bool IsAutoCastOnly(EquippedSkill skill) =>
+        skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2;
 
     public bool HasSkill(ActiveSkillId id) => equippedSkills.Any(s => s.Id == id);
 
@@ -524,6 +542,17 @@ public class PlayerSkills : MonoBehaviour
         SkillCategory.Utility => "C7A8FF", // 보라 = 유틸
         _ => "FF8A6B",                     // 주황 = 공격
     };
+
+    // 레벨업 선택지처럼 액티브/패시브가 섞여 나오는 곳에서 쓰는 종류 배지.
+    public static string ActiveTypeBadge => "<size=68%><color=#FFD86B>[액티브]</color></size>";
+    public static string PassiveTypeBadge => "<size=68%><color=#9BE86B>[패시브]</color></size>";
+
+    // 레벨업 선택지 제목: 배지를 이름 뒤에 붙인다 — "회오리 [액티브] [공격]" / "힘 [패시브]"
+    public static string GetActiveSkillTitleWithTags(ActiveSkillId id) =>
+        $"{GetActiveSkillName(id)} {ActiveTypeBadge} {GetActiveSkillBadge(id).TrimEnd()}";
+
+    public static string GetPassiveSkillTitleWithTags(PassiveSkillId id) =>
+        $"{GetPassiveSkillName(id)} {PassiveTypeBadge}";
 
     // 이름 앞에 붙이는 리치텍스트 배지("[공격] " 등). UI 요소 추가 없이 제목에 인라인.
     public static string GetActiveSkillBadge(ActiveSkillId id)
@@ -1220,7 +1249,7 @@ public class PlayerSkills : MonoBehaviour
                 {
                     Vector2 offset = Random.insideUnitCircle * 0.5f;
                     Vector3 miniSpawnPos = spawnPos + (Vector3)offset;
-                    SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * 0.4f, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
+                    SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * MiniWhirlwindScale, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
                 }
             }
         }
@@ -1280,6 +1309,13 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.ExtraLifetime = extraLifetime;
         whirlwind.TargetHighestHealth = PlayerPassives.AssassinateWhirlwindTargetHighest;
         whirlwind.CanHitFlying = !isMini; // 미니 회오리는 비행 적을 타격할 수 없다
+
+        // 미니는 크기가 작아 기본 groundY(피벗=중심)에 놓으면 지면 위로 떠 보인다 — 바닥선을 큰 회오리와 맞춘다.
+        if (isMini)
+        {
+            SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
+            if (sr != null) whirlwind.GroundY = -sr.bounds.extents.y * (1f / MiniWhirlwindScale - 1f);
+        }
     }
 
     private void FireOrb(float damage, float critChance, EquippedSkill skill)
@@ -1369,7 +1405,7 @@ public class PlayerSkills : MonoBehaviour
                 enemy.TakeSkillHit(dropDamage, critChance, ActiveSkillId.EagleDrop);
 
                 if (overhealPerHit > 0 && health != null) health.AddOverheal(overhealPerHit);
-                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * 0.4f, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
+                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
 
                 StartCoroutine(MeteorImpact(pos, skill.Scale));
             }

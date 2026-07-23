@@ -28,11 +28,11 @@
 Main Camera
 EventSystem
 Canvas
- ├─ Background · TitleImage · CurrencyText
+ ├─ Background · TitleImage
  ├─ Btn_플레이 · Btn_업그레이드 · Btn_컬렉션 · Btn_설정 · Btn_종료   (각 +Text 자식)
  ├─ SkillTreeRoot  [activeSelf=false — 버튼으로 여는 전체화면 패널]
- │    Viewport/Content · Title · EssenceText · CrystalText · CloseButton
- │    · RespecButton · BuildBar · PowderText · Tooltip(Name/Desc/Cost)
+ │    Viewport/Content · Title · EssenceText · CloseButton
+ │    · BuildBar · Tooltip(Name/Desc/Cost)
  │    · OutgameLevelBar(Fill/LevelText/XpText)
  ├─ MapSelectRoot  [activeSelf=false — Btn_플레이가 여는 맵 선택 패널, Phase 2]
  │    Title · CardContainer(HorizontalLayoutGroup) · CardTemplate(비활성 원본:
@@ -50,6 +50,7 @@ Controllers   ← TitleController + SkillTreeUI + MapSelectUI + CharacterSelectU
 - **`MapSelectRoot`**(Phase 2) = 맵 선택 패널. `Btn_플레이`→`TitleController.Play()`→`MapSelectUI.Open()`. 카드는 `CardTemplate`(자식 Frame/Bg/Thumb/Name)을 맵 수만큼 런타임 복제. 카드 클릭=선택(Frame 하이라이트), **`StartButton`이 확인 단계** — `RunConfig.Map=선택맵`+`RunConfig.Character=선택캐릭터` 후 `SampleScene` 로드. `maps[]`(SerializeField)에 MapDefinition 드래그로 로스터 확장(현재 `Map_BlueberryField` 1장).
 - **`CharacterSelectRoot`**(Phase 4) = 맵 화면 위에 뜨는 캐릭터 선택 팝업. `MapSelectRoot`를 복제해 만듦(StartButton 제거). `MapSelectRoot/ChangeCharButton`→`CharacterSelectUI.Open()`. **카드 클릭 = 즉시 선택+팝업 닫힘**(맵과 달리 확인 단계 없음), `OnSelectionChanged`로 `MapSelectUI`가 `CharNameLabel`을 갱신. `characters[]`(SerializeField)에 CharacterDefinition 드래그로 로스터 확장(현재 `Char_Strawberry` 1종, `displayName`="딸기"). 초상화(`portrait`)는 아직 미설정 → 카드 Thumb 숨김·이름만 표시.
 - `Btn_컬렉션`·`Btn_설정`은 현재 리스너 미연결(향후 자리).
+- `SkillTreeRoot/BuildBar`·`OutgameLevelBar`는 **참조하는 스크립트가 없는 잔재**(빌드슬롯/아웃게임레벨 시스템 철거 흔적) — 정리 대상.
 
 ---
 

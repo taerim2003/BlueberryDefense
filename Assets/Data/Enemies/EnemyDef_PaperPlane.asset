@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
   m_Name: EnemyDef_PaperPlane
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 4.5
+  moveSpeed: 5
   damage: 4
   maxHealth: 6
   xpValue: 5

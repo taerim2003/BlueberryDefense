@@ -10,21 +10,36 @@ using UnityEditor;
 public class SkillTreeEditorWindow : EditorWindow
 {
     private const float ToolbarH = 20f;
+    private const float NodeW = 210f;
+    private const float TitleH = 20f;
 
     private SkillTreeData data;
     private Vector2 panOffset = new Vector2(60, 80);
     private string linkingFrom;
 
     private bool isPanning;
+    private int draggingNode = -1;
 
     private bool pendingAdd;
     private int pendingDelete = -1;
 
+    private GUIStyle titleStyle;
+
     [MenuItem("Blueberry Defense/Skill Tree Editor")]
     public static void Open() => GetWindow<SkillTreeEditorWindow>("Skill Tree");
 
+    // 창을 닫거나 스크립트 리컴파일로 사라질 때 배치를 잃지 않도록 확정 저장
+    private void OnDisable()
+    {
+        if (data == null) return;
+        EditorUtility.SetDirty(data);
+        AssetDatabase.SaveAssets();
+    }
+
     private void OnGUI()
     {
+        titleStyle ??= new GUIStyle(EditorStyles.boldLabel) { alignment = TextAnchor.MiddleCenter };
+
         DrawToolbar();
         if (data == null)
         {
@@ -34,20 +49,10 @@ public class SkillTreeEditorWindow : EditorWindow
 
         DrawEdges();
 
-        Color prevBg = GUI.backgroundColor;
-        BeginWindows();
         for (int i = 0; i < data.nodes.Count; i++)
-        {
-            SkillNode n = data.nodes[i];
-            GUI.backgroundColor = TypeColor(n.type);
-            Rect r = new Rect(n.editorPos + panOffset, new Vector2(210, 10));
-            Rect moved = GUILayout.Window(i, r, DrawNode, string.IsNullOrEmpty(n.displayName) ? n.id : n.displayName);
-            n.editorPos = moved.position - panOffset;
-        }
-        EndWindows();
-        GUI.backgroundColor = prevBg;
+            DrawNode(i);
 
-        // 노드(window)가 자기 위의 클릭을 먼저 소비한 뒤, 남은(빈 공간) 이벤트만 팬으로 처리
+        // 노드가 자기 위의 클릭을 먼저 소비한 뒤, 남은(빈 공간) 이벤트만 팬으로 처리
         HandlePan();
 
         if (pendingAdd) { AddNode(); pendingAdd = false; }
@@ -78,7 +83,7 @@ public class SkillTreeEditorWindow : EditorWindow
             GUILayout.Space(8);
             GUILayout.Label(linkingFrom != null
                 ? $"연결 중: [{linkingFrom}] → 대상 노드의 '여기로' 클릭 (Esc 취소)"
-                : $"노드 {data.nodes.Count}개 · 빈 공간 드래그=이동");
+                : $"노드 {data.nodes.Count}개 · 제목바 드래그=노드 이동 · 빈 공간 드래그=화면 이동");
         }
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
@@ -96,7 +101,7 @@ public class SkillTreeEditorWindow : EditorWindow
                 break;
 
             case EventType.MouseDown:
-                if (e.button != 1 && e.mousePosition.y > ToolbarH) // 우클릭 제외, 빈 공간
+                if (e.button != 1 && e.mousePosition.y > ToolbarH && !IsOverAnyNode(e.mousePosition)) // 우클릭 제외, 빈 공간
                 {
                     isPanning = true;
                     GUIUtility.hotControl = panId; // MouseDrag가 이 창으로 확실히 전달되도록
@@ -105,7 +110,14 @@ public class SkillTreeEditorWindow : EditorWindow
                 break;
 
             case EventType.MouseDrag:
-                if (isPanning)
+                if (draggingNode >= 0 && draggingNode < data.nodes.Count)
+                {
+                    data.nodes[draggingNode].editorPos += e.delta;
+                    EditorUtility.SetDirty(data); // 배치 변경도 에셋 저장 대상으로 표시
+                    e.Use();
+                    Repaint();
+                }
+                else if (isPanning)
                 {
                     panOffset += e.delta;
                     e.Use();
@@ -114,7 +126,13 @@ public class SkillTreeEditorWindow : EditorWindow
                 break;
 
             case EventType.MouseUp:
-                if (isPanning)
+                if (draggingNode >= 0)
+                {
+                    draggingNode = -1;
+                    e.Use();
+                    Repaint();
+                }
+                else if (isPanning)
                 {
                     isPanning = false;
                     if (GUIUtility.hotControl == panId) GUIUtility.hotControl = 0;
@@ -123,6 +141,13 @@ public class SkillTreeEditorWindow : EditorWindow
                 }
                 break;
         }
+    }
+
+    private bool IsOverAnyNode(Vector2 mouse)
+    {
+        foreach (SkillNode n in data.nodes)
+            if (NodeRect(n).Contains(mouse)) return true;
+        return false;
     }
 
     private void AddNode()
@@ -138,9 +163,50 @@ public class SkillTreeEditorWindow : EditorWindow
         EditorUtility.SetDirty(data);
     }
 
-    private void DrawNode(int id)
+    // 노드는 고정 크기 박스로 직접 그린다. (예전엔 GUILayout.Window를 썼는데, Unity가 창 밖으로 나간
+    //  window를 뷰 안으로 강제로 끌어당기고 그 좌표를 editorPos에 되써서 배치가 통째로 망가졌다.)
+    private Rect NodeRect(SkillNode n) => new Rect(n.editorPos + panOffset, new Vector2(NodeW, NodeHeight(n)));
+
+    private static float NodeHeight(SkillNode n)
     {
-        SkillNode n = data.nodes[id];
+        float h = TitleH + 4 * 20f + 18f + 46f + 22f + 6f; // 제목 + 기본4필드 + 메모라벨 + 텍스트영역 + 버튼줄 + 여백
+        if (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SkillEnhance) h += 20f; // 스킬 선택 줄
+        return h + n.prereqIds.Count * 20f;
+    }
+
+    private void DrawNode(int index)
+    {
+        SkillNode n = data.nodes[index];
+        Rect r = NodeRect(n);
+
+        Color prevBg = GUI.backgroundColor;
+        GUI.backgroundColor = TypeColor(n.type);
+        GUI.Box(r, GUIContent.none, GUI.skin.window);
+        GUI.backgroundColor = prevBg;
+
+        Rect title = new Rect(r.x, r.y, r.width, TitleH);
+        GUI.Label(title, string.IsNullOrEmpty(n.displayName) ? n.id : n.displayName, titleStyle);
+        EditorGUIUtility.AddCursorRect(title, MouseCursor.Pan);
+
+        // 제목바 드래그 = 노드 이동 (실제 이동은 HandlePan의 MouseDrag에서)
+        Event e = Event.current;
+        if (e.type == EventType.MouseDown && e.button == 0 && title.Contains(e.mousePosition))
+        {
+            draggingNode = index;
+            e.Use();
+        }
+
+        GUILayout.BeginArea(new Rect(r.x + 6f, r.y + TitleH, r.width - 12f, r.height - TitleH - 2f));
+        DrawNodeBody(n, index);
+        GUILayout.EndArea();
+    }
+
+    private void DrawNodeBody(SkillNode n, int id)
+    {
+        // 노드 폭(210)이 좁아서 라벨 폭을 고정하지 않으면 EditorGUILayout이 창 너비 기준으로 라벨을 잡아
+        // 오른쪽 컨트롤(연결 끊기 x 버튼 등)이 노드 밖으로 밀려 잘려 나간다.
+        float prevLabelWidth = EditorGUIUtility.labelWidth;
+        EditorGUIUtility.labelWidth = 100f;
 
         n.id = EditorGUILayout.TextField("id", n.id);
         n.displayName = EditorGUILayout.TextField("이름", n.displayName);
@@ -175,15 +241,17 @@ public class SkillTreeEditorWindow : EditorWindow
         if (GUILayout.Button("삭제")) pendingDelete = id;
         EditorGUILayout.EndHorizontal();
 
+        // 선행조건 목록 — 각 줄의 x가 그 연결을 끊는다.
+        // (EditorGUILayout.LabelField는 라벨 폭을 통째로 예약해 x 버튼을 밀어내므로 GUILayout.Label을 쓴다)
         for (int k = n.prereqIds.Count - 1; k >= 0; k--)
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("← " + n.prereqIds[k]);
+            GUILayout.Label("← " + n.prereqIds[k], EditorStyles.miniLabel);
             if (GUILayout.Button("x", GUILayout.Width(22))) { n.prereqIds.RemoveAt(k); EditorUtility.SetDirty(data); }
             EditorGUILayout.EndHorizontal();
         }
 
-        GUI.DragWindow();
+        EditorGUIUtility.labelWidth = prevLabelWidth;
     }
 
     private static Color TypeColor(SkillNodeType type) => type switch

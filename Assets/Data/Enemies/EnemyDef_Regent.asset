@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
   m_Name: EnemyDef_Regent
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 1.6
+  moveSpeed: 2.5
   damage: 12
   maxHealth: 30
   xpValue: 15

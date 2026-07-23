@@ -31,6 +31,7 @@ public class UITransition : MonoBehaviour
     private Vector2 _targetPos;
     private Vector3 _targetScale;
     private Vector3 _targetRotation;
+    private Sequence _hideSeq; // 진행 중인 닫힘 연출. 다시 열릴 때 죽이지 않으면 완료 콜백이 새로 연 패널을 꺼버린다.
 
     private void Awake()
     {
@@ -60,6 +61,7 @@ public class UITransition : MonoBehaviour
     {
         _animTarget.DOKill();
         _canvasGroup.DOKill();
+        _hideSeq?.Kill();
 
         var seq = DOTween.Sequence();
 
@@ -75,12 +77,15 @@ public class UITransition : MonoBehaviour
         }
 
         seq.OnComplete(() => gameObject.SetActive(false));
+        _hideSeq = seq;
     }
 
     private void PlayShow()
     {
         _animTarget.DOKill();
         _canvasGroup.DOKill();
+        _hideSeq?.Kill(); // 닫히는 중에 다시 열렸다면 완료 콜백(SetActive(false))이 돌지 않게 취소
+        _hideSeq = null;
 
         _canvasGroup.alpha = 0f;
         _animTarget.localEulerAngles = _targetRotation;

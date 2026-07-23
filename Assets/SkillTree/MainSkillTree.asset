@@ -103,8 +103,8 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - atk_1
-    editorPos: {x: 366.76318, y: -532.4304}
+    - arrow_StartLev
+    editorPos: {x: 641.7632, y: -516.4304}
   - id: crit_2
     displayName: "\uCE58\uBA85 II"
     description: "\uCE58\uBA85\uD0C0 \uD655\uB960 5% \uC99D\uAC00"
@@ -162,7 +162,7 @@ MonoBehaviour:
     description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 15%"
     type: 0
     skill: 0
-    tier: 5
+    tier: 4
     hasEffect: 0
     effect: 0
     perLevel: 5
@@ -176,14 +176,14 @@ MonoBehaviour:
       \uC2DC\uC791"
     type: 2
     skill: 0
-    tier: 4
+    tier: 2
     hasEffect: 0
     effect: 0
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - crit_1
-    editorPos: {x: 662.7632, y: -534.4304}
+    - atk_1
+    editorPos: {x: 358.76318, y: -523.4304}
   - id: orb_BasicFly
     displayName: "\uC624\uBE0C \uBE44\uD589 \uD0C0\uACA9 \uAC00\uB2A5"
     description: "\uAE30\uBCF8 \uC624\uBE0C\uB3C4 \uBE44\uD589 \uC801\uC744 \uD0C0\uACA9\uD560
@@ -329,7 +329,7 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 5
     prereqIds: []
-    editorPos: {x: 381.19995, y: 15.400024}
+    editorPos: {x: 380.19995, y: 7.4000244}
   - id: New_Orb
     displayName: "\uC624\uBE0C \uD574\uAE08"
     description: "<\uC624\uBE0C> \uC2A4\uD0AC\uC774 \uB4F1\uC7A5\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
