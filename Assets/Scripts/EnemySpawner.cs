@@ -6,12 +6,14 @@ public class EnemySpawner : MonoBehaviour
     // fallbackMap = 씬 단독 실행 시(RunBootstrap 없거나 RunConfig.Map null) 사용할 기본 맵.
     [SerializeField] private MapDefinition fallbackMap;
     [SerializeField] private ScalingTable scaling;       // 후반 체력/이속 스텝 배율(전역). 미할당 시 기본값 폴백
+    [SerializeField] private AscensionTable ascension;   // 승천(난이도 등급) 배율표. 미할당 시 기본값 폴백
 
     public MapDefinition ActiveMap { get; set; }
     private MapDefinition Map => ActiveMap != null ? ActiveMap : fallbackMap;
 
     // 3스테이지마다 추가로 붙는 체력/이속 배율 — 처음엔 거의 안 느껴지다가 갈수록 증가폭이 커짐(후반일수록 스텝당 증가폭 자체가 커짐)
     private ScalingTable Scaling => scaling != null ? scaling : ScalingTable.Default;
+    private AscensionTable Ascension => ascension != null ? ascension : AscensionTable.Default;
 
     // 지식 연계 path1: 블루베리 스폰 시 이 확률로 보물상자 블루베리로 대체
     public static float ExtraTreasureChance = 0f;
@@ -127,9 +129,10 @@ public class EnemySpawner : MonoBehaviour
                 if (enemy != null)
                 {
                     int step = currentStage / 3;
-                    float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step));
-                    float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step));
-                    enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier);
+                    AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
+                    float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;
+                    float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step)) * asc.speedMult;
+                    enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
                 }
             }
         }

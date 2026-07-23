@@ -15,35 +15,42 @@
 
 ---
 
-## 현재 상태 (2026-07-21, 세션 10)
+## 현재 상태 (2026-07-22, 세션 11)
 
-**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). SampleScene 저장 완료. **리팩토링 로드맵(Phase 0~5) 완료** — 게임은 이제 단일 씬 + SO 스왑 구조. 세션10은 밸런스/UI 다듬기.
+**빌드**: 컴파일 에러 없음(경고 CS0618 기존 잔존, 무해). Title·SampleScene 저장 완료.
+**세션11 = 게임 루프 구축** — 스킬트리 재편 + 스킬 해금 게이팅 + 승천(난이도 등급). **전부 실플레이 확인 대기.**
 
-### 세션10 — 밸런스/UI 다듬기 (전부 컴파일·저장 완료, 실플레이 확인만 대기)
-- **패시브 데이터화**: `PassiveProgression.cs`(SO, 액티브 SkillProgression 미러링) + `Assets/Data/Skills/Passive_<5종>.asset`(기본값·레벨업당 상승값). `PlayerPassives`가 하드코딩 상수 대신 SO 참조(공통경로 `ApplyPassiveValue`, 정적 조회맵). 치명타/초기화 기본값도 SO 이관 + Awake 판마다 리셋. 카드 설명은 SO값 기반 동적 생성. 진화 트리는 현행 하드코딩 유지(범위 밖).
-- **낙뢰 표시버그 수정**: 일시정지 요약 낙뢰 피해 음수 표기. 원인=`GetDefaultDamage(Lightning)`가 실시간 `ProcDamage`(배율 적용값) 반환. `LightningStorm.BaseProcDamage=12f` 고정상수로 교체. (실제 피해는 원래 정상)
-- **일시정지 창 2열 개편**: `PauseMenu` 1760×940, 왼쪽=액티브·오른쪽=패시브, 항목별 스킬 아이콘. **스크롤 없음 — 후반 액티브 다 모으면 한 열 넘칠 수 있음(그때 스크롤 추가)**.
-- **레벨업 대체보상 = 정수 +10**: `LevelUpStatOptionSO` 폐기 → 레벨업 후보 3개 미만이면 '정수 +10' 1개 끼움, 그래도 모자라면 선택지 1~2개만 뜸.
-- **종이비행기 전용 스테이지 SO화**: `EnemySpawner` `currentStage==7`·`>=5` 게이트 제거 → StageTable 데이터(7스테이지 `paperPlaneChance=1`)로 표현.
-- **호밍 아이콘**: `Icon_Homing.png` 추가·배선(`activeIcons[6]` 2곳)·임포트 설정(Point·Uncompressed·PPU32).
+### 루프 설계 (확정)
+> 스킬트리는 **자원 1개·되돌리기 불가**의 영구 성장. **승천 = 슬더식 난이도 등급**(맵을 난이도별로 다시 도전).
+> "지금 빌드론 못 깸 → 정수 벌어 스킬 해금·강화 → 클리어 → 다음 승천" 반복.
+
+### 이번 세션 변경 (요약)
+- **스킬트리 재편**: 자원 **정수 하나**로 통일(태양결정·가루·아웃게임 전역레벨 **제거**). **되돌리기 불가**(환불·리스펙·빌드셋 슬롯 삭제). 노드 **4종** = 일반/스킬해금/스킬강화/**특수해금(노랑, 리롤 등 기능류)**.
+- **비용 = 등급(tier)제**: 노드마다 정수를 직접 안 치고 `tier`만 지정 → `TierCost = 30 + (tier-1)×10`, **tier 0 = 1정수 고정**. 밸런싱은 `SkillTreeSave.TierCostBase/TierCostStep` 두 상수만.
+- **스킬 해금 게이팅**: `SkillUnlock` 노드를 찍어야 그 스킬이 인게임 레벨업 카드 풀에 등장(캐릭터 풀 ∩ 트리 해금). 트리에 해금 노드가 없는 스킬은 게이팅 안 함(안전 폴백).
+- **신규 강화 노드 구현**: `Homing_MissileNum`(10회마다 미사일+1, **해금 시에만**) · `Sniping_TwoTarget`(타겟+1) · `Rewind_Slow`(되감기 시 전체 50%·2초 둔화) · `Shotgun_CloseBonus`(산탄 버프 공격이 근거리 3.5유닛 적에게 +2타) · `New_Reroll`(리롤 +1, 그 위에 `reroll_2`가 추가).
+- **상시 효과로 전환**: 체력회복 드랍 = **기본 3%** 상시(노드 삭제분). 낙뢰 쿨감 **0.01초/타**로 너프.
+- **승천 시스템**: `AscensionTable` SO(`Assets/Data/AscensionTable.asset`) — 승천 1=×1(현재) / 2=hp1.35·spd1.1·dmg1.25 / 3=hp1.8·spd1.2·dmg1.5. `EnemySpawner`가 스폰 시 곱함. 클리어하면 다음 등급 해금(`AscensionSave`). **맵 선택 화면에 `◀ 승천 N ▶` UI**(해금된 데까지만, 효과 실시간 표시).
 
 ---
 
-## 🧩 콘텐츠 확장 = 순수 데이터 (리팩토링 완료)
-- **밸런스 편집**: `Window > Blueberry Defense > Balance Dashboard` 또는 인스펙터 — `Prog_*.asset`(액티브)·`Passive_*.asset`(패시브)·`EnemyDefinition`·`MapDefinition`·`StageTable`·`ScalingTable`·`CharacterDefinition`. 전역 상수는 `BalanceConstants.cs`. **진화 티어 수치는 아직 코드**(PlayerSkills/PlayerPassives 하드코딩, Tier B 보류).
-- **새 맵**: `MapDefinition` 에셋 만들어 `MapSelectUI.maps[]`에 드래그 → 카드 자동 생성. (현재 `Map_BlueberryField` 1장)
-- **새 캐릭터**: `CharacterDefinition`(고유 시작스킬·허용풀·기본체력·외형) 만들어 `CharacterSelectUI.characters[]`에 드래그. (현재 `Char_Strawberry` 1종)
-- **새 스킬**: `ActiveSkillId` enum + `Fire*` 메서드 추가, 캐릭터 `allowedPool`로 게이팅.
-- **미착수(선택)**: Phase 6 = `PlayerSkills.cs` 분리(약 1400줄, 과설계 우려로 보류). 콘텐츠 확장(2번째 맵·캐릭터)으로 넘어가도 됨 — 선행: 사용자와 콘셉트 확정.
+## 🧩 콘텐츠 확장 = 순수 데이터
+- **밸런스 편집**: `Window > Blueberry Defense > Balance Dashboard` 또는 인스펙터 — `Prog_*`·`Passive_*`·`EnemyDefinition`·`MapDefinition`·`StageTable`·`ScalingTable`·`CharacterDefinition`·**`AscensionTable`**. 전역 상수는 `BalanceConstants.cs`.
+- **스킬트리 편집**: `Blueberry Defense > Skill Tree Editor` — 노드는 id/이름/**타입**/**등급(비용 자동표시)**/(해금·강화면)스킬/설명/선행. 백업본 `MainSkillTree_Backup.asset` 있음.
+- **새 강화 노드 추가법**: 에디터에서 노드 만들고, 그 **id**를 `SkillEffects.Compute`의 case에 추가(효과는 id 기준 레지스트리 — 에셋 `effect` 필드는 신뢰 안 함).
+- **새 맵/캐릭터**: `MapDefinition`/`CharacterDefinition` 만들어 각 Select UI 배열에 드래그.
+- **치트**: `Window > Blueberry Defense > Cheat Window` — 정수 지급, 스킬트리 초기화, **승천 등급 설정·해금 최대로**.
 
 ---
 
 ## ⚠️ 미해결 이슈 / 주의
-- **씬 직접 조작 OK**(사용자 승인): MCP로 씬 열기/수정/저장 자유. 과거 "씬 손대지 말 것" 원칙은 폐기.
-- **에디터 인스펙터 예외(무해)**: 플레이 진입 시 `ObjectPreview.DrawPreview ... Image destroyed` — 인스펙터 프리뷰 오류, 게임/빌드 무관.
+- **실플레이 확인 대기(이번 세션 전부)**: 승천 UI 레이아웃·간격, 스킬 종류 배지 표시, 신규 강화 노드 4종 체감, 해금 게이팅이 실제로 "처음엔 못 깨는" 난이도인지.
+- **시작 캐릭터 풀 축소 필요**: 루프가 성립하려면 `Char_Strawberry.allowedPool`을 1~2개로 줄여야 함(지금은 넓어서 트리 해금 없이도 스킬이 나옴).
+- **Title 씬 스킬트리 패널에 죽은 UI 잔존**: 리셋(리스펙) 버튼·결정/가루 텍스트·전역레벨 경험치바·빌드슬롯 컨테이너 — 코드 필드가 없어져 동작만 멈춘 상태. 트리 UI 재배치할 때 지울 것.
+- **씬 직접 조작 OK**(사용자 승인): MCP로 씬 열기/수정/저장 자유.
+- **에디터 인스펙터 예외(무해)**: 플레이 진입 시 `ObjectPreview.DrawPreview ... Image destroyed`.
 - **노션 토큰 노출**(기존): 폐기·재발급 권장.
-- (기존) **사운드 볼륨 이중곱** — 우선순위 낮음(`SfxPlayer`/`AudioThrottle`/`ObjectPool`/Vefects).
-- (참고) ONBOARDING의 `홈\.mcp.json` 노션 자동로드 안 됨 → user scope 등록이 정답. 정정 필요.
+- (기존) **사운드 볼륨 이중곱** — 우선순위 낮음.
 
 ---
 
@@ -52,13 +59,17 @@
 - 새 이펙트 프리팹은 기존값에 곱하지 말고 `localScale`을 **직접 (1.5,1.5,1.5)로** 세팅.
 - PPU **32**, Main Camera Orthographic Size 5(화면 세로 = 10유닛).
 - 공식: `원본 그림 px = (목표 월드 유닛 × 32) ÷ 1.5` (예: 화면 세로 꽉 = 64 × 213px)
-- 카메라 Size나 플레이어 localScale이 바뀌면 이 배율을 전부 다시 계산할 것.
 
 ---
+
+## 다음 할 일
+1. **실플레이로 루프 검증** — 승천 1 클리어 → 승천 2 해금 → 못 깸 → 트리 해금 → 재도전이 실제로 굴러가는지.
+2. **시작 캐릭터 풀 축소** (위 이슈).
+3. **밸런스 조율** — 승천 배율, 근거리 3.5유닛, 되감기 둔화 50%/2초, 등급별 비용(TierCostBase/Step).
+4. 죽은 트리 UI 정리 + 트리 UI 레이아웃 손보기.
 
 ## 보류 중인 결정 / 백로그
 - UI 시스템: uGUI + TextMeshPro 확정 (한글 폰트 = `Galmuri11 SDF`)
 - 배포(itch.io 등)는 아직 진행 안 함
 - 아웃게임 컬렉션(캐릭터/스킬 해금) = 스킬트리 이후 Phase
-- 진화 시스템·메타 신규 수치는 감으로 잡은 값 — 플레이테스트로 조정 필요
 - 딸기 전용 초상화 도트 미완(`Player.png` 임시) — 그리면 `Char_Strawberry.portrait`만 교체

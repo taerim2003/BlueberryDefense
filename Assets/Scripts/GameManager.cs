@@ -68,9 +68,8 @@ public class GameManager : MonoBehaviour
     // 현재 스테이지 클리어 처리 → 다음 스테이지(또는 게임 클리어)
     private void AdvanceStage()
     {
-        // 스킬트리 자원: 최종(15) 클리어 시 태양결정 +1. (가루는 이제 아웃게임 레벨업으로만 획득 — 스테이지 클리어 지급 폐지)
-        if (CurrentStage >= FinalStage) SkillTreeSave.AddCrystal(1);
-
+        // 스킬트리 자원은 정수 하나로 통일 — 정수는 인게임 적 처치로만 획득(스테이지 클리어 별도 지급 없음).
+        // 승천(난이도 등급) 해금은 별도 시스템에서 처리 예정.
         if (CurrentStage >= FinalStage)
         {
             GameClear();
@@ -111,6 +110,7 @@ public class GameManager : MonoBehaviour
         IsGameClear = true;
         Debug.Log("Game Clear");
         BankRunCurrency();
+        AscensionSave.UnlockUpTo(RunConfig.AscensionLevel + 1); // 이 등급 클리어 → 다음 승천 해금(StS식 루프)
         Time.timeScale = 0f;
     }
 

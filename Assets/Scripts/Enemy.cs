@@ -32,7 +32,8 @@ public class Enemy : MonoBehaviour
 
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
-    // 하트(체력회복) 드랍은 스킬트리 루트(root_hp) 해금 시에만 발동 — 확률은 MetaBonuses.HealDropChanceBonus로 전적으로 결정
+    // 하트(체력회복) 드랍 확률 = 기본 3% + MetaBonuses.HealDropChanceBonus(스킬트리 가산, 현재 대응 노드 없음)
+    private const float BaseHealDropChance = 0.03f;
 
     // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=노랑, 2회=파랑, 3회=보라, 4회=마젠타)
     private static readonly Color[] RecursiveLightningColors =
@@ -232,7 +233,7 @@ public class Enemy : MonoBehaviour
                     MetaRun.Collect(essenceDropAmount); // 프리팹 미설정 시 즉시 적립(폴백)
             }
 
-            if (HeartPickupPrefab != null && Random.value < MetaBonuses.HealDropChanceBonus)
+            if (HeartPickupPrefab != null && Random.value < BaseHealDropChance + MetaBonuses.HealDropChanceBonus)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
 
             SpawnDeathBurst();
@@ -312,7 +313,8 @@ public class Enemy : MonoBehaviour
     public bool TakeSkillHit(float baseDamage, float critChance, ActiveSkillId source)
     {
         int natural = Mathf.Max(1, PlayerSkills.NaturalHits(source)); // 스킬 고유 타수(기본공격=BasicAttackHits, 그 외 1)
-        int total = natural + PlayerSkills.GlobalBonusHits(source);   // 산탄(타수) 버프로 추가된 타격 수
+        int total = natural + PlayerSkills.GlobalBonusHits(source)     // 산탄(타수) 버프로 추가된 타격 수
+                    + PlayerSkills.CloseRangeBonusHits(source, transform.position); // 산탄 근거리 조준(+2, 스킬트리)
         float per = baseDamage / natural;                             // 자연 타수 기준 1히트 크기 → 보너스 히트는 추가 데미지
 
         if (total <= 1)

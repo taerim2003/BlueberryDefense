@@ -1,0 +1,414 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b45ba58cae185ea478f212fb9c3b2b2f, type: 3}
+  m_Name: MainSkillTree_Backup
+  m_EditorClassIdentifier: Assembly-CSharp::SkillTreeData
+  nodes:
+  - id: root_hp
+    displayName: "\uCCB4\uB825\uD68C\uBCF5"
+    description: "\uC801\uB4E4\uC774 \uC77C\uC815 \uD655\uB960\uB85C \uCCB4\uB825\uD68C\uBCF5
+      \uC544\uC774\uD15C\uC744 \uB4DC\uB78D"
+    type: 0
+    skill: 0
+    hasEffect: 1
+    effect: 1
+    perLevel: 20
+    maxLevel: 1
+    cost: 40
+    costGrowth: 1.5
+    prereqIds: []
+    editorPos: {x: -132.9878, y: -148.2221}
+  - id: atk_1
+    displayName: "\uACF5\uACA9\uB825 I"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 5% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 1
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - root_hp
+    editorPos: {x: -528.9878, y: -157.22131}
+  - id: atk_2
+    displayName: "\uACF5\uACA9\uB825 II"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 8% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 1
+    effect: 0
+    perLevel: 8
+    maxLevel: 5
+    cost: 120
+    costGrowth: 1.5
+    prereqIds:
+    - atk_1
+    editorPos: {x: -876.9878, y: -294.22058}
+  - id: hp_1
+    displayName: "\uCCB4\uB825 I"
+    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 10 \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 1
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - root_hp
+    editorPos: {x: 292.51233, y: -293.6222}
+  - id: hp_2
+    displayName: "\uCCB4\uB825 II"
+    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 15 \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - hp_1
+    editorPos: {x: 538.7632, y: -544.4304}
+  - id: reroll_1
+    displayName: "\uB9AC\uB864 \uD574\uAE08"
+    description: "\uB808\uBCA8 \uC5C5 \uC120\uD0DD\uC9C0\uB97C \uAC8C\uC784\uB2F9
+      1\uD68C \uB9AC\uB864\uD560 \uC218 \uC788\uB294 \uAE30\uB2A5 \uD574\uAE08"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 1
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - root_hp
+    editorPos: {x: 234.76318, y: 97.56958}
+  - id: reroll_2
+    displayName: "\uB9AC\uB864 I"
+    description: "\uAC8C\uC784\uB2F9 \uB9AC\uB864 +1"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - reroll_1
+    editorPos: {x: 619.7632, y: 203.56958}
+  - id: crit_1
+    displayName: "\uCE58\uBA85 I"
+    description: "\uCE58\uBA85\uD0C0 \uD655\uB960 3% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gate_crit
+    editorPos: {x: -557.2368, y: 205.56958}
+  - id: crit_2
+    displayName: "\uCE58\uBA85 II"
+    description: "\uCE58\uBA85\uD0C0 \uD655\uB960 5% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - crit_1
+    editorPos: {x: -392.23682, y: 441.56958}
+  - id: exp_1
+    displayName: "\uACBD\uD5D8 I"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +5%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - reroll_1
+    editorPos: {x: 51.763184, y: 342.56958}
+  - id: exp_2
+    displayName: "\uACBD\uD5D8 II"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +8%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - exp_1
+    editorPos: {x: -107.23682, y: 602.5696}
+  - id: gold_1
+    displayName: "\uBD80\uC720 I"
+    description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 \uC99D\uAC00 +10%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - hp_1
+    editorPos: {x: 36.763184, y: -532.4304}
+  - id: gold_2
+    displayName: "\uBD80\uC720 II"
+    description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 15%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gold_1
+    editorPos: {x: -180.23682, y: -782.4304}
+  - id: gate_crit
+    displayName: "\uAE30\uBCF8 \uCE58\uBA85\uD0C0"
+    description: "\uAE30\uBCF8 \uCE58\uBA85\uD0C0 \uD655\uB960 10% \uC99D\uAC00"
+    type: 1
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - atk_1
+    editorPos: {x: -826.2368, y: 18.56958}
+  - id: arrow_StartLev
+    displayName: "\uD654\uC0B4 \uC219\uB828"
+    description: "(\uB538\uAE30 \uC120\uD0DD \uC2DC) \uD654\uC0B4 3\uB808\uBCA8\uB85C
+      \uC2DC\uC791"
+    type: 2
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - crit_1
+    editorPos: {x: -872.2368, y: 431.56958}
+  - id: gate_fly
+    displayName: "\uBE44\uD589 \uCD94\uAC00 \uD53C\uD574"
+    description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +20%"
+    type: 1
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - exp_1
+    editorPos: {x: 437.76318, y: 490.56958}
+  - id: orb_BasicFly
+    displayName: "\uC624\uBE0C \uBE44\uD589 \uD0C0\uACA9 \uAC00\uB2A5"
+    description: "\uAE30\uBCF8 \uC624\uBE0C\uB3C4 \uBE44\uD589 \uC801\uC744 \uD0C0\uACA9\uD560
+      \uC218 \uC788\uAC8C \uB428"
+    type: 2
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gate_fly
+    editorPos: {x: 766.7632, y: 505.56958}
+  - id: fly_1
+    displayName: "\uBE44\uD589 I"
+    description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +5%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gate_fly
+    editorPos: {x: 347.76318, y: 722.5696}
+  - id: eagle_fly
+    displayName: "\uB3C5\uC218\uB9AC \uBE44\uD589 \uCD94\uAC00 \uD53C\uD574"
+    description: "\uB3C5\uC218\uB9AC \uD22C\uD558\uC758 \uBE44\uD589 \uC801 \uCD94\uAC00
+      \uD53C\uD574 +30%"
+    type: 2
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - fly_1
+    editorPos: {x: 699.7632, y: 905.5696}
+  - id: fly_2
+    displayName: "\uBE44\uD589 II"
+    description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +10%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - fly_1
+    editorPos: {x: 223.76318, y: 946.5696}
+  - id: gate_cooldown
+    displayName: "\uCFE8\uD0C0\uC784 \uAC10\uC18C"
+    description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -10%"
+    type: 1
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - hp_1
+    editorPos: {x: 648.7632, y: -263.43042}
+  - id: cool_1
+    displayName: "\uCFE8\uB2E4\uC6B4 I"
+    description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -3%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gate_cooldown
+    editorPos: {x: 973.7632, y: -275.43042}
+  - id: cool_2
+    displayName: "\uCFE8\uB2E4\uC6B4 II"
+    description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -5%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - cool_1
+    editorPos: {x: 1283.7632, y: -380.43042}
+  - id: tornado_CoolDownBonus
+    displayName: "\uC2E0\uC18D\uD55C \uD68C\uC624\uB9AC"
+    description: "\uD68C\uC624\uB9AC\uB294 \uBAA8\uB4E0 \uCFE8\uD0C0\uC784 \uAC10\uC18C
+      \uD6A8\uACFC\uB97C 1.5\uBC30\uB85C \uBC1B\uC74C"
+    type: 2
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - cool_1
+    editorPos: {x: 1075.7632, y: -634.4304}
+  - id: refresh_bonus
+    displayName: "\uB9AC\uD504\uB808\uC26C I"
+    description: "\uB9AC\uD504\uB808\uC26C \uAE30\uBCF8 \uCFE8\uD0C0\uC784 \uCD08\uAE30\uD654
+      \uD655\uB960 5% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gate_cooldown
+    editorPos: {x: 805.7632, y: -32.43042}
+  - id: thunder_Cooldown
+    displayName: "\uB099\uB8B0 \uCFE8\uD0C0\uC784 \uAC10\uC18C"
+    description: "\uB099\uB8B0\uAC00 \uCE60 \uB54C\uB9C8\uB2E4 \uB099\uB8B0 \uCFE8\uD0C0\uC784
+      -0.1\uCD08"
+    type: 2
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - refresh_bonus
+    editorPos: {x: 1102.7632, y: 54.56958}
+  - id: atk_3
+    displayName: "\uACF5\uACA9\uB825 III"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - atk_2
+    editorPos: {x: -1149.2368, y: -447.43042}
+  - id: gold_3
+    displayName: "\uBD80\uC720 III"
+    description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 25%"
+    type: 0
+    skill: 0
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    cost: 50
+    costGrowth: 1.5
+    prereqIds:
+    - gold_2
+    editorPos: {x: -403.23688, y: -979.4304}

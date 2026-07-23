@@ -18,6 +18,9 @@ public enum ActiveSkillId
     // enum 끝에 추가 — 아이콘 인덱스/저장값 유지
 }
 
+// 액티브 스킬의 성격 분류(레벨업 카드·일시정지 요약에 배지로 표시).
+public enum SkillCategory { Attack, Buff, Utility }
+
 public class EquippedSkill
 {
     public ActiveSkillId Id;
@@ -88,6 +91,21 @@ public class PlayerSkills : MonoBehaviour
         return !shotgunSingleTarget || source == shotgunTargetSkill;
     }
 
+    private static PlayerSkills instance; // 근거리 판정 등 정적 메서드가 플레이어 위치를 참조하기 위한 인스턴스
+    private const float ShotgunCloseRange = 3.5f;
+
+    // Enemy.TakeSkillHit가 참조: 산탄 버프를 받은 공격이 플레이어 근처(ShotgunCloseRange) 적을 때릴 때 추가 타수(+2).
+    // 스킬트리 "근거리 조준"(Shotgun_CloseBonus) 해금 시에만.
+    public static int CloseRangeBonusHits(ActiveSkillId source, Vector3 enemyPos)
+    {
+        if (!MetaBonuses.ShotgunCloseBonus || instance == null) return 0;
+        if (!IsShotgunBuffed(source)) return 0;
+        return Vector2.Distance(instance.transform.position, enemyPos) <= ShotgunCloseRange ? 2 : 0;
+    }
+
+    // 버프류 스킬 = 지속시간 버프를 부여하고 HUD 우상단에 버프 아이콘이 뜨는 스킬 (산탄·낙뢰)
+    public static bool IsBuffSkill(ActiveSkillId id) => id == ActiveSkillId.Shotgun || id == ActiveSkillId.Lightning;
+
     // 리프레쉬(재사용 초기화)가 발동될 때 — HUD가 구독해 리프레쉬 패시브 아이콘에 보잉 연출
     public static System.Action OnRefreshProc;
 
@@ -133,6 +151,7 @@ public class PlayerSkills : MonoBehaviour
 
     private void Awake()
     {
+        instance = this;
         passives = GetComponent<PlayerPassives>();
         health = GetComponent<PlayerHealth>();
         BuildProgressionLookup(); // 정적 조회맵 승격. AcquireSkill 전에 세팅해야 기본 수치가 채워짐
@@ -484,6 +503,35 @@ public class PlayerSkills : MonoBehaviour
         _ => id.ToString(),
     };
 
+    // ── 스킬 종류(공격/버프/유틸) ── 대부분 공격, 산탄=버프(타수↑), 되감기=유틸(쿨 되감기).
+    public static SkillCategory GetSkillCategory(ActiveSkillId id) => id switch
+    {
+        ActiveSkillId.Shotgun => SkillCategory.Buff,
+        ActiveSkillId.Rewind => SkillCategory.Utility,
+        _ => SkillCategory.Attack,
+    };
+
+    public static string GetSkillCategoryLabel(SkillCategory c) => c switch
+    {
+        SkillCategory.Buff => "버프",
+        SkillCategory.Utility => "유틸",
+        _ => "공격",
+    };
+
+    private static string CategoryColorHex(SkillCategory c) => c switch
+    {
+        SkillCategory.Buff => "6FD3FF",    // 하늘 = 버프
+        SkillCategory.Utility => "C7A8FF", // 보라 = 유틸
+        _ => "FF8A6B",                     // 주황 = 공격
+    };
+
+    // 이름 앞에 붙이는 리치텍스트 배지("[공격] " 등). UI 요소 추가 없이 제목에 인라인.
+    public static string GetActiveSkillBadge(ActiveSkillId id)
+    {
+        SkillCategory c = GetSkillCategory(id);
+        return $"<size=68%><color=#{CategoryColorHex(c)}>[{GetSkillCategoryLabel(c)}]</color></size> ";
+    }
+
     // 일시정지(ESC) 요약용: 이 스킬이 1레벨 기본값 대비 레벨업으로 얼마나 강해졌는지 항목별로 정리.
     // (진화 효과는 PauseMenu가 PathTier 제목으로 따로 표시하므로 여기선 레벨업 성장분만 다룬다)
     public static List<string> DescribeLevelUpGains(EquippedSkill s)
@@ -806,6 +854,9 @@ public class PlayerSkills : MonoBehaviour
         // 스킬트리 "신속한 회오리": 회오리는 쿨타임 감소분(1-CooldownMult)을 1.5배로 받음
         if (skill.Id == ActiveSkillId.Whirlwind && MetaBonuses.WhirlwindCooldownBonus)
             cdMult = Mathf.Max(0.05f, 1f - 1.5f * (1f - MetaBonuses.CooldownMult));
+        // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소
+        if (PlayerPassives.BuffSkillCooldownMult < 1f && IsBuffSkill(skill.Id))
+            cdMult *= PlayerPassives.BuffSkillCooldownMult;
         skill.CooldownTimer = baseCd * cdMult;
 
         if (passives != null && passives.HasPassive(PassiveSkillId.Refresh) && Random.value < PlayerPassives.RefreshChance + MetaBonuses.RefreshChanceBonus)
@@ -948,6 +999,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[0] >= 1) targets += 1; // Route1 T1: +1 (총 2)
         if (skill.PathTier[0] >= 2) targets += 1; // T2(타겟수++): +1 (총 3)
         if (skill.PathTier[0] >= 3) targets += 2; // T3: +2 (총 5)
+        if (MetaBonuses.SnipingExtraTarget) targets += 1; // 스킬트리 "한 발에 두 놈": +1 타겟
 
         List<Enemy> chosen = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
             .Where(e => e != null)
@@ -1040,8 +1092,8 @@ public class PlayerSkills : MonoBehaviour
 
         // Route1(path0): 미사일 개수 N배
         int count = skill.PathTier[0] >= 3 ? 15 : skill.PathTier[0] >= 2 ? 10 : skill.PathTier[0] >= 1 ? 7 : 5;
-        // 15번 사용할 때마다 미사일 +1발 (GrowthStacks = 이번 판 누적 사용 횟수)
-        count += skill.GrowthStacks / 15;
+        // 스킬트리 "더 많은 폭격"(Homing_MissileNum) 해금 시에만: 10회 사용마다 미사일 +1발
+        if (MetaBonuses.HomingMissileGrowth) count += skill.GrowthStacks / 10;
         // Route2(path1): T2 폭발, T3 폭발 강화
         bool explode = skill.PathTier[1] >= 2;
         float explodeRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
@@ -1119,6 +1171,11 @@ public class PlayerSkills : MonoBehaviour
 
         foreach (EquippedSkill s in equippedSkills)
             if (s != skill) s.CooldownTimer = Mathf.Max(0f, s.CooldownTimer - amount);
+
+        // 스킬트리 "블루베리 둔화"(Rewind_Slow) 해금 시: 되감을 때 모든 적을 천천히 감아 둔화(50% 감속, 2초)
+        if (MetaBonuses.RewindSlowAll)
+            foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+                if (e != null) e.ApplySlow(0.5f, 2f);
 
         // Route2(path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
         if (skill.PathTier[1] >= 1)

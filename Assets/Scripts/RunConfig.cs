@@ -6,4 +6,5 @@ public static class RunConfig
 {
     public static MapDefinition Map;
     public static CharacterDefinition Character; // 선택 화면이 채움. null이면 프리팹 기본값(현행)으로 동작
+    public static int AscensionLevel = 1;        // 이번 판 승천(난이도) 등급. 선택 화면이 채움(기본 1 = 현재 난이도)
 }

@@ -97,6 +97,7 @@ public class HUDController : MonoBehaviour
             {
                 lastSeenStage = stage;
                 ShowStageBanner(stage);
+                PunchIcon(stageText.rectTransform);
             }
         }
 

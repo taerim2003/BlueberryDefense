@@ -18,6 +18,7 @@ public class CheatWindow : EditorWindow
 
         // 메타 자원(스킬트리) — Player/Play 모드 없이도 항상 사용 가능(PlayerPrefs 저장). 타이틀 씬에서도 됨.
         DrawMetaResourceSection();
+        DrawAscensionSection();
 
         if (!Application.isPlaying)
         {
@@ -50,19 +51,33 @@ public class CheatWindow : EditorWindow
     private void DrawMetaResourceSection()
     {
         EditorGUILayout.LabelField("메타 자원 (스킬트리)", EditorStyles.boldLabel);
-        EditorGUILayout.LabelField($"정수 {SkillTreeSave.EssenceEarned}  ·  결정 {SkillTreeSave.CrystalEarned}  ·  가루 {SkillTreeSave.PowderEarned}");
+        EditorGUILayout.LabelField($"정수 {SkillTreeSave.EssenceEarned}");
 
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("정수 +100")) SkillTreeSave.AddEssence(100);
         if (GUILayout.Button("정수 +1000")) SkillTreeSave.AddEssence(1000);
         EditorGUILayout.EndHorizontal();
 
+        if (GUILayout.Button("스킬트리 자원·해금 전체 초기화")) SkillTreeSave.ResetAll();
+
+        EditorGUILayout.Space();
+    }
+
+    private void DrawAscensionSection()
+    {
+        EditorGUILayout.LabelField("승천 (난이도 등급)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"이번 판 승천 {RunConfig.AscensionLevel}  ·  해금 최고 {AscensionSave.Unlocked}");
+
+        // 이번 판 등급 설정(Play 중이면 다음 스폰부터 즉시 반영). 버튼 수 = 기본표 최고 레벨.
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("결정 +5")) SkillTreeSave.AddCrystal(5);
-        if (GUILayout.Button("가루 +5")) SkillTreeSave.AddPowder(5);
+        for (int lv = 1; lv <= AscensionTable.Default.MaxLevel; lv++)
+            if (GUILayout.Button($"승천 {lv}")) RunConfig.AscensionLevel = lv;
         EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("스킬트리 자원·해금 전체 초기화")) SkillTreeSave.ResetAll();
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("해금 최대로")) AscensionSave.UnlockUpTo(AscensionTable.Default.MaxLevel);
+        if (GUILayout.Button("승천 해금 초기화")) AscensionSave.Reset();
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
     }

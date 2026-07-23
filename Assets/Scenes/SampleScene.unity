@@ -4008,6 +4008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8eb5aeb3ee3c4a84e9d9f1c487e56cd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRunApplier
+  tree: {fileID: 11400000, guid: 8d2930d273fbc9445bc944154bf9ba8d, type: 2}
 --- !u!114 &487568135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7823,6 +7824,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   fallbackMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
   scaling: {fileID: 11400000, guid: 9484fa5d921a29d43820bf2806a38679, type: 2}
+  ascension: {fileID: 11400000, guid: 8273c9a8898f0b1409cbf7b89b9b86ff, type: 2}
 --- !u!4 &984900548
 Transform:
   m_ObjectHideFlags: 0

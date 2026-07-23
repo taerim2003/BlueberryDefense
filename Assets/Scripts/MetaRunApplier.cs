@@ -4,6 +4,10 @@ using UnityEngine;
 // 인게임 스탯(플레이어 컴포넌트)과 전투 런타임 보너스(MetaBonuses)에 반영한다.
 public class MetaRunApplier : MonoBehaviour
 {
+    // 스킬 해금 게이팅에 필요한 트리 에셋(효과 반영은 id 레지스트리라 트리 없이도 되지만,
+    // 어떤 스킬을 해금 노드가 열어주는지는 트리 데이터가 있어야 안다). MainSkillTree.asset을 배선.
+    [SerializeField] private SkillTreeData tree;
+
     private SkillEffects.Totals totals;
 
     private void Awake()
@@ -13,6 +17,15 @@ public class MetaRunApplier : MonoBehaviour
         MetaRun.Reset();
         totals = SkillEffects.Compute();
         ApplyRuntimeBonuses();
+        ApplySkillGating();
+    }
+
+    // 스킬트리의 해금 노드 → 인게임 카드 풀 게이팅 집합 세팅(트리 미배선이면 게이팅 없음 = 현행).
+    private void ApplySkillGating()
+    {
+        if (tree == null) return;
+        foreach (var s in SkillTreeSave.GatedSkills(tree)) MetaBonuses.GatedSkills.Add(s);
+        foreach (var s in SkillTreeSave.UnlockedSkills(tree)) MetaBonuses.TreeUnlockedSkills.Add(s);
     }
 
     private void Start()
@@ -30,9 +43,13 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.EagleFlyDamageBonus = 0.01f * totals.EagleFlyDmgPct;
         MetaBonuses.HealDropChanceBonus = 0.01f * totals.HealDropPct;
         MetaBonuses.OrbCanHitFlying = totals.OrbFly;
+        MetaBonuses.HomingMissileGrowth = totals.HomingGrowth;
         MetaBonuses.WhirlwindCooldownBonus = totals.WhirlwindCdBonus;
         MetaBonuses.RefreshChanceBonus = 0.01f * totals.RefreshPct;
         MetaBonuses.ThunderCooldownPerStrike = totals.ThunderCdPerStrike;
+        MetaBonuses.SnipingExtraTarget = totals.SnipingExtraTarget;
+        MetaBonuses.RewindSlowAll = totals.RewindSlow;
+        MetaBonuses.ShotgunCloseBonus = totals.ShotgunClose;
         MetaBonuses.RerollCount = totals.RerollCount;
         if (totals.ArrowStartLevel > 1) MetaBonuses.ArrowStartLevel = totals.ArrowStartLevel;
         // Duration/Regen은 현재 트리에 대응 노드 없음 → Reset 기본값 유지.

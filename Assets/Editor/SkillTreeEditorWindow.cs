@@ -146,6 +146,13 @@ public class SkillTreeEditorWindow : EditorWindow
         n.displayName = EditorGUILayout.TextField("이름", n.displayName);
         n.type = (SkillNodeType)EditorGUILayout.EnumPopup("타입", n.type);
 
+        // 비용 등급(0,1,2…). 0=1정수 고정. 인게임 정수 비용은 SkillTreeSave.TierCost가 등급→비용으로 계산.
+        n.tier = Mathf.Max(0, EditorGUILayout.IntField($"등급 (={SkillTreeSave.TierCost(Mathf.Max(0, n.tier))} 정수)", n.tier));
+
+        // 스킬 해금/강화 노드는 대상 스킬을 지정(해금 노드는 이 스킬이 인게임 카드 풀에 등장).
+        if (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SkillEnhance)
+            n.skill = (ActiveSkillId)EditorGUILayout.EnumPopup("스킬", n.skill);
+
         EditorGUILayout.LabelField("효과 / 메모", EditorStyles.miniBoldLabel);
         n.description = EditorGUILayout.TextArea(n.description, GUILayout.Height(42));
 
@@ -181,9 +188,10 @@ public class SkillTreeEditorWindow : EditorWindow
 
     private static Color TypeColor(SkillNodeType type) => type switch
     {
-        SkillNodeType.Gate => new Color(1f, 0.8f, 0.2f),        // 금색
-        SkillNodeType.ActiveSkill => new Color(1f, 0.45f, 0.9f), // 마젠타
-        _ => Color.cyan,                                         // 일반
+        SkillNodeType.SkillUnlock => new Color(1f, 0.8f, 0.2f),     // 금색 = 스킬 해금
+        SkillNodeType.SkillEnhance => new Color(1f, 0.45f, 0.9f),   // 마젠타 = 스킬 강화
+        SkillNodeType.SpecialUnlock => new Color(0.95f, 0.95f, 0.2f), // 노랑 = 특수 해금
+        _ => Color.cyan,                                            // 일반
     };
 
     private void DrawEdges()

@@ -4,8 +4,13 @@ using UnityEngine;
 // 노드 스킬트리의 데이터(에셋). 커스텀 에디터 창(SkillTreeEditorWindow)에서 편집하고,
 // 런타임 인게임 트리 UI가 같은 에셋을 읽는다. 노드 위치(editorPos)는 인게임 레이아웃으로도 재사용.
 
-// ActiveSkill = 루트 끝에 배치하는 "특정 액티브 스킬 강화" 노드 (enum 끝에 추가 — 기존 저장값 유지)
-public enum SkillNodeType { Normal, Gate, ActiveSkill }
+// 노드 4종:
+//   Normal        = 일반 스탯 노드(레벨제 가능, 효과는 id 기준 SkillEffects 레지스트리)
+//   SkillUnlock   = 스킬 해금 노드. 해금해야 그 스킬(node.skill)이 인게임 레벨업 카드 풀에 등장
+//   SkillEnhance  = 스킬 강화 노드. 스킬별 고유 강화(오브 비행타격·낙뢰 쿨감 등, id 기준 SkillEffects)
+//   SpecialUnlock = 특수(기능) 해금 노드. 스킬이 아닌 기능류(리롤 등) 1회 개방. 효과는 id 기준 SkillEffects.
+// (enum 순서 유지 — 기존 저장/직렬화값 흔들지 않도록 끝에만 추가할 것)
+public enum SkillNodeType { Normal, SkillUnlock, SkillEnhance, SpecialUnlock }
 
 [System.Serializable]
 public class SkillNode
@@ -16,21 +21,24 @@ public class SkillNode
 
     public SkillNodeType type = SkillNodeType.Normal;
 
-    // 효과(스탯 반영) — Gate 노드나 순수 분기 노드는 hasEffect=false
+    // SkillUnlock/SkillEnhance 노드가 대상으로 삼는 액티브 스킬.
+    // SkillUnlock: 이 스킬을 레벨업 카드 풀에 해금. SkillEnhance: 어느 스킬 강화인지(표시용, 효과는 id 레지스트리).
+    public ActiveSkillId skill = ActiveSkillId.BasicAttack;
+
+    // 노드 비용 "등급"(1,2,3…). 노드마다 정수 비용을 직접 치지 않고 등급만 지정한다.
+    // 실제 정수 비용은 SkillTreeSave.TierCost가 등급→비용 선형변환으로 계산(공식 상수만 바꾸면 전체 밸런싱).
+    // 인게임엔 계산된 정수만 보이고 등급은 노출 안 함.
+    public int tier = 1;
+
+    // 효과(스탯 반영) 메모 — 실제 효과는 id 기준 SkillEffects 레지스트리(effect 필드는 신뢰 안 함).
     public bool hasEffect = true;
     public MetaUpgradeId effect = MetaUpgradeId.Attack;
     public float perLevel = 5f;
     public int maxLevel = 5;
 
-    // 일반 노드 비용(정수), Gate 노드 비용(태양 결정)
-    public int cost = 50;
-    public float costGrowth = 1.5f;
-    public int gateCost = 1;
-
     public List<string> prereqIds = new List<string>();
     public Vector2 editorPos = new Vector2(200, 200);
 
-    public int CostForLevel(int level) => Mathf.RoundToInt(cost * Mathf.Pow(costGrowth, level));
     public float TotalAt(int level) => perLevel * level;
 }
 
@@ -42,63 +50,21 @@ public class SkillTreeData : ScriptableObject
     public SkillNode Find(string id) => nodes.Find(n => n.id == id);
 }
 
-// 노드가 소비하는 자원 종류. Normal→정수, Gate→태양결정, ActiveSkill→가루.
-public enum SkillResource { Essence, Crystal, Powder }
-
 // ─────────────────────────────────────────────────────────────────────────────
-// 스킬트리 저장/진행 상태. 모든 노드는 일회성 개방(레벨 없음).
-//   정수(essence)   = 인게임 획득, 일반 노드 비용(루트에 가까울수록 싸고 가장자리로 갈수록 비쌈)
-//   태양결정(crystal) = 스테이지15/20 클리어, 게이트 노드 비용(node.gateCost)
-//   가루(powder)    = 스테이지 클리어마다 +1, ActiveSkill(스킬강화) 노드 비용(개당 1)
-// available = earned − Σ(해금된 노드 비용). earned는 단조증가라 유효했던 빌드는 항상 재구매 가능.
-// 상세 규칙은 SKILLTREE_DESIGN.md 참고.
+// 스킬트리 저장/진행 상태. **자원 1개(정수)** · **되돌리기 불가**(환불/리스펙/빌드셋 없음).
+//   정수(essence) = 인게임 획득. 모든 노드 비용을 정수로 지불.
+// available = earned − Σ(해금된 노드 비용). earned는 단조증가.
+// 승천(난이도 등급)은 별도 시스템 — 이 트리는 판을 넘어 영구히 유지되는 성장.
 // ─────────────────────────────────────────────────────────────────────────────
 public static class SkillTreeSave
 {
     private const string EssenceKey = "meta.currency"; // 기존 정수 키 재사용(인게임 적립분 이어짐)
-    private const string CrystalKey = "meta.crystal";
-    private const string PowderKey = "meta.powder";
     private const string CurrentKey = "skilltree.current";
-    private const string BuildPrefix = "skilltree.build.";
-    public const int BuildSlots = 5;
 
-    // ── 자원 earned 총량 ──
+    // ── 정수 earned 총량 ──
     public static int EssenceEarned => PlayerPrefs.GetInt(EssenceKey, 0);
-    public static int CrystalEarned => PlayerPrefs.GetInt(CrystalKey, 0);
-    public static int PowderEarned => PlayerPrefs.GetInt(PowderKey, 0);
 
-    // 정수 적립 시 아웃게임 레벨이 오르면 그만큼 가루를 지급한다(가루는 오직 레벨업으로만 획득).
-    public static void AddEssence(int amount)
-    {
-        if (amount <= 0) return;
-        int before = OutgameLevel;
-        Add(EssenceKey, amount);
-        int gained = OutgameLevel - before;
-        if (gained > 0) AddPowder(gained);
-    }
-
-    public static void AddCrystal(int amount) => Add(CrystalKey, amount);
-    public static void AddPowder(int amount) => Add(PowderKey, amount);
-
-    // ── 아웃게임 레벨: 지금까지 번 정수 총합(EssenceEarned)이 그대로 경험치. 레벨업마다 가루 +1. ──
-    // 레벨 L에 "도달"하는 데 필요한 누적 정수 = LevelXpBase·L·(L-1) → L→L+1 비용은 2·LevelXpBase·L 로 점증.
-    private const int LevelXpBase = 20;
-
-    public static int EssenceForLevel(int level) => LevelXpBase * level * (level - 1);
-
-    public static int OutgameLevel => LevelForEssence(EssenceEarned);
-
-    public static int LevelForEssence(int totalEssence)
-    {
-        int level = 1;
-        while (level < 9999 && EssenceForLevel(level + 1) <= totalEssence) level++;
-        return level;
-    }
-
-    // 경험치 바 UI용: 현재 레벨 구간에서의 진행 정도
-    public static int XpIntoCurrentLevel => EssenceEarned - EssenceForLevel(OutgameLevel);
-    public static int XpForNextLevel => EssenceForLevel(OutgameLevel + 1) - EssenceForLevel(OutgameLevel);
-    public static float LevelProgress => XpForNextLevel > 0 ? Mathf.Clamp01((float)XpIntoCurrentLevel / XpForNextLevel) : 0f;
+    public static void AddEssence(int amount) => Add(EssenceKey, amount);
 
     private static void Add(string key, int amount)
     {
@@ -113,7 +79,7 @@ public static class SkillTreeSave
 
     public static int LevelOf(string id) => Levels().TryGetValue(id, out int lv) ? lv : 0;
 
-    // 토폴로지/게이팅/빌드 코드가 그대로 쓰도록 "보유(level≥1) id 집합"을 파생 제공
+    // 토폴로지/게이팅 코드가 그대로 쓰도록 "보유(level≥1) id 집합"을 파생 제공
     public static HashSet<string> UnlockedIds()
     {
         var set = new HashSet<string>();
@@ -123,66 +89,68 @@ public static class SkillTreeSave
 
     public static bool IsUnlocked(string id) => LevelOf(id) >= 1;
 
-    // 노드 만렙: 스탯 노드(Normal)만 여러 레벨(에셋 maxLevel), Gate/ActiveSkill(결정/가루)은 1회 개방
+    // 노드 만렙: 스탯 노드(Normal)만 여러 레벨(에셋 maxLevel), 스킬 해금/강화는 1회 개방
     public static int MaxLevelOf(SkillNode n) =>
         n.type == SkillNodeType.Normal ? Mathf.Max(1, n.maxLevel) : 1;
 
-    // ── 노드 비용/자원 종류 ──
-    public static SkillResource ResourceOf(SkillNode n) =>
-        n.type == SkillNodeType.Gate ? SkillResource.Crystal :
-        n.type == SkillNodeType.ActiveSkill ? SkillResource.Powder : SkillResource.Essence;
-
-    public static int CostOf(SkillTreeData tree, SkillNode n) =>
-        n.type == SkillNodeType.Gate ? n.gateCost :
-        n.type == SkillNodeType.ActiveSkill ? 1 :
-        EssenceCost(tree, n);
-
-    // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐)
-    private const float LevelCostGrowth = 1.5f;
-
-    // 다음 레벨(현재 level → level+1) 구매 비용. 1레벨(cur 0)=기본비용, 이후 1.5배씩.
-    public static int NextLevelCost(SkillTreeData tree, SkillNode n) =>
-        Mathf.RoundToInt(CostOf(tree, n) * Mathf.Pow(LevelCostGrowth, LevelOf(n.id)));
-
-    // 정수 비용: 루트로부터의 깊이가 깊을수록 비쌈. 15 · 1.4^depth (기존 30에서 절반으로 인하)
-    public static int EssenceCost(SkillTreeData tree, SkillNode n) =>
-        Mathf.RoundToInt(15f * Mathf.Pow(1.4f, Depth(tree, n.id)));
-
-    // 루트로부터 최단 선행 거리(루트=0). 순수 데이터라 UI/저장 양쪽에서 씀.
-    public static int Depth(SkillTreeData tree, string id) => DepthRec(tree, id, new HashSet<string>());
-
-    private static int DepthRec(SkillTreeData tree, string id, HashSet<string> visiting)
+    // ── 스킬 해금 게이팅 ──
+    // 트리에 SkillUnlock 노드로 등록된 스킬(=게이팅 대상). 여기 없는 스킬은 게이팅 안 함(캐릭터 풀 그대로).
+    public static HashSet<ActiveSkillId> GatedSkills(SkillTreeData tree)
     {
-        SkillNode n = tree != null ? tree.Find(id) : null;
-        if (n == null || n.prereqIds.Count == 0) return 0;
-        if (!visiting.Add(id)) return 0; // 사이클 가드
-        int min = int.MaxValue;
-        foreach (string p in n.prereqIds) min = Mathf.Min(min, DepthRec(tree, p, visiting) + 1);
-        visiting.Remove(id);
-        return min == int.MaxValue ? 0 : min;
+        var set = new HashSet<ActiveSkillId>();
+        if (tree == null) return set;
+        foreach (SkillNode n in tree.nodes)
+            if (n.type == SkillNodeType.SkillUnlock) set.Add(n.skill);
+        return set;
     }
 
-    // ── available 자원 ──
-    public static int AvailableEssence(SkillTreeData tree) => EssenceEarned - Spent(tree, SkillResource.Essence);
-    public static int AvailableCrystal(SkillTreeData tree) => CrystalEarned - Spent(tree, SkillResource.Crystal);
-    public static int AvailablePowder(SkillTreeData tree) => PowderEarned - Spent(tree, SkillResource.Powder);
-
-    public static int Available(SkillTreeData tree, SkillResource res) => res switch
+    // 현재 해금된 SkillUnlock 노드가 열어준 스킬 집합.
+    public static HashSet<ActiveSkillId> UnlockedSkills(SkillTreeData tree)
     {
-        SkillResource.Crystal => AvailableCrystal(tree),
-        SkillResource.Powder => AvailablePowder(tree),
-        _ => AvailableEssence(tree),
-    };
+        var set = new HashSet<ActiveSkillId>();
+        if (tree == null) return set;
+        foreach (var kv in Levels())
+        {
+            SkillNode n = tree.Find(kv.Key);
+            if (n != null && n.type == SkillNodeType.SkillUnlock) set.Add(n.skill);
+        }
+        return set;
+    }
 
-    private static int Spent(SkillTreeData tree, SkillResource res)
+    // 인게임 카드 풀 게이팅 판정: 게이팅 대상이 아니거나(=트리에 unlock 노드 없음) 이미 해금됐으면 사용 가능.
+    public static bool SkillAvailable(SkillTreeData tree, ActiveSkillId id) =>
+        !GatedSkills(tree).Contains(id) || UnlockedSkills(tree).Contains(id);
+
+    // ── 노드 비용(정수) ── 등급(tier) 기반 선형변환.
+    //   tier 0 = 1정수 고정(극초반 해금용). tier 1 = TierCostBase, 이후 등급마다 +TierCostStep (등속).
+    //   예) base 30·step 10 → 0=1, 1=30, 2=40, 3=50 … 밸런싱은 이 두 상수만 조정하면 전체 등급에 반영된다.
+    public const int TierCostBase = 30;
+    public const int TierCostStep = 10;
+
+    public static int TierCost(int tier) => tier <= 0 ? 1 : TierCostBase + (tier - 1) * TierCostStep;
+
+    // 노드의 기본(1레벨) 비용 = 등급 비용.
+    public static int CostOf(SkillNode n) => TierCost(n.tier);
+
+    // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐 — 레벨제 Normal 노드용)
+    private const float LevelCostGrowth = 1.5f;
+
+    // 다음 레벨(현재 level → level+1) 구매 비용. 1레벨(cur 0)=등급 비용, 이후 1.5배씩.
+    public static int NextLevelCost(SkillTreeData tree, SkillNode n) =>
+        Mathf.RoundToInt(CostOf(n) * Mathf.Pow(LevelCostGrowth, LevelOf(n.id)));
+
+    // ── available 정수 = earned − Σ(해금된 노드에 지불한 정수) ──
+    public static int AvailableEssence(SkillTreeData tree) => EssenceEarned - Spent(tree);
+
+    private static int Spent(SkillTreeData tree)
     {
         if (tree == null) return 0;
         int sum = 0;
         foreach (var kv in Levels())
         {
             SkillNode n = tree.Find(kv.Key);
-            if (n == null || ResourceOf(n) != res) continue;
-            int baseCost = CostOf(tree, n);
+            if (n == null) continue;
+            int baseCost = CostOf(n);
             for (int L = 0; L < kv.Value; L++)
                 sum += Mathf.RoundToInt(baseCost * Mathf.Pow(LevelCostGrowth, L));
         }
@@ -210,7 +178,7 @@ public static class SkillTreeSave
         if (cur >= MaxLevelOf(node)) return false;
         if (cur == 0 && !PrereqMet(tree, node)) return false;
 
-        return Available(tree, ResourceOf(node)) >= NextLevelCost(tree, node);
+        return AvailableEssence(tree) >= NextLevelCost(tree, node);
     }
 
     public static bool TryUpgrade(SkillTreeData tree, string id)
@@ -223,68 +191,15 @@ public static class SkillTreeSave
         return true;
     }
 
-    // ── 환불(우클릭): 한 레벨 내림. 레벨이 0이 되면 그 노드에서 파생된 자식들도 함께 해제(캐스케이드) ──
-    public static bool RefundOneLevel(SkillTreeData tree, string id)
-    {
-        if (tree == null) return false;
-        var levels = Levels();
-        if (!levels.TryGetValue(id, out int cur) || cur <= 0) return false;
-        if (cur > 1) { levels[id] = cur - 1; WriteLevels(CurrentKey, levels); return true; }
-        return RefundNode(tree, id); // 마지막 레벨 → 완전 제거 + 자식 캐스케이드
-    }
-
-    // 노드 + 그 노드에서 파생되는 모든 보유 자식 노드를 통째로 해제(자원 자동 환급)
-    public static bool RefundNode(SkillTreeData tree, string id)
-    {
-        if (tree == null) return false;
-        var levels = Levels();
-        if (!levels.ContainsKey(id)) return false;
-
-        var toRemove = new HashSet<string>();
-        var stack = new Stack<string>();
-        stack.Push(id);
-        while (stack.Count > 0)
-        {
-            string cur = stack.Pop();
-            if (!toRemove.Add(cur)) continue;
-            foreach (SkillNode n in tree.nodes)
-                if (levels.ContainsKey(n.id) && !toRemove.Contains(n.id) && n.prereqIds.Contains(cur))
-                    stack.Push(n.id);
-        }
-        foreach (string r in toRemove) levels.Remove(r);
-        WriteLevels(CurrentKey, levels);
-        return true;
-    }
-
-    // ── 리스펙(리셋): 현재 해금 초기화 → available 자동 환급 ──
-    public static void Respec()
-    {
-        PlayerPrefs.DeleteKey(CurrentKey);
-        PlayerPrefs.Save();
-    }
-
-    // ── 빌드셋 슬롯(1~BuildSlots) — 레벨까지 통째로 저장/로드 ──
-    public static bool BuildEmpty(int slot) => ReadLevels(BuildKey(slot)).Count == 0;
-
-    public static void SaveBuild(int slot) => WriteLevels(BuildKey(slot), Levels());
-
-    // 로드: 현재를 슬롯 내용으로 교체. earned 단조증가라 항상 afford 가능.
-    public static void LoadBuild(int slot) => WriteLevels(CurrentKey, ReadLevels(BuildKey(slot)));
-
-    // ── 치트/디버그: 전체 초기화 ──
+    // ── 치트/디버그: 전체 초기화 (정상 플레이에는 되돌리기 없음) ──
     public static void ResetAll()
     {
         PlayerPrefs.DeleteKey(EssenceKey);
-        PlayerPrefs.DeleteKey(CrystalKey);
-        PlayerPrefs.DeleteKey(PowderKey);
         PlayerPrefs.DeleteKey(CurrentKey);
-        for (int i = 1; i <= BuildSlots; i++) PlayerPrefs.DeleteKey(BuildKey(i));
         PlayerPrefs.Save();
     }
 
     // ── 내부 CSV 직렬화 (id:level,id:level) ──
-    private static string BuildKey(int slot) => BuildPrefix + slot;
-
     private static Dictionary<string, int> ReadLevels(string key)
     {
         var map = new Dictionary<string, int>();

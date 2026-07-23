@@ -41,6 +41,7 @@ public class EvolutionTreeUI : MonoBehaviour
     private EquippedSkill currentSkill;
     private EquippedPassive currentPassive;
     private bool isPassiveMode;
+    private System.Action onClosed; // 진화 완료(모달 닫힘) 후 1회 콜백 — 보물상자 연쇄 레벨업이 대기
 
     // 진화 노드 카드에 붙는 juice 연출(등장 pop-in, 진화 가능 노드 강조 펄스)용 트윈 — 재오픈/닫기 시 정리
     private readonly List<Tween> nodeTweens = new List<Tween>();
@@ -60,21 +61,23 @@ public class EvolutionTreeUI : MonoBehaviour
         }
     }
 
-    public void Show(PlayerSkills skillsRef, EquippedSkill skill)
+    public void Show(PlayerSkills skillsRef, EquippedSkill skill, System.Action closed = null)
     {
         skills = skillsRef;
         currentSkill = skill;
         currentPassive = null;
         isPassiveMode = false;
+        onClosed = closed;
         ShowInternal();
     }
 
-    public void Show(PlayerPassives passivesRef, EquippedPassive passive)
+    public void Show(PlayerPassives passivesRef, EquippedPassive passive, System.Action closed = null)
     {
         passives = passivesRef;
         currentPassive = passive;
         currentSkill = null;
         isPassiveMode = true;
+        onClosed = closed;
         ShowInternal();
     }
 
@@ -200,6 +203,10 @@ public class EvolutionTreeUI : MonoBehaviour
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);
+
+        System.Action cb = onClosed;
+        onClosed = null;
+        cb?.Invoke();
     }
 
     private string GetPathName(int path)

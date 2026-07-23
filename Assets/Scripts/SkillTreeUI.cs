@@ -6,23 +6,25 @@ using TMPro;
 using DG.Tweening;
 
 // 트리 노드 하나의 입력 처리. 런타임에 SkillTreeUI가 각 노드에 붙인다(씬/프리팹에 저장되지 않아 같은 파일 OK).
-// 좌클릭=구매, 우클릭=환불, 호버=툴팁.
+// 좌클릭=구매(해금), 호버=툴팁. (되돌리기 불가 — 우클릭 환불 없음)
 public class SkillNodeButton : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     public string NodeId;
-    public System.Action<string, bool> OnClickNode; // (id, isRightClick)
+    public System.Action<string> OnClickNode;
     public System.Action<string> OnHoverEnter;
     public System.Action<string> OnHoverExit;
 
     public void OnPointerClick(PointerEventData e)
-        => OnClickNode?.Invoke(NodeId, e.button == PointerEventData.InputButton.Right);
+    {
+        if (e.button == PointerEventData.InputButton.Left) OnClickNode?.Invoke(NodeId);
+    }
 
     public void OnPointerEnter(PointerEventData e) => OnHoverEnter?.Invoke(NodeId);
     public void OnPointerExit(PointerEventData e) => OnHoverExit?.Invoke(NodeId);
 }
 
 // 인게임(타이틀) 스킬트리 패널. MainSkillTree.asset을 읽어 노드/연결선을 런타임 생성.
-// 팬(드래그)·줌(휠)·좌클릭 구매·우클릭 환불(자식 캐스케이드)·호버 툴팁·리셋·빌드셋.
+// 팬(드래그)·줌(휠)·좌클릭 구매·호버 툴팁. **자원 1개(정수) · 되돌리기 불가**.
 // 인접(보유 노드 옆) 노드만 정보 노출, 나머지는 물음표로 마스킹.
 public class SkillTreeUI : MonoBehaviour
 {
@@ -39,18 +41,9 @@ public class SkillTreeUI : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] private Button nodeButtonPrefab;
     [SerializeField] private Image linePrefab;
-    [SerializeField] private BuildSlotUI buildSlotPrefab;
-    [SerializeField] private Transform buildSlotContainer;
 
     [Header("Currency")]
     [SerializeField] private TMP_Text essenceText;
-    [SerializeField] private TMP_Text crystalText;
-    [SerializeField] private TMP_Text powderText;
-
-    [Header("Outgame Level (선택 — 패널 하단 경험치 바)")]
-    [SerializeField] private TMP_Text levelText;      // "Lv N"
-    [SerializeField] private Image levelXpFill;       // filled 이미지(fillAmount)
-    [SerializeField] private TMP_Text levelXpText;    // "현재/다음" 경험치
 
     [Header("Tooltip")]
     [SerializeField] private GameObject tooltipRoot;
@@ -60,7 +53,6 @@ public class SkillTreeUI : MonoBehaviour
     [SerializeField] private TMP_Text tooltipCost;
 
     [Header("Actions")]
-    [SerializeField] private Button respecButton;
     [SerializeField] private Button closeButton;
 
     [Header("Layout")]
@@ -70,8 +62,9 @@ public class SkillTreeUI : MonoBehaviour
 
     // 타입 기본색
     private static readonly Color ColNormal = new Color(0.42f, 0.68f, 1f);
-    private static readonly Color ColGate = new Color(1f, 0.82f, 0.2f);
-    private static readonly Color ColActive = new Color(1f, 0.35f, 0.85f);
+    private static readonly Color ColUnlock = new Color(1f, 0.82f, 0.2f);   // 스킬 해금 = 금색
+    private static readonly Color ColEnhance = new Color(1f, 0.35f, 0.85f); // 스킬 강화 = 마젠타
+    private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f); // 특수 해금 = 노랑
     private static readonly Color ColMasked = new Color(0.22f, 0.22f, 0.26f);
     private static readonly Color ColLineDim = new Color(1f, 1f, 1f, 0.12f);
     private static readonly Color ColLineOn = new Color(1f, 1f, 1f, 0.6f);
@@ -92,16 +85,10 @@ public class SkillTreeUI : MonoBehaviour
     private bool built;
 
     // 자원 텍스트 펀치용 직전값(첫 갱신엔 펀치 생략)
-    private int prevEssence = -1, prevCrystal = -1, prevPowder = -1;
+    private int prevEssence = -1;
 
     private void Awake()
     {
-        if (respecButton != null)
-        {
-            respecButton.onClick.AddListener(OnRespec);
-            var t = respecButton.GetComponentInChildren<TMP_Text>();
-            if (t != null) t.text = "리셋";
-        }
         if (closeButton != null) closeButton.onClick.AddListener(Close);
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
@@ -113,7 +100,7 @@ public class SkillTreeUI : MonoBehaviour
         if (panelRoot != null) panelRoot.SetActive(true);
         hoveredId = null;
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
-        prevEssence = prevCrystal = prevPowder = -1; // 재오픈 시 자원 펀치 생략
+        prevEssence = -1; // 재오픈 시 자원 펀치 생략
         RefreshAll();
         PlayOpenStagger();
     }
@@ -149,7 +136,7 @@ public class SkillTreeUI : MonoBehaviour
         }
     }
 
-    // ── 최초 1회: 노드·연결선·빌드슬롯 생성 ──
+    // ── 최초 1회: 노드·연결선 생성 ──
     private void Build()
     {
         if (tree == null || nodeButtonPrefab == null) return;
@@ -192,14 +179,6 @@ public class SkillTreeUI : MonoBehaviour
             views[n.id] = view;
         }
 
-        if (buildSlotPrefab != null && buildSlotContainer != null)
-            for (int i = 1; i <= SkillTreeSave.BuildSlots; i++)
-            {
-                BuildSlotUI slot = Instantiate(buildSlotPrefab, buildSlotContainer);
-                slot.gameObject.SetActive(true);
-                slot.Bind(i, OnBuildSave, OnBuildLoad);
-            }
-
         built = true;
     }
 
@@ -213,20 +192,14 @@ public class SkillTreeUI : MonoBehaviour
         rt.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
     }
 
-    // ── 입력 ──
-    private void OnNodeClick(string id, bool rightClick)
+    // ── 입력 ── 좌클릭 = 해금(마스킹된 노드는 무시). 되돌리기 없음.
+    private void OnNodeClick(string id)
     {
-        if (rightClick)
-        {
-            if (SkillTreeSave.RefundOneLevel(tree, id)) { PlayNodePunch(id, -0.22f); RefreshAll(); RefreshTooltip(); }
-            return;
-        }
-        // 좌클릭 = 레벨업/구매 (마스킹된 노드는 무시)
         if (!IsRevealed(id, SkillTreeSave.UnlockedIds())) return;
         if (SkillTreeSave.TryUpgrade(tree, id)) { PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
     }
 
-    // 구매(+)/환불(-) 시 노드 펀치. 펀치는 스케일 채널이라 진행 중 pop-in/호버 트윈을 교체한다.
+    // 구매 시 노드 펀치. 펀치는 스케일 채널이라 진행 중 pop-in/호버 트윈을 교체한다.
     private void PlayNodePunch(string id, float strength)
     {
         if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
@@ -251,10 +224,6 @@ public class SkillTreeUI : MonoBehaviour
         v.scaleTween = v.rt.DOScale(entering ? 1.12f : 1f, 0.18f).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
-    private void OnRespec() { SkillTreeSave.Respec(); RefreshAll(); RefreshTooltip(); }
-    private void OnBuildSave(int slot) { SkillTreeSave.SaveBuild(slot); RefreshAll(); }
-    private void OnBuildLoad(int slot) { SkillTreeSave.LoadBuild(slot); RefreshAll(); RefreshTooltip(); }
-
     // ── 인접/공개 판정: 해금됨 or 선행 중 하나라도 해금됨 or 루트(선행 없음) ──
     private bool IsRevealed(string id, HashSet<string> unlocked)
     {
@@ -271,23 +240,10 @@ public class SkillTreeUI : MonoBehaviour
     private void RefreshAll()
     {
         int ess = SkillTreeSave.AvailableEssence(tree);
-        int cry = SkillTreeSave.AvailableCrystal(tree);
-        int pow = SkillTreeSave.AvailablePowder(tree);
         if (essenceText != null) { essenceText.text = ess + " 정수"; if (prevEssence >= 0 && ess != prevEssence) PunchCurrency(essenceText); }
-        if (crystalText != null) { crystalText.text = cry + " 결정"; if (prevCrystal >= 0 && cry != prevCrystal) PunchCurrency(crystalText); }
-        if (powderText != null) { powderText.text = pow + " 가루"; if (prevPowder >= 0 && pow != prevPowder) PunchCurrency(powderText); }
-        prevEssence = ess; prevCrystal = cry; prevPowder = pow;
-        UpdateLevelBar();
+        prevEssence = ess;
         RefreshNodes();
         RefreshLines();
-    }
-
-    // 아웃게임 레벨 바(선택): 총정수 기반 레벨/진행도 표시. 레벨은 판 종료 때만 오르므로 패널 열 때 갱신으로 충분.
-    private void UpdateLevelBar()
-    {
-        if (levelText != null) levelText.text = "Lv " + SkillTreeSave.OutgameLevel;
-        if (levelXpFill != null) levelXpFill.fillAmount = SkillTreeSave.LevelProgress;
-        if (levelXpText != null) levelXpText.text = SkillTreeSave.XpIntoCurrentLevel + " / " + SkillTreeSave.XpForNextLevel;
     }
 
     private static void PunchCurrency(TMP_Text t)
@@ -382,17 +338,15 @@ public class SkillTreeUI : MonoBehaviour
             {
                 int lv = SkillTreeSave.LevelOf(hoveredId);
                 int max = SkillTreeSave.MaxLevelOf(n);
-                string resLabel = ResLabel(SkillTreeSave.ResourceOf(n));
                 bool canUp = SkillTreeSave.CanUpgrade(tree, hoveredId);
                 int nextCost = SkillTreeSave.NextLevelCost(tree, n);
 
                 if (!isUnlocked)
-                    tooltipCost.text = nextCost + " " + resLabel + (canUp ? "  ▸ 클릭하여 구매" : "");
+                    tooltipCost.text = nextCost + " 정수" + (canUp ? "  ▸ 클릭하여 해금" : "");
                 else if (lv >= max)
-                    tooltipCost.text = (max > 1 ? "Lv " + lv + "/" + max + " (최대)" : "해금됨") + "  · 우클릭 환불";
+                    tooltipCost.text = max > 1 ? "Lv " + lv + "/" + max + " (최대)" : "해금됨";
                 else
-                    tooltipCost.text = "Lv " + lv + "/" + max + "  · 다음 " + nextCost + " " + resLabel
-                        + (canUp ? "  ▸ 클릭" : "") + "  · 우클릭 환불";
+                    tooltipCost.text = "Lv " + lv + "/" + max + "  · 다음 " + nextCost + " 정수" + (canUp ? "  ▸ 클릭" : "");
             }
         }
 
@@ -411,17 +365,11 @@ public class SkillTreeUI : MonoBehaviour
         }
     }
 
-    private static string ResLabel(SkillResource res) => res switch
-    {
-        SkillResource.Crystal => "결정",
-        SkillResource.Powder => "가루",
-        _ => "정수",
-    };
-
     private static Color BaseColor(SkillNodeType type) => type switch
     {
-        SkillNodeType.Gate => ColGate,
-        SkillNodeType.ActiveSkill => ColActive,
+        SkillNodeType.SkillUnlock => ColUnlock,
+        SkillNodeType.SkillEnhance => ColEnhance,
+        SkillNodeType.SpecialUnlock => ColSpecial,
         _ => ColNormal,
     };
 

@@ -71,7 +71,7 @@ public class PauseMenu : MonoBehaviour
             foreach (var s in skills.EquippedSkills)
                 BuildEntry(leftColumn,
                     levelUp != null ? levelUp.GetActiveIcon(s.Id) : null,
-                    TitleLine(PlayerSkills.GetActiveSkillName(s.Id), s.Level),
+                    PlayerSkills.GetActiveSkillBadge(s.Id) + TitleLine(PlayerSkills.GetActiveSkillName(s.Id), s.Level),
                     BuildActiveDetail(s));
 
         BuildEntry(rightColumn, null, "<b>[ 패시브 ]</b>", null);

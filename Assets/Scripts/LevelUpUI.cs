@@ -1,8 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 public class LevelUpUI : MonoBehaviour
 {
@@ -17,6 +19,10 @@ public class LevelUpUI : MonoBehaviour
         public string Description;
         public Sprite Icon;
         public System.Action Apply;
+        // 진화 연쇄(레벨업 후 진화창)·보물상자 에스컬레이션이 대상 스킬/패시브를 식별하기 위한 정보
+        public ActiveSkillId? SkillId;
+        public PassiveSkillId? PassiveId;
+        public bool IsEssence;
     }
 
     [SerializeField] private GameObject panel;
@@ -52,6 +58,14 @@ public class LevelUpUI : MonoBehaviour
     private Option[] currentOptions;
     private int rerollsRemaining;  // 게임당 남은 리롤 횟수
     private bool rerollable;        // 이번 모달이 리롤 가능한가(진화 선택 모달은 불가)
+    private bool treasureMode;      // 이번 모달이 보물상자 에스컬레이션 보상인가
+
+    private Button[] optionButtons;
+    private TMP_Text[] optionLevelTexts;
+
+    // 보물상자 에스컬레이션: 0.3초 간격으로 다음 레벨(최대 4)까지 강화될 확률
+    private const float TreasureEscalateChance = 0.6f;
+    private const int TreasureMaxLevels = 4;
 
     private void Awake()
     {
@@ -65,6 +79,9 @@ public class LevelUpUI : MonoBehaviour
 
         // 진화 가능 레벨업 강조용 셀 아웃라인(기본 꺼짐)
         optionOutlines = new[] { MakeOutline(optionButtonA), MakeOutline(optionButtonB), MakeOutline(optionButtonC) };
+
+        optionButtons = new[] { optionButtonA, optionButtonB, optionButtonC };
+        optionLevelTexts = new[] { levelA, levelB, levelC };
     }
 
     private static Outline MakeOutline(Button btn)
@@ -87,6 +104,7 @@ public class LevelUpUI : MonoBehaviour
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
         rerollable = true;
+        treasureMode = false;
         currentOptions = BuildOptions(skills, passives);
         ShowOptions();
     }
@@ -116,7 +134,11 @@ public class LevelUpUI : MonoBehaviour
 
     private void SetSlot(int index, Button button, TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
     {
-        if (button != null) button.gameObject.SetActive(option != null);
+        if (button != null)
+        {
+            button.gameObject.SetActive(option != null);
+            button.interactable = true; // 보물 에스컬레이션에서 껐던 상호작용 복구
+        }
         if (optionOutlines != null && optionOutlines[index] != null)
             optionOutlines[index].enabled = option != null && option.UnlocksEvolution;
         if (option != null) SetRow(title, level, desc, icon, option);
@@ -177,14 +199,16 @@ public class LevelUpUI : MonoBehaviour
             {
                 if (skills.HasSkill(id)) continue;
                 if (character != null && !character.AllowsActive(id)) continue;
+                if (!MetaBonuses.SkillUnlockedForRun(id)) continue; // 스킬트리 해금 게이팅
                 ActiveSkillId captured = id;
                 candidates.Add(new Option
                 {
-                    Title = PlayerSkills.GetActiveSkillName(captured),
+                    Title = PlayerSkills.GetActiveSkillBadge(captured) + PlayerSkills.GetActiveSkillName(captured),
                     IsNew = true,
                     Description = GetActiveSkillDescription(captured),
                     Icon = GetIcon(activeIcons, (int)captured),
                     Apply = () => skills.AcquireSkill(captured),
+                    SkillId = captured,
                 });
             }
         }
@@ -203,6 +227,7 @@ public class LevelUpUI : MonoBehaviour
                     Description = GetPassiveSkillDescription(captured),
                     Icon = GetIcon(passiveIcons, (int)captured),
                     Apply = () => passives.AcquirePassive(captured),
+                    PassiveId = captured,
                 });
             }
         }
@@ -213,12 +238,13 @@ public class LevelUpUI : MonoBehaviour
             EquippedSkill captured = equipped;
             candidates.Add(new Option
             {
-                Title = PlayerSkills.GetActiveSkillName(captured.Id),
+                Title = PlayerSkills.GetActiveSkillBadge(captured.Id) + PlayerSkills.GetActiveSkillName(captured.Id),
                 LevelText = "레벨: " + (captured.Level + 1),
                 UnlocksEvolution = (captured.Level + 1) % 5 == 0,
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
+                SkillId = captured.Id,
             });
         }
 
@@ -234,6 +260,7 @@ public class LevelUpUI : MonoBehaviour
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
                 Icon = GetIcon(passiveIcons, (int)captured.Id),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
+                PassiveId = captured.Id,
             });
         }
 
@@ -254,65 +281,20 @@ public class LevelUpUI : MonoBehaviour
         Title = "정수 획득",
         Description = "정수 +" + EssenceReward,
         Apply = () => MetaRun.Collect(EssenceReward),
+        IsEssence = true,
     };
 
+    // 보물상자 블루베리 보상: 일반 레벨업과 동일한 3지선다를 제시하되, 하나를 고르면
+    // 0.3초 간격으로 보상이 랜덤하게 강화(최대 4업)되는 에스컬레이션 연출로 파워 스파이크를 준다.
+    // (진화는 더 이상 보물상자가 아니라 '진화 가능 레벨 도달' 시 즉시 열린다.)
     public void ShowTreasureReward()
     {
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
-        List<EquippedSkill> readySkills = skills.EquippedSkills.Where(s =>
-            s.Level >= 5 && s.TotalEvolutionTier < s.Level / 5 && s.TotalEvolutionTier < 4 && skills.CanEvolveAnyPath(s)).ToList();
-        List<EquippedPassive> readyPassives = passives.EquippedPassives.Where(p =>
-            p.Level >= 5 && p.TotalEvolutionTier < p.Level / 5 && p.TotalEvolutionTier < 4 && passives.CanEvolveAnyPath(p)).ToList();
-
-        if (readySkills.Count == 0 && readyPassives.Count == 0)
-        {
-            Show();
-            return;
-        }
-
-        if (readySkills.Count + readyPassives.Count == 1)
-        {
-            if (readySkills.Count == 1) EvolutionTreeUI.Instance.Show(skills, readySkills[0]);
-            else EvolutionTreeUI.Instance.Show(passives, readyPassives[0]);
-            return;
-        }
-
-        List<Option> pickOptions = new List<Option>();
-        foreach (EquippedSkill s in readySkills)
-        {
-            EquippedSkill captured = s;
-            pickOptions.Add(new Option
-            {
-                Title = PlayerSkills.GetActiveSkillName(captured.Id),
-                LevelText = "진화 가능",
-                Description = "어떤 스킬을 먼저 진화시킬지 선택하세요",
-                Icon = GetIcon(activeIcons, (int)captured.Id),
-                Apply = () => EvolutionTreeUI.Instance.Show(skills, captured),
-            });
-        }
-        foreach (EquippedPassive p in readyPassives)
-        {
-            EquippedPassive captured = p;
-            pickOptions.Add(new Option
-            {
-                Title = PlayerSkills.GetPassiveSkillName(captured.Id),
-                LevelText = "진화 가능",
-                Description = "어떤 패시브를 먼저 진화시킬지 선택하세요",
-                Icon = GetIcon(passiveIcons, (int)captured.Id),
-                Apply = () => EvolutionTreeUI.Instance.Show(passives, captured),
-            });
-        }
-
-        Shuffle(pickOptions);
-        pickOptions = pickOptions.Take(3).ToList();
-
-        while (pickOptions.Count < 3)
-            pickOptions.Add(new Option { Title = "체력 강화", Description = "최대 체력 +20", Apply = () => FindAnyObjectByType<PlayerHealth>().IncreaseMaxHealth(20) });
-
-        rerollable = false; // 진화 대상 선택 모달은 리롤 불가
-        currentOptions = pickOptions.ToArray();
+        rerollable = false;   // 보물상자 보상은 리롤 불가
+        treasureMode = true;
+        currentOptions = BuildOptions(skills, passives);
         ShowOptions();
     }
 
@@ -340,8 +322,148 @@ public class LevelUpUI : MonoBehaviour
 
     private void Choose(int index)
     {
-        currentOptions[index].Apply?.Invoke();
+        Option opt = currentOptions[index];
+
+        if (treasureMode)
+        {
+            treasureMode = false;
+            StartCoroutine(TreasureEscalateRoutine(index, opt));
+            return;
+        }
+
+        opt.Apply?.Invoke();
         Close();
+        if (opt.UnlocksEvolution) OpenEvolutionAfterLevelUp(opt);
+    }
+
+    // (2A) 레벨업으로 5의 배수 레벨(진화 해금 레벨)에 도달하면 곧바로 진화창을 연다.
+    private void OpenEvolutionAfterLevelUp(Option opt)
+    {
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
+
+        if (opt.SkillId.HasValue)
+        {
+            EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == opt.SkillId.Value);
+            if (s != null && !skills.CanUpgradeSkill(s) && s.TotalEvolutionTier < 4 && skills.CanEvolveAnyPath(s))
+                EvolutionTreeUI.Instance.Show(skills, s);
+        }
+        else if (opt.PassiveId.HasValue)
+        {
+            EquippedPassive p = passives.GetPassive(opt.PassiveId.Value);
+            if (p != null && !passives.CanUpgradePassive(p) && p.TotalEvolutionTier < 4 && passives.CanEvolveAnyPath(p))
+                EvolutionTreeUI.Instance.Show(passives, p);
+        }
+    }
+
+    // 보물상자 에스컬레이션: 고른 선택지 셀만 남기고, 0.3초 간격으로 랜덤하게 레벨업 수치를 강화(최대 4업).
+    // 강화될 때마다 바운스 + "Bonus!". 확정되면 보상을 적용하고(5배수 넘으면 진화창 연쇄) 모달을 닫는다.
+    private IEnumerator TreasureEscalateRoutine(int index, Option opt)
+    {
+        // 고른 셀만 남기고 나머지 숨김 + 중복 클릭 방지
+        for (int i = 0; i < optionButtons.Length; i++)
+        {
+            if (optionButtons[i] == null) continue;
+            optionButtons[i].interactable = false;
+            if (i != index) optionButtons[i].gameObject.SetActive(false);
+        }
+
+        RectTransform cell = (RectTransform)optionButtons[index].transform;
+        int levels = 1;
+        while (levels < TreasureMaxLevels)
+        {
+            yield return new WaitForSecondsRealtime(0.3f);
+            if (Random.value >= TreasureEscalateChance) break;
+
+            levels++;
+            cell.DOKill();
+            cell.localScale = Vector3.one;
+            cell.DOPunchScale(Vector3.one * 0.35f, 0.3f, 8, 0.6f).SetUpdate(true);
+            if (optionLevelTexts[index] != null)
+            {
+                optionLevelTexts[index].text = $"Bonus!  {levels}업!";
+                optionLevelTexts[index].color = EvolveTagColor;
+            }
+        }
+
+        yield return new WaitForSecondsRealtime(0.5f); // 결과 여운
+
+        yield return ApplyTreasureReward(opt, levels);
+
+        // 보물 모달 종료 (ShowOptions에서 Push한 참조 1개 해제)
+        ModalPause.Pop();
+        if (panelTransition != null) panelTransition.Hide();
+        else panel.SetActive(false);
+    }
+
+    // 고른 보상을 levels만큼 부여. 정수는 배수로, 그 외에는 첫 적용(획득/1레벨업) 후 나머지를 연쇄 레벨업.
+    private IEnumerator ApplyTreasureReward(Option opt, int levels)
+    {
+        if (opt.IsEssence)
+        {
+            MetaRun.Collect(EssenceReward * levels);
+            yield break;
+        }
+
+        opt.Apply?.Invoke(); // 신규 스킬 획득 또는 첫 레벨업
+
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
+        if (opt.SkillId.HasValue)
+            yield return GrantSkillLevels(skills, opt.SkillId.Value, levels - 1);
+        else if (opt.PassiveId.HasValue)
+            yield return GrantPassiveLevels(passives, opt.PassiveId.Value, levels - 1);
+    }
+
+    // 스킬을 count번 레벨업. 5배수 게이트에 걸리면 진화창을 열고 닫힐 때까지 대기 후 계속.
+    private IEnumerator GrantSkillLevels(PlayerSkills skills, ActiveSkillId id, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            yield return ResolveSkillEvolution(skills, id);
+            EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == id);
+            if (s == null || !skills.CanUpgradeSkill(s)) break;
+            skills.UpgradeSkillLevel(id);
+        }
+        yield return ResolveSkillEvolution(skills, id); // 마지막 레벨이 5배수면 진화창
+    }
+
+    private IEnumerator GrantPassiveLevels(PlayerPassives passives, PassiveSkillId id, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            yield return ResolvePassiveEvolution(passives, id);
+            EquippedPassive p = passives.GetPassive(id);
+            if (p == null || !passives.CanUpgradePassive(p)) break;
+            passives.UpgradePassiveLevel(id);
+        }
+        yield return ResolvePassiveEvolution(passives, id);
+    }
+
+    private IEnumerator ResolveSkillEvolution(PlayerSkills skills, ActiveSkillId id)
+    {
+        while (true)
+        {
+            EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == id);
+            if (s == null || skills.CanUpgradeSkill(s)) yield break;      // 게이트 없음
+            if (s.TotalEvolutionTier >= 4 || !skills.CanEvolveAnyPath(s)) yield break; // 더 진화 불가
+            bool done = false;
+            EvolutionTreeUI.Instance.Show(skills, s, () => done = true);
+            yield return new WaitUntil(() => done);
+        }
+    }
+
+    private IEnumerator ResolvePassiveEvolution(PlayerPassives passives, PassiveSkillId id)
+    {
+        while (true)
+        {
+            EquippedPassive p = passives.GetPassive(id);
+            if (p == null || passives.CanUpgradePassive(p)) yield break;
+            if (p.TotalEvolutionTier >= 4 || !passives.CanEvolveAnyPath(p)) yield break;
+            bool done = false;
+            EvolutionTreeUI.Instance.Show(passives, p, () => done = true);
+            yield return new WaitUntil(() => done);
+        }
     }
 
     private void Close()

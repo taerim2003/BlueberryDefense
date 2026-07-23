@@ -32,7 +32,8 @@ public class PlayerPassives : MonoBehaviour
     public static float RefreshChance = 0f;
     public static float AssassinateKillXpMultiplier = 1f; // 암살 연계 path1: 치명타 처치 시 경험치 배율
     public static float RefreshHealOnResetAmount = 0f; // 리프레쉬 연계 path1: 쿨타임 초기화시 회복량
-    public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path2: 낙뢰 발동시 전체 쿨타임 감소 확률
+    public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path3 T2+: 낙뢰 발동시 전체 쿨타임 감소 확률
+    public static float BuffSkillCooldownMult = 1f; // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
     public static float HealthDamagePerHp = 0f; // 건강 연계 path1: 최대체력 1당 피해량 배율 보너스
     public static float HealthRetaliationMultiplier = 0f; // 건강 연계 path2: 피격 시 피격 피해량 대비 전체 피해 배율
     public static float BasicAttackDamageMultiplierBonus = 0f; // 힘 연계 path2: 기본공격 전용 추가 피해 배율
@@ -68,6 +69,7 @@ public class PlayerPassives : MonoBehaviour
         BuildProgressionLookup();   // 정적 조회맵 승격 — AcquirePassive 전에 세팅
         AssassinateCritChance = 0f; // 판마다 리셋 — 기본값은 획득 시 SO에서 채워짐
         RefreshChance = 0f;
+        BuffSkillCooldownMult = 1f;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격. 미포함 패시브는 조회 실패 → 코드 기본값 폴백.
@@ -119,7 +121,7 @@ public class PlayerPassives : MonoBehaviour
     {
         if (RefreshLightningCooldownProcChance <= 0f || skills == null) return;
         if (Random.value < RefreshLightningCooldownProcChance)
-            skills.ReduceAllCooldowns(1f);
+            skills.ReduceAllCooldowns(0.5f);
     }
 
     // 타격 기준 치명타: 각 데미지 이벤트(투사체 명중, 회오리/오브 틱 등)마다 개별적으로 굴린다.
@@ -297,8 +299,8 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Refresh, 1, 1): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 2): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 3): RefreshHealOnResetAmount += 2f; break;
-            case (PassiveSkillId.Refresh, 2, 1): RefreshLightningCooldownProcChance += 0.03f; break;
-            case (PassiveSkillId.Refresh, 2, 2): RefreshLightningCooldownProcChance += 0.02f; break;
+            case (PassiveSkillId.Refresh, 2, 1): BuffSkillCooldownMult = 0.9f; break; // 버프류 스킬 쿨타임 10% 감소
+            case (PassiveSkillId.Refresh, 2, 2): RefreshLightningCooldownProcChance += 0.05f; break;
             case (PassiveSkillId.Refresh, 2, 3): RefreshLightningCooldownProcChance += 0.03f; break;
         }
     }
@@ -402,8 +404,8 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Refresh, 1, 1) => "쿨타임 초기화 시마다 체력(또는 초과체력) 2 회복",
         (PassiveSkillId.Refresh, 1, 2) => "회복량 4로 증가",
         (PassiveSkillId.Refresh, 1, 3) => "회복량 6으로 증가",
-        (PassiveSkillId.Refresh, 2, 1) => "낙뢰 발동 시 3% 확률로 모든 스킬 쿨타임 -1초",
-        (PassiveSkillId.Refresh, 2, 2) => "발동 확률 5%로 증가",
+        (PassiveSkillId.Refresh, 2, 1) => "버프류 스킬(산탄·낙뢰) 재사용 대기시간 10% 감소",
+        (PassiveSkillId.Refresh, 2, 2) => "낙뢰 발동 시 5% 확률로 모든 스킬 쿨타임 -0.5초",
         (PassiveSkillId.Refresh, 2, 3) => "발동 확률 8%로 증가",
 
         _ => "",
@@ -458,9 +460,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Refresh, 1, 1) => "초기화 회복",
         (PassiveSkillId.Refresh, 1, 2) => "초기화 회복 강화",
         (PassiveSkillId.Refresh, 1, 3) => "초기화 회복 강화 II",
-        (PassiveSkillId.Refresh, 2, 1) => "낙뢰 쿨타임 감소",
-        (PassiveSkillId.Refresh, 2, 2) => "낙뢰 쿨타임 감소 강화",
-        (PassiveSkillId.Refresh, 2, 3) => "낙뢰 쿨타임 감소 강화 II",
+        (PassiveSkillId.Refresh, 2, 1) => "버프 쿨타임 감소",
+        (PassiveSkillId.Refresh, 2, 2) => "낙뢰 쿨타임 감소",
+        (PassiveSkillId.Refresh, 2, 3) => "낙뢰 쿨타임 감소 강화",
 
         _ => "",
     };

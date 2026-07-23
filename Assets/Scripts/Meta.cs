@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,14 +36,29 @@ public static class MetaBonuses
     public static float HealDropChanceBonus = 0f; // 적 처치 시 하트 드랍 확률 가산(0~1)
 
     public static bool OrbCanHitFlying = false;         // 기본 오브도 비행 적 타격 가능
+    public static bool HomingMissileGrowth = false;     // 호밍: 10회 사용마다 미사일 +1 (스킬트리 해금 시에만)
     public static bool WhirlwindCooldownBonus = false;  // 회오리는 쿨타임 감소 효과를 1.5배로 받음
     public static float RefreshChanceBonus = 0f;        // 리프레시(재사용 초기화) 확률 가산(0~1)
     public static float ThunderCooldownPerStrike = 0f;  // 낙뢰 1회 타격마다 낙뢰 쿨타임 감소(초)
+    public static bool SnipingExtraTarget = false;      // 스나이핑 저격 타겟 +1
+    public static bool RewindSlowAll = false;           // 되감기 사용 시 모든 적 둔화
+    public static bool ShotgunCloseBonus = false;       // 산탄 버프 받은 공격이 근거리 적에게 +2타
     public static int ArrowStartLevel = 1;              // 기본공격(화살) 시작 레벨
     public static int RerollCount = 0;                  // 레벨업 선택지 리롤 가능 횟수(게임당)
 
+    // 스킬 해금 게이팅(스킬트리): Gated=트리에 해금 노드가 있는 스킬 / TreeUnlocked=그중 실제 해금된 것.
+    // MetaRunApplier가 판 시작 시 채움. 비어 있으면(트리 미연결) 게이팅 안 함 = 현행.
+    public static readonly HashSet<ActiveSkillId> GatedSkills = new();
+    public static readonly HashSet<ActiveSkillId> TreeUnlockedSkills = new();
+
+    // 인게임 레벨업 카드에 이 스킬을 후보로 띄워도 되는지: 게이팅 대상이 아니거나 이미 해금됐으면 OK.
+    public static bool SkillUnlockedForRun(ActiveSkillId id) =>
+        !GatedSkills.Contains(id) || TreeUnlockedSkills.Contains(id);
+
     public static void Reset()
     {
+        GatedSkills.Clear();
+        TreeUnlockedSkills.Clear();
         CooldownMult = 1f;
         DurationMult = 1f;
         CritBonus = 0f;
@@ -52,9 +68,13 @@ public static class MetaBonuses
         EagleFlyDamageBonus = 0f;
         HealDropChanceBonus = 0f;
         OrbCanHitFlying = false;
+        HomingMissileGrowth = false;
         WhirlwindCooldownBonus = false;
         RefreshChanceBonus = 0f;
         ThunderCooldownPerStrike = 0f;
+        SnipingExtraTarget = false;
+        RewindSlowAll = false;
+        ShotgunCloseBonus = false;
         ArrowStartLevel = 1;
         RerollCount = 0;
     }
@@ -94,11 +114,15 @@ public static class SkillEffects
         public float EagleFlyDmgPct; // 독수리 비행 추가피해
         public float HealDropPct;    // 하트 드랍 확률 가산
         public bool OrbFly;          // 오브 비행 타격 가능
+        public bool HomingGrowth;    // 호밍 10회 사용마다 미사일 +1
         public bool WhirlwindCdBonus;// 회오리 쿨감 1.5배
         public float RefreshPct;     // 리프레시 확률 가산
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;  // 화살 시작 레벨(0=미설정)
         public int RerollCount;      // 레벨업 리롤 횟수(게임당)
+        public bool SnipingExtraTarget; // 스나이핑 타겟 +1
+        public bool RewindSlow;      // 되감기 시 모든 적 둔화
+        public bool ShotgunClose;    // 산탄 버프 근거리 +2타
     }
 
     public static Totals Compute()
@@ -142,11 +166,16 @@ public static class SkillEffects
                 case "root_hp": t.HealDropPct += 4f * lv; break;
                 // 스킬 개별강화(토글, maxLevel 1)
                 case "orb_BasicFly": t.OrbFly = true; break;
+                case "Homing_MissileNum": t.HomingGrowth = true; break;
                 case "tornado_CoolDownBonus": t.WhirlwindCdBonus = true; break;
+                case "Sniping_TwoTarget": t.SnipingExtraTarget = true; break;
+                case "Rewind_Slow": t.RewindSlow = true; break;
+                case "Shotgun_CloseBonus": t.ShotgunClose = true; break;
                 case "refresh_bonus": t.RefreshPct += 5f * lv; break;
-                case "thunder_Cooldown": t.ThunderCdPerStrike += 0.1f; break;
+                case "thunder_Cooldown": t.ThunderCdPerStrike += 0.01f; break;
                 case "arrow_StartLev": t.ArrowStartLevel = 3; break;
-                // 레벨업 리롤 — 레벨당 +1 (reroll_1/reroll_2 각각)
+                // 레벨업 리롤: New_Reroll(해금)=첫 리롤 +1, reroll_1/reroll_2(리롤 I)=레벨당 추가
+                case "New_Reroll": t.RerollCount += 1; break;
                 case "reroll_1": t.RerollCount += 1 * lv; break;
                 case "reroll_2": t.RerollCount += 1 * lv; break;
             }
