@@ -3960,6 +3960,7 @@ GameObject:
   - component: {fileID: 487568132}
   - component: {fileID: 487568134}
   - component: {fileID: 487568135}
+  - component: {fileID: 487568136}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4025,6 +4026,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunBootstrap
   defaultMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
+--- !u!114 &487568136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 487568131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 533682008e2e58644860b6ee690b732f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ComicBurst
+  baamSprite: {fileID: 1965371399047293395, guid: 7edb89deb7c48814485ac027cc7374c5, type: 3}
+  boomSprite: {fileID: 7034660610512690298, guid: 6ab82d233af5ca34d8f82338213fa8cb, type: 3}
+  smashSprite: {fileID: -4660095295743317812, guid: 2538d66ed3afb1d45a89a966661c115c, type: 3}
+  baamScale: 1.1
+  boomScale: 1.35
+  smashScale: 1.7
+  lifetime: 0.6
+  riseSpeed: 1.1
+  tiltDegrees: 12
+  minInterval: 0.35
+  comboWindow: 0.6
+  baamKills: 3
+  boomKills: 6
+  smashKills: 10
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -11224,6 +11251,65 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &1428322417
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1428322418}
+  - component: {fileID: 1428322419}
+  m_Layer: 0
+  m_Name: XpGemLayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1428322418
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428322417}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1464816413}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1428322419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428322417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f58f7736ac68c1347948375e8b79694d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XpGemFlight
+  expFill: {fileID: 1639691372}
+  barPunch: {fileID: 1636937149}
+  gemSprite: {fileID: 4584742786557731766, guid: 293f0818033d5604ea399e27305f29a4, type: 3}
+  gemColor: {r: 1, g: 0.85, b: 0.15, a: 1}
+  gemSize: {x: 44, y: 44}
+  scatterTime: 0.14
+  scatterDistance: 55
+  homingSpeed: 420
+  homingAccel: 2400
+  arriveDistance: 14
+  maxLiveGems: 120
 --- !u!21 &1430397402
 Material:
   serializedVersion: 8
@@ -11789,6 +11875,7 @@ RectTransform:
   m_Children:
   - {fileID: 311797667}
   - {fileID: 1748281608}
+  - {fileID: 1428322418}
   - {fileID: 1469638247}
   - {fileID: 1111993052}
   m_Father: {fileID: 0}

@@ -21,6 +21,7 @@ public class Orb : MonoBehaviour
     private const float ImpactSfxCooldown = 0.9f; // Whirlwind와 동일한 이유: 임팩트 클립 길이가 틱 간격(0.3초)보다 길어서 매 틱 재생하면 겹쳐 쌓인다.
 
     private float nextImpactSfxTime;
+    private bool consumed; // 방패에 막혀 소멸 확정 — 같은 프레임에 다른 방패와도 겹쳐 있으면 중복 타격되는 것을 막는다
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
 
@@ -64,12 +65,15 @@ public class Orb : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (consumed) return;
+
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy == null) return;
 
         // 방패 블루베리: 오브도 통과하지 못하고 여기서 소멸 — 마지막으로 한 번 타격을 주고 사라진다
         if (enemy.BlocksProjectiles)
         {
+            consumed = true;
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);
             if (impactVfxPrefab != null)
                 ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);

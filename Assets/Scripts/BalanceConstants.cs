@@ -10,4 +10,19 @@ public static class BalanceConstants
     public const int SnipingBaseShots = 5;          // 스나이핑 타겟당 저격 횟수
     public const float SnipingShotInterval = 0.08f; // 스나이핑 저격 간격
     public const float FlyingArrowSpawnRaise = 0.65f; // 비행 타격 진화 시 발사점 상승
+
+    // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──
+    // 적은 더 이상 스스로 사라지지 않는다. 죽여야만 없어지고, 그 대신 1회 피해가 훨씬 약하다.
+    public const float ContactStopDistance = 1.35f;   // 플레이어로부터 이 x거리에서 멈춰 선다(돌진할 여유를 두고 물러서 있음)
+    public const float HeadbuttInterval = 1f;         // 박치기 주기(초)
+    public const float HeadbuttDamageScale = 0.35f;   // EnemyDefinition.damage에 곱해지는 1회 피해 배율
+    public const float HeadbuttLungeDistance = 0.5f;  // 박치기할 때 앞으로 튀어나가는 거리
+    public const float HeadbuttLungeDuration = 0.26f; // 나갔다 제자리로 돌아오는 총 시간(피해는 최전방 도달 순간)
+    public const float HeadbuttLungeTilt = 18f;       // 돌진하며 앞으로 기우는 각도(도) — 튀어나간 만큼 같이 기울었다 돌아온다
+    // 앞 적과의 **중심 간 x거리**. 적 스프라이트 폭이 약 1.1유닛(콜라이더 0.75 × scale 1.5)이라
+    // 이 값이 그보다 훨씬 작아야 서로 깊게 겹쳐서 "두께 있는 무리"로 보인다(줄 서 있는 것처럼 보이면 이 값을 더 줄일 것).
+    public const float EnemyStackSpacing = 0.042f;
+    public const float EnemyStackSearchRadius = 1.2f; // 앞 적 **후보 탐색** 반경(정지 판정은 중심거리로 함 — 이 값은 판정에 안 쓰임)
+    public const float EnemySpawnYJitter = 0.065f;    // 스폰 시 y를 이만큼 랜덤하게 흔든다 — 줄이 자로 잰 듯 정렬되지 않게(EnemyLaneTolerance보다 훨씬 작아야 레인이 안 갈라짐)
+    public const float EnemyLaneTolerance = 0.6f;     // y가 이보다 벌어지면 다른 레인(지상/공중)이라 서로 안 막음
 }

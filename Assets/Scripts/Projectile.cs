@@ -18,6 +18,11 @@ public class Projectile : MonoBehaviour
 
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
+    // 소멸이 확정됐는지. `Destroy(gameObject)`는 프레임 끝에 실행되므로, 같은 물리 스텝에서 이미 잡힌
+    // 나머지 충돌 콜백은 그대로 호출된다 → 적이 겹쳐 서 있으면 관통 예산이 0인데도 그 프레임에 닿은
+    // 적을 전부 때리게 된다(기본공격이 뭉친 무리를 한 번에 쓸어버리던 원인). 이 플래그로 즉시 끊는다.
+    private bool consumed;
+
     // 발사음은 이 컴포넌트가 아니라 PlayerSkills.FireBasicAttack에서 한 캐스트당 정확히 한 번만 재생한다
     // (Projectile은 캐스트 한 번에 여러 발 생성될 수 있어, 발사체 쪽에 소리를 두면 재생 시점이 GameObject
     // 생성/컴포넌트 초기화 타이밍에 얽혀 불안정해진다).
@@ -29,6 +34,8 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (consumed) return;
+
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy == null || (enemy.IsFlying && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
@@ -45,7 +52,7 @@ public class Projectile : MonoBehaviour
         // 방패 블루베리는 관통을 끊는다 — 남은 관통 횟수와 무관하게 여기서 소멸(뒤에 있는 적은 못 맞힘)
         if (enemy.BlocksProjectiles)
         {
-            Destroy(gameObject);
+            Consume();
             return;
         }
 
@@ -55,6 +62,15 @@ public class Projectile : MonoBehaviour
             return;
         }
 
+        Consume();
+    }
+
+    // 이번 프레임의 남은 충돌 콜백까지 확실히 차단하고 소멸시킨다.
+    // 플래그만으로 같은 스텝의 콜백은 막히고, 콜라이더를 끄면 소멸 전 다음 스텝까지 안전하다.
+    private void Consume()
+    {
+        consumed = true;
+        if (TryGetComponent(out Collider2D col)) col.enabled = false;
         Destroy(gameObject);
     }
 }

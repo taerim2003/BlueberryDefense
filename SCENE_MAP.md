@@ -59,13 +59,14 @@ Global Light 2D
 Player  [tag=Player]   ← SpriteRenderer · BoxCollider2D · Animator
                           + PlayerHealth · PlayerSkills · PlayerExperience · PlayerPassives
 EnemySpawner           ← EnemySpawner (fallbackMap=Map_BlueberryField, scaling=ScalingTable)
-GameManager            ← GameManager + MetaRunApplier + RunBootstrap(defaultMap=Map_BlueberryField)
+GameManager            ← GameManager + MetaRunApplier + RunBootstrap(defaultMap=Map_BlueberryField) + ComicBurst
 Canvas                 ← LevelUpUI · EvolutionTreeUI · DamageMeterUI  (+Canvas/Scaler/Raycaster)
  ├─ LevelUpPanel
  │    EssenceRain(Dialog 뒤·보물 모드 전용) · Dialog · TreasureChest(Dialog 앞·좌하단·보물 모드 전용)
  ├─ HUD                ← HUDController
  │    StageText · HealthPanel · LevelText · PassiveSlot_0~3 · ExpBar
  │    · ActiveSlot_0~3 · ExpLevelText · StageBanner · BuffSlot_0~2(비활성)
+ ├─ XpGemLayer         ← XpGemFlight (전체 스트레치·빈 RectTransform, 보석은 런타임 자식으로 생성)
  ├─ EvolutionPanel/Window          [activeSelf=false]
  └─ DamageMeterPanel               [activeSelf=false]
         Dialog · EarnedEssenceText · ReturnToTitleButton
@@ -81,6 +82,7 @@ Background
 - `GameManager` SerializeField: `stageTable`(RunBootstrap이 맵값으로 덮음, 기본맵이면 동일), `heartPickupPrefab`, `essencePickupPrefab`, `stageBreakDuration`.
 - **`Canvas` 루트에 UI 싱글톤 3개**(LevelUpUI/EvolutionTreeUI/DamageMeterUI)가 컴포넌트로 직접 붙음. 패널 오브젝트(LevelUpPanel/EvolutionPanel/DamageMeterPanel)는 각 UI가 제어하는 뷰.
 - **보물 획득 패널 연출**: 레벨업/보물 보상은 같은 `LevelUpPanel`을 재사용. 보물 모드에서만 `LevelUpUI`가 `treasureDecor`(=[TreasureChest, EssenceRain])를 켜고 HeaderText를 "보물 획득!"으로 교체. `EssenceRain`엔 `TreasureRewardDecor`(정수 비 낙하·회전 + 보물상자 등장/흔들림 연출, unscaled 시간)가 붙음. 순서(상자 먼저 활성)로 정수 비 OnEnable이 상자 트윈을 안전하게 건다.
+- **`XpGemLayer`**(신규) = 경험치 보석 연출 레이어. `HUD` 바로 다음 형제라 **바 위·모달 아래**로 그려진다. `XpGemFlight`가 `ExpBar/ExpFill`을 참조해 "현재 차 있는 끝 지점"을 목표로 잡고, 보석은 이 오브젝트의 자식으로 런타임 생성·풀링. **XP는 보석 도착 시점에 적립**(Enemy.Die는 `XpGemFlight.TrySpawn` 실패 시에만 즉시 적립).
 - `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
 - **BGM = 신규(Phase 1)**: `MapDefinition.bgm`(AudioClip) 있으면 RunBootstrap이 런타임 AudioSource를 GameManager에 추가해 루프 재생. 기본맵은 bgm=null → 무음(현행 유지). SfxPlayer/ObjectPool 효과음은 그대로.
 - **적 로스터·스폰 파라미터는 EnemySpawner가 아니라 `MapDefinition`이 소유**(Phase 1). EnemySpawner는 `ActiveMap`(RunBootstrap이 세팅) 또는 `fallbackMap`(씬 단독 실행용, =Map_BlueberryField)에서 7종 프리팹·bossStage·spawnInterval·defaultSpawnCount를 읽는다.

@@ -41,6 +41,31 @@ public class Enemy : MonoBehaviour
     private bool popping;
     private float popVelY, popVelX, popGroundY;
 
+    // 플레이어 앞 정체(박치기) 상태 — 수치는 BalanceConstants에 모여 있다.
+    private float headbuttTimer;
+    private float holdBaseX;        // 돌진 전 제자리 x(돌진 후 여기로 복귀)
+    private float lungeTimer = -1f; // 0 이상이면 돌진 중
+    private bool lungeDamageDone;
+    private bool isHolding;         // 이번 프레임에 멈춰 서 있는가(추월 판정에서 참조)
+    private Quaternion baseRotation; // 돌진 기울기를 얹기 전의 원래 회전(복귀 기준)
+    private float laneJitter;       // 스폰 시 부여되는 y 흔들림 — 줄이 딱 맞게 정렬되지 않도록
+
+    // 앞 적 감지용 공유 버퍼(적마다 새로 할당하지 않게 static 1개만 돌려쓴다).
+    private static readonly List<Collider2D> aheadHits = new List<Collider2D>();
+    private static ContactFilter2D aheadFilter = new ContactFilter2D { useTriggers = true };
+    private static ContactFilter2D AheadFilter => aheadFilter;
+
+    // 씬이 바뀌면 자동으로 null이 되어 다시 찾는다(판 간 static 누수 없음).
+    private static PlayerHealth cachedPlayer;
+    private static PlayerHealth Player
+    {
+        get
+        {
+            if (cachedPlayer == null) cachedPlayer = FindAnyObjectByType<PlayerHealth>();
+            return cachedPlayer;
+        }
+    }
+
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
     // 하트(체력회복) 드랍 확률 = 기본 3% + MetaBonuses.HealDropChanceBonus(스킬트리 가산, 현재 대응 노드 없음)
@@ -102,6 +127,12 @@ public class Enemy : MonoBehaviour
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
+        baseRotation = transform.localRotation;
+
+        // 스폰 순간부터 y를 살짝 흔들어 둔다 — 겹쳐 쌓일 때 자로 잰 듯한 일렬이 아니라 두께 있는 무리로 보이게.
+        // (캐리어는 Awake에서 스스로 화면 위로 재배치하므로 제외)
+        laneJitter = Random.Range(-BalanceConstants.EnemySpawnYJitter, BalanceConstants.EnemySpawnYJitter);
+        if (!isCarrier) transform.position += Vector3.up * laneJitter;
 
         if (isCarrier)
         {
@@ -145,7 +176,7 @@ public class Enemy : MonoBehaviour
         popping = true;
         popVelY = upVel;
         popVelX = sideVel;
-        popGroundY = groundY;
+        popGroundY = groundY + laneJitter; // 분출 팝콘도 같은 흔들림을 받아 착지 높이가 조금씩 다르게
     }
 
     private void Update()
@@ -185,8 +216,113 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
+        // 플레이어 앞에 닿았거나 앞 적에 막혔으면 그 자리에서 대기(전진 정지) — 줄줄이 쌓인다.
+        bool holding = HoldAtPlayer();
+        isHolding = holding; // 뒤 적이 "멈춰 선 적"인지 판단하는 데 쓴다(추월 예외 처리)
+        if (!holding)
+            transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
+
+        // 제자리에 서 있으면 걷기 애니메이션도 멈춘다(기절 정지와 같은 스위치를 공유).
+        SetAnimatorFrozen(holding || slowMultiplier <= 0.01f);
+
         spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
+    }
+
+    // 멈춰야 하면 true. 플레이어에 실제로 닿은 맨 앞 적만 박치기하고,
+    // 뒤에 막혀 있는 적들은 대기만 한다(그래서 동시에 때리는 건 각 레인의 선두 하나뿐).
+    private bool HoldAtPlayer()
+    {
+        PlayerHealth player = Player;
+        if (player == null) return false;
+
+        if (transform.position.x >= player.transform.position.x - BalanceConstants.ContactStopDistance)
+        {
+            if (lungeTimer < 0f) holdBaseX = transform.position.x; // 돌진 중이 아닐 때의 제자리를 기억해 둔다
+            Headbutt(player);
+            return true;
+        }
+
+        return BlockedAhead();
+    }
+
+    // 예전에는 닿는 순간 damage를 한 번 주고 자폭했지만, 이제는 주기적으로 약하게 때린다.
+    // 적은 죽여야만 사라지므로 "좀 맞고 있어도 버틸 수 있는" 수준으로 1회 피해를 낮춘다.
+    private void Headbutt(PlayerHealth player)
+    {
+        if (lungeTimer >= 0f) { AdvanceLunge(player); return; }
+
+        headbuttTimer += Time.deltaTime;
+        if (headbuttTimer < BalanceConstants.HeadbuttInterval) return;
+
+        headbuttTimer = 0f;
+        lungeTimer = 0f;
+        lungeDamageDone = false;
+    }
+
+    // 앞으로 튀어나갔다가 제자리로 돌아오는 돌진 박치기. sin 곡선이라 0 → 최대 → 0으로 자연히 왕복한다.
+    // 피해는 가장 앞으로 나간 순간(k=0.5, 실제로 부딪히는 그림)에 들어간다.
+    private void AdvanceLunge(PlayerHealth player)
+    {
+        lungeTimer += Time.deltaTime;
+        float k = lungeTimer / BalanceConstants.HeadbuttLungeDuration;
+
+        if (!lungeDamageDone && k >= 0.5f)
+        {
+            lungeDamageDone = true;
+            int hit = Mathf.Max(1, Mathf.RoundToInt(damage * BalanceConstants.HeadbuttDamageScale));
+            player.TakeDamage(hit);
+
+            if (playerCollisionVfxPrefab != null)
+                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(playerCollisionVfxPrefab, transform.position, Quaternion.identity), 2f);
+            SpawnHitParticles(hit);
+        }
+
+        Vector3 p = transform.position;
+        if (k >= 1f)
+        {
+            lungeTimer = -1f;
+            p.x = holdBaseX;
+            transform.localRotation = baseRotation;
+        }
+        else
+        {
+            // 앞으로 나간 거리와 기울기가 같은 곡선을 타서, 튀어나가며 숙였다가 돌아오며 다시 선다.
+            float curve = Mathf.Sin(Mathf.PI * k);
+            p.x = holdBaseX + BalanceConstants.HeadbuttLungeDistance * curve;
+            // 적은 +x로 전진하므로 앞으로 기울이려면 시계방향(-Z)
+            transform.localRotation = baseRotation * Quaternion.Euler(0f, 0f, -BalanceConstants.HeadbuttLungeTilt * curve);
+        }
+        transform.position = p;
+    }
+
+    // 바로 앞(진행 방향)에 같은 레인의 다른 적이 있으면 막힌다. 레인 구분(y 허용치)이 있어서
+    // 지상 줄과 공중 줄이 서로를 막지 않는다.
+    private bool BlockedAhead()
+    {
+        // 프로브를 정지 판정에 직접 쓰면 앞 적의 **콜라이더 가장자리**에 닿는 순간 멈춰서
+        // 간격이 스프라이트 폭(약 1.1유닛)만큼 벌어진다 = 겹치지 않고 줄 서 있는 그림.
+        // 그래서 프로브는 후보를 넓게 긁어오는 용도로만 쓰고, 실제 판정은 **중심 간 x거리**로 한다.
+        aheadHits.Clear();
+        Physics2D.OverlapCircle(transform.position, BalanceConstants.EnemyStackSearchRadius, AheadFilter, aheadHits);
+
+        for (int i = 0; i < aheadHits.Count; i++)
+        {
+            Collider2D hit = aheadHits[i];
+            if (hit == null || hit.gameObject == gameObject) continue;
+            if (!hit.TryGetComponent(out Enemy other)) continue;
+            if (other.isCarrier || other.isDead || other.popping) continue;
+            // 나보다 느린 적은 막지 못한다 — 라이더가 일반 블루베리를 추월해 제 속도로 달려간다.
+            // 단 **이미 멈춰 선 적은 속도와 무관하게 막는다**: 안 그러면 추월한 적이 플레이어 앞에 선 적을
+            // 그대로 통과해 같은 자리에 겹쳐 서고, 선두가 여러 마리가 되어 피해가 배로 들어간다.
+            if (other.moveSpeed < moveSpeed - 0.01f && !other.isHolding) continue;
+
+            float dx = other.transform.position.x - transform.position.x;
+            if (dx <= 0f || dx >= BalanceConstants.EnemyStackSpacing) continue; // 뒤에 있거나 아직 여유 있음
+            if (Mathf.Abs(other.transform.position.y - transform.position.y) > BalanceConstants.EnemyLaneTolerance) continue;
+
+            return true;
+        }
+        return false;
     }
 
     // 캐리어 궤적: 하강 → 호버(중간에 1회 투하) → 상승 후 화면 위로 퇴장(Destroy).
@@ -328,7 +464,9 @@ public class Enemy : MonoBehaviour
 
             // 암살 연계 path1: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
             int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
-            PlayerExperience.Instance?.AddXP(grantedXp);
+            // 경험치 보석이 경험치 바까지 날아가 도착하는 순간 적립된다. 연출이 불가능하면(HUD 없는 씬 등) 즉시 적립.
+            if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
+                PlayerExperience.Instance?.AddXP(grantedXp);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
 
             // 아웃게임 정수(태양빛) 드랍 — 하트처럼 물리적 픽업이 플레이어에게 흡입되어 적립됨
@@ -343,6 +481,15 @@ public class Enemy : MonoBehaviour
 
             if (HeartPickupPrefab != null && Random.value < BaseHealDropChance + MetaBonuses.HealDropChanceBonus)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
+
+            // 만화식 의성어: 보스(사망분출을 가진 대왕)는 무조건 SMASH!,
+            // 수송선을 투하 전에 격추하면 BOOM!(대공 보상), 나머지는 멀티킬 누적에만 기여.
+            if (deathSpawnCount > 0)
+                ComicBurst.Pop(transform.position, ComicBurst.Word.Smash, ignoreInterval: true);
+            else if (isCarrier && carrierDropsDone == 0)
+                ComicBurst.Pop(transform.position, ComicBurst.Word.Boom);
+            else
+                ComicBurst.NotifyKill(transform.position);
 
             SpawnDeathBurst();
 
@@ -478,17 +625,4 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        PlayerHealth playerHealth = other.GetComponent<PlayerHealth>();
-        if (playerHealth == null) return;
-
-        playerHealth.TakeDamage(damage);
-
-        if (playerCollisionVfxPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(playerCollisionVfxPrefab, transform.position, Quaternion.identity), 2f);
-        SpawnHitParticles(damage);
-
-        Destroy(gameObject);
-    }
 }
