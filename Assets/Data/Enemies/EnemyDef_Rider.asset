@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
-  m_Name: EnemyDef_Ufo
+  m_Name: EnemyDef_Rider
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 2.3
-  damage: 16
-  maxHealth: 45
-  xpValue: 12
+  moveSpeed: 4.5
+  damage: 10
+  maxHealth: 28
+  xpValue: 7
   essenceDropChance: 0.15
   essenceDropAmount: 2

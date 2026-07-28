@@ -11,6 +11,7 @@ public class StageData
     public float paperPlaneChance = 0f;
     public float ufoChance = 0f;
     public float shieldChance = 0f; // 방패 블루베리(관통·오브 차단) 스폰 확률
+    public float riderChance = 0f;  // 라이더 블루베리(지상 고속 돌진·저HP) 스폰 확률
     public float enemyHpMultiplier = 1f;
     public float enemySpeedMultiplier = 1f;
     public float enemyDamageMultiplier = 1f;

@@ -88,6 +88,7 @@ public class EnemySpawner : MonoBehaviour
         float paperPlaneChance = stage != null ? stage.paperPlaneChance : 0f;
         float ufoChance = stage != null ? stage.ufoChance : 0f;
         float shieldChance = stage != null ? stage.shieldChance : 0f;
+        float riderChance = stage != null ? stage.riderChance : 0f;
 
         timer += Time.deltaTime;
         if (timer < interval) return;
@@ -107,10 +108,12 @@ public class EnemySpawner : MonoBehaviour
             prefabToSpawn = map.eliteEnemyPrefab;
         else if (map.paperPlaneEnemyPrefab != null && Random.value < paperPlaneChance)
             prefabToSpawn = map.paperPlaneEnemyPrefab;
-        else if (map.ufoEnemyPrefab != null && currentStage >= 11 && Random.value < ufoChance)
+        else if (map.ufoEnemyPrefab != null && Random.value < ufoChance)
             prefabToSpawn = map.ufoEnemyPrefab;
         else if (map.shieldEnemyPrefab != null && Random.value < shieldChance)
             prefabToSpawn = map.shieldEnemyPrefab;
+        else if (map.riderEnemyPrefab != null && Random.value < riderChance)
+            prefabToSpawn = map.riderEnemyPrefab;
 
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
     }

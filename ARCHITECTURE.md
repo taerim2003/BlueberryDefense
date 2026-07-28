@@ -115,6 +115,7 @@
 - **모달 일시정지는 참조카운트.** 레벨업+진화 패널이 겹쳐 뜰 수 있어 `ModalPause.Push/Pop`으로만 `timeScale`을 만진다. timeScale=0 중에도 DOTween 연출이 돌도록 `GameManager.Awake`에서 `DOTween.defaultTimeScaleIndependent=true`.
 - **`Enemy.TakeDamage`는 같은 프레임 재진입에 안전해야 한다.** `Destroy`는 프레임 끝에 실행되므로 낙뢰 재귀/체인이 같은 프레임에 사망 처리를 두 번 돌 수 있어 `isDead` 가드가 두 군데 있다. 낙뢰/체인 판정은 사망 처리보다 **앞**에 있어야 한다(한 방 킬 타격도 낙뢰를 굴릴 기회를 갖도록).
 - **비행 적(`isFlying`) 타격 규칙이 스킬마다 다르다.** 투사체는 진화(`CanHitFlying`) 전엔 못 맞히고 발사점을 위로 올려 세로 히트박스로 커버, 오브는 공중추가피해 진화로만 해금, 미니 회오리는 아예 불가. 새 스킬 만들 때 이 플래그 처리를 빠뜨리기 쉬움.
+- **UFO 수송선(`isCarrier`)은 좌진 행진을 안 한다.** `Enemy.Update`가 `isCarrier`면 `UpdateCarrier`(하강→호버→상승 상태기계)로 분기하고 일반 이동/`spawnYOffset`을 건너뛴다. 스폰 y를 `carrierLaneY`(투하물 착지 지면)로 기억한 뒤 `Camera.main` 기준으로 화면 위 랜덤 x에 재배치. 호버 중 1회 `DropSquad`(투하물에 자기 스테이지 배율을 물려줌). 상승 완료 시 `Destroy`(=격추 안 하면 XP 없음). 투하 전 격추 시 부대 안 나옴.
 - **효과음 3중 안전장치.** `AudioThrottle`(같은 프레임 중복 차단) → `SfxPlayer`(라운드로빈 풀) → `SfxLimiter`(0dBFS 근접 원본 클립 브릭월 리미팅). 원본 VFX 팩 클립이 대부분 풀스케일이라 볼륨만 올리면 클리핑 남.
 
 ---

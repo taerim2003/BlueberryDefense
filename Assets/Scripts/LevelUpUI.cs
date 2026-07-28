@@ -47,6 +47,14 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Button rerollButton;   // 스킬트리 리롤 해금 시 노출
     [SerializeField] private TMP_Text rerollLabel;
 
+    [SerializeField] private TMP_Text headerText;        // 패널 제목(일반=레벨 업, 보물=보물 획득)
+    [SerializeField] private GameObject[] treasureDecor; // 보물 모드에서만 켜지는 장식(정수 비·보물상자)
+
+    private static readonly Color TreasureHeaderColor = new Color(1f, 0.82f, 0.2f, 1f);
+    private const string TreasureHeader = "보물 획득!";
+    private string headerDefaultText;
+    private Color headerDefaultColor;
+
     private static readonly Color NewTagColor = new Color(1f, 0.85f, 0.2f, 1f);
     private static readonly Color LevelTagColor = new Color(0.75f, 0.85f, 1f, 1f);
     private static readonly Color EvolveTagColor = new Color(1f, 0.55f, 0.1f, 1f); // 진화 가능 강조(주황)
@@ -77,6 +85,13 @@ public class LevelUpUI : MonoBehaviour
     {
         Instance = this;
         panel.SetActive(false);
+
+        if (headerText != null)
+        {
+            headerDefaultText = headerText.text;
+            headerDefaultColor = headerText.color;
+        }
+        SetTreasureDecor(false);
 
         optionButtonA.onClick.AddListener(() => Choose(0));
         optionButtonB.onClick.AddListener(() => Choose(1));
@@ -117,8 +132,24 @@ public class LevelUpUI : MonoBehaviour
 
         rerollable = true;
         treasureMode = false;
+        SetTreasureDecor(false);
         currentOptions = BuildOptions(skills, passives);
         ShowOptions();
+    }
+
+    // 보물 모드 장식(정수 비·보물상자)과 패널 제목을 일반/보물에 맞게 전환.
+    // 배열 앞쪽부터 켜지므로 보물상자를 정수 비보다 먼저 두면 정수 비 OnEnable에서 상자 연출을 안전하게 건다.
+    private void SetTreasureDecor(bool on)
+    {
+        if (treasureDecor != null)
+            foreach (GameObject go in treasureDecor)
+                if (go != null) go.SetActive(on);
+
+        if (headerText != null)
+        {
+            headerText.text = on ? TreasureHeader : headerDefaultText;
+            headerText.color = on ? TreasureHeaderColor : headerDefaultColor;
+        }
     }
 
     // 밀려 있던 보상을 하나 이어서 연다(보물상자 우선). 닫힘 연출(UITransition.Hide)이 끝난 뒤에
@@ -340,6 +371,7 @@ public class LevelUpUI : MonoBehaviour
 
         rerollable = false;   // 보물상자 보상은 리롤 불가
         treasureMode = true;
+        SetTreasureDecor(true);
         currentOptions = BuildOptions(skills, passives);
         ShowOptions();
     }

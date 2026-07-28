@@ -18,6 +18,15 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool isFlying = false;
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
+    [Header("수송선(UFO) — 화면 위에서 내려와 부대 투하 후 상승 퇴장")]
+    [SerializeField] private bool isCarrier = false;         // 켜면 좌진 행진 대신 하강→투하→상승 궤적을 탄다
+    [SerializeField] private GameObject carrierDropPrefab;   // 투하할 잡몹(기본 블루베리)
+    [SerializeField] private int carrierDropMin = 3;
+    [SerializeField] private int carrierDropMax = 4;
+    [SerializeField] private float carrierDescendSpeed = 4f;
+    [SerializeField] private float carrierAscendSpeed = 5.5f;
+    [SerializeField] private float carrierHoverTime = 0.6f;  // 호버(투하 연출) 지속시간
+
     [Header("사망 시 분출(대왕 블루베리 = BTD 비행선 방식)")]
     [SerializeField] private GameObject[] deathSpawnPrefabs; // 사망 시 흩뿌릴 적들(마리마다 랜덤 선택). 대왕: 일반+리젠트+UFO
     [SerializeField] private int deathSpawnCount = 0;         // 흩뿌릴 총 마릿수(0=없음)
@@ -59,6 +68,18 @@ public class Enemy : MonoBehaviour
 
     private float currentHealth;
     private bool isDead;
+
+    // 캐리어(UFO) 궤적 상태 — 화면 위 스폰 → 하강 → 호버(투하) → 상승 퇴장
+    private enum CarrierPhase { Descend, Hover, Ascend }
+    private CarrierPhase carrierPhase;
+    private float carrierTopY;   // 스폰·퇴장 높이(화면 위 바로 바깥) — Awake에서 카메라 기준 계산
+    private float carrierHoverY; // 투하 고도(화면 상단부)
+    private float carrierLaneY;  // 스포너가 준 레인 기준 y — 투하물이 착지할 지면 높이
+    private float carrierHoverTimer;
+    private bool carrierDropped;
+    // 스테이지 배율을 기억해 투하물에 동일 적용(공유 SO 오염 없이 자식도 같은 난이도로)
+    private float appliedHpMult = 1f, appliedSpeedMult = 1f, appliedDamageMult = 1f;
+
     private float slowMultiplier = 1f;
     private float slowTimer;
     private float vulnerableMultiplier = 1f;
@@ -78,7 +99,24 @@ public class Enemy : MonoBehaviour
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
-        if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
+
+        if (isCarrier)
+        {
+            // 스포너가 준 스폰 y = 레인 지면 → 투하물 착지 높이로 보관. 그 뒤 화면 위 랜덤 x로 재배치.
+            carrierLaneY = transform.position.y;
+            Camera cam = Camera.main;
+            float camX = cam != null ? cam.transform.position.x : 0f;
+            float camY = cam != null ? cam.transform.position.y : 0f;
+            float halfH = cam != null ? cam.orthographicSize : 5f;
+            float halfW = cam != null ? halfH * cam.aspect : halfH * 1.78f;
+            carrierTopY = camY + halfH + 1f;        // 화면 위 바로 바깥에서 등장
+            carrierHoverY = camY + halfH * 0.4f;    // 화면 상단부에서 호버·투하
+            // 플레이어가 있는 좌측 끝은 피하고 화면 중앙~우측 사이에 등장(빈 중앙을 채우는 게 목적)
+            float spawnX = camX + Random.Range(-halfW * 0.15f, halfW * 0.7f);
+            transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
+            carrierPhase = CarrierPhase.Descend;
+        }
+        else if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
     }
 
     // 기절 = 이동정지(slowMultiplier≈0). 이때 걷기 애니메이션도 함께 멈추고, 풀리면 다시 재생한다.
@@ -89,6 +127,9 @@ public class Enemy : MonoBehaviour
 
     public void ApplyStageMultipliers(float hpMultiplier, float speedMultiplier, float damageMultiplier)
     {
+        appliedHpMult = hpMultiplier;       // 캐리어 투하물에 동일 배율을 물려주기 위해 기억
+        appliedSpeedMult = speedMultiplier;
+        appliedDamageMult = damageMultiplier;
         maxHealth *= hpMultiplier;
         currentHealth = maxHealth;
         moveSpeed *= speedMultiplier;
@@ -135,8 +176,56 @@ public class Enemy : MonoBehaviour
                 vulnerableMultiplier = 1f;
         }
 
+        if (isCarrier)
+        {
+            UpdateCarrier();
+            return;
+        }
+
         transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
         spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
+    }
+
+    // 캐리어 궤적: 하강 → 호버(중간에 1회 투하) → 상승 후 화면 위로 퇴장(Destroy).
+    // 투하 전에 격추당하면(하강 중 사망) 부대는 안 나온다 — 빠른 대공에 대한 보상.
+    private void UpdateCarrier()
+    {
+        Vector3 p = transform.position;
+        switch (carrierPhase)
+        {
+            case CarrierPhase.Descend:
+                p.y -= carrierDescendSpeed * slowMultiplier * Time.deltaTime;
+                if (p.y <= carrierHoverY) { p.y = carrierHoverY; carrierPhase = CarrierPhase.Hover; carrierHoverTimer = 0f; }
+                break;
+            case CarrierPhase.Hover:
+                carrierHoverTimer += Time.deltaTime;
+                if (!carrierDropped && carrierHoverTimer >= carrierHoverTime * 0.4f) { DropSquad(); carrierDropped = true; }
+                if (carrierHoverTimer >= carrierHoverTime) carrierPhase = CarrierPhase.Ascend;
+                break;
+            case CarrierPhase.Ascend:
+                p.y += carrierAscendSpeed * slowMultiplier * Time.deltaTime;
+                if (p.y >= carrierTopY) { Destroy(gameObject); return; }
+                break;
+        }
+        transform.position = p;
+        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
+    }
+
+    // 호버 지점에서 잡몹 부대를 팝콘처럼 흩뿌린다. 각 투하물은 레인 지면(carrierLaneY)으로 낙하하며,
+    // 캐리어가 받은 스테이지 배율을 그대로 물려받아 후반 스테이지에서도 유의미한 위협이 된다.
+    private void DropSquad()
+    {
+        if (carrierDropPrefab == null) return;
+        int n = Random.Range(carrierDropMin, carrierDropMax + 1);
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 offset = new Vector2(Random.Range(-0.8f, 0.8f), Random.Range(-0.2f, 0.4f));
+            GameObject go = Instantiate(carrierDropPrefab, transform.position + (Vector3)offset, Quaternion.identity);
+            Enemy e = go.GetComponent<Enemy>();
+            if (e == null) continue;
+            e.ApplyStageMultipliers(appliedHpMult, appliedSpeedMult, appliedDamageMult);
+            e.PopIn(Random.Range(2f, 4f), Random.Range(-3f, 3f), carrierLaneY + e.SpawnYOffset);
+        }
     }
 
     public void ApplySlow(float multiplier, float duration)

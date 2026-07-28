@@ -26,4 +26,5 @@ MonoBehaviour:
   paperPlaneEnemyPrefab: {fileID: 2450170008170281, guid: cc51a7d5446e5f64faa618a4e06e8744, type: 3}
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
   shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
+  riderEnemyPrefab: {fileID: 6695594374957680745, guid: 6712b983e4ac3c542bfcc99377910015, type: 3}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}

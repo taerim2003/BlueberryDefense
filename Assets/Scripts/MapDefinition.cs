@@ -26,5 +26,6 @@ public class MapDefinition : ScriptableObject
     public GameObject paperPlaneEnemyPrefab;
     public GameObject ufoEnemyPrefab;
     public GameObject shieldEnemyPrefab;
+    public GameObject riderEnemyPrefab;
     public GameObject bossEnemyPrefab;
 }
