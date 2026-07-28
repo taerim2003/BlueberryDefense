@@ -359,15 +359,18 @@ public class HUDController : MonoBehaviour
         return frame;
     }
 
+    // 슬롯 아래 보석 = 진화 횟수(0~2). 예전엔 투자한 path 수였지만 진화가 2루트×2티어로 바뀌면서
+    // 루트는 항상 하나뿐이라 "몇 차 진화까지 갔나"를 보여주는 게 맞다.
     private void SetPathIcons(ActiveSlot slot, EquippedSkill skill)
     {
         if (slot.gemIcons == null) return;
 
+        int stage = skill != null ? skill.EvolutionStage : 0;
         for (int i = 0; i < slot.gemIcons.Length; i++)
         {
-            bool hasPath = skill != null && i < skill.PathTier.Length && skill.PathTier[i] > 0;
-            slot.gemIcons[i].enabled = hasPath;
-            if (hasPath) slot.gemIcons[i].sprite = GetIcon(gemIconSprites, i);
+            bool filled = i < stage;
+            slot.gemIcons[i].enabled = filled;
+            if (filled) slot.gemIcons[i].sprite = GetIcon(gemIconSprites, i);
         }
     }
 

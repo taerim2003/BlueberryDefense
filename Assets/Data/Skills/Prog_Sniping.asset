@@ -14,152 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 5
   baseCooldown: 5
-  baseDamage: 30
+  baseDamage: 15
   levels:
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
+  - stat: 10
     op: 0
-    amount: 0.05
+    amount: 1
   - stat: 0
     op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
+    amount: 1.3
+  - stat: 4
     op: 0
-    amount: 0.05
+    amount: 1
   - stat: 0
     op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
+    amount: 1.3
+  - stat: 10
     op: 0
-    amount: 0.05
+    amount: 1
   - stat: 0
     op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
+    amount: 1.3
+  - stat: 4
     op: 0
-    amount: 0.05
+    amount: 1
   - stat: 0
     op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
+    amount: 1.3
+  - stat: 10
     op: 0
-    amount: 0.05
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
-    op: 0
-    amount: 0.05
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
-  - stat: 7
-    op: 0
-    amount: 0.05
-  - stat: 0
-    op: 1
-    amount: 1.2
-  - stat: 1
-    op: 1
-    amount: 0.95
+    amount: 1

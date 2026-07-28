@@ -25,6 +25,7 @@ public class EnemySpawner : MonoBehaviour
     private int treasureSpawnedForStage = 0;
     private int stageBeingCounted = -1;
     private bool bossSpawnedThisStage;
+    private int evolutionElitesSpawnedThisStage; // 벽 스테이지 확정 엘리트를 몇 마리 내보냈나
 
     // 물량 기반 스폰 진행 상태 — GameManager가 클리어 판정에, HUD가 진행바에 참조
     public int SpawnedThisStage { get; private set; }
@@ -48,6 +49,7 @@ public class EnemySpawner : MonoBehaviour
         SpawnTarget = stage != null ? stage.spawnCount : Map.defaultSpawnCount;
         treasureSpawnedForStage = 0;
         bossSpawnedThisStage = false;
+        evolutionElitesSpawnedThisStage = 0;
         timer = 0f;
         treasureDelayTimer = 0f;
     }
@@ -95,6 +97,20 @@ public class EnemySpawner : MonoBehaviour
 
         timer = 0f;
 
+        // 벽 스테이지 진화 엘리트: 확률이 아니라 확정으로, 스테이지 물량을 균등 분할한 지점마다 1마리씩.
+        // (2마리면 33%·66% 지점) 이 엘리트만 진화 아이템을 떨군다.
+        int evolutionDrops = stage != null ? stage.evolutionItemDrops : 0;
+        if (evolutionDrops > 0 && evolutionElitesSpawnedThisStage < evolutionDrops && map.eliteEnemyPrefab != null)
+        {
+            int threshold = SpawnTarget * (evolutionElitesSpawnedThisStage + 1) / (evolutionDrops + 1);
+            if (SpawnedThisStage >= threshold)
+            {
+                evolutionElitesSpawnedThisStage++;
+                SpawnEnemies(map.eliteEnemyPrefab, 1, stage, currentStage, carriesEvolutionItem: true);
+                return;
+            }
+        }
+
         GameObject prefabToSpawn = map.enemyPrefab;
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어)
         if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
@@ -118,7 +134,7 @@ public class EnemySpawner : MonoBehaviour
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
     }
 
-    private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage)
+    private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage, bool carriesEvolutionItem = false)
     {
         for (int i = 0; i < count; i++)
         {
@@ -126,11 +142,12 @@ public class EnemySpawner : MonoBehaviour
             Vector3 spawnPos = transform.position + Vector3.left * (1.2f * i);
             GameObject obj = Instantiate(prefab, spawnPos, Quaternion.identity);
 
-            if (stage != null)
             {
                 Enemy enemy = obj.GetComponent<Enemy>();
                 if (enemy != null)
                 {
+                    if (carriesEvolutionItem) enemy.MarkEvolutionItemCarrier();
+                    if (stage == null) continue;
                     int step = currentStage / 3;
                     AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
                     float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;

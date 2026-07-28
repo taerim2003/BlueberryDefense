@@ -8,6 +8,9 @@ public class StageData
     public float duration = 45f;  // (레거시) 물량 기반 전환으로 미사용 — 참고용으로만 남김
     public float spawnInterval = 1.5f;
     public float eliteChance = 0f;
+    // 벽 스테이지(능력시험) 표식. 0보다 크면 이 스테이지에 엘리트가 **확정으로** 그 수만큼 나오고,
+    // 그 엘리트를 잡으면 진화 아이템을 떨군다. 진화는 이 아이템으로만 열린다(§EvolutionRoutes).
+    public int evolutionItemDrops = 0;
     public float paperPlaneChance = 0f;
     public float ufoChance = 0f;
     public float shieldChance = 0f; // 방패 블루베리(관통·오브 차단) 스폰 확률

@@ -6,6 +6,12 @@ public class Enemy : MonoBehaviour
 {
     [SerializeField] private EnemyDefinition definition; // 밸런스 스탯(속도·피해·체력·xp·정수드랍). Awake에서 런타임 필드로 복사
     [SerializeField] private bool isTreasure;
+
+    // 벽 스테이지 진화 엘리트 표식. 프리팹 값이 아니라 EnemySpawner가 스폰 직후 켜준다
+    // (같은 엘리트 프리팹이 일반 스테이지에도 나오기 때문).
+    private bool carriesEvolutionItem;
+    public void MarkEvolutionItemCarrier() => carriesEvolutionItem = true;
+
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
     [SerializeField] private GameObject chainLightningVfxPrefab;
@@ -17,9 +23,10 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
     // "비행 유닛인가"(isFlying = 추가피해·호밍 우선타겟 같은 분류)와 "대공 능력이 있어야만 맞힐 수 있는가"를 분리한다.
-    // UFO는 계속 대공 전용(true)이라 13스테이지 대공 시험이 유지되고,
-    // 종이비행기는 false로 두어 **오직 히트박스가 닿느냐로만** 판정된다(대각선으로 내려오며 점점 맞기 쉬워짐).
-    [SerializeField] private bool requiresAntiAir = true;
+    // ⚠️ 기본값은 반드시 **false**(= 히트박스로만 판정). true로 두면 이 필드가 직렬화되지 않은
+    //    기존 프리팹 전부가 "대공 필요"로 잡혀 지상 적조차 아무 스킬에도 안 맞는다(실제로 한 번 터진 버그).
+    //    대공 전용으로 만들 적(UFO)에만 프리팹에서 켤 것.
+    [SerializeField] private bool requiresAntiAir = false;
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
     [Header("대각선 강하(종이비행기) — 화면 위에서 플레이어로 직선 수렴")]
@@ -513,6 +520,9 @@ public class Enemy : MonoBehaviour
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
+
+            // 벽 스테이지 엘리트만 진화 아이템을 떨군다 — 진화를 여는 유일한 경로(§EvolutionRoutes)
+            if (carriesEvolutionItem) EvolutionItemPickup.Drop(transform.position);
 
             // 아웃게임 정수(태양빛) 드랍 — 하트처럼 물리적 픽업이 플레이어에게 흡입되어 적립됨
             if (isTreasure || Random.value < essenceDropChance)

@@ -8,6 +8,8 @@ public class Whirlwind : MonoBehaviour
     [SerializeField] private float damagingMoveSpeedMultiplier = 0.4f;
     [SerializeField] private float lifetime = 4f;
     [SerializeField] private float tickInterval = 0.3f;
+    // 레벨업으로 이 배율이 내려가면 더 자주 갈아버린다(회오리 성장의 보조축). 1 = 프리팹 기본 주기.
+    public float TickIntervalMult { get; set; } = 1f;
     [SerializeField] private GameObject impactVfxPrefab;
     [SerializeField] private float groundY = 0f; // 공중(비행 적 처치 지점 등)에서 생성돼도 이 높이까지 자연스럽게 낙하
     [SerializeField] private float gravity = 25f;
@@ -50,7 +52,7 @@ public class Whirlwind : MonoBehaviour
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
             if (enemy == null || (enemy.RequiresAntiAir && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
-            nextTickTime[enemy] = Time.time + tickInterval;
+            nextTickTime[enemy] = Time.time + tickInterval * TickIntervalMult;
 
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
             if (ApplyGemSlow) enemy.ApplySlow(0.3f, SlowDuration);

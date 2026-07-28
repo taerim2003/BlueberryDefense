@@ -17,6 +17,7 @@ public class Orb : MonoBehaviour
     public float FlyingDamageMultiplier { get; set; } = 1f;
     public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
     public float SlowDurationBonus { get; set; } // 덧셈(초)
+    public int MaxTargets { get; set; } = 2; // 한 번에 갈아버릴 수 있는 적 수(레벨업 주 성장축). FireOrb가 세팅
 
     private const float ImpactSfxCooldown = 0.9f; // Whirlwind와 동일한 이유: 임팩트 클립 길이가 틱 간격(0.3초)보다 길어서 매 틱 재생하면 겹쳐 쌓인다.
 
@@ -36,11 +37,26 @@ public class Orb : MonoBehaviour
 
         overlappingEnemies.RemoveWhere(e => e == null);
         bool canHitFlying = FlyingDamageMultiplier > 1f || MetaBonuses.OrbCanHitFlying; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0) 또는 스킬트리로 해금
-        foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
+
+        // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로 MaxTargets마리까지만** 때린다.
+        // 레벨업으로 이 한도가 올라가는 게 오브의 주 성장축(2마리 → 5마리).
+        int remaining = Mathf.Max(1, MaxTargets);
+        List<Enemy> ordered = new List<Enemy>(overlappingEnemies);
+        ordered.Sort((a, b) =>
         {
+            if (a == null || b == null) return 0;
+            float da = ((Vector2)a.transform.position - (Vector2)transform.position).sqrMagnitude;
+            float db = ((Vector2)b.transform.position - (Vector2)transform.position).sqrMagnitude;
+            return da.CompareTo(db);
+        });
+
+        foreach (Enemy enemy in ordered)
+        {
+            if (remaining <= 0) break;
             if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             if (enemy.RequiresAntiAir && !canHitFlying) continue; // 대공 전용 적(UFO)만 차단 — 종이비행기는 히트박스로만 판정
             nextTickTime[enemy] = Time.time + tickInterval;
+            remaining--;
 
             float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
             enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb);

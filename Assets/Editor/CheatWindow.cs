@@ -123,19 +123,18 @@ public class CheatWindow : EditorWindow
         EditorGUILayout.LabelField("장착 스킬 / 진화", EditorStyles.boldLabel);
         foreach (EquippedSkill eq in skills.EquippedSkills.ToList())
         {
-            EditorGUILayout.LabelField(PlayerSkills.GetActiveSkillName(eq.Id) + " Lv." + eq.Level
-                + "  [" + eq.PathTier[0] + "/" + eq.PathTier[1] + "/" + eq.PathTier[2] + "]");
+            EditorGUILayout.LabelField(eq.DisplayName + " Lv." + eq.Level
+                + "  (누적 " + eq.TotalLevel + " · " + eq.EvolutionStage + "차 진화)");
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("레벨 +1")) skills.UpgradeSkillLevel(eq.Id);
-            for (int path = 0; path < 3; path++)
+            using (new EditorGUI.DisabledScope(!skills.CanEvolve(eq)))
             {
-                int capturedPath = path;
-                bool canEvolve = skills.CanEvolvePath(eq, capturedPath);
-                using (new EditorGUI.DisabledScope(!canEvolve))
+                foreach (int route in PlayerSkills.SelectableRoutes(eq))
                 {
-                    if (GUILayout.Button("진화 path" + (capturedPath + 1)))
-                        skills.EvolveSkill(eq.Id, capturedPath);
+                    int captured = route;
+                    if (GUILayout.Button("진화 → " + EvolutionRoutes.EvolvedName(eq.Id, captured, eq.EvolutionStage + 1)))
+                        skills.EvolveSkill(eq.Id, captured);
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -157,19 +156,18 @@ public class CheatWindow : EditorWindow
         EditorGUILayout.LabelField("장착 패시브 / 진화", EditorStyles.boldLabel);
         foreach (EquippedPassive eq in passives.EquippedPassives.ToList())
         {
-            EditorGUILayout.LabelField(PlayerSkills.GetPassiveSkillName(eq.Id) + " Lv." + eq.Level
-                + "  [" + eq.PathTier[0] + "/" + eq.PathTier[1] + "/" + eq.PathTier[2] + "]");
+            EditorGUILayout.LabelField(eq.DisplayName + " Lv." + eq.Level
+                + "  (누적 " + eq.TotalLevel + " · " + eq.EvolutionStage + "차 진화)");
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("레벨 +1")) passives.UpgradePassiveLevel(eq.Id);
-            for (int path = 0; path < 3; path++)
+            using (new EditorGUI.DisabledScope(!passives.CanEvolve(eq)))
             {
-                int capturedPath = path;
-                bool canEvolve = passives.CanEvolvePath(eq, capturedPath);
-                using (new EditorGUI.DisabledScope(!canEvolve))
+                foreach (int route in PlayerPassives.SelectableRoutes(eq))
                 {
-                    if (GUILayout.Button("진화 path" + (capturedPath + 1)))
-                        passives.EvolvePassive(eq.Id, capturedPath);
+                    int captured = route;
+                    if (GUILayout.Button("진화 → " + EvolutionRoutes.EvolvedName(eq.Id, captured, eq.EvolutionStage + 1)))
+                        passives.EvolvePassive(eq.Id, captured);
                 }
             }
             EditorGUILayout.EndHorizontal();

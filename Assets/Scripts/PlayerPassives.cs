@@ -16,9 +16,16 @@ public class EquippedPassive
     public PassiveSkillId Id;
     public int Level = 1;
 
-    // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
+    // 진화 효과 저장소(§EvolutionRoutes — 루트/티어를 여기로 번역해 넣는다).
     public readonly int[] PathTier = new int[3];
     public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
+
+    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 진화 게이트(5/10) 기준
+    public int EvolutionStage = 0;  // 0=미진화, 1=1차, 2=2차(최종)
+    public int Route = -1;
+
+    public string DisplayName =>
+        EvolutionStage > 0 ? EvolutionRoutes.EvolvedName(Id, Route, EvolutionStage) : PlayerSkills.GetPassiveSkillName(Id);
 }
 
 public class PlayerPassives : MonoBehaviour
@@ -163,14 +170,16 @@ public class PlayerPassives : MonoBehaviour
         ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
     }
 
-    public bool CanUpgradePassive(EquippedPassive passive) => passive.TotalEvolutionTier >= passive.Level / 5;
+    // 진화가 아이템 기반이 되면서 5의 배수 레벨업 게이트는 사라졌다(호출부 유지용으로 남김).
+    public bool CanUpgradePassive(EquippedPassive passive) => passive != null;
 
     public void UpgradePassiveLevel(PassiveSkillId id)
     {
         EquippedPassive passive = GetPassive(id);
-        if (passive == null || !CanUpgradePassive(passive)) return;
+        if (passive == null) return;
 
         passive.Level++;
+        passive.TotalLevel++;
         ApplyPassiveLevelEffect(passive);
     }
 
@@ -277,38 +286,41 @@ public class PlayerPassives : MonoBehaviour
         return lines;
     }
 
-    // path: 0=기본(무의존), 1=패시브 연계, 2=액티브 연계
-    public bool CanEvolvePath(EquippedPassive passive, int path)
+    // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) — 액티브 스킬과 동일 규칙 ──
+    public bool CanEvolve(EquippedPassive passive)
     {
-        int tier = passive.PathTier[path];
-        if (tier >= 3) return false;
-
-        if (tier == 0)
-        {
-            int investedPaths = CountInvestedPaths(passive);
-            return investedPaths < 2;
-        }
-
-        if (tier == 1)
-        {
-            int advancingPath = GetAdvancingPath(passive);
-            if (advancingPath != -1 && advancingPath != path) return false;
-            return HasPathPrereq(passive.Id, path);
-        }
-
-        return true;
+        if (passive == null || passive.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
+        int required = passive.EvolutionStage == 0
+            ? EvolutionRoutes.FirstEvolutionLevel
+            : EvolutionRoutes.SecondEvolutionLevel;
+        return passive.TotalLevel >= required;
     }
 
-    public bool CanEvolveAnyPath(EquippedPassive passive) =>
-        CanEvolvePath(passive, 0) || CanEvolvePath(passive, 1) || CanEvolvePath(passive, 2);
+    public static int[] SelectableRoutes(EquippedPassive passive) =>
+        passive.EvolutionStage == 0 ? new[] { 0, 1 } : new[] { passive.Route };
 
-    public void EvolvePassive(PassiveSkillId id, int path)
+    public void EvolvePassive(PassiveSkillId id, int route)
     {
         EquippedPassive passive = GetPassive(id);
-        if (passive == null || !CanEvolvePath(passive, path)) return;
+        if (passive == null || !CanEvolve(passive)) return;
+        if (passive.EvolutionStage > 0 && route != passive.Route) return;
 
-        passive.PathTier[path]++;
-        ApplyPassivePathTierEffect(passive, path, passive.PathTier[path]);
+        int newTier = passive.EvolutionStage + 1;
+        int path = EvolutionRoutes.RoutePath(id, route);
+
+        foreach (int legacyTier in EvolutionRoutes.LegacyTiersFor(newTier))
+        {
+            passive.PathTier[path] = legacyTier;
+            ApplyPassivePathTierEffect(passive, path, legacyTier);
+        }
+        passive.PathTier[path] = EvolutionRoutes.TargetPathTier(newTier);
+
+        passive.Route = route;
+        passive.EvolutionStage = newTier;
+
+        // 패시브의 "기본 스탯 도약" = 레벨업 1회분을 한 번 더 얹는 것(스킬의 피해 ×1.5에 해당).
+        ApplyPassiveLevelEffect(passive);
+        passive.Level = 1;
     }
 
     private void ApplyPassivePathTierEffect(EquippedPassive passive, int path, int newTier)
@@ -372,35 +384,6 @@ public class PlayerPassives : MonoBehaviour
         }
     }
 
-    private static int CountInvestedPaths(EquippedPassive passive) =>
-        (passive.PathTier[0] > 0 ? 1 : 0) + (passive.PathTier[1] > 0 ? 1 : 0) + (passive.PathTier[2] > 0 ? 1 : 0);
-
-    private static int GetAdvancingPath(EquippedPassive passive)
-    {
-        for (int i = 0; i < 3; i++)
-            if (passive.PathTier[i] >= 2) return i;
-        return -1;
-    }
-
-    // path1/path2 진화는 연계 대상(패시브/액티브)을 보유하는 것만으로는 부족하고, Lv.5 이상이어야 함
-    private bool HasPathPrereq(PassiveSkillId id, int path)
-    {
-        if (path == 1)
-        {
-            PassiveSkillId? req = GetPassivePrereq(id);
-            if (!req.HasValue) return false;
-            EquippedPassive p = GetPassive(req.Value);
-            return p != null && p.Level >= 5;
-        }
-        if (path == 2)
-        {
-            ActiveSkillId? req = GetActivePrereq(id);
-            if (!req.HasValue || skills == null) return false;
-            EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == req.Value);
-            return s != null && s.Level >= 5;
-        }
-        return true;
-    }
 
     public static PassiveSkillId? GetPassivePrereq(PassiveSkillId id) => id switch
     {

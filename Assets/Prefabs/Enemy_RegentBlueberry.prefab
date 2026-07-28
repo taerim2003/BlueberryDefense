@@ -218,7 +218,20 @@ MonoBehaviour:
   spawnYOffset: 0.15
   alwaysBackLayer: 1
   isFlying: 0
+  requiresAntiAir: 0
   blocksProjectiles: 0
+  isDiveFlyer: 0
+  diveSpawnHeightRatioMin: 0.4
+  diveSpawnHeightRatioMax: 0.95
+  isCarrier: 0
+  carrierDropPrefab: {fileID: 0}
+  carrierRegentPrefab: {fileID: 0}
+  carrierDropMin: 4
+  carrierDropMax: 5
+  carrierDropCount: 3
+  carrierDropInterval: 1
+  carrierDescendSpeed: 4
+  carrierAscendSpeed: 5.5
   deathSpawnPrefabs: []
   deathSpawnCount: 0
   deathSpawnRadius: 0.6

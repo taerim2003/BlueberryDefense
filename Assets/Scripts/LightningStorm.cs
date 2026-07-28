@@ -9,9 +9,13 @@ public static class LightningStorm
 {
     private static readonly List<float> stackEndTimes = new List<float>();
 
-    public const float BaseProcChance = 0.6f;
+    // 레벨업 주 성장축이라 시작값을 낮게 잡는다(60%였을 땐 헤드룸이 40%뿐이라 +3%p가 전혀 안 보였음).
+    // 25%에서 시작해 레벨업마다 +6%p → 10레벨 55%. 초반엔 가끔 터지고 후반엔 쫙쫙 떨어진다.
+    public const float BaseProcChance = 0.25f;
     public static float ProcChance = BaseProcChance;
-    public const float BaseProcDamage = 12f;          // 낙뢰 기본 피해(레벨업 성장 표시의 기준값)
+    // 낙뢰 기본 피해. ⚠️ Prog_Lightning.baseDamage(=0)는 무시되고 **이 상수가 실제 시작 피해**다
+    // (GetDefaultDamage가 낙뢰만 여기서 읽어감). 시작값 하향 12→6.
+    public const float BaseProcDamage = 6f;
     public static float ProcDamage = BaseProcDamage;  // 캐스트마다 배율 적용된 '현재' 피해로 갱신됨
     public static bool RecursiveProcEnabled;
     public static float RecursiveDamageGrowth; // 힘 연계 path0 T3: 재귀 단계마다 이 비율만큼 낙뢰 피해량 누적 증가

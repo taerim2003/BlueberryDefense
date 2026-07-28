@@ -7,8 +7,16 @@ public static class BalanceConstants
     public const float OrbAltarCooldown = 15f;      // 오브 제단(Orb path2 T2+) 쿨타임
     public const float MaxCritChance = 0.7f;        // 치명타 확률 상한(상시 100% 크리 방지)
     public const int BasicAttackBaseHits = 3;       // 기본공격 기본 멀티히트 수
-    public const int SnipingBaseShots = 5;          // 스나이핑 타겟당 저격 횟수
+    public const int SnipingBaseShots = 3;          // 스나이핑 타겟당 저격 횟수(레벨업으로 +, 시작값 하향 5→3)
     public const float SnipingShotInterval = 0.08f; // 스나이핑 저격 간격
+
+    // ── 레벨업 성장축의 "시작값" ──
+    // 레벨업이 눈에 보이려면 시작이 낮아야 한다(2→5마리가 5→8마리보다 훨씬 크게 느껴짐).
+    public const int OrbBaseTargets = 2;      // 오브가 동시에 갈아버리는 적 수
+    public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값 하향 5→3)
+    public const int EagleBaseDrops = 2;      // 독수리 투하 횟수(시작값 하향 3→2)
+    public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
+    public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
     public const float FlyingArrowSpawnRaise = 0.65f; // 비행 타격 진화 시 발사점 상승
 
     // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──

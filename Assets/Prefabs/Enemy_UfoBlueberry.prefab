@@ -218,13 +218,11 @@ MonoBehaviour:
   spawnYOffset: 1.1
   alwaysBackLayer: 0
   isFlying: 1
+  requiresAntiAir: 1
   blocksProjectiles: 0
-  deathSpawnPrefabs: []
-  deathSpawnCount: 0
-  deathSpawnRadius: 0.6
-  deathBurstVfxPrefab: {fileID: 0}
-  deathBurstVfxScale: 1
-  popGravity: 30
+  isDiveFlyer: 0
+  diveSpawnHeightRatioMin: 0.4
+  diveSpawnHeightRatioMax: 0.95
   isCarrier: 1
   carrierDropPrefab: {fileID: 2590007705602640116, guid: aca1e7fdf80f4c04f91136455ad76b45, type: 3}
   carrierRegentPrefab: {fileID: 1348368236079402333, guid: 017ef458e4ed6be41aeea56d842438bc, type: 3}
@@ -234,3 +232,9 @@ MonoBehaviour:
   carrierDropInterval: 1
   carrierDescendSpeed: 3
   carrierAscendSpeed: 5.5
+  deathSpawnPrefabs: []
+  deathSpawnCount: 0
+  deathSpawnRadius: 0.6
+  deathBurstVfxPrefab: {fileID: 0}
+  deathBurstVfxScale: 1
+  popGravity: 30

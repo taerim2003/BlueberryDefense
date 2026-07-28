@@ -35,14 +35,30 @@ public class EquippedSkill
 
     // 레벨업 전용 고유 강화치 (진화 트리와 별개)
     public int ExtraPierce = 0; // 기본공격: 관통 +1
-    public int ExtraProjectiles = 0; // 기본공격: 투사체 추가 발사 (1당 1발)
+    // 한 번의 시전에서 나가는 발사체/투하 수 — 기본공격 화살, 스나이핑 연사, 호밍 미사일, 독수리 투하, 산탄 알
+    public int ExtraProjectiles = 0;
+    // 동시에 상대하는 적 수 — 오브 동시 타격, 스나이핑 저격 대상
+    public int ExtraTargets = 0;
+    // 반복 타격 간격 배율(작을수록 자주 때림) — 회오리 피해 주기, 독수리 투하 간격
+    public float TickIntervalMult = 1f;
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
     public int GrowthStacks = 0; // 호밍 미사일: 사용할수록 누적되는 성장 스택(이번 판 한정)
     public float RewindAmount = 1f; // 되감기: 다른 스킬 쿨타임을 앞당기는 시간(초). 짝수 레벨업마다 +0.15
 
-    // 진화 트리: path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
+    // 진화 효과 저장소. path 0=기본(무의존), 1=패시브 연계, 2=액티브 연계. 각 값은 도달한 티어(0~3).
+    // ⚠️ 이제 이 배열을 직접 올리지 않는다 — 진화는 EvolutionRoutes를 통해 루트/티어로만 다룬다(§EvolutionRoutes).
+    //    Fire*/TryUseSkill이 이 값을 그대로 읽으므로 저장 형식만 유지하는 것.
     public readonly int[] PathTier = new int[3];
     public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
+
+    // ── 진화 상태 (2루트 × 2티어) ──
+    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 진화 게이트(5/10)는 이걸 본다
+    public int EvolutionStage = 0;  // 0=미진화, 1=1차 진화, 2=2차 진화(최종)
+    public int Route = -1;          // 1차 진화에서 고른 루트(0/1). 2차는 같은 루트를 이어간다
+
+    // 진화하면 이름이 바뀐다. 미진화면 원래 이름.
+    public string DisplayName =>
+        EvolutionStage > 0 ? EvolutionRoutes.EvolvedName(Id, Route, EvolutionStage) : PlayerSkills.GetActiveSkillName(Id);
 }
 
 public class PlayerSkills : MonoBehaviour
@@ -63,6 +79,10 @@ public class PlayerSkills : MonoBehaviour
 
     // 스나이핑: 타겟 1명당 저격 횟수, 저격 간격
     private const int SnipingBaseShots = BalanceConstants.SnipingBaseShots;
+    private const int OrbBaseTargets = BalanceConstants.OrbBaseTargets;
+    private const int HomingBaseMissiles = BalanceConstants.HomingBaseMissiles;
+    private const int EagleBaseDrops = BalanceConstants.EagleBaseDrops;
+    private const int ShotgunBasePellets = BalanceConstants.ShotgunBasePellets;
     private const float SnipingShotInterval = BalanceConstants.SnipingShotInterval;
 
     // 산탄(타수) 버프 — 5초간 스킬 공격 횟수 증가. 전역(모든 스킬) 또는 최고공격력 스킬 1개(Route2).
@@ -118,6 +138,7 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject orbPrefab;
     [SerializeField] private GameObject bigOrbPrefab; // 지식 연계 path1 T2부터 등장하는 큰 초록 오브 비주얼
     [SerializeField] private GameObject orbAltarPrefab;
+    [SerializeField] private GameObject shotgunPelletPrefab; // 산탄 알(SmallOrb_Skill 재사용 — 방향성 단발 투사체)
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
     [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 후속 타격 VFX(Effect_Sniping, 2~5번째 저격)
@@ -258,14 +279,17 @@ public class PlayerSkills : MonoBehaviour
         if (skill != null) skill.Cooldown *= multiplier;
     }
 
-    public bool CanUpgradeSkill(EquippedSkill skill) => skill.TotalEvolutionTier >= skill.Level / 5;
+    // 진화가 아이템 기반으로 바뀌면서 "5의 배수에서 레벨업이 막히는" 게이트는 사라졌다.
+    // (호출부가 많아 메서드는 남겨둔다 — 항상 true)
+    public bool CanUpgradeSkill(EquippedSkill skill) => skill != null;
 
     public void UpgradeSkillLevel(ActiveSkillId id)
     {
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
-        if (skill == null || !CanUpgradeSkill(skill)) return;
+        if (skill == null) return;
 
         skill.Level++;
+        skill.TotalLevel++;
         ApplyUpgradeEffect(skill, skill.Level);
     }
 
@@ -277,6 +301,7 @@ public class PlayerSkills : MonoBehaviour
         while (skill.Level < targetLevel)
         {
             skill.Level++;
+            skill.TotalLevel++;
             ApplyUpgradeEffect(skill, skill.Level);
         }
     }
@@ -308,6 +333,8 @@ public class PlayerSkills : MonoBehaviour
             case SkillStat.Duration: skill.ExtraWhirlwindDuration = Op(skill.ExtraWhirlwindDuration, s); break;
             case SkillStat.Scale: skill.Scale = Op(skill.Scale, s); break;
             case SkillStat.RewindAmount: skill.RewindAmount = Op(skill.RewindAmount, s); break;
+            case SkillStat.TickRate: skill.TickIntervalMult = Mathf.Max(0.15f, Op(skill.TickIntervalMult, s)); break;
+            case SkillStat.MaxTargets: skill.ExtraTargets = Mathf.RoundToInt(Op(skill.ExtraTargets, s)); break;
         }
     }
 
@@ -333,43 +360,53 @@ public class PlayerSkills : MonoBehaviour
             case SkillStat.Duration: return $"지속시간 {s.amount:0.##}초 증가";
             case SkillStat.Scale: return $"크기 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
             case SkillStat.RewindAmount: return $"되감기 시간 {s.amount:0.##}초 증가";
+            case SkillStat.TickRate: return $"타격 주기 {Mathf.RoundToInt((1f - s.amount) * 100f)}% 빨라짐";
+            case SkillStat.MaxTargets: return $"동시 대상 +{Mathf.RoundToInt(s.amount)}";
             default: return "";
         }
     }
 
-    // path: 0=기본(무의존, 데미지), 1=패시브 연계(쿨타임), 2=액티브 연계(제어기)
-    public bool CanEvolvePath(EquippedSkill skill, int path)
+    // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) ────────────────────────────
+    // 1차: 누적 레벨 5 이상 → 루트 2개 중 하나 선택
+    // 2차: 누적 레벨 10 이상 → 1차에서 고른 루트의 다음 티어(선택지 없음)
+    public bool CanEvolve(EquippedSkill skill)
     {
-        int tier = skill.PathTier[path];
-        if (tier >= 3) return false;
-
-        if (tier == 0)
-        {
-            int investedPaths = CountInvestedPaths(skill);
-            return investedPaths < 2;
-        }
-
-        if (tier == 1)
-        {
-            int advancingPath = GetAdvancingPath(skill);
-            if (advancingPath != -1 && advancingPath != path) return false;
-            return HasPathPrereq(skill.Id, path);
-        }
-
-        // tier == 2 → 3: 이미 advancingPath로 확정된 경로만 여기 올 수 있음
-        return true;
+        if (skill == null || skill.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
+        int required = skill.EvolutionStage == 0
+            ? EvolutionRoutes.FirstEvolutionLevel
+            : EvolutionRoutes.SecondEvolutionLevel;
+        return skill.TotalLevel >= required;
     }
 
-    public bool CanEvolveAnyPath(EquippedSkill skill) =>
-        CanEvolvePath(skill, 0) || CanEvolvePath(skill, 1) || CanEvolvePath(skill, 2);
+    // 이 진화에서 고를 수 있는 루트들. 1차는 0·1 둘 다, 2차는 이미 고른 루트 하나뿐.
+    public static int[] SelectableRoutes(EquippedSkill skill) =>
+        skill.EvolutionStage == 0 ? new[] { 0, 1 } : new[] { skill.Route };
 
-    public void EvolveSkill(ActiveSkillId id, int path)
+    public void EvolveSkill(ActiveSkillId id, int route)
     {
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
-        if (skill == null || !CanEvolvePath(skill, path)) return;
+        if (skill == null || !CanEvolve(skill)) return;
+        if (skill.EvolutionStage > 0 && route != skill.Route) return; // 2차는 루트 변경 불가
 
-        skill.PathTier[path]++;
-        ApplyPathTierEffect(skill, path, skill.PathTier[path]);
+        int newTier = skill.EvolutionStage + 1;
+        int path = EvolutionRoutes.RoutePath(id, route);
+
+        // 기존 티어 효과를 순서대로 적용 — 새 티어1 = 옛 T1+T2, 새 티어2 = 옛 T3
+        foreach (int legacyTier in EvolutionRoutes.LegacyTiersFor(newTier))
+        {
+            skill.PathTier[path] = legacyTier;
+            ApplyPathTierEffect(skill, path, legacyTier);
+        }
+        skill.PathTier[path] = EvolutionRoutes.TargetPathTier(newTier);
+
+        skill.Route = route;
+        skill.EvolutionStage = newTier;
+
+        // 기본 스탯 도약 + 레벨 표시 리셋(누적 레벨 TotalLevel은 유지 — 다음 진화 게이트 기준).
+        // 레벨업 커브를 처음부터 다시 타므로 "새 스킬을 1레벨부터 키운다"는 감각이 된다.
+        skill.Damage *= EvolutionRoutes.EvolveDamageMult;
+        skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * EvolutionRoutes.EvolveCooldownMult);
+        skill.Level = 1;
     }
 
     // 티어마다 정확히 하나의 효과만 부여한다. 여기 없는 조합은 PathTier를 직접 읽는 Fire*/TryUseSkill에서
@@ -456,37 +493,8 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    private static int CountInvestedPaths(EquippedSkill skill) =>
-        (skill.PathTier[0] > 0 ? 1 : 0) + (skill.PathTier[1] > 0 ? 1 : 0) + (skill.PathTier[2] > 0 ? 1 : 0);
-
-    private static int GetAdvancingPath(EquippedSkill skill)
-    {
-        for (int i = 0; i < 3; i++)
-            if (skill.PathTier[i] >= 2) return i;
-        return -1;
-    }
-
-    // path1/path2 진화는 연계 대상(패시브/액티브)을 보유하는 것만으로는 부족하고, Lv.5 이상이어야 함
-    private bool HasPathPrereq(ActiveSkillId skillId, int path)
-    {
-        if (path == 1)
-        {
-            PassiveSkillId? req = GetPassivePrereq(skillId);
-            if (!req.HasValue) return true; // 연계 미지정 스킬(신규)은 연계 조건 없이 자유 진화
-            if (passives == null) return false;
-            EquippedPassive p = passives.GetPassive(req.Value);
-            return p != null && p.Level >= 5;
-        }
-        if (path == 2)
-        {
-            ActiveSkillId? req = GetActivePrereq(skillId);
-            if (!req.HasValue) return true; // 연계 미지정 스킬(신규)은 자유 진화
-            EquippedSkill s = equippedSkills.FirstOrDefault(x => x.Id == req.Value);
-            return s != null && s.Level >= 5;
-        }
-        return true;
-    }
-
+    // 연계 대상 표기용(진화 카드 부제). 진화 조건으로는 더 이상 쓰이지 않는다 —
+    // 진화 아이템이 희소해서 "연계 스킬 Lv.5" 같은 추가 조건을 걸면 아이템이 버려지는 판이 생긴다.
     public static PassiveSkillId? GetPassivePrereq(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => PassiveSkillId.Assassinate,
@@ -554,6 +562,13 @@ public class PlayerSkills : MonoBehaviour
     public static string GetPassiveSkillTitleWithTags(PassiveSkillId id) =>
         $"{GetPassiveSkillName(id)} {PassiveTypeBadge}";
 
+    // 이미 장착한 스킬은 진화 후 이름(DisplayName)으로 표시한다.
+    public static string GetActiveSkillTitleWithTags(EquippedSkill s) =>
+        $"{s.DisplayName} {ActiveTypeBadge} {GetActiveSkillBadge(s.Id).TrimEnd()}";
+
+    public static string GetPassiveSkillTitleWithTags(EquippedPassive p) =>
+        $"{p.DisplayName} {PassiveTypeBadge}";
+
     // 이름 앞에 붙이는 리치텍스트 배지("[공격] " 등). UI 요소 추가 없이 제목에 인라인.
     public static string GetActiveSkillBadge(ActiveSkillId id)
     {
@@ -584,7 +599,9 @@ public class PlayerSkills : MonoBehaviour
         if (s.ProjectileSpeedMultiplier > 1.0001f)
             lines.Add($"투사체 속도 +{Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)}%");
         if (s.ExtraPierce > 0) lines.Add($"관통 +{s.ExtraPierce}회");
-        if (s.ExtraProjectiles > 0) lines.Add($"투사체 +{s.ExtraProjectiles}발");
+        if (s.ExtraProjectiles > 0) lines.Add($"발사 수 +{s.ExtraProjectiles}");
+        if (s.ExtraTargets > 0) lines.Add($"동시 대상 +{s.ExtraTargets}");
+        if (s.TickIntervalMult < 0.9999f) lines.Add($"타격 주기 -{Mathf.RoundToInt((1f - s.TickIntervalMult) * 100f)}%");
         if (s.ProcChanceBonus > 0f) lines.Add($"발동 확률 +{Mathf.RoundToInt(s.ProcChanceBonus * 100f)}%p");
         if (s.ExtraWhirlwindDuration > 0f) lines.Add($"지속시간 +{s.ExtraWhirlwindDuration:0.#}초");
         if (s.Scale > 1.0001f) lines.Add($"크기 +{Mathf.RoundToInt((s.Scale - 1f) * 100f)}%");
@@ -1024,7 +1041,7 @@ public class PlayerSkills : MonoBehaviour
     // ── 스나이핑: 가장 체력 높은 적(들)을 5회씩 저격 ──
     private bool FireSniping(float damage, float critChance, EquippedSkill skill)
     {
-        int targets = 1;
+        int targets = 1 + skill.ExtraTargets; // 레벨업 주 성장축: 동시 저격 대상 수
         if (skill.PathTier[0] >= 1) targets += 1; // Route1 T1: +1 (총 2)
         if (skill.PathTier[0] >= 2) targets += 1; // T2(타겟수++): +1 (총 3)
         if (skill.PathTier[0] >= 3) targets += 2; // T3: +2 (총 5)
@@ -1042,14 +1059,15 @@ public class PlayerSkills : MonoBehaviour
         int firstFanout = skill.PathTier[1] >= 3 ? 2 : 1;            // T3: 첫 튐부터 두 갈래
 
         animator.SetTrigger("Attack");
+        int shots = SnipingBaseShots + skill.ExtraProjectiles; // 레벨업 보조축: 대상당 연사 수
         foreach (Enemy target in chosen)
-            StartCoroutine(SnipeTarget(target, damage, critChance, overkillSplash, overkillRadius, firstFanout));
+            StartCoroutine(SnipeTarget(target, damage, critChance, overkillSplash, overkillRadius, firstFanout, shots));
         return true;
     }
 
-    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool overkillSplash, float overkillRadius, int firstFanout)
+    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool overkillSplash, float overkillRadius, int firstFanout, int shots)
     {
-        for (int i = 0; i < SnipingBaseShots; i++)
+        for (int i = 0; i < shots; i++)
         {
             if (target == null) yield break;
             Vector3 pos = target.transform.position;
@@ -1119,8 +1137,9 @@ public class PlayerSkills : MonoBehaviour
         skill.GrowthStacks++;
         float missileDamage = damage * (1f + growthPerCast * skill.GrowthStacks);
 
-        // Route1(path0): 미사일 개수 N배
-        int count = skill.PathTier[0] >= 3 ? 15 : skill.PathTier[0] >= 2 ? 10 : skill.PathTier[0] >= 1 ? 7 : 5;
+        // 레벨업 주 성장축: 미사일 수. Route1(path0) 진화는 그 위에 배수로 얹힌다(레벨업=+1씩, 진화=배수).
+        int count = HomingBaseMissiles + skill.ExtraProjectiles;
+        if (skill.PathTier[0] >= 3) count *= 5; else if (skill.PathTier[0] >= 2) count *= 3; else if (skill.PathTier[0] >= 1) count *= 2;
         // 스킬트리 "더 많은 폭격"(Homing_MissileNum) 해금 시에만: 10회 사용마다 미사일 +1발
         if (MetaBonuses.HomingMissileGrowth) count += skill.GrowthStacks / 10;
         // Route2(path1): T2 폭발, T3 폭발 강화
@@ -1146,9 +1165,13 @@ public class PlayerSkills : MonoBehaviour
         return true;
     }
 
-    // ── 산탄 장착: 5초간 스킬 공격 횟수 증가(타수 버프) ──
+    // ── 산탄 장착: 전방으로 산탄을 뿌리고, 동시에 5초간 타수 버프를 건다 ──
+    // 예전엔 버프만 걸어서 **시전해도 화면에 아무 일도 안 일어나는** 유일한 스킬이었다.
+    // 실제로 산탄을 쏘게 해 이름값을 하게 하고, 알 개수를 레벨업 주 성장축으로 삼는다.
     private bool FireShotgun(float damage, float critChance, EquippedSkill skill)
     {
+        FireShotgunPellets(damage, critChance, skill);
+
         float duration = 5f + (skill.PathTier[1] >= 1 ? 2f : 0f) + (skill.PathTier[2] >= 1 ? 2f : 0f);
         // Route1(path0): 공격 횟수 추가
         int bonus = 1 + (skill.PathTier[0] >= 1 ? 1 : 0) + (skill.PathTier[0] >= 2 ? 1 : 0) + (skill.PathTier[0] >= 3 ? 2 : 0);
@@ -1235,7 +1258,7 @@ public class PlayerSkills : MonoBehaviour
         else
         {
             spawnPos = transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f;
-            SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration);
+            SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration, tickIntervalMult: skill.TickIntervalMult);
         }
 
         // 기본 path: 미니 회오리 추가 소환 (T1=2개, T3=+1개 총 3개). 거대 회오리(오브 연계 path)와도 독립적으로
@@ -1252,7 +1275,7 @@ public class PlayerSkills : MonoBehaviour
             {
                 Vector2 offset = Random.insideUnitCircle * 0.5f;
                 Vector3 miniSpawnPos = spawnPos + (Vector3)offset;
-                SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * MiniWhirlwindScale, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
+                SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * MiniWhirlwindScale, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true, tickIntervalMult: skill.TickIntervalMult);
             }
         }
 
@@ -1296,7 +1319,32 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.TargetHighestHealth = PlayerPassives.AssassinateWhirlwindTargetHighest;
     }
 
-    private void SpawnWhirlwind(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, int maxHitCount = 0, float slowDuration = 3f, float extraLifetime = 0f, bool isMini = false)
+    // 적이 오는 왼쪽으로 부채꼴 산탄. 알이 늘어도 각도는 그대로라 **촘촘해지는 것**이 눈에 보인다.
+    private void FireShotgunPellets(float damage, float critChance, EquippedSkill skill)
+    {
+        if (shotgunPelletPrefab == null) return;
+
+        int pellets = Mathf.Max(1, ShotgunBasePellets + skill.ExtraProjectiles); // 레벨업 주 성장축
+        Vector3 origin = transform.position + Vector3.up * 0.2f;
+
+        for (int i = 0; i < pellets; i++)
+        {
+            float t = pellets > 1 ? i / (float)(pellets - 1) : 0.5f;
+            float angle = Mathf.Lerp(-BalanceConstants.ShotgunSpreadDegrees, BalanceConstants.ShotgunSpreadDegrees, t);
+            Vector2 dir = Quaternion.Euler(0f, 0f, angle) * Vector2.left;
+
+            GameObject obj = Instantiate(shotgunPelletPrefab, origin, Quaternion.identity);
+            obj.transform.localScale *= skill.Scale;
+            SmallOrb pellet = obj.GetComponent<SmallOrb>();
+            if (pellet == null) continue;
+            pellet.CritChance = critChance;
+            pellet.Init(dir, damage, false);
+        }
+
+        animator.SetTrigger("Attack");
+    }
+
+    private void SpawnWhirlwind(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, int maxHitCount = 0, float slowDuration = 3f, float extraLifetime = 0f, bool isMini = false, float tickIntervalMult = 1f)
     {
         PlayCastSfx(whirlwindCastSfx, whirlwindCastSfxVolume);
         GameObject obj = Instantiate(whirlwindPrefab, position, Quaternion.identity);
@@ -1311,6 +1359,7 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.ExtraLifetime = extraLifetime;
         whirlwind.TargetHighestHealth = PlayerPassives.AssassinateWhirlwindTargetHighest;
         whirlwind.CanHitFlying = !isMini; // 미니 회오리는 비행 적을 타격할 수 없다
+        whirlwind.TickIntervalMult = tickIntervalMult; // 레벨업 보조축: 피해 주기
 
         // 미니는 크기가 작아 기본 groundY(피벗=중심)에 놓으면 지면 위로 떠 보인다 — 바닥선을 큰 회오리와 맞춘다.
         if (isMini)
@@ -1351,6 +1400,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[1] >= 3) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
         orb.SlowMultiplierBonus = slowMultBonus;
         orb.SlowDurationBonus = slowDurBonus;
+        orb.MaxTargets = OrbBaseTargets + skill.ExtraTargets; // 레벨업 주 성장축: 동시에 갈아버리는 적 수
     }
 
     private void SpawnOrbAltar(Vector3 position, float damage, float critChance, EquippedSkill skill)
@@ -1384,10 +1434,13 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[1] >= 1) overhealPerHit += 2;
         if (skill.PathTier[1] >= 3) overhealPerHit += 2;
 
-        int dropCount = 3 + (skill.PathTier[0] >= 1 ? 1 : 0) - (skill.PathTier[2] >= 1 ? 1 : 0); // 기본 path T1: 투하 횟수 +1, 회오리 연계 path T1: 투하 횟수 -1 (쿨감 트레이드오프)
+        // 레벨업 보조축: 투하 횟수(ExtraProjectiles). 기본 path T1: +1, 회오리 연계 path T1: -1(쿨감 트레이드오프)
+        int dropCount = Mathf.Max(1, EagleBaseDrops + skill.ExtraProjectiles
+                                     + (skill.PathTier[0] >= 1 ? 1 : 0) - (skill.PathTier[2] >= 1 ? 1 : 0));
         bool scaleByEnemyCount = skill.PathTier[0] >= 2; // 기본 path T2: 화면 내 적 수에 반비례한 피해량 스케일링(최대 450%)
         float t3DamageMult = skill.PathTier[0] >= 3 ? 1.5f : 1f; // 기본 path T3: 피해량 50% 증가
-        float interval = skill.PathTier[0] >= 3 ? 0.5f : 1f; // 기본 path T3: 투하 간격 50% 감소
+        // 레벨업 주 성장축: 투하 간격(TickIntervalMult). 기본 path T3: 추가로 50% 감소
+        float interval = (skill.PathTier[0] >= 3 ? 0.5f : 1f) * skill.TickIntervalMult;
 
         for (int i = 0; i < dropCount; i++)
         {

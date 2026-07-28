@@ -12,6 +12,9 @@ public enum SkillStat
     Duration,        // 지속시간(회오리)
     Scale,           // 크기
     RewindAmount,    // 되감기 시간
+    // ↓ 아래는 뒤에만 추가할 것 — 기존 Prog_* 에셋이 이 enum을 정수로 직렬화해 두어서 중간에 끼우면 값이 밀린다.
+    TickRate,        // 반복 타격 간격 배율(작을수록 자주 때림) — 회오리 피해 주기, 독수리 투하 간격
+    MaxTargets,      // 동시에 상대하는 적 수 — 오브 동시 타격 수, 스나이핑 저격 대상 수
 }
 
 // 스탯을 올리는 방식. Multiply=현재값×amount, Add=현재값+amount.
