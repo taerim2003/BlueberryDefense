@@ -37,7 +37,7 @@ public class Projectile : MonoBehaviour
         if (consumed) return;
 
         Enemy enemy = other.GetComponent<Enemy>();
-        if (enemy == null || (enemy.IsFlying && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
+        if (enemy == null || (enemy.RequiresAntiAir && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
         // 기본공격 멀티히트: baseDamage를 N회로 쪼개 각각 크리 개별 판정(총 데미지 유지). 반환=서브히트 중 크리 있었는지

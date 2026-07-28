@@ -16,7 +16,18 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float spawnYOffset = 0f;
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
+    // "비행 유닛인가"(isFlying = 추가피해·호밍 우선타겟 같은 분류)와 "대공 능력이 있어야만 맞힐 수 있는가"를 분리한다.
+    // UFO는 계속 대공 전용(true)이라 13스테이지 대공 시험이 유지되고,
+    // 종이비행기는 false로 두어 **오직 히트박스가 닿느냐로만** 판정된다(대각선으로 내려오며 점점 맞기 쉬워짐).
+    [SerializeField] private bool requiresAntiAir = true;
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
+
+    [Header("대각선 강하(종이비행기) — 화면 위에서 플레이어로 직선 수렴")]
+    [SerializeField] private bool isDiveFlyer = false;
+    // 스폰 높이 = 카메라 중심 + (화면 절반 높이 × 이 비율). 비율로 두면 카메라 크기를 바꿔도 "화면 어디쯤"이 유지된다.
+    // 0.4≈화면 위쪽의 중간, 0.95≈거의 최상단 → 매번 크게 달라져서 완만한 강하와 급강하가 섞인다.
+    [SerializeField] private float diveSpawnHeightRatioMin = 0.4f;
+    [SerializeField] private float diveSpawnHeightRatioMax = 0.95f;
 
     [Header("수송선(UFO) — 화면 위에서 내려와 부대 투하 후 상승 퇴장")]
     [SerializeField] private bool isCarrier = false;         // 켜면 좌진 행진 대신 하강→투하→상승 궤적을 탄다
@@ -47,6 +58,7 @@ public class Enemy : MonoBehaviour
     private float lungeTimer = -1f; // 0 이상이면 돌진 중
     private bool lungeDamageDone;
     private bool isHolding;         // 이번 프레임에 멈춰 서 있는가(추월 판정에서 참조)
+    private Vector2 diveDir = Vector2.right; // 대각선 강하 방향(스폰 시 1회 결정)
     private Quaternion baseRotation; // 돌진 기울기를 얹기 전의 원래 회전(복귀 기준)
     private float laneJitter;       // 스폰 시 부여되는 y 흔들림 — 줄이 딱 맞게 정렬되지 않도록
 
@@ -81,6 +93,7 @@ public class Enemy : MonoBehaviour
     };
 
     public bool IsFlying => isFlying;
+    public bool RequiresAntiAir => requiresAntiAir; // 스킬이 "대공 불가라 못 맞힘" 판정에 쓰는 값(분류용 IsFlying과 별개)
     public bool IsCarrier => isCarrier;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
@@ -150,7 +163,33 @@ public class Enemy : MonoBehaviour
             transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
             carrierPhase = CarrierPhase.Descend;
         }
+        else if (isDiveFlyer) SetupDive();
         else if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
+    }
+
+    // 화면 위쪽에서 등장해 **스폰 순간 정한 방향으로 직선 강하**한다(유도 아님 — 쭉 뻗은 선이 플레이어로 수렴).
+    // 스폰 높이가 매번 달라 여러 마리가 부채꼴로 모여든다. 높이 있는 동안엔 지상 스킬의 히트박스가 안 닿아
+    // 딜을 넣기 까다롭고, 플레이어에 가까워질수록 낮아져 대부분의 스킬에 맞기 시작한다.
+    private void SetupDive()
+    {
+        Camera cam = Camera.main;
+        float camY = cam != null ? cam.transform.position.y : 0f;
+        float halfH = cam != null ? cam.orthographicSize : 5f;
+
+        Vector3 p = transform.position;
+        p.y = camY + halfH * Random.Range(diveSpawnHeightRatioMin, diveSpawnHeightRatioMax) + laneJitter;
+        transform.position = p;
+
+        PlayerHealth player = Player;
+        Vector2 aim = player != null
+            ? (Vector2)player.transform.position
+            : new Vector2(p.x + 20f, camY); // 플레이어가 없으면 오른쪽으로 완만히 강하
+        diveDir = (aim - (Vector2)p).normalized;
+        if (diveDir.sqrMagnitude < 0.0001f) diveDir = Vector2.right;
+
+        // 기수를 진행 방향으로 — 종이비행기가 실제로 꽂히듯 기울어 날아간다.
+        transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diveDir.y, diveDir.x) * Mathf.Rad2Deg);
+        baseRotation = transform.localRotation; // 돌진 기울기는 이 각도 위에 얹힌다
     }
 
     // 기절 = 이동정지(slowMultiplier≈0). 이때 걷기 애니메이션도 함께 멈추고, 풀리면 다시 재생한다.
@@ -220,7 +259,13 @@ public class Enemy : MonoBehaviour
         bool holding = HoldAtPlayer();
         isHolding = holding; // 뒤 적이 "멈춰 선 적"인지 판단하는 데 쓴다(추월 예외 처리)
         if (!holding)
-            transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
+        {
+            // 강하 유닛은 기수가 돌아가 있으므로 반드시 월드 기준으로 이동해야 한다(로컬 right는 기울어져 있음).
+            if (isDiveFlyer)
+                transform.Translate(diveDir * moveSpeed * slowMultiplier * Time.deltaTime, Space.World);
+            else
+                transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
+        }
 
         // 제자리에 서 있으면 걷기 애니메이션도 멈춘다(기절 정지와 같은 스위치를 공유).
         SetAnimatorFrozen(holding || slowMultiplier <= 0.01f);

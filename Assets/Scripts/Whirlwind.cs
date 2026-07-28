@@ -49,7 +49,7 @@ public class Whirlwind : MonoBehaviour
 
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
-            if (enemy == null || (enemy.IsFlying && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy == null || (enemy.RequiresAntiAir && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval;
 
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
@@ -90,7 +90,7 @@ public class Whirlwind : MonoBehaviour
             float highestHealth = float.NegativeInfinity;
             foreach (Enemy enemy in enemies)
             {
-                if (enemy.IsFlying && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
+                if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
                 if (enemy.CurrentHealth > highestHealth)
                 {
                     highestHealth = enemy.CurrentHealth;
@@ -103,7 +103,7 @@ public class Whirlwind : MonoBehaviour
             float nearestSqrDist = float.MaxValue;
             foreach (Enemy enemy in enemies)
             {
-                if (enemy.IsFlying && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
+                if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
                 float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
                 if (sqrDist < nearestSqrDist)
                 {

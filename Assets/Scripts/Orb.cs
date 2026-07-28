@@ -39,7 +39,7 @@ public class Orb : MonoBehaviour
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
             if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
-            if (enemy.IsFlying && !canHitFlying) continue;
+            if (enemy.RequiresAntiAir && !canHitFlying) continue; // 대공 전용 적(UFO)만 차단 — 종이비행기는 히트박스로만 판정
             nextTickTime[enemy] = Time.time + tickInterval;
 
             float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
