@@ -65,7 +65,6 @@ public class SkillTreeUI : MonoBehaviour
     private static readonly Color ColUnlock = new Color(1f, 0.82f, 0.2f);   // 스킬 해금 = 금색
     private static readonly Color ColEnhance = new Color(1f, 0.35f, 0.85f); // 스킬 강화 = 마젠타
     private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f); // 특수 해금 = 노랑
-    private static readonly Color ColMasked = new Color(0.22f, 0.22f, 0.26f);
     private static readonly Color ColLineDim = new Color(1f, 1f, 1f, 0.12f);
     private static readonly Color ColLineOn = new Color(1f, 1f, 1f, 0.6f);
     private static readonly Color RingUnlocked = new Color(0.4f, 1f, 0.5f, 1f);
@@ -195,7 +194,7 @@ public class SkillTreeUI : MonoBehaviour
     // ── 입력 ── 좌클릭 = 해금(마스킹된 노드는 무시). 되돌리기 없음.
     private void OnNodeClick(string id)
     {
-        if (FogOf(id, SkillTreeSave.UnlockedIds()) == Fog.Hidden) return; // '?' 노드는 내용을 몰라도 살 수 있다
+        if (FogOf(id, SkillTreeSave.UnlockedIds()) == Fog.Hidden) return; // 숨겨진(2링크 이상) 노드는 구매 불가
         if (SkillTreeSave.TryUpgrade(tree, id)) { PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
     }
 
@@ -225,12 +224,12 @@ public class SkillTreeUI : MonoBehaviour
     }
 
     // ── 안개(공개 범위) ──
-    // 트리 전체 규모가 처음부터 보이면 재미가 없으므로, 내가 연 노드 바로 옆까지만 '?'로 보여주고
-    // 그보다 먼 노드는 존재 자체를 감춘다(노드·연결선 모두 비활성).
+    // 트리 전체 규모가 처음부터 보이면 재미가 없으므로, 내가 연 노드 바로 옆(1링크)까지만 보여주고
+    // 그보다 먼 노드(2링크 이상)는 존재 자체를 감춘다(노드·연결선 모두 비활성).
     private enum Fog
     {
-        Hidden,   // 아예 안 보임
-        Hinted,   // '?'만 — 이름/효과는 해금해야 공개. 구매는 가능
+        Hidden,   // 아예 안 보임(2링크 이상)
+        Hinted,   // 해금 노드 바로 옆 — 이름·효과·비용을 모두 공개(아직 미보유). 구매 가능
         Revealed, // 해금됨 — 전부 표시
     }
 
@@ -280,25 +279,19 @@ public class SkillTreeUI : MonoBehaviour
             bool isUnlocked = fog == Fog.Revealed;
             bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
 
-            // '?' 노드는 타입 색을 쓰지 않는다 — 색만 봐도 해금/강화 노드인지 드러나 버리므로 무채색으로 통일.
-            Color c = isUnlocked
-                ? BaseColor(v.node.type)                 // 활성: 원색
-                : (buyable ? ColMasked * 1.6f : ColMasked); // 물음표(구매 가능하면 살짝 밝게)
+            // 미보유(힌트) 노드도 타입 색으로 내용을 공개하되, 아직 안 산 상태임을 어둡게 구분(구매 가능하면 살짝 밝게).
+            Color c = isUnlocked ? BaseColor(v.node.type) : BaseColor(v.node.type) * (buyable ? 0.7f : 0.5f);
             c.a = 1f;
             if (v.bg != null) v.bg.color = c;
 
             if (v.label != null)
             {
-                if (!isUnlocked) v.label.text = "?"; // 이름·효과는 해금해야 공개
-                else
-                {
-                    int lv = SkillTreeSave.LevelOf(v.node.id);
-                    int max = SkillTreeSave.MaxLevelOf(v.node);
-                    // 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기
-                    v.label.text = (lv >= 1 && max > 1)
-                        ? v.node.displayName + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
-                        : v.node.displayName;
-                }
+                int lv = SkillTreeSave.LevelOf(v.node.id);
+                int max = SkillTreeSave.MaxLevelOf(v.node);
+                // 이름은 인접 노드부터 공개. 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기.
+                v.label.text = (isUnlocked && lv >= 1 && max > 1)
+                    ? v.node.displayName + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
+                    : v.node.displayName;
             }
 
             if (v.ring != null)
@@ -351,9 +344,9 @@ public class SkillTreeUI : MonoBehaviour
 
         if (!isUnlocked)
         {
-            // 이름·효과는 감추되 값은 알려준다 — 가격도 모르면 살지 말지 판단할 수 없다
-            if (tooltipName != null) tooltipName.text = "???";
-            if (tooltipDesc != null) tooltipDesc.text = "해금하면 효과가 공개됩니다";
+            // 해금 노드 바로 옆(힌트) 노드는 이름·효과·비용을 모두 공개한다 — 살지 말지 미리 판단 가능하게
+            if (tooltipName != null) tooltipName.text = n.displayName;
+            if (tooltipDesc != null) tooltipDesc.text = n.description;
             if (tooltipCost != null)
             {
                 int cost = SkillTreeSave.NextLevelCost(tree, n);

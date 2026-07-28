@@ -21,11 +21,13 @@ public class Enemy : MonoBehaviour
     [Header("수송선(UFO) — 화면 위에서 내려와 부대 투하 후 상승 퇴장")]
     [SerializeField] private bool isCarrier = false;         // 켜면 좌진 행진 대신 하강→투하→상승 궤적을 탄다
     [SerializeField] private GameObject carrierDropPrefab;   // 투하할 잡몹(기본 블루베리)
-    [SerializeField] private int carrierDropMin = 3;
-    [SerializeField] private int carrierDropMax = 4;
+    [SerializeField] private GameObject carrierRegentPrefab; // 투하 1회마다 섞이는 리젠트 1마리
+    [SerializeField] private int carrierDropMin = 4;
+    [SerializeField] private int carrierDropMax = 5;
+    [SerializeField] private int carrierDropCount = 3;       // 호버 중 1초 간격으로 이만큼 반복 투하
+    [SerializeField] private float carrierDropInterval = 1f; // 투하 간격(초)
     [SerializeField] private float carrierDescendSpeed = 4f;
     [SerializeField] private float carrierAscendSpeed = 5.5f;
-    [SerializeField] private float carrierHoverTime = 0.6f;  // 호버(투하 연출) 지속시간
 
     [Header("사망 시 분출(대왕 블루베리 = BTD 비행선 방식)")]
     [SerializeField] private GameObject[] deathSpawnPrefabs; // 사망 시 흩뿌릴 적들(마리마다 랜덤 선택). 대왕: 일반+리젠트+UFO
@@ -54,6 +56,7 @@ public class Enemy : MonoBehaviour
     };
 
     public bool IsFlying => isFlying;
+    public bool IsCarrier => isCarrier;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
     public float SpawnYOffset => spawnYOffset; // 이 종류가 서는 자연 높이(레인 y=0 기준). 분출 팝콘의 착지 높이로 사용
@@ -76,7 +79,7 @@ public class Enemy : MonoBehaviour
     private float carrierHoverY; // 투하 고도(화면 상단부)
     private float carrierLaneY;  // 스포너가 준 레인 기준 y — 투하물이 착지할 지면 높이
     private float carrierHoverTimer;
-    private bool carrierDropped;
+    private int carrierDropsDone;
     // 스테이지 배율을 기억해 투하물에 동일 적용(공유 SO 오염 없이 자식도 같은 난이도로)
     private float appliedHpMult = 1f, appliedSpeedMult = 1f, appliedDamageMult = 1f;
 
@@ -110,9 +113,9 @@ public class Enemy : MonoBehaviour
             float halfH = cam != null ? cam.orthographicSize : 5f;
             float halfW = cam != null ? halfH * cam.aspect : halfH * 1.78f;
             carrierTopY = camY + halfH + 1f;        // 화면 위 바로 바깥에서 등장
-            carrierHoverY = camY + halfH * 0.4f;    // 화면 상단부에서 호버·투하
-            // 플레이어가 있는 좌측 끝은 피하고 화면 중앙~우측 사이에 등장(빈 중앙을 채우는 게 목적)
-            float spawnX = camX + Random.Range(-halfW * 0.15f, halfW * 0.7f);
+            carrierHoverY = camY + halfH * 0.28f;   // 화면 상단부에서 호버·투하(살짝 더 아래로 내려와 투하)
+            // 플레이어(우측)에게 부대가 곧장 떨어지지 않도록, 화면 우측 1/3은 피하고 좌측~중앙에 등장
+            float spawnX = camX + Random.Range(-halfW * 0.6f, halfW * 0.3f);
             transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
             carrierPhase = CarrierPhase.Descend;
         }
@@ -199,8 +202,14 @@ public class Enemy : MonoBehaviour
                 break;
             case CarrierPhase.Hover:
                 carrierHoverTimer += Time.deltaTime;
-                if (!carrierDropped && carrierHoverTimer >= carrierHoverTime * 0.4f) { DropSquad(); carrierDropped = true; }
-                if (carrierHoverTimer >= carrierHoverTime) carrierPhase = CarrierPhase.Ascend;
+                // 1초 간격으로 carrierDropCount번 반복 투하(첫 투하는 호버 진입 즉시). 마지막 투하 뒤 한 텀 있다가 상승.
+                if (carrierDropsDone < carrierDropCount && carrierHoverTimer >= carrierDropsDone * carrierDropInterval)
+                {
+                    DropSquad();
+                    carrierDropsDone++;
+                }
+                else if (carrierDropsDone >= carrierDropCount && carrierHoverTimer >= carrierDropCount * carrierDropInterval)
+                    carrierPhase = CarrierPhase.Ascend;
                 break;
             case CarrierPhase.Ascend:
                 p.y += carrierAscendSpeed * slowMultiplier * Time.deltaTime;
@@ -219,13 +228,23 @@ public class Enemy : MonoBehaviour
         int n = Random.Range(carrierDropMin, carrierDropMax + 1);
         for (int i = 0; i < n; i++)
         {
+            // 투하 1회마다 첫 마리는 리젠트, 나머지는 기본 블루베리
+            GameObject prefab = (i == 0 && carrierRegentPrefab != null) ? carrierRegentPrefab : carrierDropPrefab;
             Vector2 offset = new Vector2(Random.Range(-0.8f, 0.8f), Random.Range(-0.2f, 0.4f));
-            GameObject go = Instantiate(carrierDropPrefab, transform.position + (Vector3)offset, Quaternion.identity);
+            GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
             Enemy e = go.GetComponent<Enemy>();
             if (e == null) continue;
             e.ApplyStageMultipliers(appliedHpMult, appliedSpeedMult, appliedDamageMult);
             e.PopIn(Random.Range(2f, 4f), Random.Range(-3f, 3f), carrierLaneY + e.SpawnYOffset);
         }
+    }
+
+    // 보스 사망분출로 튀어나온 캐리어(UFO)는 Awake에서 화면 위로 순간이동해버려, 그대로 두면 하강하며
+    // 플레이어 머리 위로 떨어져 확정 피해를 준다. 보스 죽은 자리로 되돌리고 투하 없이 곧장 상승 퇴장시킨다.
+    public void EmergeAsBurstCarrier(Vector3 emergePos)
+    {
+        transform.position = emergePos;
+        carrierPhase = CarrierPhase.Ascend;
     }
 
     public void ApplySlow(float multiplier, float duration)
@@ -390,9 +409,14 @@ public class Enemy : MonoBehaviour
             if (prefab == null) continue;
             Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
             GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
-            // 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(UFO/종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.
             Enemy e = go.GetComponent<Enemy>();
-            if (e != null) e.PopIn(Random.Range(5f, 9f), Random.Range(-5f, 5f), laneBaselineY + e.SpawnYOffset);
+            if (e == null) continue;
+            // 캐리어(UFO)는 팝콘 낙하 대신 보스 죽은 자리에서 등장해 상승 퇴장(플레이어 위로 하강해 확정 피해 주던 문제 제거).
+            // 그 외는 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.
+            if (e.IsCarrier)
+                e.EmergeAsBurstCarrier(transform.position + (Vector3)offset);
+            else
+                e.PopIn(Random.Range(5f, 9f), Random.Range(-5f, 5f), laneBaselineY + e.SpawnYOffset);
         }
     }
 

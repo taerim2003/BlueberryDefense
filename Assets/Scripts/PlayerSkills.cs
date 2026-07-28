@@ -1226,31 +1226,33 @@ public class PlayerSkills : MonoBehaviour
         bool applySlow = skill.PathTier[2] >= 1;
         bool applyVulnerable = skill.PathTier[2] >= 3;
 
+        Vector3 spawnPos;
         if (skill.PathTier[2] >= 2) // 오브 연계 path T2: 거대 회오리로 대체 (여러 개로 안 쪼개짐)
         {
-            Vector3 spawnPos = transform.position + Vector3.left * 0.6f + Vector3.down * 0.7f;
+            spawnPos = transform.position + Vector3.left * 0.6f + Vector3.down * 0.7f;
             SpawnBigTornado(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, skill.ExtraWhirlwindDuration);
         }
         else
         {
-            Vector3 spawnPos = transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f;
+            spawnPos = transform.position + Vector3.left * 0.6f + Vector3.up * 0.6f;
             SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration);
+        }
 
-            // 기본 path: 미니 회오리 추가 소환 (T1=2개, T3=+1개 총 3개). 독수리투하 연계(path T3)의 미니 회오리와
-            // MiniWhirlwindDamageBonus를 공유해서, 이 트리에 투자하면 독수리투하 쪽 미니 회오리도 함께 강해진다.
-            int miniCount = 0;
-            if (skill.PathTier[0] >= 1) miniCount += 2;
-            if (skill.PathTier[0] >= 3) miniCount += 1;
+        // 기본 path: 미니 회오리 추가 소환 (T1=2개, T3=+1개 총 3개). 거대 회오리(오브 연계 path)와도 독립적으로
+        // 함께 나온다 — 두 path에 모두 투자하면 거대 회오리 + 미니 회오리가 같이 소환된다.
+        // 독수리투하 연계(path T3)의 미니 회오리와 MiniWhirlwindDamageBonus를 공유해 서로의 미니 회오리가 함께 강해진다.
+        int miniCount = 0;
+        if (skill.PathTier[0] >= 1) miniCount += 2;
+        if (skill.PathTier[0] >= 3) miniCount += 1;
 
-            if (miniCount > 0)
+        if (miniCount > 0)
+        {
+            float miniDamage = damage * 0.3f * (1f + MiniWhirlwindDamageBonus);
+            for (int i = 0; i < miniCount; i++)
             {
-                float miniDamage = damage * 0.3f * (1f + MiniWhirlwindDamageBonus);
-                for (int i = 0; i < miniCount; i++)
-                {
-                    Vector2 offset = Random.insideUnitCircle * 0.5f;
-                    Vector3 miniSpawnPos = spawnPos + (Vector3)offset;
-                    SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * MiniWhirlwindScale, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
-                }
+                Vector2 offset = Random.insideUnitCircle * 0.5f;
+                Vector3 miniSpawnPos = spawnPos + (Vector3)offset;
+                SpawnWhirlwind(miniSpawnPos, miniDamage, critChance, skill.Scale * MiniWhirlwindScale, applySlow, applyVulnerable, maxHitCount: 6, slowDuration: 3f, isMini: true);
             }
         }
 

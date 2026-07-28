@@ -61,7 +61,8 @@ Player  [tag=Player]   ← SpriteRenderer · BoxCollider2D · Animator
 EnemySpawner           ← EnemySpawner (fallbackMap=Map_BlueberryField, scaling=ScalingTable)
 GameManager            ← GameManager + MetaRunApplier + RunBootstrap(defaultMap=Map_BlueberryField)
 Canvas                 ← LevelUpUI · EvolutionTreeUI · DamageMeterUI  (+Canvas/Scaler/Raycaster)
- ├─ LevelUpPanel/Dialog
+ ├─ LevelUpPanel
+ │    EssenceRain(Dialog 뒤·보물 모드 전용) · Dialog · TreasureChest(Dialog 앞·좌하단·보물 모드 전용)
  ├─ HUD                ← HUDController
  │    StageText · HealthPanel · LevelText · PassiveSlot_0~3 · ExpBar
  │    · ActiveSlot_0~3 · ExpLevelText · StageBanner · BuffSlot_0~2(비활성)
@@ -79,6 +80,7 @@ Background
 - **`GameManager`** = GameManager + **MetaRunApplier** + **RunBootstrap**(Phase 1 신규, 형제로 붙음). RunBootstrap.Awake가 판 시작 시 선택된 맵(`RunConfig.Map`, 없으면 `defaultMap`)을 씬에 적용 — GameManager.stageTable 주입·EnemySpawner.ActiveMap 세팅·Background 스프라이트 교체·BGM 재생. **+ 선택된 캐릭터(`RunConfig.Character`)의 외형(스프라이트/애니메이터, null이면 스킵)도 적용**(Phase 3). **EnemySpawner.Start(물량 세팅) 전에 도는 Awake라 순서 안전.**
 - `GameManager` SerializeField: `stageTable`(RunBootstrap이 맵값으로 덮음, 기본맵이면 동일), `heartPickupPrefab`, `essencePickupPrefab`, `stageBreakDuration`.
 - **`Canvas` 루트에 UI 싱글톤 3개**(LevelUpUI/EvolutionTreeUI/DamageMeterUI)가 컴포넌트로 직접 붙음. 패널 오브젝트(LevelUpPanel/EvolutionPanel/DamageMeterPanel)는 각 UI가 제어하는 뷰.
+- **보물 획득 패널 연출**: 레벨업/보물 보상은 같은 `LevelUpPanel`을 재사용. 보물 모드에서만 `LevelUpUI`가 `treasureDecor`(=[TreasureChest, EssenceRain])를 켜고 HeaderText를 "보물 획득!"으로 교체. `EssenceRain`엔 `TreasureRewardDecor`(정수 비 낙하·회전 + 보물상자 등장/흔들림 연출, unscaled 시간)가 붙음. 순서(상자 먼저 활성)로 정수 비 OnEnable이 상자 트윈을 안전하게 건다.
 - `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
 - **BGM = 신규(Phase 1)**: `MapDefinition.bgm`(AudioClip) 있으면 RunBootstrap이 런타임 AudioSource를 GameManager에 추가해 루프 재생. 기본맵은 bgm=null → 무음(현행 유지). SfxPlayer/ObjectPool 효과음은 그대로.
 - **적 로스터·스폰 파라미터는 EnemySpawner가 아니라 `MapDefinition`이 소유**(Phase 1). EnemySpawner는 `ActiveMap`(RunBootstrap이 세팅) 또는 `fallbackMap`(씬 단독 실행용, =Map_BlueberryField)에서 7종 프리팹·bossStage·spawnInterval·defaultSpawnCount를 읽는다.
