@@ -17,8 +17,9 @@
 public static class EvolutionRoutes
 {
     public const int MaxStage = 2;             // 스킬당 진화 횟수 상한
-    public const int FirstEvolutionLevel = 5;  // 1차 진화 요구 누적 레벨
-    public const int SecondEvolutionLevel = 10; // 2차 진화 요구 누적 레벨
+    // 진화 요구 레벨 = 만렙. 1차·2차 모두 같다 — 진화하면 표시 레벨이 1로 리셋되므로
+    // "만렙 찍고 진화, 다시 만렙 찍고 진화"가 된다. (누적 레벨 TotalLevel이 아니라 **표시 레벨**이 기준)
+    public const int RequiredLevel = BalanceConstants.MaxSkillLevel;
 
     // 진화 시 즉시 붙는 기본 스탯 도약. 레벨 표시가 1로 리셋되는 대신 이만큼 세져서
     // "약해진 게 아니라 다른 스킬이 됐다"가 눈에 보이게 한다.
@@ -52,6 +53,39 @@ public static class EvolutionRoutes
 
     // 패시브는 전부 path0이 "같은 스탯 더 주기"(레벨업과 완전 중복)라 1·2를 루트로 쓴다.
     public static int RoutePath(PassiveSkillId id, int route) => route == 0 ? 1 : 2;
+
+    // ── 루트 잠금(연계 조건) ─────────────────────────────────────────────────
+    // 기존 path 좌표계가 그대로 조건이 된다: path1 = 패시브 연계, path2 = 액티브 연계, path0 = 무의존.
+    // 연계 대상을 **보유**해야 그 루트가 열린다(레벨 조건은 없음 — 아이템이 희소해서 레벨까지 걸면
+    // 아이템이 버려지는 판이 생긴다). 두 루트가 다 잠긴 스킬은 진화 목록에 아예 안 뜬다.
+    public static PassiveSkillId? RoutePassivePrereq(ActiveSkillId id, int route) =>
+        RoutePath(id, route) == 1 ? PlayerSkills.GetPassivePrereq(id) : null;
+
+    public static ActiveSkillId? RouteActivePrereq(ActiveSkillId id, int route) =>
+        RoutePath(id, route) == 2 ? PlayerSkills.GetActivePrereq(id) : null;
+
+    public static PassiveSkillId? RoutePassivePrereq(PassiveSkillId id, int route) =>
+        RoutePath(id, route) == 1 ? PlayerPassives.GetPassivePrereq(id) : null;
+
+    public static ActiveSkillId? RouteActivePrereq(PassiveSkillId id, int route) =>
+        RoutePath(id, route) == 2 ? PlayerPassives.GetActivePrereq(id) : null;
+
+    // 잠금 사유 표기용 — 필요한 연계 스킬 이름. 조건이 없으면 null.
+    public static string RoutePrereqName(ActiveSkillId id, int route)
+    {
+        PassiveSkillId? p = RoutePassivePrereq(id, route);
+        if (p.HasValue) return PlayerSkills.GetPassiveSkillName(p.Value);
+        ActiveSkillId? a = RouteActivePrereq(id, route);
+        return a.HasValue ? PlayerSkills.GetActiveSkillName(a.Value) : null;
+    }
+
+    public static string RoutePrereqName(PassiveSkillId id, int route)
+    {
+        PassiveSkillId? p = RoutePassivePrereq(id, route);
+        if (p.HasValue) return PlayerSkills.GetPassiveSkillName(p.Value);
+        ActiveSkillId? a = RouteActivePrereq(id, route);
+        return a.HasValue ? PlayerSkills.GetActiveSkillName(a.Value) : null;
+    }
 
     // 새 티어(1/2)가 도달시키는 기존 PathTier 값. 1 → 2(T1+T2), 2 → 3(T3).
     public static int TargetPathTier(int newTier) => newTier == 1 ? 2 : 3;

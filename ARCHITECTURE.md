@@ -10,7 +10,7 @@
 
 ## 한눈에 보기
 
-**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 왼쪽에 고정된 플레이어(움직이지 않음)를 향해 오른쪽에서 블루베리 몬스터들이 좌측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. Lv.5 단위로 **진화 트리**(스킬/패시브마다 3경로 × 3티어)가 열리며, 진화는 보물상자 블루베리 처치로 얻는다. 각 스테이지는 정해진 물량(`StageData.spawnCount`)을 다 스폰하고 잔몹이 전멸하면 클리어(타이머 아님) — **15스테이지(보스 블루베리)**까지 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
+**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 왼쪽에 고정된 플레이어(움직이지 않음)를 향해 오른쪽에서 블루베리 몬스터들이 좌측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. 스킬이 **만렙(Lv.10)**에 닿고 **진화 아이템**(벽 스테이지 엘리트 드랍)이 있으면 **진화 트리**(스킬/패시브마다 2루트 × 2티어)가 열린다 — 진화하면 Lv.1로 리셋되고 다시 만렙까지 큰다. 각 스테이지는 정해진 물량(`StageData.spawnCount`)을 다 스폰하고 잔몹이 전멸하면 클리어(타이머 아님) — **15스테이지(보스 블루베리)**까지 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
 
 **기술 스택**: Unity 6 (6000.4.4f1) · URP 2D · uGUI(+TextMeshPro) · DOTween(트위닝) · JuicyUI(UI 연출) · Vefects Pixel Craft VFX(파티클). 코드는 순수 MonoBehaviour + static 상태 홀더, DI 프레임워크 없음.
 
@@ -110,7 +110,7 @@
 ## 자주 헷갈리는 것
 
 - **static 상태가 도메인 리로드 없이는 안 풀린다.** `PlayerPassives`의 static 필드들, `LightningStorm.*`, `PlayerSkills.MiniWhirlwindDamageBonus`는 전역 static이라 `GameManager.Awake`에서 리셋하는 건 `DamageMeter`뿐이다. 씬 재시작(도메인 리로드 없이)이나 자동화 테스트에서 이전 판의 진화 보너스가 그대로 남아있을 수 있음 — "Enter Play Mode Options"로 도메인 리로드를 끄면 특히 주의.
-- **진화는 레벨업과 별개 게이트다.** 레벨업 선택지는 `CanUpgradeSkill`(= `TotalEvolutionTier >= Level/5`)로 5레벨마다 막힌다 — 진화를 안 하면 그 스킬은 더 이상 레벨업 후보에 안 뜬다. 진화는 **보물상자 블루베리** 처치(`LevelUpUI.ShowTreasureReward`)로만 열리고, path1/path2는 연계 대상이 **Lv.5 이상**이어야 하며, 한 스킬은 2티어 이상 진행한 경로 하나로만 끝까지 갈 수 있다(`GetAdvancingPath`).
+- **진화는 레벨업의 연장이 아니라 리셋이다.** 레벨업은 **만렙(`BalanceConstants.MaxSkillLevel`=10)**에서 막히고(`CanUpgradeSkill`), 그 스킬은 레벨업 후보에서 빠진다. 만렙 스킬은 **진화 아이템**(벽 스테이지 엘리트 드랍 → `LevelUpUI.ShowEvolutionReward`)을 먹어야 진화하고, 진화하면 Lv.1로 리셋되어 다시 큰다. 루트는 2개뿐이고 **연계 스킬을 보유해야 열린다**(`IsRouteUnlocked` — path1=패시브 연계·path2=액티브 연계). 1차에서 고른 루트는 2차까지 고정. 좌표 번역은 전부 `EvolutionRoutes`가 하고, 저장은 여전히 `PathTier[3]`이다.
 - **3번째 슬롯 레벨업은 occurrence(`ThirdSlotCount`) 순환이다.** `DescribeThirdUpgradeEffect`(미리보기)와 `ApplyThirdUpgradeEffect`(적용)가 **증가 전 같은 값**을 읽어야 미리보기와 실제가 일치한다. Apply가 끝에서 `ThirdSlotCount++`.
 - **모달 일시정지는 참조카운트.** 레벨업+진화 패널이 겹쳐 뜰 수 있어 `ModalPause.Push/Pop`으로만 `timeScale`을 만진다. timeScale=0 중에도 DOTween 연출이 돌도록 `GameManager.Awake`에서 `DOTween.defaultTimeScaleIndependent=true`.
 - **`Enemy.TakeDamage`는 같은 프레임 재진입에 안전해야 한다.** `Destroy`는 프레임 끝에 실행되므로 낙뢰 재귀/체인이 같은 프레임에 사망 처리를 두 번 돌 수 있어 `isDead` 가드가 두 군데 있다. 낙뢰/체인 판정은 사망 처리보다 **앞**에 있어야 한다(한 방 킬 타격도 낙뢰를 굴릴 기회를 갖도록).

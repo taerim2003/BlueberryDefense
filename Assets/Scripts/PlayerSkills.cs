@@ -52,7 +52,7 @@ public class EquippedSkill
     public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
 
     // ── 진화 상태 (2루트 × 2티어) ──
-    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 진화 게이트(5/10)는 이걸 본다
+    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 표시용(진화 게이트는 표시 레벨 Level을 본다)
     public int EvolutionStage = 0;  // 0=미진화, 1=1차 진화, 2=2차 진화(최종)
     public int Route = -1;          // 1차 진화에서 고른 루트(0/1). 2차는 같은 루트를 이어간다
 
@@ -279,14 +279,13 @@ public class PlayerSkills : MonoBehaviour
         if (skill != null) skill.Cooldown *= multiplier;
     }
 
-    // 진화가 아이템 기반으로 바뀌면서 "5의 배수에서 레벨업이 막히는" 게이트는 사라졌다.
-    // (호출부가 많아 메서드는 남겨둔다 — 항상 true)
-    public bool CanUpgradeSkill(EquippedSkill skill) => skill != null;
+    // 만렙(MaxSkillLevel)에 닿으면 더 이상 레벨업 후보로 뜨지 않는다 — 진화해서 Lv.1로 리셋해야 다시 큰다.
+    public bool CanUpgradeSkill(EquippedSkill skill) => skill != null && skill.Level < BalanceConstants.MaxSkillLevel;
 
     public void UpgradeSkillLevel(ActiveSkillId id)
     {
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
-        if (skill == null) return;
+        if (skill == null || skill.Level >= BalanceConstants.MaxSkillLevel) return;
 
         skill.Level++;
         skill.TotalLevel++;
@@ -298,6 +297,7 @@ public class PlayerSkills : MonoBehaviour
     {
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
         if (skill == null) return;
+        targetLevel = Mathf.Min(targetLevel, BalanceConstants.MaxSkillLevel);
         while (skill.Level < targetLevel)
         {
             skill.Level++;
@@ -367,15 +367,22 @@ public class PlayerSkills : MonoBehaviour
     }
 
     // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) ────────────────────────────
-    // 1차: 누적 레벨 5 이상 → 루트 2개 중 하나 선택
-    // 2차: 누적 레벨 10 이상 → 1차에서 고른 루트의 다음 티어(선택지 없음)
+    // 1차: 만렙(Lv.10) 도달 → 열려 있는 루트 중 하나 선택 (고르면 Lv.1로 리셋)
+    // 2차: 다시 만렙 도달 → 1차에서 고른 루트의 다음 티어(선택지 없음)
     public bool CanEvolve(EquippedSkill skill)
     {
         if (skill == null || skill.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
-        int required = skill.EvolutionStage == 0
-            ? EvolutionRoutes.FirstEvolutionLevel
-            : EvolutionRoutes.SecondEvolutionLevel;
-        return skill.TotalLevel >= required;
+        if (skill.Level < EvolutionRoutes.RequiredLevel) return false;
+        return SelectableRoutes(skill).Any(r => IsRouteUnlocked(skill.Id, r));
+    }
+
+    // 루트 잠금: 연계 대상(패시브/액티브)을 보유해야 그 루트를 고를 수 있다(§EvolutionRoutes).
+    public bool IsRouteUnlocked(ActiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue && (passives == null || !passives.HasPassive(p.Value))) return false;
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return !a.HasValue || HasSkill(a.Value);
     }
 
     // 이 진화에서 고를 수 있는 루트들. 1차는 0·1 둘 다, 2차는 이미 고른 루트 하나뿐.
@@ -387,6 +394,7 @@ public class PlayerSkills : MonoBehaviour
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
         if (skill == null || !CanEvolve(skill)) return;
         if (skill.EvolutionStage > 0 && route != skill.Route) return; // 2차는 루트 변경 불가
+        if (!IsRouteUnlocked(id, route)) return;                      // 연계 스킬 미보유
 
         int newTier = skill.EvolutionStage + 1;
         int path = EvolutionRoutes.RoutePath(id, route);
@@ -493,8 +501,8 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    // 연계 대상 표기용(진화 카드 부제). 진화 조건으로는 더 이상 쓰이지 않는다 —
-    // 진화 아이템이 희소해서 "연계 스킬 Lv.5" 같은 추가 조건을 걸면 아이템이 버려지는 판이 생긴다.
+    // 루트 잠금 조건 — 이 스킬을 **보유**해야 해당 루트(path1=패시브 연계 / path2=액티브 연계)가 열린다.
+    // 레벨 조건은 걸지 않는다(아이템이 희소해서 조건이 과하면 아이템이 버려지는 판이 생김).
     public static PassiveSkillId? GetPassivePrereq(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => PassiveSkillId.Assassinate,
@@ -983,12 +991,28 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[0] >= 3) pierce += 10;
         pierce += skill.ExtraPierce; // 레벨업 고유 강화
 
+        // 첫 발은 즉시(입력 반응성), 추가 발사는 시간차를 두고 연사한다.
         SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0f, allowBonusShot);
-        for (int i = 1; i <= skill.ExtraProjectiles; i++) // 레벨업 고유 강화: 투사체 추가 발사
-            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0.4f * i, allowBonusShot);
+        if (skill.ExtraProjectiles > 0)
+            StartCoroutine(BasicAttackBurst(skill, damage, critChance, pierce, allowBonusShot));
 
         animator.SetTrigger("Attack");
         return true;
+    }
+
+    // 추가 발사체를 "두두두둑" 쏟아낸다 — 발사마다 간격을 두고, 세로로 위·아래 번갈아 조금씩 어긋나게.
+    // 예전엔 전부 같은 프레임에 0.4씩 위로 쌓아 올려 한 덩어리로 보였다(여러 발 맞는 게 안 보임).
+    private IEnumerator BasicAttackBurst(EquippedSkill skill, float damage, float critChance, int pierce, bool allowBonusShot)
+    {
+        int count = skill.ExtraProjectiles; // 캐스트 시점 값으로 고정(도중에 레벨업해도 이번 연사는 그대로)
+        for (int i = 1; i <= count; i++)
+        {
+            yield return new WaitForSeconds(BalanceConstants.BasicAttackBurstInterval);
+            // +0.13 / -0.13 / +0.26 / -0.26 … 위아래로 번갈아 벌어진다
+            float sign = i % 2 == 1 ? 1f : -1f;
+            float magnitude = Mathf.CeilToInt(i * 0.5f) * BalanceConstants.BasicAttackBurstYOffset;
+            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, sign * magnitude, allowBonusShot);
+        }
     }
 
     private void SpawnBasicAttackProjectile(EquippedSkill skill, float damage, float critChance, int pierce, float verticalOffset, bool allowBonusShot)

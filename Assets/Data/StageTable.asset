@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageTable
   stages:
   - stageNumber: 1
-    spawnCount: 9
+    spawnCount: 5
     duration: 10
-    spawnInterval: 0.8
+    spawnInterval: 1.1
     eliteChance: 0
     evolutionItemDrops: 0
     paperPlaneChance: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
   - stageNumber: 2
     spawnCount: 13
     duration: 11
-    spawnInterval: 0.65
+    spawnInterval: 0.7
     eliteChance: 0.035
     evolutionItemDrops: 0
     paperPlaneChance: 0
@@ -140,7 +140,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0.16
     riderChance: 0.15
-    enemyHpMultiplier: 3.2
+    enemyHpMultiplier: 3.6
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.8
   - stageNumber: 11
@@ -153,7 +153,7 @@ MonoBehaviour:
     ufoChance: 0.06
     shieldChance: 0.18
     riderChance: 0.12
-    enemyHpMultiplier: 4.3
+    enemyHpMultiplier: 5.5
     enemySpeedMultiplier: 1.32
     enemyDamageMultiplier: 2.25
   - stageNumber: 12
@@ -166,7 +166,7 @@ MonoBehaviour:
     ufoChance: 0.07
     shieldChance: 0.18
     riderChance: 0
-    enemyHpMultiplier: 5.3
+    enemyHpMultiplier: 7.2
     enemySpeedMultiplier: 1.35
     enemyDamageMultiplier: 2.45
   - stageNumber: 13
@@ -179,7 +179,7 @@ MonoBehaviour:
     ufoChance: 1
     shieldChance: 0
     riderChance: 0
-    enemyHpMultiplier: 5.6
+    enemyHpMultiplier: 8
     enemySpeedMultiplier: 1.38
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
@@ -192,7 +192,7 @@ MonoBehaviour:
     ufoChance: 0.08
     shieldChance: 0.18
     riderChance: 0.12
-    enemyHpMultiplier: 7.3
+    enemyHpMultiplier: 11
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.65
   - stageNumber: 15
@@ -205,6 +205,6 @@ MonoBehaviour:
     ufoChance: 0.09
     shieldChance: 0.22
     riderChance: 0
-    enemyHpMultiplier: 8.6
+    enemyHpMultiplier: 14.5
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 3.05

@@ -131,6 +131,13 @@ public class EvolutionTreeUI : MonoBehaviour
         {
             // 1차 진화에서 고르지 않은 루트는 영영 닫힌다.
             bool routeAbandoned = stage > 0 && chosenRoute != route;
+            // 연계 스킬 미보유로 잠긴 루트 — 그 스킬을 얻으면 열린다.
+            bool routeUnlocked = isPassiveMode
+                ? passives.IsRouteUnlocked(currentPassive.Id, route)
+                : skills.IsRouteUnlocked(currentSkill.Id, route);
+            string prereqName = isPassiveMode
+                ? EvolutionRoutes.RoutePrereqName(currentPassive.Id, route)
+                : EvolutionRoutes.RoutePrereqName(currentSkill.Id, route);
 
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
             {
@@ -139,7 +146,7 @@ public class EvolutionTreeUI : MonoBehaviour
                 node.button.gameObject.SetActive(true);
 
                 bool owned = !routeAbandoned && stage >= tier;
-                bool available = canEvolve && !routeAbandoned && stage == tier - 1;
+                bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1;
                 bool locked = !owned && !available;
 
                 SetIcon(node.icon, GetIcon(pathIconSprites, route));
@@ -156,6 +163,7 @@ public class EvolutionTreeUI : MonoBehaviour
                 string effect = RouteEffect(route, tier);
                 // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
                 node.description.text = routeAbandoned ? "[포기한 루트] " + effect
+                                      : !routeUnlocked ? $"[잠김 — '{prereqName}' 필요] " + effect
                                       : locked ? "[잠김] " + effect
                                       : effect;
                 node.description.color = locked ? LockedTextColor : Color.black;

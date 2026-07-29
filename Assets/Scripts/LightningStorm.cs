@@ -14,8 +14,8 @@ public static class LightningStorm
     public const float BaseProcChance = 0.25f;
     public static float ProcChance = BaseProcChance;
     // 낙뢰 기본 피해. ⚠️ Prog_Lightning.baseDamage(=0)는 무시되고 **이 상수가 실제 시작 피해**다
-    // (GetDefaultDamage가 낙뢰만 여기서 읽어감). 시작값 하향 12→6.
-    public const float BaseProcDamage = 6f;
+    // (GetDefaultDamage가 낙뢰만 여기서 읽어감). 시작값 하향 12→6→4(세션16: 1레벨 파워 축소).
+    public const float BaseProcDamage = 4f;
     public static float ProcDamage = BaseProcDamage;  // 캐스트마다 배율 적용된 '현재' 피해로 갱신됨
     public static bool RecursiveProcEnabled;
     public static float RecursiveDamageGrowth; // 힘 연계 path0 T3: 재귀 단계마다 이 비율만큼 낙뢰 피해량 누적 증가

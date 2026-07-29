@@ -128,6 +128,7 @@ public class CheatWindow : EditorWindow
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("레벨 +1")) skills.UpgradeSkillLevel(eq.Id);
+            if (GUILayout.Button("만렙")) while (skills.CanUpgradeSkill(eq)) skills.UpgradeSkillLevel(eq.Id); // 진화 게이트(만렙)까지 한 번에
             using (new EditorGUI.DisabledScope(!skills.CanEvolve(eq)))
             {
                 foreach (int route in PlayerSkills.SelectableRoutes(eq))
@@ -161,6 +162,7 @@ public class CheatWindow : EditorWindow
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("레벨 +1")) passives.UpgradePassiveLevel(eq.Id);
+            if (GUILayout.Button("만렙")) while (passives.CanUpgradePassive(eq)) passives.UpgradePassiveLevel(eq.Id);
             using (new EditorGUI.DisabledScope(!passives.CanEvolve(eq)))
             {
                 foreach (int route in PlayerPassives.SelectableRoutes(eq))

@@ -70,7 +70,7 @@ public class EnemySpawner : MonoBehaviour
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
 
-        int treasureCount = currentStage >= 11 ? 2 : 1; // 11스테이지부터 스테이지 종료 보물상자 블루베리 2마리
+        const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
         bool isBossStage = currentStage == map.bossStage && map.bossEnemyPrefab != null;
         bool treasureStage = !isBossStage && map.treasureEnemyPrefab != null;
 

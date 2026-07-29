@@ -20,7 +20,7 @@ public class EquippedPassive
     public readonly int[] PathTier = new int[3];
     public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
 
-    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 진화 게이트(5/10) 기준
+    public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 표시용(진화 게이트는 표시 레벨 Level을 본다)
     public int EvolutionStage = 0;  // 0=미진화, 1=1차, 2=2차(최종)
     public int Route = -1;
 
@@ -170,13 +170,13 @@ public class PlayerPassives : MonoBehaviour
         ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
     }
 
-    // 진화가 아이템 기반이 되면서 5의 배수 레벨업 게이트는 사라졌다(호출부 유지용으로 남김).
-    public bool CanUpgradePassive(EquippedPassive passive) => passive != null;
+    // 만렙(MaxSkillLevel)에 닿으면 레벨업 후보에서 빠진다 — 진화해야 Lv.1로 리셋되어 다시 큰다(액티브와 동일).
+    public bool CanUpgradePassive(EquippedPassive passive) => passive != null && passive.Level < BalanceConstants.MaxSkillLevel;
 
     public void UpgradePassiveLevel(PassiveSkillId id)
     {
         EquippedPassive passive = GetPassive(id);
-        if (passive == null) return;
+        if (passive == null || passive.Level >= BalanceConstants.MaxSkillLevel) return;
 
         passive.Level++;
         passive.TotalLevel++;
@@ -290,10 +290,17 @@ public class PlayerPassives : MonoBehaviour
     public bool CanEvolve(EquippedPassive passive)
     {
         if (passive == null || passive.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
-        int required = passive.EvolutionStage == 0
-            ? EvolutionRoutes.FirstEvolutionLevel
-            : EvolutionRoutes.SecondEvolutionLevel;
-        return passive.TotalLevel >= required;
+        if (passive.Level < EvolutionRoutes.RequiredLevel) return false;
+        return SelectableRoutes(passive).Any(r => IsRouteUnlocked(passive.Id, r));
+    }
+
+    // 루트 잠금: 연계 대상(패시브/액티브)을 보유해야 그 루트를 고를 수 있다(§EvolutionRoutes).
+    public bool IsRouteUnlocked(PassiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue && !HasPassive(p.Value)) return false;
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return !a.HasValue || (skills != null && skills.HasSkill(a.Value));
     }
 
     public static int[] SelectableRoutes(EquippedPassive passive) =>
@@ -304,6 +311,7 @@ public class PlayerPassives : MonoBehaviour
         EquippedPassive passive = GetPassive(id);
         if (passive == null || !CanEvolve(passive)) return;
         if (passive.EvolutionStage > 0 && route != passive.Route) return;
+        if (!IsRouteUnlocked(id, route)) return; // 연계 스킬 미보유
 
         int newTier = passive.EvolutionStage + 1;
         int path = EvolutionRoutes.RoutePath(id, route);

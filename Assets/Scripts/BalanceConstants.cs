@@ -4,9 +4,16 @@
 public static class BalanceConstants
 {
     public const float GlobalCooldown = 0.4f;       // 모든 스킬 공통 최소 간격 + 쿨타임 하한
+    // 스킬/패시브 표시 레벨 상한 = 만렙. 여기 도달해야 진화가 열리고, 진화하면 Lv.1로 리셋되어 다시 이 값까지 큰다.
+    // (레벨업 커브 Prog_*가 정확히 10레벨까지만 저작돼 있다 — 이 값을 올리면 11+가 옛 폴백 커브를 탄다)
+    public const int MaxSkillLevel = 10;
     public const float OrbAltarCooldown = 15f;      // 오브 제단(Orb path2 T2+) 쿨타임
     public const float MaxCritChance = 0.7f;        // 치명타 확률 상한(상시 100% 크리 방지)
     public const int BasicAttackBaseHits = 3;       // 기본공격 기본 멀티히트 수
+    // 기본공격 추가 발사체는 한 줄로 동시에 나가지 않고 "두두두둑" 연사된다 — 여러 발이 나간다는 게 눈에 보이게.
+    // 세로 오프셋은 순수 연출(화살 히트박스가 세로 2.4유닛이라 명중 판정엔 영향 없음).
+    public const float BasicAttackBurstInterval = 0.07f; // 추가 발사 간격(초)
+    public const float BasicAttackBurstYOffset = 0.13f;  // 발사마다 위·아래로 번갈아 벌어지는 폭
     public const int SnipingBaseShots = 3;          // 스나이핑 타겟당 저격 횟수(레벨업으로 +, 시작값 하향 5→3)
     public const float SnipingShotInterval = 0.08f; // 스나이핑 저격 간격
 

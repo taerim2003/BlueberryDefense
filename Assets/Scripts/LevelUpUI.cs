@@ -186,10 +186,14 @@ public class LevelUpUI : MonoBehaviour
         bool alreadyOpen = isOpen;
 
         // 선택지는 1~3개로 가변 — 남는 슬롯의 옵션 카드(버튼)는 통째로 숨긴다.
-        int count = currentOptions.Length;
-        SetSlot(0, optionButtonA, titleA, levelA, descA, iconA, count > 0 ? currentOptions[0] : null);
-        SetSlot(1, optionButtonB, titleB, levelB, descB, iconB, count > 1 ? currentOptions[1] : null);
-        SetSlot(2, optionButtonC, titleC, levelC, descC, iconC, count > 2 ? currentOptions[2] : null);
+        // 슬롯은 씬에 y=+190/0/-190으로 고정 배치돼 있어서, 1개짜리는 가운데 슬롯에 넣어야 덩그러니 위에 붙지 않는다.
+        Option[] slots = new Option[3];
+        for (int i = 0; i < currentOptions.Length && i < slots.Length; i++)
+            slots[SlotForOption(i)] = currentOptions[i];
+
+        SetSlot(0, optionButtonA, titleA, levelA, descA, iconA, slots[0]);
+        SetSlot(1, optionButtonB, titleB, levelB, descB, iconB, slots[1]);
+        SetSlot(2, optionButtonC, titleC, levelC, descC, iconC, slots[2]);
 
         UpdateRerollButton();
 
@@ -422,7 +426,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = (captured.EvolutionStage + 1) + "차 진화",
                 IsEvolution = true,
-                Description = DescribeEvolutionChoice(captured.Id, captured.EvolutionStage, captured.Route),
+                Description = DescribeEvolutionChoice(skills, captured),
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 SkillId = captured.Id,
             });
@@ -437,31 +441,41 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = (captured.EvolutionStage + 1) + "차 진화",
                 IsEvolution = true,
-                Description = DescribeEvolutionChoice(captured.Id, captured.EvolutionStage, captured.Route),
+                Description = DescribeEvolutionChoice(passives, captured),
                 Icon = GetIcon(passiveIcons, (int)captured.Id),
                 PassiveId = captured.Id,
             });
         }
 
-        if (candidates.Count == 0) candidates = BuildEvolutionFallbackOptions(skills, passives);
+        // 진화 대상이 없으면 대체 보상(레벨업)인데, 이건 고를 게 없는 보상이라 3지선다로 낼 이유가 없다.
+        // 랜덤으로 하나만 뽑아 가운데에 한 장 띄우고 누르게 한다.
+        if (candidates.Count == 0)
+        {
+            List<Option> fallback = BuildEvolutionFallbackOptions(skills, passives);
+            Shuffle(fallback);
+            return fallback.Take(1).ToArray();
+        }
 
         Shuffle(candidates);
         return candidates.Take(3).ToArray();
     }
 
     // 진화 대상이 없을 때의 대체 보상: 아무 스킬/패시브 하나를 골라 3레벨업.
+    // 만렙에 걸린 대상은 올릴 자리가 없으니 후보에서 빼고, 남은 여유분만큼만 표기한다.
     private List<Option> BuildEvolutionFallbackOptions(PlayerSkills skills, PlayerPassives passives)
     {
         List<Option> candidates = new List<Option>();
 
         foreach (EquippedSkill equipped in skills.EquippedSkills)
         {
+            if (!skills.CanUpgradeSkill(equipped)) continue;
             EquippedSkill captured = equipped;
+            int target = Mathf.Min(captured.Level + EvolutionFallbackLevels, BalanceConstants.MaxSkillLevel);
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = $"레벨: {captured.Level} → {captured.Level + EvolutionFallbackLevels}",
-                Description = $"{EvolutionFallbackLevels}레벨 즉시 상승",
+                LevelText = $"레벨: {captured.Level} → {target}",
+                Description = $"{target - captured.Level}레벨 즉시 상승",
                 Icon = GetIcon(activeIcons, (int)captured.Id),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) skills.UpgradeSkillLevel(captured.Id); },
                 SkillId = captured.Id,
@@ -470,12 +484,14 @@ public class LevelUpUI : MonoBehaviour
 
         foreach (EquippedPassive equipped in passives.EquippedPassives)
         {
+            if (!passives.CanUpgradePassive(equipped)) continue;
             EquippedPassive captured = equipped;
+            int target = Mathf.Min(captured.Level + EvolutionFallbackLevels, BalanceConstants.MaxSkillLevel);
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = $"레벨: {captured.Level} → {captured.Level + EvolutionFallbackLevels}",
-                Description = $"{EvolutionFallbackLevels}레벨 즉시 상승",
+                LevelText = $"레벨: {captured.Level} → {target}",
+                Description = $"{target - captured.Level}레벨 즉시 상승",
                 Icon = GetIcon(passiveIcons, (int)captured.Id),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) passives.UpgradePassiveLevel(captured.Id); },
                 PassiveId = captured.Id,
@@ -486,13 +502,26 @@ public class LevelUpUI : MonoBehaviour
         return candidates;
     }
 
-    private static string DescribeEvolutionChoice(ActiveSkillId id, int stage, int route) => stage == 0
-        ? $"루트 선택: {EvolutionRoutes.EvolvedName(id, 0, 1)} / {EvolutionRoutes.EvolvedName(id, 1, 1)}"
-        : $"→ {EvolutionRoutes.EvolvedName(id, route, 2)}";
+    // 1차 진화 카드는 "고를 수 있는" 루트만 나열한다 — 연계 스킬이 없어 잠긴 루트는 이름조차 안 보여준다.
+    private static string DescribeEvolutionChoice(PlayerSkills skills, EquippedSkill s)
+    {
+        if (s.EvolutionStage > 0) return $"→ {EvolutionRoutes.EvolvedName(s.Id, s.Route, 2)}";
+        string[] names = PlayerSkills.SelectableRoutes(s)
+            .Where(r => skills.IsRouteUnlocked(s.Id, r))
+            .Select(r => EvolutionRoutes.EvolvedName(s.Id, r, 1))
+            .ToArray();
+        return "루트 선택: " + string.Join(" / ", names);
+    }
 
-    private static string DescribeEvolutionChoice(PassiveSkillId id, int stage, int route) => stage == 0
-        ? $"루트 선택: {EvolutionRoutes.EvolvedName(id, 0, 1)} / {EvolutionRoutes.EvolvedName(id, 1, 1)}"
-        : $"→ {EvolutionRoutes.EvolvedName(id, route, 2)}";
+    private static string DescribeEvolutionChoice(PlayerPassives passives, EquippedPassive p)
+    {
+        if (p.EvolutionStage > 0) return $"→ {EvolutionRoutes.EvolvedName(p.Id, p.Route, 2)}";
+        string[] names = PlayerPassives.SelectableRoutes(p)
+            .Where(r => passives.IsRouteUnlocked(p.Id, r))
+            .Select(r => EvolutionRoutes.EvolvedName(p.Id, r, 1))
+            .ToArray();
+        return "루트 선택: " + string.Join(" / ", names);
+    }
 
     // 진화 카드를 고른 뒤: 진화면 트리 창으로, 대체 보상이면 곧바로 적용.
     private IEnumerator ResolveEvolutionChoice(Option opt)
@@ -549,14 +578,20 @@ public class LevelUpUI : MonoBehaviour
 
     private static string GetPassiveSkillDescription(PassiveSkillId id) => PlayerPassives.DescribePassiveAcquire(id);
 
-    private void Choose(int index)
+    // 선택지가 1개뿐일 때만 슬롯과 옵션 인덱스가 어긋난다(옵션 0 → 가운데 슬롯 1).
+    private int SlotForOption(int optionIndex) => currentOptions.Length == 1 ? 1 : optionIndex;
+    private int OptionForSlot(int slot) => currentOptions.Length == 1 ? 0 : slot;
+
+    private void Choose(int slot)
     {
+        int index = OptionForSlot(slot);
+        if (index < 0 || index >= currentOptions.Length) return;
         Option opt = currentOptions[index];
 
         if (treasureMode)
         {
             treasureMode = false;
-            StartCoroutine(TreasureEscalateRoutine(index, opt));
+            StartCoroutine(TreasureEscalateRoutine(slot, opt)); // 셀 연출은 슬롯 기준
             return;
         }
 
