@@ -13,11 +13,12 @@ MonoBehaviour:
   m_Name: Map_Wide15
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: "\uD574\uC548\uAC00"
-  description:
+  description: 
   fieldScale: 1.5
+  cameraYLift: 2.2
   background: {fileID: 21300000, guid: 9c4d3f446a9975a48a04ab8381e61c94, type: 3}
   bgm: {fileID: 0}
-  stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
+  stageTable: {fileID: 11400000, guid: b10847536e04b494096fac13aa5dfa58, type: 2}
   bossStage: 15
   spawnInterval: 1.5
   defaultSpawnCount: 20
@@ -28,4 +29,6 @@ MonoBehaviour:
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
   shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
   riderEnemyPrefab: {fileID: 6695594374957680745, guid: 6712b983e4ac3c542bfcc99377910015, type: 3}
+  hopperEnemyPrefab: {fileID: 4929157244831216748, guid: 7f6ec0332f1ff8d44b89e740db6b0372, type: 3}
+  surferEnemyPrefab: {fileID: 200601693386062424, guid: 5703b8e999276e34a9f16b936ca42d41, type: 3}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}

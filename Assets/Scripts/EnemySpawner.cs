@@ -28,6 +28,7 @@ public class EnemySpawner : MonoBehaviour
     private int evolutionElitesSpawnedThisStage; // 벽 스테이지 확정 엘리트를 몇 마리 내보냈나
     private int ambushesTriggeredThisStage;      // 중간 소환을 몇 번 예고했나
     private AmbushMarker pendingAmbush;          // 예고 중인 마커(있으면 정문 스폰 정지)
+    private int spawnedInBurst;                  // 현재 무리에서 몇 마리 내보냈나(웨이브 스폰. burstSize=0/1이면 안 쓰임)
 
     // 물량 기반 스폰 진행 상태 — GameManager가 클리어 판정에, HUD가 진행바에 참조
     public int SpawnedThisStage { get; private set; }
@@ -53,6 +54,7 @@ public class EnemySpawner : MonoBehaviour
         bossSpawnedThisStage = false;
         evolutionElitesSpawnedThisStage = 0;
         ambushesTriggeredThisStage = 0;
+        spawnedInBurst = 0;
         // 예고 중에 스테이지가 넘어가면 마커는 다음 판에 부대를 쏟아낸다 — 판이 바뀌는 즉시 취소.
         if (pendingAmbush != null) Destroy(pendingAmbush.gameObject);
         pendingAmbush = null;
@@ -101,11 +103,20 @@ public class EnemySpawner : MonoBehaviour
         float ufoChance = stage != null ? stage.ufoChance : 0f;
         float shieldChance = stage != null ? stage.shieldChance : 0f;
         float riderChance = stage != null ? stage.riderChance : 0f;
+        float hopperChance = stage != null ? stage.hopperChance : 0f;
+        float surferChance = stage != null ? stage.surferChance : 0f;
+
+        // 웨이브(무리) 스폰: 무리를 다 쏟았으면 spawnInterval 대신 burstRest만큼 쉰다.
+        // burstSize가 0/1이면 resting이 영원히 false라 기존의 균일 간격 스폰과 완전히 동일하게 동작한다.
+        int burstSize = stage != null ? stage.burstSize : 0;
+        bool resting = burstSize > 1 && spawnedInBurst >= burstSize;
+        float wait = resting ? stage.burstRest : interval;
 
         timer += Time.deltaTime;
-        if (timer < interval) return;
+        if (timer < wait) return;
 
         timer = 0f;
+        if (resting) spawnedInBurst = 0; // 휴식 끝 — 다음 무리 시작
 
         // 벽 스테이지 진화 엘리트: 확률이 아니라 확정으로, 스테이지 물량을 균등 분할한 지점마다 1마리씩.
         // (2마리면 33%·66% 지점) 이 엘리트만 진화 아이템을 떨군다.
@@ -153,6 +164,10 @@ public class EnemySpawner : MonoBehaviour
             prefabToSpawn = map.shieldEnemyPrefab;
         else if (map.riderEnemyPrefab != null && Random.value < riderChance)
             prefabToSpawn = map.riderEnemyPrefab;
+        else if (map.hopperEnemyPrefab != null && Random.value < hopperChance)
+            prefabToSpawn = map.hopperEnemyPrefab;
+        else if (map.surferEnemyPrefab != null && Random.value < surferChance)
+            prefabToSpawn = map.surferEnemyPrefab;
 
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
     }
@@ -173,6 +188,9 @@ public class EnemySpawner : MonoBehaviour
             Random.Range(BalanceConstants.AmbushBandMinX * fieldScale, BalanceConstants.AmbushBandMaxX * fieldScale),
             transform.position.y, // 스포너 y = 레인 기준선
             0f);
+
+        // 중간 소환 부대 자체가 하나의 무리다 — 쏟은 직후 곧바로 휴식이 걸리게 무리 정원을 채워 둔다.
+        if (stage != null && stage.burstSize > 1) spawnedInBurst = stage.burstSize;
 
         pendingAmbush = AmbushMarker.Spawn(center, BalanceConstants.AmbushWarnDuration, () =>
         {
@@ -201,7 +219,8 @@ public class EnemySpawner : MonoBehaviour
     }
 
     // 중간 소환은 그 스테이지의 **지상** 로스터를 다시 굴린다 — 벽 스테이지의 성격이 중간 소환에도 그대로 반영된다.
-    // 종이비행기(상공 강하)·UFO(캐리어 하강)는 자기 전용 등장 연출이 있어 땅에서 튀어나오면 안 되므로 제외.
+    // 종이비행기(상공 강하)·UFO(캐리어 하강)·서핑(바다에서 강하)은 자기 전용 등장 연출이 있어 땅에서 튀어나오면 안 되므로 제외.
+    // (콩콩이는 평범한 지상 스폰이라 포함된다.)
     private GameObject PickAmbushPrefab(StageData stage, MapDefinition map)
     {
         if (stage != null)
@@ -209,6 +228,7 @@ public class EnemySpawner : MonoBehaviour
             if (map.eliteEnemyPrefab != null && Random.value < stage.eliteChance) return map.eliteEnemyPrefab;
             if (map.shieldEnemyPrefab != null && Random.value < stage.shieldChance) return map.shieldEnemyPrefab;
             if (map.riderEnemyPrefab != null && Random.value < stage.riderChance) return map.riderEnemyPrefab;
+            if (map.hopperEnemyPrefab != null && Random.value < stage.hopperChance) return map.hopperEnemyPrefab;
         }
         return map.enemyPrefab;
     }
@@ -238,5 +258,6 @@ public class EnemySpawner : MonoBehaviour
         }
 
         SpawnedThisStage += count;
+        spawnedInBurst += count; // 웨이브 회계 — 이 한 곳만 지나가면 정문 스폰 전부가 무리에 잡힌다
     }
 }

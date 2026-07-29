@@ -60,6 +60,15 @@ public class RunBootstrap : MonoBehaviour
             if (sr != null) sr.sprite = map.background;
         }
 
+        // 카메라 들어올리기 = 화면 안에서 레인 내리기. 배경은 카메라의 자식이 아니라서 **같이** 옮겨야
+        // 화면을 계속 정확히 덮는다(둘 다 y=0 중심이라는 전제로 fieldScale이 계산돼 있다).
+        if (!Mathf.Approximately(map.cameraYLift, 0f))
+        {
+            Camera cam = Camera.main;
+            if (cam != null) cam.transform.position += Vector3.up * map.cameraYLift;
+            if (bg != null) bg.transform.position += Vector3.up * map.cameraYLift;
+        }
+
         // 배경 스프라이트는 자기 px/PPU만큼 커지므로(480×270@PPU18 = 26.67×15유닛) 별도 스케일링이 필요 없다.
 
         // BGM (최소 재생 — clip 없으면 무음으로 현재와 동일)

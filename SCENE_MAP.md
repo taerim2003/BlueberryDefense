@@ -4,7 +4,7 @@
 > Claude가 MCP로 씬을 조작하므로 매 세션이 콜드 스타트 — 이 문서가 "어디에 뭐가 붙어 있나"를 미리 알려 MCP 왕복을 줄인다.
 >
 > **적는 것**: 매니저/싱글톤 오브젝트 위치, 오브젝트에 붙은 load-bearing 스크립트, Canvas/UI 루트, "새 오브젝트 어디 붙이나".
-> **안 적는 것**(MCP 쿼리로 즉시 확인): 좌표·스케일·색상, 개별 위젯 나열, SerializeField 수치, 프리팹 내부, 밸런스값(→ BALANCE_MAP.md).
+> **안 적는 것**(MCP 쿼리로 즉시 확인): 좌표·스케일·색상, 개별 위젯 나열, SerializeField 수치, 프리팹 내부, 밸런스값(→ `StageTable`·`EnemyDefinition` 등 에셋과 `BalanceConstants.cs`).
 >
 > **유지 원칙**: 큰 구조 바뀔 때만 갱신(오브젝트 추가/이동/스크립트 재배치). 씬과 어긋나면 씬이 정답 — 이 문서를 의심할 것.
 > 갱신 시점: 리팩토링 각 Phase 완료 시 필수(HANDOFF 로드맵 참고).
@@ -45,7 +45,7 @@ Controllers   ← TitleController + SkillTreeUI + MapSelectUI + CharacterSelectU
 **핵심 배선:**
 - **`Controllers`** = 씬의 로직 허브. `TitleController`(메뉴 버튼), `SkillTreeUI`(SkillTreeRoot 패널), `MapSelectUI`(MapSelectRoot 패널), `CharacterSelectUI`(CharacterSelectRoot 팝업)가 여기 함께 붙어 있음. **새 화면 컨트롤러도 여기 붙이는 게 일관적.**
 - **`SkillTreeRoot`** = "버튼으로 토글하는 전체화면 패널"의 **모범 사례**. 기본 비활성, `Controllers`의 컨트롤러가 On/Off.
-- **`MapSelectRoot`**(Phase 2) = 맵 선택 패널. `Btn_플레이`→`TitleController.Play()`→`MapSelectUI.Open()`. 카드는 `CardTemplate`(자식 Frame/Bg/Thumb/Name)을 맵 수만큼 런타임 복제. 카드 클릭=선택(Frame 하이라이트), **`StartButton`이 확인 단계** — `RunConfig.Map=선택맵`+`RunConfig.Character=선택캐릭터` 후 `SampleScene` 로드. `maps[]`(SerializeField)에 MapDefinition 드래그로 로스터 확장(현재 `Map_BlueberryField` 1장).
+- **`MapSelectRoot`**(Phase 2) = 맵 선택 패널. `Btn_플레이`→`TitleController.Play()`→`MapSelectUI.Open()`. 카드는 `CardTemplate`(자식 Frame/Bg/Thumb/Name)을 맵 수만큼 런타임 복제. 카드 클릭=선택(Frame 하이라이트), **`StartButton`이 확인 단계** — `RunConfig.Map=선택맵`+`RunConfig.Character=선택캐릭터` 후 `SampleScene` 로드. `maps[]`(SerializeField)에 MapDefinition 드래그로 로스터 확장(**현재 3장** — 블루베리 밭 / 해안가 / 광활한 밭).
 - **`CharacterSelectRoot`**(Phase 4) = 맵 화면 위에 뜨는 캐릭터 선택 팝업. `MapSelectRoot`를 복제해 만듦(StartButton 제거). `MapSelectRoot/ChangeCharButton`→`CharacterSelectUI.Open()`. **카드 클릭 = 즉시 선택+팝업 닫힘**(맵과 달리 확인 단계 없음), `OnSelectionChanged`로 `MapSelectUI`가 `CharNameLabel`을 갱신. `characters[]`(SerializeField)에 CharacterDefinition 드래그로 로스터 확장(현재 `Char_Strawberry` 1종, `displayName`="딸기"). 초상화(`portrait`)는 아직 미설정 → 카드 Thumb 숨김·이름만 표시.
 - `Btn_컬렉션`·`Btn_설정`은 현재 리스너 미연결(향후 자리).
 
@@ -86,7 +86,8 @@ Background
 - **`XpGemLayer`**(신규) = 경험치 보석 연출 레이어. `HUD` 바로 다음 형제라 **바 위·모달 아래**로 그려진다. `XpGemFlight`가 `ExpBar/ExpFill`을 참조해 "현재 차 있는 끝 지점"을 목표로 잡고, 보석은 이 오브젝트의 자식으로 런타임 생성·풀링. **XP는 보석 도착 시점에 적립**(Enemy.Die는 `XpGemFlight.TrySpawn` 실패 시에만 즉시 적립).
 - `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
 - **BGM = 신규(Phase 1)**: `MapDefinition.bgm`(AudioClip) 있으면 RunBootstrap이 런타임 AudioSource를 GameManager에 추가해 루프 재생. 기본맵은 bgm=null → 무음(현행 유지). SfxPlayer/ObjectPool 효과음은 그대로.
-- **적 로스터·스폰 파라미터는 EnemySpawner가 아니라 `MapDefinition`이 소유**(Phase 1). EnemySpawner는 `ActiveMap`(RunBootstrap이 세팅) 또는 `fallbackMap`(씬 단독 실행용, =Map_BlueberryField)에서 7종 프리팹·bossStage·spawnInterval·defaultSpawnCount를 읽는다.
+- **적 로스터·스폰 파라미터는 EnemySpawner가 아니라 `MapDefinition`이 소유**(Phase 1). EnemySpawner는 `ActiveMap`(RunBootstrap이 세팅) 또는 `fallbackMap`(씬 단독 실행용, =Map_BlueberryField)에서 **적 프리팹 9종**(기본·보물·엘리트·종이비행기·UFO·방패·라이더·콩콩이·서핑)·보스·bossStage·spawnInterval·defaultSpawnCount를 읽는다. **맵마다 비워둘 수 있다** — null이면 그 적은 그 맵에 안 나온다(콩콩이·서핑은 현재 해안가에만 물려 있음).
+- **`RunBootstrap`이 판 시작 시 씬 좌표를 손댄다** — `fieldScale`(카메라 ortho + 플레이어·스포너 x,y에 곱) / `cameraYLift`(**카메라와 `Background` 오브젝트를 같이** 위로 이동). ⚠️ **둘 다 런타임 적용이라 씬 파일은 안 바뀐다** — 에디터에서 씬을 열면 항상 기본 맵 기준 좌표로 보인다(정상).
 
 ---
 

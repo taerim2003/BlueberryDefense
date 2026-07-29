@@ -17,6 +17,14 @@ public class MapDefinition : ScriptableObject
     //    안 그러면 넓어진 화면의 가장자리가 빈다.
     public float fieldScale = 1f;
 
+    // 카메라와 배경을 이만큼 위로 올린다(월드 유닛) = 화면 안에서 **지상 레인이 그만큼 아래로 내려간다.**
+    // fieldScale은 y를 비율로만 벌려서 화면이 세로로 커져도 레인이 화면 한가운데 근처에 머문다 —
+    // 넓은 맵에서 "레인이 너무 높다"는 문제를 이 값으로 따로 해결한다.
+    // ⚠️ **플레이어·적의 월드 좌표는 일부러 안 건드린다.** 절대 y를 쓰는 것들(회오리 착지선 groundY=0 등)이
+    //    그대로 맞아떨어져야 하기 때문. 대신 카메라 기준으로 계산되는 것(UFO 호버 고도·종이비행기 강하 높이)은
+    //    자동으로 같이 올라가서 하늘 공간이 그만큼 넓어진다 — 이것도 노린 결과다.
+    public float cameraYLift = 0f;
+
     [Header("표시")]
     public Sprite background;
     public AudioClip bgm; // null이면 무음(현재 상태). RunBootstrap이 있으면 루프 재생
@@ -35,5 +43,7 @@ public class MapDefinition : ScriptableObject
     public GameObject ufoEnemyPrefab;
     public GameObject shieldEnemyPrefab;
     public GameObject riderEnemyPrefab;
+    public GameObject hopperEnemyPrefab;
+    public GameObject surferEnemyPrefab;
     public GameObject bossEnemyPrefab;
 }

@@ -20,6 +20,9 @@ public class Enemy : MonoBehaviour
     [SerializeField] private Sprite[] hitParticleSprites;
     [SerializeField] private GameObject playerCollisionVfxPrefab;
     [SerializeField] private float spawnYOffset = 0f;
+    // 개체마다 이동속도를 ±이 비율만큼 흩는다(0.15 = ±15%). 0이면 전원 같은 속도(=기존 적 전부).
+    // 무리로 나오는 적이 자로 잰 듯 같은 속도로 붙어 오는 걸 깨는 용도.
+    [SerializeField] private float speedVariance = 0f;
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
     // "비행 유닛인가"(isFlying = 추가피해·호밍 우선타겟 같은 분류)와 "대공 능력이 있어야만 맞힐 수 있는가"를 분리한다.
@@ -29,12 +32,36 @@ public class Enemy : MonoBehaviour
     [SerializeField] private bool requiresAntiAir = false;
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
-    [Header("대각선 강하(종이비행기) — 화면 위에서 플레이어로 직선 수렴")]
+    [Header("대각선 강하(종이비행기·서핑) — 화면 위/바다에서 플레이어로 직선 수렴")]
     [SerializeField] private bool isDiveFlyer = false;
     // 스폰 높이 = 카메라 중심 + (화면 절반 높이 × 이 비율). 비율로 두면 카메라 크기를 바꿔도 "화면 어디쯤"이 유지된다.
-    // 0.4≈화면 위쪽의 중간, 0.95≈거의 최상단 → 매번 크게 달라져서 완만한 강하와 급강하가 섞인다.
+    // 종이비행기 0.4~0.95 = 화면 위쪽 중간~거의 최상단 → 완만한 강하와 급강하가 섞인다.
+    // 서핑 0.03~0.14 = 물결 바로 위. **`cameraYLift` 덕분에 카메라 중심이 곧 배경의 물가선**이라
+    // 낮은 비율이 그대로 "바다에서 나온다"가 된다(모래 위에서 서핑하지 않게).
     [SerializeField] private float diveSpawnHeightRatioMin = 0.4f;
     [SerializeField] private float diveSpawnHeightRatioMax = 0.95f;
+    // 조준점을 플레이어에서 위아래로 이만큼 흩는다(월드 유닛, ±). 0이면 전원이 플레이어 한 점으로 수렴한다.
+    // 0보다 크면 **날아가는 내내 세로 간격이 유지돼** 한 덩어리(무리)로 몰려오는 그림이 된다.
+    // 스폰 높이만 흩어봐야 조준점이 같으면 접근할수록 한 줄로 좁혀지므로, 무리 느낌은 이 값이 만든다.
+    [SerializeField] private float diveAimYSpread = 0f;
+    // 강하 경로 위에 얹는 위아래 흔들림(파도 타는 느낌). 0이면 없음(=종이비행기는 기존 그대로 직선).
+    [SerializeField] private float diveBobAmplitude = 0f;
+    [SerializeField] private float diveBobSpeed = 2.2f;
+    private const float DiveBobSettleTime = 0.3f; // 멈춰 선 뒤 흔들림이 0으로 잦아드는 시간(초)
+    // 개체마다 위상·속도를 흩는다 — 안 그러면 무리 전체가 한 파도를 타듯 똑같이 출렁인다.
+    private float diveBobPhase, diveBobPhase2, diveBobRate;
+    private float diveBobPrev;  // 지난 프레임에 얹은 오프셋(경로에 누적되지 않게 차분만 더한다)
+    private float diveBobTimer;
+
+    [Header("호핑(콩콩이) — 지상 유닛이 크게 뛰면서 전진")]
+    // isFlying은 끈 채로 둔다(분류상 지상 유닛). 대신 **떠 있는 동안 히트박스가 위로 올라가** 지상 스킬을
+    // 흘려보내는 게 이 적의 정체성이다 — 높이가 곧 회피. 넓은 맵의 빈 세로 공간을 쓰라고 만든 유닛.
+    [SerializeField] private bool isHopper = false;
+    [SerializeField] private float hopHeight = 2.2f;       // 도약 최고점(월드 유닛, 착지 지면 기준)
+    [SerializeField] private float hopDuration = 0.62f;    // 도약~착지까지 걸리는 시간
+    [SerializeField] private float hopGroundPause = 0.12f; // 착지 후 다음 도약까지 웅크리는 시간
+    private float hopBaseY;  // 착지 지면(= 스폰 시의 레인 y). 팝인으로 소환되면 착지 지점으로 갱신된다
+    private float hopTimer;
 
     [Header("수송선(UFO) — 화면 위에서 내려와 부대 투하 후 상승 퇴장")]
     [SerializeField] private bool isCarrier = false;         // 켜면 좌진 행진 대신 하강→투하→상승 궤적을 탄다
@@ -170,6 +197,8 @@ public class Enemy : MonoBehaviour
 
         // definition → 런타임 스탯 복사. 스테이지 배율은 스폰 직후 ApplyStageMultipliers가 이 위에 곱한다.
         moveSpeed = definition.moveSpeed;
+        // 개체차는 스테이지 배율보다 **먼저** 곱한다 — 배율이 뒤에 곱해져도 비율(±variance)이 그대로 유지된다.
+        if (speedVariance > 0f) moveSpeed *= 1f + Random.Range(-speedVariance, speedVariance);
         damage = definition.damage;
         maxHealth = definition.maxHealth;
         xpValue = definition.xpValue;
@@ -186,6 +215,12 @@ public class Enemy : MonoBehaviour
         headbuttTimer = 0f; holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         diveDir = Vector2.right;
+        // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.
+        diveBobPhase = Random.Range(0f, Mathf.PI * 2f);
+        diveBobPhase2 = Random.Range(0f, Mathf.PI * 2f);
+        diveBobRate = Random.Range(0.8f, 1.25f);
+        diveBobPrev = 0f;
+        diveBobTimer = 0f;
         // 캐리어 좌표 3종은 아래 isCarrier 분기에서 다시 계산되지만, 여기서도 0으로 되돌린다.
         // 비캐리어에겐 읽히지 않는 값이라 지금은 무해하지만 — "런타임 필드는 예외 없이 전부 리셋된다"는
         // 불변식을 깨 두면 나중에 이 값을 읽는 경로가 생겼을 때 잠복 버그가 된다.
@@ -218,6 +253,11 @@ public class Enemy : MonoBehaviour
         }
         else if (isDiveFlyer) SetupDive();
         else if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
+
+        // 호핑 기준 지면 = y 보정이 전부 끝난 최종 스폰 높이.
+        // 위상은 랜덤하게 흩어 둔다 — 안 그러면 같이 나온 콩콩이들이 한 몸처럼 동시에 뛰어서 군무가 된다.
+        hopBaseY = transform.position.y;
+        hopTimer = isHopper ? Random.Range(0f, hopDuration + hopGroundPause) : 0f;
     }
 
     // 화면 위쪽에서 등장해 **스폰 순간 정한 방향으로 직선 강하**한다(유도 아님 — 쭉 뻗은 선이 플레이어로 수렴).
@@ -234,9 +274,11 @@ public class Enemy : MonoBehaviour
         transform.position = p;
 
         PlayerHealth player = Player;
+        // 조준점을 개체마다 살짝 어긋나게 잡아 무리의 세로 두께가 접근 중에도 유지되게 한다(diveAimYSpread).
+        float aimJitter = diveAimYSpread > 0f ? Random.Range(-diveAimYSpread, diveAimYSpread) : 0f;
         Vector2 aim = player != null
-            ? (Vector2)player.transform.position
-            : new Vector2(p.x + 20f, camY); // 플레이어가 없으면 오른쪽으로 완만히 강하
+            ? (Vector2)player.transform.position + Vector2.up * aimJitter
+            : new Vector2(p.x + 20f, camY + aimJitter); // 플레이어가 없으면 오른쪽으로 완만히 강하
         diveDir = (aim - (Vector2)p).normalized;
         if (diveDir.sqrMagnitude < 0.0001f) diveDir = Vector2.right;
 
@@ -279,7 +321,8 @@ public class Enemy : MonoBehaviour
             Vector3 p = transform.position;
             p.x += popVelX * Time.deltaTime;
             p.y += popVelY * Time.deltaTime;
-            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; }
+            // 팝인으로 소환된 콩콩이는 튀어오른 자리가 곧 자기 지면이 된다 — 착지 높이를 도약 기준으로 넘겨받는다.
+            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; }
             transform.position = p;
             spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
@@ -323,7 +366,58 @@ public class Enemy : MonoBehaviour
         // 제자리에 서 있으면 걷기 애니메이션도 멈춘다(기절 정지와 같은 스위치를 공유).
         SetAnimatorFrozen(holding || slowMultiplier <= 0.01f);
 
+        if (isHopper) UpdateHop();
+        if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(holding);
+
         spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
+    }
+
+    // 포물선 도약을 반복한다. y를 "지면 + 도약 높이"로 **덮어쓰는** 방식이라(누적 아님)
+    // 박치기 돌진·기절처럼 x만 만지는 다른 로직과 섞여도 높이가 어긋나 쌓이지 않는다.
+    // 플레이어 앞에 멈춰 선 뒤에도 계속 뛴다 — 콩콩이는 서 있는 그림이 없다.
+    private void UpdateHop()
+    {
+        float cycle = hopDuration + hopGroundPause;
+        hopTimer += Time.deltaTime * slowMultiplier; // 기절하면 공중에 굳는 게 아니라 도약 자체가 느려진다
+        if (hopTimer >= cycle) hopTimer -= cycle;
+
+        float lift = 0f;
+        if (hopTimer < hopDuration)
+        {
+            float k = hopTimer / hopDuration;
+            lift = hopHeight * 4f * k * (1f - k); // k=0.5에서 정확히 hopHeight
+        }
+
+        Vector3 p = transform.position;
+        p.y = hopBaseY + lift;
+        transform.position = p;
+    }
+
+    // 강하 경로 위에 파도 흔들림을 얹는다(서핑). 주기가 다른 사인 2개를 겹쳐 규칙적인 왕복이 아니라
+    // 불규칙한 너울처럼 보이게 한다.
+    // ⚠️ 흔들림은 **차분(이번 값 − 지난 값)만 더한다.** 매 프레임 offset을 그냥 더하면 경로에 누적돼
+    //    적이 하늘로 떠오른다. 콩콩이(y를 절대값으로 덮어씀)와 달리 여기선 전진이 Translate 누적이라
+    //    절대 대입을 쓸 수 없어서, 이 방식이 강하 이동과 섞이는 유일하게 안전한 형태다.
+    private void UpdateDiveBob(bool holding)
+    {
+        float bob;
+        if (holding)
+        {
+            // 플레이어 앞에 멈춰 섰다 = 모래에 올라섰다. 흔들림을 0으로 되돌려 가라앉힌다
+            // (그냥 멈추면 최대 ±진폭만큼 뜬 채로 굳어서 땅에서 떠 있는 것처럼 보인다).
+            bob = Mathf.MoveTowards(diveBobPrev, 0f, diveBobAmplitude / DiveBobSettleTime * Time.deltaTime);
+        }
+        else
+        {
+            diveBobTimer += Time.deltaTime * slowMultiplier;
+            float w = diveBobSpeed * diveBobRate;
+            bob = diveBobAmplitude *
+                (Mathf.Sin(diveBobTimer * w + diveBobPhase) * 0.7f +
+                 Mathf.Sin(diveBobTimer * w * 1.7f + diveBobPhase2) * 0.3f);
+        }
+
+        transform.position += Vector3.up * (bob - diveBobPrev);
+        diveBobPrev = bob;
     }
 
     // 멈춰야 하면 true. 플레이어에 실제로 닿은 맨 앞 적만 박치기하고,

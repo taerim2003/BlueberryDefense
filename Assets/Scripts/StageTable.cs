@@ -7,7 +7,16 @@ public class StageData
     public int stageNumber = 1;
     public int spawnCount = 20;   // 이 스테이지에 스폰할 총 적 수(물량 기반 클리어). 쿼터 소진 + 잔몹 0 → 클리어
     public float duration = 45f;  // (레거시) 물량 기반 전환으로 미사용 — 참고용으로만 남김
+    // 적 1마리 사이의 간격. burstSize가 2 이상이면 **무리 안에서의 간격**이 된다(무리끼리의 간격은 burstRest).
     public float spawnInterval = 1.5f;
+
+    // ── 웨이브(무리) 스폰 ──
+    // BTD6식 리듬. burstSize 마리를 spawnInterval 간격으로 연달아 쏟은 뒤 burstRest만큼 정문 스폰을 멈춘다.
+    // 0 또는 1이면 기존 방식(균일 간격으로 꾸준히) 그대로 — 스테이지마다 성격을 갈라 쓰라고 데이터로 뒀다.
+    // ⚠️ 무리로 만들 땐 spawnInterval을 확 낮춰야(0.06~0.15) "좌라락" 쏟아진다. 안 낮추면 그냥 느린 스폰에 쉼표만 찍힌 꼴.
+    public int burstSize = 0;
+    public float burstRest = 0f;
+
     public float eliteChance = 0f;
     // 벽 스테이지(능력시험) 표식. 0보다 크면 이 스테이지에 엘리트가 **확정으로** 그 수만큼 나오고,
     // 그 엘리트를 잡으면 진화 아이템을 떨군다. 진화는 이 아이템으로만 열린다(§EvolutionRoutes).
@@ -19,6 +28,8 @@ public class StageData
     public float ufoChance = 0f;
     public float shieldChance = 0f; // 방패 블루베리(관통·오브 차단) 스폰 확률
     public float riderChance = 0f;  // 라이더 블루베리(지상 고속 돌진·저HP) 스폰 확률
+    public float hopperChance = 0f; // 콩콩이 블루베리(지상을 높이 뛰며 전진 — 공중에 뜬 동안 지상 히트박스를 피함) 스폰 확률
+    public float surferChance = 0f; // 서핑 블루베리(라이더보다 빠른 최고속·최저HP — 무리로 몰려나오라고 만든 적) 스폰 확률
     public float enemyHpMultiplier = 1f;
     public float enemySpeedMultiplier = 1f;
     public float enemyDamageMultiplier = 1f;
@@ -74,6 +85,8 @@ public class StageTable : ScriptableObject
             spawnCount = last.spawnCount + extendedSpawnCountStep * n,
             duration = last.duration,
             spawnInterval = Mathf.Max(extendedSpawnIntervalMin, last.spawnInterval),
+            burstSize = last.burstSize,
+            burstRest = last.burstRest,
             eliteChance = last.eliteChance,
             // 판이 길어진 만큼 진화 기회도 늘어난다(승천1=+1개, 2=+2, 3=+3).
             evolutionItemDrops = (extendedEvolutionItemEvery > 0 && n % extendedEvolutionItemEvery == 0) ? 1 : 0,
@@ -82,6 +95,8 @@ public class StageTable : ScriptableObject
             ufoChance = last.ufoChance,
             shieldChance = last.shieldChance,
             riderChance = last.riderChance,
+            hopperChance = last.hopperChance,
+            surferChance = last.surferChance,
             enemyHpMultiplier = last.enemyHpMultiplier * Mathf.Pow(extendedHpGrowth, n),
             enemySpeedMultiplier = last.enemySpeedMultiplier * Mathf.Pow(extendedSpeedGrowth, n),
             enemyDamageMultiplier = last.enemyDamageMultiplier * Mathf.Pow(extendedDamageGrowth, n),
