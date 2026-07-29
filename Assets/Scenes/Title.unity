@@ -4016,6 +4016,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapSelectUI
   maps:
   - {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
+  - {fileID: 11400000, guid: 6e8e7f7751a96b746afa6b8fd4d9b777, type: 2}
+  - {fileID: 11400000, guid: 9db28795bfcf4d74f8bf189493c35ce4, type: 2}
   panelRoot: {fileID: 260572310}
   cardContainer: {fileID: 1541024989}
   cardTemplate: {fileID: 1108736324}

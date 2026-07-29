@@ -50,6 +50,8 @@ public class RunBootstrap : MonoBehaviour
         EnemySpawner spawner = FindAnyObjectByType<EnemySpawner>();
         if (spawner != null) spawner.ActiveMap = map;
 
+        ApplyFieldScale(map.fieldScale, spawner);
+
         // 배경
         GameObject bg = GameObject.Find("Background");
         if (bg != null && map.background != null)
@@ -57,6 +59,8 @@ public class RunBootstrap : MonoBehaviour
             SpriteRenderer sr = bg.GetComponent<SpriteRenderer>();
             if (sr != null) sr.sprite = map.background;
         }
+
+        // 배경 스프라이트는 자기 px/PPU만큼 커지므로(480×270@PPU18 = 26.67×15유닛) 별도 스케일링이 필요 없다.
 
         // BGM (최소 재생 — clip 없으면 무음으로 현재와 동일)
         if (map.bgm != null)
@@ -67,5 +71,27 @@ public class RunBootstrap : MonoBehaviour
             bgmSource.playOnAwake = false;
             bgmSource.Play();
         }
+    }
+
+    // 필드 확장 = 카메라 줌아웃 + 절대 좌표를 같은 비율로 벌리기. 캐릭터/적 스케일은 손대지 않는다.
+    // 카메라 기준으로 계산되는 것들(UFO 등장·호버 고도, 종이비행기 강하 시작 높이, 의성어 클램프)은 자동으로 따라온다.
+    // 중간 소환 구간(BalanceConstants.AmbushBand*)만 절대 좌표라 EnemySpawner가 따로 곱한다.
+    private void ApplyFieldScale(float scale, EnemySpawner spawner)
+    {
+        if (scale <= 0f || Mathf.Approximately(scale, 1f)) return;
+
+        Camera cam = Camera.main;
+        if (cam != null && cam.orthographic) cam.orthographicSize *= scale;
+
+        PlayerSkills player = FindAnyObjectByType<PlayerSkills>();
+        if (player != null) Widen(player.transform, scale);
+        if (spawner != null) Widen(spawner.transform, scale);
+    }
+
+    // x·y만 벌린다(z는 정렬용이라 유지).
+    private static void Widen(Transform t, float scale)
+    {
+        Vector3 p = t.position;
+        t.position = new Vector3(p.x * scale, p.y * scale, p.z);
     }
 }

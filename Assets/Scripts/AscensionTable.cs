@@ -13,7 +13,7 @@ public class AscensionTier
     public float essenceMult = 1f; // 정수 획득량 배율 — 어려운 만큼 보상도 커진다
     // 이 승천의 마지막 스테이지(=보스가 나오는 판). 승천이 오를수록 **판 자체가 길어진다**
     // (스테이지당 물량이 아니라 스테이지 개수). 0 이하면 DefaultFinalStage로 폴백.
-    public int finalStage = 20;
+    public int finalStage = 15;
 }
 
 [CreateAssetMenu(fileName = "AscensionTable", menuName = "BlueberryDefense/Ascension Table")]
@@ -22,13 +22,13 @@ public class AscensionTable : ScriptableObject
     // tiers[0]=승천 1(기본, 전부 ×1), [1]=승천 2, [2]=승천 3 … 배열을 늘리면 상위 승천도 추가된다.
     public AscensionTier[] tiers =
     {
-        new AscensionTier { hpMult = 1f,    speedMult = 1f,   damageMult = 1f,    essenceMult = 1f,    finalStage = 20 }, // 승천 1 (현재 난이도)
-        new AscensionTier { hpMult = 1.35f, speedMult = 1.1f, damageMult = 1.25f, essenceMult = 1.25f, finalStage = 25 }, // 승천 2
-        new AscensionTier { hpMult = 1.8f,  speedMult = 1.2f, damageMult = 1.5f,  essenceMult = 1.5f,  finalStage = 30 }, // 승천 3
+        new AscensionTier { hpMult = 1f,    speedMult = 1f,   damageMult = 1f,    essenceMult = 1f,    finalStage = 15 }, // 승천 1 (현재 난이도)
+        new AscensionTier { hpMult = 1.35f, speedMult = 1.1f, damageMult = 1.25f, essenceMult = 1.25f, finalStage = 20 }, // 승천 2
+        new AscensionTier { hpMult = 1.8f,  speedMult = 1.2f, damageMult = 1.5f,  essenceMult = 1.5f,  finalStage = 25 }, // 승천 3
     };
 
     // finalStage가 직렬화되지 않은 옛 에셋(값 0)을 위한 폴백.
-    private const int DefaultFinalStage = 20;
+    private const int DefaultFinalStage = 15;
 
     // 존재하는 최고 승천 레벨(1-based).
     public int MaxLevel => Mathf.Max(1, tiers != null ? tiers.Length : 1);

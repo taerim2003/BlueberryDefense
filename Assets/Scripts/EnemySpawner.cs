@@ -78,7 +78,7 @@ public class EnemySpawner : MonoBehaviour
         if (pendingAmbush != null) return;             // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
         const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
-        // 보스는 **승천이 정한 최종 스테이지**에 나온다(승천1=20, 2=25, 3=30).
+        // 보스는 **승천이 정한 최종 스테이지**에 나온다(승천1=15, 2=20, 3=25).
         // MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백으로만 남는다.
         int bossStage = gm != null ? gm.FinalStage : map.bossStage;
         bool isBossStage = currentStage == bossStage && map.bossEnemyPrefab != null;
@@ -166,8 +166,11 @@ public class EnemySpawner : MonoBehaviour
         int squad = Mathf.Min(Random.Range(BalanceConstants.AmbushSquadMin, BalanceConstants.AmbushSquadMax + 1), room);
         if (squad <= 0) return;
 
+        // 소환 구간은 절대 좌표라 맵 필드 배율만큼 같이 벌려야 한다(넓은 맵에서 화면 왼쪽에만 몰리지 않게).
+        // 부대원이 흩어지는 폭(AmbushSquadSpreadX)은 적 크기 기준이라 안 곱한다.
+        float fieldScale = Map != null ? Map.fieldScale : 1f;
         Vector3 center = new Vector3(
-            Random.Range(BalanceConstants.AmbushBandMinX, BalanceConstants.AmbushBandMaxX),
+            Random.Range(BalanceConstants.AmbushBandMinX * fieldScale, BalanceConstants.AmbushBandMaxX * fieldScale),
             transform.position.y, // 스포너 y = 레인 기준선
             0f);
 

@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
 
     public StageData CurrentStageData => stageTable != null ? stageTable.GetStage(CurrentStage) : null;
 
-    // 판 길이는 승천 등급이 정한다(승천1=20, 2=25, 3=30). 이 스테이지를 클리어하면 게임 클리어.
+    // 판 길이는 승천 등급이 정한다(승천1=15, 2=20, 3=25). 이 스테이지를 클리어하면 게임 클리어.
     // EnemySpawner의 보스 등장 판정과 HUD의 "Stage X/N"도 같은 값을 본다 — 단일 출처.
     public int FinalStage => (ascension != null ? ascension : AscensionTable.Default).FinalStageFor(RunConfig.AscensionLevel);
 

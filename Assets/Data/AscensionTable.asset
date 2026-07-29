@@ -17,14 +17,14 @@ MonoBehaviour:
     speedMult: 1
     damageMult: 1
     essenceMult: 1
-    finalStage: 20
+    finalStage: 15
   - hpMult: 1.2
     speedMult: 1.1
     damageMult: 1.2
     essenceMult: 1.25
-    finalStage: 25
+    finalStage: 20
   - hpMult: 1.8
     speedMult: 1.2
     damageMult: 1.5
     essenceMult: 1.5
-    finalStage: 30
+    finalStage: 25

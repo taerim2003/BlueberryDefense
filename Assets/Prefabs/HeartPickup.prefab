@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 484843476286054513}
   - component: {fileID: 5326915933153587340}
   - component: {fileID: 3819123896490614666}
+  - component: {fileID: 2875671805316558955}
   m_Layer: 0
   m_Name: HeartPickup
   m_TagString: Untagged
@@ -82,7 +83,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 150
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6291172614262969420, guid: 0259a8246dd63a74286f78912e4e24cc, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9d7608856dfffde44a1c990e15ff3697, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -110,3 +111,25 @@ MonoBehaviour:
   homingAcceleration: 10
   absorbDistance: 0.3
   absorbVfxPrefab: {fileID: 4748681987041982144, guid: e896e353751e25a4ab545a268625c0df, type: 3}
+--- !u!95 &2875671805316558955
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8256105624388431671}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8ccaa0faa71c045469c75a5cd9baadde, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

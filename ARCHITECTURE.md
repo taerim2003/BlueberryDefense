@@ -10,7 +10,7 @@
 
 ## 한눈에 보기
 
-**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 왼쪽에 고정된 플레이어(움직이지 않음)를 향해 오른쪽에서 블루베리 몬스터들이 좌측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. 스킬이 **만렙(Lv.10)**에 닿고 **진화 아이템**(벽 스테이지 엘리트 드랍)이 있으면 **진화 트리**(스킬/패시브마다 2루트 × 2티어)가 열린다 — 진화하면 Lv.1로 리셋되고 다시 만렙까지 큰다. 각 스테이지는 정해진 물량(`StageData.spawnCount`)을 다 스폰하고 잔몹이 전멸하면 클리어(타이머 아님) — **15스테이지(보스 블루베리)**까지 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
+**블루베리 디펜스 = 뱀서라이크 디펜스.** 화면 **오른쪽**에 고정된 플레이어(움직이지 않음, 기본 맵 기준 x=+7.91)를 향해 **왼쪽**(스포너 x=−9)에서 블루베리 몬스터들이 우측으로 행진해 온다. 플레이어는 Q/W/E/R 4개 액티브 스킬 + 4개 패시브를 자동/키입력으로 발동해 몹을 잡고, 처치 XP로 레벨업할 때마다 뜨는 3지선다에서 신규 스킬 획득·레벨업·스탯강화 중 하나를 고른다. 스킬이 **만렙(Lv.10)**에 닿고 **진화 아이템**(벽 스테이지 엘리트 드랍)이 있으면 **진화 트리**(스킬/패시브마다 2루트 × 2티어)가 열린다 — 진화하면 Lv.1로 리셋되고 다시 만렙까지 큰다. 각 스테이지는 정해진 물량(`StageData.spawnCount`)을 다 스폰하고 잔몹이 전멸하면 클리어(타이머 아님) — **15스테이지(보스 블루베리)**까지 클리어하면 게임 클리어, 체력 0이면 게임오버. (게임 비전·기획은 [GDD.md](GDD.md), 진행 상태는 [HANDOFF.md](HANDOFF.md).)
 
 **기술 스택**: Unity 6 (6000.4.4f1) · URP 2D · uGUI(+TextMeshPro) · DOTween(트위닝) · JuicyUI(UI 연출) · Vefects Pixel Craft VFX(파티클). 코드는 순수 MonoBehaviour + static 상태 홀더, DI 프레임워크 없음.
 
@@ -102,6 +102,7 @@
 | **새 적 타입** | `Enemy` 프리팹(플래그: `isFlying`/`isTreasure` 등) / `EnemySpawner.cs` 프리팹 필드 + 스폰 조건 / `StageData`에 등장 확률 필드 |
 | **새 스테이지 / 밸런스** | `StageTable` 에셋의 `StageData` 배열 (코드 X). 스텝 배율은 `EnemySpawner`의 `HpStepBonus`/`SpeedStepBonus` |
 | **중간 소환 배치·강도** | 횟수는 `StageData.ambushCount` (데이터). 예고 시간·소환 구간·부대 크기는 `BalanceConstants.Ambush*` |
+| **새 맵 / 맵 필드 크기** | `MapDefinition` 에셋 하나 (코드 X). `fieldScale`이 플레이 영역 배율 — `RunBootstrap.ApplyFieldScale`이 판 시작 시 카메라 ortho·플레이어/스포너 좌표에 곱한다. **캐릭터·적 크기는 안 변하므로 필드가 넓을수록 화면에서 작아 보인다.** 배경 그림도 같은 배율(PPU 18 기준 1배=320×180px)이어야 가장자리가 안 빈다. 만든 뒤 Title 씬 `MapSelectUI.maps` 배열에 추가 |
 | **새 진화 티어 효과** | 영구 스탯이면 `PlayerSkills.ApplyPathTierEffect`/`PlayerPassives.ApplyPassivePathTierEffect`, 실시간 기믹(관통·분열·재귀 등)이면 해당 `Fire*`/`TakeDamage`에서 `PathTier` 직접 읽기 + 설명/제목 표. 표시 텍스트만 바꿀 땐 `EvolutionTierTextTableSO` 에셋 |
 | **새 HUD 버프 표시** | 발생측에서 `BuffTracker.Set(key,...)` 호출 + `HUDController.GetBuffIcon`에 key→아이콘 한 줄 (슬롯은 자동 채워짐) |
 | **레벨업 선택지 부족 시 대체 보상** | 레벨업 가능한 후보가 3개 미만이면 `LevelUpUI`가 '정수 +10' 선택지를 하나 끼우고, 그래도 모자라면 선택지 자체가 1~2개만 뜸. 지급량은 `LevelUpUI.EssenceReward` |
