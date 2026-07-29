@@ -41,7 +41,8 @@ public class Orb : MonoBehaviour
     {
         transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
 
-        overlappingEnemies.RemoveWhere(e => e == null);
+        // 풀링된 적은 죽어도 null이 되지 않는다 — IsAlive로 걸러야 반납된 적을 계속 붙잡고 있지 않는다.
+        overlappingEnemies.RemoveWhere(e => e == null || !e.IsAlive);
         bool canHitFlying = FlyingDamageMultiplier > 1f || MetaBonuses.OrbCanHitFlying; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0) 또는 스킬트리로 해금
 
         // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로** 예산이 닿는 만큼만 붙잡는다.
@@ -58,7 +59,7 @@ public class Orb : MonoBehaviour
 
         foreach (Enemy enemy in ordered)
         {
-            if (enemy == null || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             if (enemy.RequiresAntiAir && !canHitFlying) continue; // 대공 전용 적(UFO)만 차단 — 종이비행기는 히트박스로만 판정
 
             if (!claimed.Contains(enemy))
@@ -91,7 +92,8 @@ public class Orb : MonoBehaviour
         }
 
         // 예산을 다 쓰고 붙잡고 있던 적이 전부 정리되면(죽었거나 오브가 지나쳤거나) 임무 완료 — 그 자리에서 사라진다.
-        claimed.RemoveWhere(e => e == null);
+        // 여기서 IsAlive를 빠뜨리면 붙잡은 적이 죽어도 claimed가 안 비어서 **오브가 영영 안 사라진다**.
+        claimed.RemoveWhere(e => e == null || !e.IsAlive);
         if (budgetRemaining <= 0 && claimed.Count == 0)
             Destroy(gameObject);
     }

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5472d9ee116515744b91d63ab2a416d5, type: 3}
   m_Name: Map_Wide15
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
-  displayName: "\uB113\uC740 \uBC2D"
-  description: 
+  displayName: "\uD574\uC548\uAC00"
+  description:
   fieldScale: 1.5
-  background: {fileID: 0}
+  background: {fileID: 21300000, guid: 9c4d3f446a9975a48a04ab8381e61c94, type: 3}
   bgm: {fileID: 0}
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
   bossStage: 15

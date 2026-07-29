@@ -56,6 +56,13 @@ public class PauseMenu : MonoBehaviour
         ModalPause.Pop();
     }
 
+    // 판을 포기하고 게임오버 흐름을 탄다 — 정수 적립·결과 패널·타이틀 복귀는 전부 기존 경로가 처리한다.
+    private void GiveUpToTitle()
+    {
+        Resume();                         // Pop을 먼저 — GameOver 뒤에 부르면 timeScale이 1로 되돌아가 패널 뒤에서 게임이 계속 돈다
+        GameManager.Instance?.GameOver(); // 정수 적립 + timeScale 0 → DamageMeterUI가 "GAME OVER / 획득 정수 / 타이틀로"를 띄움
+    }
+
     // ── 스킬/패시브 요약 채우기 (열 때마다 갱신) ──
     private void PopulateColumns()
     {
@@ -203,7 +210,7 @@ public class PauseMenu : MonoBehaviour
         var columns = NewUI("Columns", box.transform);
         var colRt = columns.GetComponent<RectTransform>();
         colRt.anchorMin = Vector2.zero; colRt.anchorMax = Vector2.one;
-        colRt.offsetMin = new Vector2(44, 64); colRt.offsetMax = new Vector2(-44, -104);
+        colRt.offsetMin = new Vector2(44, 130); colRt.offsetMax = new Vector2(-44, -104);
         var hg = columns.AddComponent<HorizontalLayoutGroup>();
         hg.spacing = 48;
         hg.childAlignment = TextAnchor.UpperLeft;
@@ -212,6 +219,15 @@ public class PauseMenu : MonoBehaviour
 
         leftColumn = MakeColumn(columns.transform);
         rightColumn = MakeColumn(columns.transform);
+
+        var giveUp = NewUI("GiveUpButton", box.transform);
+        Bottom(giveUp, new Vector2(0, 66), new Vector2(340, 56));
+        var giveUpBtn = giveUp.AddComponent<Button>();
+        giveUpBtn.targetGraphic = AddImage(giveUp, new Color(0.34f, 0.11f, 0.15f, 1f), true);
+        giveUpBtn.onClick.AddListener(GiveUpToTitle);
+        var giveUpLabel = NewUI("Label", giveUp.transform);
+        Stretch(giveUpLabel);
+        AddText(giveUpLabel, font, "타이틀로 돌아가기", 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));
 
         var hint = NewUI("Hint", box.transform);
         Bottom(hint, new Vector2(0, 18), new Vector2(1680, 40));

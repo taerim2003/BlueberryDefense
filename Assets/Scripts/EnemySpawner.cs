@@ -192,7 +192,7 @@ public class EnemySpawner : MonoBehaviour
             GameObject prefab = PickAmbushPrefab(stage, map);
             if (prefab == null) continue;
             Vector3 pos = center + Vector3.right * Random.Range(-BalanceConstants.AmbushSquadSpreadX, BalanceConstants.AmbushSquadSpreadX);
-            Enemy enemy = Instantiate(prefab, pos, Quaternion.identity).GetComponent<Enemy>();
+            Enemy enemy = Enemy.Spawn(prefab, pos);
             if (enemy == null) continue;
             ApplyStageScaling(enemy, stage, currentStage);
             enemy.PopIn(Random.Range(4f, 7f), Random.Range(-1.5f, 1.5f), laneBaselineY + enemy.SpawnYOffset);
@@ -229,9 +229,7 @@ public class EnemySpawner : MonoBehaviour
         {
             // 2마리 이상 동시 스폰 시 겹치지 않게 뒤쪽(왼쪽)으로 살짝 벌려 단일 대열 유지
             Vector3 spawnPos = transform.position + Vector3.left * (1.2f * i);
-            GameObject obj = Instantiate(prefab, spawnPos, Quaternion.identity);
-
-            Enemy enemy = obj.GetComponent<Enemy>();
+            Enemy enemy = Enemy.Spawn(prefab, spawnPos);
             if (enemy != null)
             {
                 if (carriesEvolutionItem) enemy.MarkEvolutionItemCarrier();

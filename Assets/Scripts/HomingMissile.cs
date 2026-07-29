@@ -32,7 +32,9 @@ public class HomingMissile : MonoBehaviour
 
     private void Update()
     {
-        if (target == null) target = AcquireTarget();
+        // IsAlive까지 봐야 한다 — 풀링된 적은 죽어도 참조가 null이 되지 않아서, null만 보면
+        // 반납된(또는 재활용된) 적을 계속 쫓으며 재타겟을 영영 안 한다.
+        if (target == null || !target.IsAlive) target = AcquireTarget();
         if (target != null)
         {
             Vector2 desired = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;

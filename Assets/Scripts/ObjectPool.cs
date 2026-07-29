@@ -18,7 +18,14 @@ public class ObjectPool : MonoBehaviour
     private readonly Dictionary<GameObject, Queue<GameObject>> pools = new Dictionary<GameObject, Queue<GameObject>>();
 
     public GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
+        => Spawn(prefab, position, rotation, out _);
+
+    // reused = 풀에서 꺼내 재사용한 것(true) / 새로 Instantiate한 것(false).
+    // 재사용은 **Awake가 다시 돌지 않으므로**, 스폰마다 초기화가 필요한 쪽(Enemy.Spawn)이 이 값을 보고
+    // 직접 초기화 함수를 부른다. VFX처럼 상태가 없는 것들은 신경 쓸 필요 없다.
+    public GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, out bool reused)
     {
+        reused = false;
         if (prefab == null) return null;
 
         if (!pools.TryGetValue(prefab, out Queue<GameObject> queue))
@@ -28,26 +35,31 @@ public class ObjectPool : MonoBehaviour
         }
 
         GameObject obj;
+        PooledInstance pooled;
         if (queue.Count > 0)
         {
+            reused = true;
             obj = queue.Dequeue();
             obj.transform.SetPositionAndRotation(position, rotation);
             obj.SetActive(true);
+            pooled = obj.GetComponent<PooledInstance>();
         }
         else
         {
             obj = Instantiate(prefab, position, rotation);
-            obj.AddComponent<PooledInstance>().SourcePrefab = prefab;
+            pooled = obj.AddComponent<PooledInstance>();
+            pooled.SourcePrefab = prefab;
+            pooled.CacheEffects();
             obj.transform.SetParent(transform, true);
         }
 
-        foreach (ParticleSystem ps in obj.GetComponentsInChildren<ParticleSystem>())
+        foreach (ParticleSystem ps in pooled.Particles)
         {
             ps.Clear(true);
             ps.Play(true);
         }
 
-        foreach (AudioSource source in obj.GetComponentsInChildren<AudioSource>())
+        foreach (AudioSource source in pooled.Sources)
         {
             if (source.clip == null) continue;
             // 원본 VFX 팩 클립이 대부분 0dBFS 근처로 마스터링돼 있어 볼륨을 더 올리면 클리핑이 난다.
@@ -91,4 +103,16 @@ public class ObjectPool : MonoBehaviour
 public class PooledInstance : MonoBehaviour
 {
     public GameObject SourcePrefab;
+
+    // 스폰마다 GetComponentsInChildren을 돌면 그때마다 배열이 새로 할당된다. 적 물량(한 판 100마리 이상 +
+    // UFO 투하)에선 그게 그대로 GC 부담이라, 생성 시 한 번만 캐시해 둔다. 적 프리팹은 보통 둘 다 비어 있어
+    // 재사용 스폰의 이펙트 처리 비용이 사실상 0이 된다.
+    public ParticleSystem[] Particles;
+    public AudioSource[] Sources;
+
+    public void CacheEffects()
+    {
+        Particles = GetComponentsInChildren<ParticleSystem>();
+        Sources = GetComponentsInChildren<AudioSource>();
+    }
 }

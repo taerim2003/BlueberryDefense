@@ -135,22 +135,68 @@ public class Enemy : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Animator animator; // 걷기 애니메이터(없을 수 있음) — 기절 중 정지시키기 위해 캐시
 
+    // 죽었거나 풀에 반납된 적을 걸러내는 생존 판정.
+    // ⚠️ 풀링 전에는 죽은 적이 Unity의 가짜 null이 되어 `== null`만으로 정리됐지만, 풀은 오브젝트를
+    //    비활성화만 하므로 참조가 살아남는다. **적 참조를 프레임 넘어 들고 있는 쪽은 반드시 이걸 봐야 한다**
+    //    (안 그러면 유도미사일이 재활용된 새 적을 계속 쫓는다). 소비처: Orb·Whirlwind·HomingMissile.
+    public bool IsAlive => !isDead && gameObject.activeInHierarchy;
+
     private void Awake()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponentInChildren<Animator>();
+        InitializeSpawn(transform.position);
+    }
+
+    // 풀에서 꺼내 적을 스폰한다. 신규 생성이면 Awake가, 재사용이면 여기서 InitializeSpawn이 초기화한다.
+    // 적을 만드는 4곳(스포너 정문·중간 소환·UFO 투하·사망 분출)은 전부 이 함수를 지나간다.
+    public static Enemy Spawn(GameObject prefab, Vector3 position)
+    {
+        GameObject go = ObjectPool.Instance.Spawn(prefab, position, Quaternion.identity, out bool reused);
+        if (go == null) return null;
+        Enemy enemy = go.GetComponent<Enemy>();
+        if (enemy != null && reused) enemy.InitializeSpawn(position); // 신규는 Awake가 방금 했다 — 두 번 하지 않는다
+        return enemy;
+    }
+
+    // 스폰 시점의 전체 초기화.
+    // ⚠️ **풀 재사용에는 Awake가 다시 돌지 않는다.** 런타임에 변하는 필드는 빠짐없이 여기서 되돌려야 한다.
+    //    하나라도 빠뜨리면 "소환되자마자 죽어 있는 적"·"박치기 자세로 굳은 적"처럼 간헐적으로만 재현되는 버그가 된다.
+    //    Enemy에 런타임 상태 필드를 추가하면 여기도 같이 고칠 것.
+    private void InitializeSpawn(Vector3 spawnPos)
+    {
+        transform.position = spawnPos;
+        transform.localRotation = Quaternion.identity;
+
+        // definition → 런타임 스탯 복사. 스테이지 배율은 스폰 직후 ApplyStageMultipliers가 이 위에 곱한다.
         moveSpeed = definition.moveSpeed;
         damage = definition.damage;
         maxHealth = definition.maxHealth;
         xpValue = definition.xpValue;
         essenceDropChance = definition.essenceDropChance;
         essenceDropAmount = definition.essenceDropAmount;
-
         currentHealth = maxHealth;
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        animator = GetComponentInChildren<Animator>();
+        appliedHpMult = appliedSpeedMult = appliedDamageMult = 1f;
+
+        isDead = false;
+        // 엘리트 프리팹은 일반 스테이지에도 재사용된다 — 표식이 남아 있으면 진화 아이템이 공짜로 쏟아진다.
+        carriesEvolutionItem = false;
+
+        popping = false; popVelY = 0f; popVelX = 0f; popGroundY = 0f;
+        headbuttTimer = 0f; holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
+        slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
+        diveDir = Vector2.right;
+        // 캐리어 좌표 3종은 아래 isCarrier 분기에서 다시 계산되지만, 여기서도 0으로 되돌린다.
+        // 비캐리어에겐 읽히지 않는 값이라 지금은 무해하지만 — "런타임 필드는 예외 없이 전부 리셋된다"는
+        // 불변식을 깨 두면 나중에 이 값을 읽는 경로가 생겼을 때 잠복 버그가 된다.
+        carrierPhase = CarrierPhase.Descend; carrierHoverTimer = 0f; carrierDropsDone = 0;
+        carrierTopY = 0f; carrierHoverY = 0f; carrierLaneY = 0f;
+        SetAnimatorFrozen(false); // 기절/정지로 animator.speed=0인 채 반납됐을 수 있다
+
         baseRotation = transform.localRotation;
 
         // 스폰 순간부터 y를 살짝 흔들어 둔다 — 겹쳐 쌓일 때 자로 잰 듯한 일렬이 아니라 두께 있는 무리로 보이게.
-        // (캐리어는 Awake에서 스스로 화면 위로 재배치하므로 제외)
+        // (캐리어는 스스로 화면 위로 재배치하므로 제외)
         laneJitter = Random.Range(-BalanceConstants.EnemySpawnYJitter, BalanceConstants.EnemySpawnYJitter);
         if (!isCarrier) transform.position += Vector3.up * laneJitter;
 
@@ -401,7 +447,7 @@ public class Enemy : MonoBehaviour
                 break;
             case CarrierPhase.Ascend:
                 p.y += carrierAscendSpeed * slowMultiplier * Time.deltaTime;
-                if (p.y >= carrierTopY) { Destroy(gameObject); return; }
+                if (p.y >= carrierTopY) { Despawn(); return; }
                 break;
         }
         transform.position = p;
@@ -419,8 +465,7 @@ public class Enemy : MonoBehaviour
             // 투하 1회마다 첫 마리는 리젠트, 나머지는 기본 블루베리
             GameObject prefab = (i == 0 && carrierRegentPrefab != null) ? carrierRegentPrefab : carrierDropPrefab;
             Vector2 offset = new Vector2(Random.Range(-0.8f, 0.8f), Random.Range(-0.2f, 0.4f));
-            GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
-            Enemy e = go.GetComponent<Enemy>();
+            Enemy e = Spawn(prefab, transform.position + (Vector3)offset);
             if (e == null) continue;
             e.ApplyStageMultipliers(appliedHpMult, appliedSpeedMult, appliedDamageMult);
             e.PopIn(Random.Range(2f, 4f), Random.Range(-3f, 3f), carrierLaneY + e.SpawnYOffset);
@@ -548,9 +593,14 @@ public class Enemy : MonoBehaviour
 
             SpawnDeathBurst();
 
-            Destroy(gameObject);
+            Despawn();
         }
     }
+
+    // 파괴 대신 풀에 반납한다. 비활성화는 즉시 반영되고 `FindObjectsByType`은 기본이 "비활성 제외"라
+    // GameManager의 "잔몹 0" 클리어 판정·회오리/미사일의 타겟 탐색에서 곧바로 빠진다.
+    // (풀을 거치지 않고 씬에 직접 놓인 적은 ObjectPool.Despawn이 알아서 Destroy로 폴백한다)
+    private void Despawn() => ObjectPool.Instance.Despawn(gameObject);
 
     // 체인 라이트닝: 첫 낙뢰 피격 시 주변 적 최대 3마리에게 전이 (재귀적으로 더 퍼지지는 않음)
     private void ChainLightningToNearby()
@@ -610,8 +660,7 @@ public class Enemy : MonoBehaviour
             GameObject prefab = deathSpawnPrefabs[Random.Range(0, deathSpawnPrefabs.Length)];
             if (prefab == null) continue;
             Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
-            GameObject go = Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity);
-            Enemy e = go.GetComponent<Enemy>();
+            Enemy e = Spawn(prefab, transform.position + (Vector3)offset);
             if (e == null) continue;
             // 캐리어(UFO)는 팝콘 낙하 대신 보스 죽은 자리에서 등장해 상승 퇴장(플레이어 위로 하강해 확정 피해 주던 문제 제거).
             // 그 외는 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.

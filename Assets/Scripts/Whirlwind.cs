@@ -43,7 +43,8 @@ public class Whirlwind : MonoBehaviour
     {
         ApplyGravity();
 
-        overlappingEnemies.RemoveWhere(e => e == null);
+        // 풀링된 적은 죽어도 null이 되지 않는다 — IsAlive로 걸러야 반납된 적을 계속 때리지 않는다.
+        overlappingEnemies.RemoveWhere(e => e == null || !e.IsAlive);
 
         Vector2 direction = FindHomingDirection();
         float speed = overlappingEnemies.Count > 0 ? moveSpeed * damagingMoveSpeedMultiplier : moveSpeed;
@@ -51,7 +52,7 @@ public class Whirlwind : MonoBehaviour
 
         foreach (Enemy enemy in new List<Enemy>(overlappingEnemies))
         {
-            if (enemy == null || (enemy.RequiresAntiAir && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy == null || !enemy.IsAlive || (enemy.RequiresAntiAir && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval * TickIntervalMult;
 
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
