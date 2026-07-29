@@ -39,7 +39,8 @@
 | 이름 | 책임 | 누구를 부르나 |
 |---|---|---|
 | **GameManager** (싱글톤) | 스테이지 진행(물량 소진+잔몹 전멸→전환 텀), 게임오버/클리어(15) 판정, `Time.timeScale` 종료 정지. Awake에서 `DamageMeter.Reset`·`DOTween` 전역설정 | `EnemySpawner.StageSpawnComplete`·`PlayerSkills.ResetAllCooldowns`, `Enemy` 수 폴링 |
-| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행률(SpawnRatio) 소유 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers` |
+| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행률(SpawnRatio) 소유. **중간 소환**(화면 안 예고→부대 투입)도 여기서 관장 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers`·`Enemy.PopIn`, `AmbushMarker` |
+| **AmbushMarker** | 중간 소환 예고 링(런타임 생성, 씬 배선 없음). 커지며 점점 빠르게 깜빡이다 시간이 차면 콜백 호출 후 자멸 | `EnemySpawner`가 생성·소유 |
 | **PlayerSkills** | 액티브 4종(Q/W/E/R) 캐스트 로직, 스킬 레벨업/진화 트리, 전투 오브젝트 스폰(투사체·회오리·오브·독수리·설치기), 낙뢰 파라미터 설정 | `LightningStorm`, `BuffTracker`, `PlayerPassives`(연계 조건·static 보너스), 모든 전투 프리팹, `ObjectPool` |
 | **PlayerPassives** | 패시브 4종 보유/레벨업/진화, **연계 효과의 static 상태 필드**(치명타·반격·경험치 배율 등) 소유, 체력재생·반격·낙뢰연계 이벤트 처리 | `PlayerSkills`/`PlayerHealth`/`PlayerExperience`(스탯 반영), `LightningStorm.OnProc` 구독 |
 | **PlayerHealth** | 현재체력/최대체력/오버힐(보호막), 피격 흡수, 게임오버 트리거, `OnDamageTaken` 이벤트 | `GameManager.GameOver` |
@@ -100,6 +101,7 @@
 | **새 패시브** | `PlayerPassives.cs`: `PassiveSkillId` enum + `AcquirePassive`·`ApplyPassiveLevelEffect` + 진화 3표 + static 보너스 필드(필요시 소비처도) + 프리렉맵 / `LevelUpUI.cs` 설명 |
 | **새 적 타입** | `Enemy` 프리팹(플래그: `isFlying`/`isTreasure` 등) / `EnemySpawner.cs` 프리팹 필드 + 스폰 조건 / `StageData`에 등장 확률 필드 |
 | **새 스테이지 / 밸런스** | `StageTable` 에셋의 `StageData` 배열 (코드 X). 스텝 배율은 `EnemySpawner`의 `HpStepBonus`/`SpeedStepBonus` |
+| **중간 소환 배치·강도** | 횟수는 `StageData.ambushCount` (데이터). 예고 시간·소환 구간·부대 크기는 `BalanceConstants.Ambush*` |
 | **새 진화 티어 효과** | 영구 스탯이면 `PlayerSkills.ApplyPathTierEffect`/`PlayerPassives.ApplyPassivePathTierEffect`, 실시간 기믹(관통·분열·재귀 등)이면 해당 `Fire*`/`TakeDamage`에서 `PathTier` 직접 읽기 + 설명/제목 표. 표시 텍스트만 바꿀 땐 `EvolutionTierTextTableSO` 에셋 |
 | **새 HUD 버프 표시** | 발생측에서 `BuffTracker.Set(key,...)` 호출 + `HUDController.GetBuffIcon`에 key→아이콘 한 줄 (슬롯은 자동 채워짐) |
 | **레벨업 선택지 부족 시 대체 보상** | 레벨업 가능한 후보가 3개 미만이면 `LevelUpUI`가 '정수 +10' 선택지를 하나 끼우고, 그래도 모자라면 선택지 자체가 1~2개만 뜸. 지급량은 `LevelUpUI.EssenceReward` |

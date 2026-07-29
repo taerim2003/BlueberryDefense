@@ -4,10 +4,9 @@ using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
-    private const int FinalStage = 15; // 이 스테이지를 클리어하면 게임 클리어(15라운드 보스전)
-
     [SerializeField] private float stageBreakDuration = 4.5f; // 스테이지 전환 시 적 스폰이 멈추는 텀
     [SerializeField] private StageTable stageTable;
+    [SerializeField] private AscensionTable ascension; // 미할당 시 AscensionTable.Default 폴백
     [SerializeField] private GameObject heartPickupPrefab;
     [SerializeField] private GameObject essencePickupPrefab;
     [SerializeField] private GameObject evolutionItemPrefab; // 벽 스테이지 엘리트가 떨구는 진화 아이템
@@ -23,6 +22,10 @@ public class GameManager : MonoBehaviour
     public float StageElapsedRatio => spawner != null ? spawner.SpawnRatio : 0f;
 
     public StageData CurrentStageData => stageTable != null ? stageTable.GetStage(CurrentStage) : null;
+
+    // 판 길이는 승천 등급이 정한다(승천1=20, 2=25, 3=30). 이 스테이지를 클리어하면 게임 클리어.
+    // EnemySpawner의 보스 등장 판정과 HUD의 "Stage X/N"도 같은 값을 본다 — 단일 출처.
+    public int FinalStage => (ascension != null ? ascension : AscensionTable.Default).FinalStageFor(RunConfig.AscensionLevel);
 
     // RunBootstrap이 판 시작 시 선택된 맵의 StageTable을 주입(기본맵이면 기존 값과 동일).
     public void SetStageTable(StageTable table) => stageTable = table;

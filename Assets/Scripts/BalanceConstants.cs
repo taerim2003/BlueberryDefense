@@ -19,7 +19,7 @@ public static class BalanceConstants
 
     // ── 레벨업 성장축의 "시작값" ──
     // 레벨업이 눈에 보이려면 시작이 낮아야 한다(2→5마리가 5→8마리보다 훨씬 크게 느껴짐).
-    public const int OrbBaseTargets = 2;      // 오브가 동시에 갈아버리는 적 수
+    public const int OrbBaseTargets = 4;      // 오브가 사라지기 전까지 붙잡을 수 있는 총 적 수(소모성 예산, 4→7)
     public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값 하향 5→3)
     public const int EagleBaseDrops = 2;      // 독수리 투하 횟수(시작값 하향 3→2)
     public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
@@ -40,4 +40,14 @@ public static class BalanceConstants
     public const float EnemyStackSearchRadius = 1.2f; // 앞 적 **후보 탐색** 반경(정지 판정은 중심거리로 함 — 이 값은 판정에 안 쓰임)
     public const float EnemySpawnYJitter = 0.065f;    // 스폰 시 y를 이만큼 랜덤하게 흔든다 — 줄이 자로 잰 듯 정렬되지 않게(EnemyLaneTolerance보다 훨씬 작아야 레인이 안 갈라짐)
     public const float EnemyLaneTolerance = 0.6f;     // y가 이보다 벌어지면 다른 레인(지상/공중)이라 서로 안 막음
+
+    // ── 중간 소환(ambush) ──
+    // 적이 화면 왼쪽 등장 지점(x=-9)에서 다 죽어 x=-5~+6.5가 빈 땅이 되는 문제의 해법.
+    // 화면 안 빈 구간에 예고 마커를 띄우고, 시간이 차면 그 자리에서 부대가 튀어나온다(전투를 플레이어 쪽으로 당김).
+    public const float AmbushWarnDuration = 2.5f;     // 마커가 떠 있는 시간 — 예고 없이 튀어나오면 대응 불가라 반드시 필요
+    public const float AmbushBandMinX = -3f;          // 소환 x 구간 하한(빈 땅 한가운데)
+    public const float AmbushBandMaxX = 5f;           // 상한. 박치기선(약 6.56)보다 앞이라 최소 1.5유닛의 대응 여유가 남는다
+    public const int AmbushSquadMin = 4;
+    public const int AmbushSquadMax = 6;
+    public const float AmbushSquadSpreadX = 1.1f;     // 부대원이 마커 중심에서 좌우로 흩어지는 폭
 }

@@ -90,7 +90,8 @@ public class HUDController : MonoBehaviour
         if (GameManager.Instance != null)
         {
             int stage = GameManager.Instance.CurrentStage;
-            stageText.text = $"Stage {stage}";
+            // 판 길이가 승천마다 달라졌으므로(20/25/30) 총 스테이지 수를 같이 보여준다 — 안 그러면 얼마나 남았는지 알 수 없다.
+            stageText.text = $"Stage {stage}/{GameManager.Instance.FinalStage}";
 
             if (lastSeenStage == -1) lastSeenStage = stage;
             else if (stage != lastSeenStage)

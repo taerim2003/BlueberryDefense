@@ -3982,6 +3982,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   stageBreakDuration: 2.5
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
+  ascension: {fileID: 11400000, guid: 8273c9a8898f0b1409cbf7b89b9b86ff, type: 2}
   heartPickupPrefab: {fileID: 8256105624388431671, guid: 513016e82fbf3b0479cb1793e0e5422a, type: 3}
   essencePickupPrefab: {fileID: 1671577611472205520, guid: 22659feae7b22a14cbd43feda69664f5, type: 3}
   evolutionItemPrefab: {fileID: 7465877528327835503, guid: 5c327c79b1977244382fbb1c84a74265, type: 3}

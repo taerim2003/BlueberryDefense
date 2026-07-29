@@ -26,6 +26,8 @@ public class EnemySpawner : MonoBehaviour
     private int stageBeingCounted = -1;
     private bool bossSpawnedThisStage;
     private int evolutionElitesSpawnedThisStage; // 벽 스테이지 확정 엘리트를 몇 마리 내보냈나
+    private int ambushesTriggeredThisStage;      // 중간 소환을 몇 번 예고했나
+    private AmbushMarker pendingAmbush;          // 예고 중인 마커(있으면 정문 스폰 정지)
 
     // 물량 기반 스폰 진행 상태 — GameManager가 클리어 판정에, HUD가 진행바에 참조
     public int SpawnedThisStage { get; private set; }
@@ -50,6 +52,10 @@ public class EnemySpawner : MonoBehaviour
         treasureSpawnedForStage = 0;
         bossSpawnedThisStage = false;
         evolutionElitesSpawnedThisStage = 0;
+        ambushesTriggeredThisStage = 0;
+        // 예고 중에 스테이지가 넘어가면 마커는 다음 판에 부대를 쏟아낸다 — 판이 바뀌는 즉시 취소.
+        if (pendingAmbush != null) Destroy(pendingAmbush.gameObject);
+        pendingAmbush = null;
         timer = 0f;
         treasureDelayTimer = 0f;
     }
@@ -69,9 +75,13 @@ public class EnemySpawner : MonoBehaviour
 
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
+        if (pendingAmbush != null) return;             // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
         const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
-        bool isBossStage = currentStage == map.bossStage && map.bossEnemyPrefab != null;
+        // 보스는 **승천이 정한 최종 스테이지**에 나온다(승천1=20, 2=25, 3=30).
+        // MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백으로만 남는다.
+        int bossStage = gm != null ? gm.FinalStage : map.bossStage;
+        bool isBossStage = currentStage == bossStage && map.bossEnemyPrefab != null;
         bool treasureStage = !isBossStage && map.treasureEnemyPrefab != null;
 
         // 스테이지 종료 보물상자: 일반 몹이 전부 나온 뒤(SpawnTarget-treasureCount 도달) 5초 텀을 두고 등장.
@@ -111,6 +121,19 @@ public class EnemySpawner : MonoBehaviour
             }
         }
 
+        // 중간 소환: 진화 엘리트와 같은 균등 분할 지점마다 1회. 예고 마커를 띄우고 그 시간 동안 정문 스폰은 멈춘다.
+        int ambushes = stage != null ? stage.ambushCount : 0;
+        if (ambushes > 0 && ambushesTriggeredThisStage < ambushes)
+        {
+            int threshold = SpawnTarget * (ambushesTriggeredThisStage + 1) / (ambushes + 1);
+            if (SpawnedThisStage >= threshold)
+            {
+                ambushesTriggeredThisStage++;
+                TriggerAmbush(stage, currentStage);
+                return;
+            }
+        }
+
         GameObject prefabToSpawn = map.enemyPrefab;
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어)
         if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
@@ -134,6 +157,69 @@ public class EnemySpawner : MonoBehaviour
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
     }
 
+    // 화면 안 빈 구간에 예고 마커를 띄운다. 실제 부대는 마커가 다 찬 뒤 콜백에서 나온다.
+    private void TriggerAmbush(StageData stage, int currentStage)
+    {
+        // 마지막 물량 1칸은 스테이지 종료 보물상자(보스 스테이지면 보스) 몫이라 절대 침범하면 안 된다.
+        // 여길 넘기면 StageSpawnComplete가 먼저 참이 되어 보물상자/보스가 영영 안 나온다.
+        int room = SpawnTarget - 1 - SpawnedThisStage;
+        int squad = Mathf.Min(Random.Range(BalanceConstants.AmbushSquadMin, BalanceConstants.AmbushSquadMax + 1), room);
+        if (squad <= 0) return;
+
+        Vector3 center = new Vector3(
+            Random.Range(BalanceConstants.AmbushBandMinX, BalanceConstants.AmbushBandMaxX),
+            transform.position.y, // 스포너 y = 레인 기준선
+            0f);
+
+        pendingAmbush = AmbushMarker.Spawn(center, BalanceConstants.AmbushWarnDuration, () =>
+        {
+            pendingAmbush = null;
+            SpawnAmbushSquad(center, squad, stage, currentStage);
+        });
+    }
+
+    // 마커 자리에서 부대가 팝콘처럼 튀어올랐다 레인에 착지한다. 튀는 동안은 Enemy가 무적이라
+    // 소환 순간 이미 깔려 있던 광역기에 "안 나온 것처럼" 즉사하지 않는다.
+    private void SpawnAmbushSquad(Vector3 center, int count, StageData stage, int currentStage)
+    {
+        MapDefinition map = Map;
+        float laneBaselineY = transform.position.y;
+        for (int i = 0; i < count; i++)
+        {
+            GameObject prefab = PickAmbushPrefab(stage, map);
+            if (prefab == null) continue;
+            Vector3 pos = center + Vector3.right * Random.Range(-BalanceConstants.AmbushSquadSpreadX, BalanceConstants.AmbushSquadSpreadX);
+            Enemy enemy = Instantiate(prefab, pos, Quaternion.identity).GetComponent<Enemy>();
+            if (enemy == null) continue;
+            ApplyStageScaling(enemy, stage, currentStage);
+            enemy.PopIn(Random.Range(4f, 7f), Random.Range(-1.5f, 1.5f), laneBaselineY + enemy.SpawnYOffset);
+        }
+        SpawnedThisStage += count;
+    }
+
+    // 중간 소환은 그 스테이지의 **지상** 로스터를 다시 굴린다 — 벽 스테이지의 성격이 중간 소환에도 그대로 반영된다.
+    // 종이비행기(상공 강하)·UFO(캐리어 하강)는 자기 전용 등장 연출이 있어 땅에서 튀어나오면 안 되므로 제외.
+    private GameObject PickAmbushPrefab(StageData stage, MapDefinition map)
+    {
+        if (stage != null)
+        {
+            if (map.eliteEnemyPrefab != null && Random.value < stage.eliteChance) return map.eliteEnemyPrefab;
+            if (map.shieldEnemyPrefab != null && Random.value < stage.shieldChance) return map.shieldEnemyPrefab;
+            if (map.riderEnemyPrefab != null && Random.value < stage.riderChance) return map.riderEnemyPrefab;
+        }
+        return map.enemyPrefab;
+    }
+
+    private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage)
+    {
+        if (stage == null) return;
+        int step = currentStage / 3;
+        AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
+        float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;
+        float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step)) * asc.speedMult;
+        enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
+    }
+
     private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage, bool carriesEvolutionItem = false)
     {
         for (int i = 0; i < count; i++)
@@ -142,18 +228,11 @@ public class EnemySpawner : MonoBehaviour
             Vector3 spawnPos = transform.position + Vector3.left * (1.2f * i);
             GameObject obj = Instantiate(prefab, spawnPos, Quaternion.identity);
 
+            Enemy enemy = obj.GetComponent<Enemy>();
+            if (enemy != null)
             {
-                Enemy enemy = obj.GetComponent<Enemy>();
-                if (enemy != null)
-                {
-                    if (carriesEvolutionItem) enemy.MarkEvolutionItemCarrier();
-                    if (stage == null) continue;
-                    int step = currentStage / 3;
-                    AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
-                    float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;
-                    float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step)) * asc.speedMult;
-                    enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
-                }
+                if (carriesEvolutionItem) enemy.MarkEvolutionItemCarrier();
+                ApplyStageScaling(enemy, stage, currentStage);
             }
         }
 

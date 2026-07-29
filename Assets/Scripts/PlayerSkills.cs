@@ -338,10 +338,10 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel) => DescribeStep(StepFor(skill.Id, nextLevel));
+    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel) => DescribeStep(StepFor(skill.Id, nextLevel), skill.Id);
 
     // 미리보기 텍스트를 스텝 데이터에서 생성 → 미리보기·실제 적용이 항상 일치. (Apply와 같은 StepFor 참조)
-    private static string DescribeStep(LevelUpStep s)
+    private static string DescribeStep(LevelUpStep s, ActiveSkillId id)
     {
         switch (s.stat)
         {
@@ -361,7 +361,11 @@ public class PlayerSkills : MonoBehaviour
             case SkillStat.Scale: return $"크기 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
             case SkillStat.RewindAmount: return $"되감기 시간 {s.amount:0.##}초 증가";
             case SkillStat.TickRate: return $"타격 주기 {Mathf.RoundToInt((1f - s.amount) * 100f)}% 빨라짐";
-            case SkillStat.MaxTargets: return $"동시 대상 +{Mathf.RoundToInt(s.amount)}";
+            // 오브만 "동시"가 아니라 사라지기 전까지 붙잡는 **총** 적 수(소모성 예산). 스나이핑은 동시 저격 대상 그대로.
+            case SkillStat.MaxTargets:
+                return id == ActiveSkillId.Orb
+                    ? $"관통 대상 +{Mathf.RoundToInt(s.amount)}"
+                    : $"동시 대상 +{Mathf.RoundToInt(s.amount)}";
             default: return "";
         }
     }
@@ -608,7 +612,7 @@ public class PlayerSkills : MonoBehaviour
             lines.Add($"투사체 속도 +{Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)}%");
         if (s.ExtraPierce > 0) lines.Add($"관통 +{s.ExtraPierce}회");
         if (s.ExtraProjectiles > 0) lines.Add($"발사 수 +{s.ExtraProjectiles}");
-        if (s.ExtraTargets > 0) lines.Add($"동시 대상 +{s.ExtraTargets}");
+        if (s.ExtraTargets > 0) lines.Add(s.Id == ActiveSkillId.Orb ? $"관통 대상 +{s.ExtraTargets}" : $"동시 대상 +{s.ExtraTargets}");
         if (s.TickIntervalMult < 0.9999f) lines.Add($"타격 주기 -{Mathf.RoundToInt((1f - s.TickIntervalMult) * 100f)}%");
         if (s.ProcChanceBonus > 0f) lines.Add($"발동 확률 +{Mathf.RoundToInt(s.ProcChanceBonus * 100f)}%p");
         if (s.ExtraWhirlwindDuration > 0f) lines.Add($"지속시간 +{s.ExtraWhirlwindDuration:0.#}초");
@@ -1424,7 +1428,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[1] >= 3) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
         orb.SlowMultiplierBonus = slowMultBonus;
         orb.SlowDurationBonus = slowDurBonus;
-        orb.MaxTargets = OrbBaseTargets + skill.ExtraTargets; // 레벨업 주 성장축: 동시에 갈아버리는 적 수
+        orb.MaxTargets = OrbBaseTargets + skill.ExtraTargets; // 레벨업 주 성장축: 사라지기 전까지 붙잡는 총 적 수
     }
 
     private void SpawnOrbAltar(Vector3 position, float damage, float critChance, EquippedSkill skill)

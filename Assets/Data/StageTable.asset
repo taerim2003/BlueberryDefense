@@ -19,6 +19,7 @@ MonoBehaviour:
     spawnInterval: 1.1
     eliteChance: 0
     evolutionItemDrops: 0
+    ambushCount: 0
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
@@ -32,6 +33,7 @@ MonoBehaviour:
     spawnInterval: 0.7
     eliteChance: 0.035
     evolutionItemDrops: 0
+    ambushCount: 0
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
@@ -45,6 +47,7 @@ MonoBehaviour:
     spawnInterval: 0.55
     eliteChance: 0.07
     evolutionItemDrops: 0
+    ambushCount: 0
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
@@ -58,6 +61,7 @@ MonoBehaviour:
     spawnInterval: 0.5
     eliteChance: 0.1
     evolutionItemDrops: 0
+    ambushCount: 1
     paperPlaneChance: 0.08
     ufoChance: 0
     shieldChance: 0
@@ -71,6 +75,7 @@ MonoBehaviour:
     spawnInterval: 0.5
     eliteChance: 0.1
     evolutionItemDrops: 0
+    ambushCount: 1
     paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0
@@ -84,6 +89,7 @@ MonoBehaviour:
     spawnInterval: 0.5
     eliteChance: 0.18
     evolutionItemDrops: 0
+    ambushCount: 2
     paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0
@@ -97,6 +103,7 @@ MonoBehaviour:
     spawnInterval: 0.45
     eliteChance: 0
     evolutionItemDrops: 1
+    ambushCount: 0
     paperPlaneChance: 1
     ufoChance: 0
     shieldChance: 0
@@ -110,6 +117,7 @@ MonoBehaviour:
     spawnInterval: 0.44
     eliteChance: 0.27
     evolutionItemDrops: 0
+    ambushCount: 2
     paperPlaneChance: 0.1
     ufoChance: 0
     shieldChance: 0.07
@@ -123,6 +131,7 @@ MonoBehaviour:
     spawnInterval: 0.75
     eliteChance: 0
     evolutionItemDrops: 1
+    ambushCount: 0
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 1
@@ -136,6 +145,7 @@ MonoBehaviour:
     spawnInterval: 0.36
     eliteChance: 0.35
     evolutionItemDrops: 0
+    ambushCount: 2
     paperPlaneChance: 0.08
     ufoChance: 0
     shieldChance: 0.16
@@ -149,6 +159,7 @@ MonoBehaviour:
     spawnInterval: 0.3
     eliteChance: 0.5
     evolutionItemDrops: 0
+    ambushCount: 3
     paperPlaneChance: 0.1
     ufoChance: 0.06
     shieldChance: 0.18
@@ -162,6 +173,7 @@ MonoBehaviour:
     spawnInterval: 0.25
     eliteChance: 0.55
     evolutionItemDrops: 0
+    ambushCount: 3
     paperPlaneChance: 0.1
     ufoChance: 0.07
     shieldChance: 0.18
@@ -175,6 +187,7 @@ MonoBehaviour:
     spawnInterval: 1.1
     eliteChance: 0
     evolutionItemDrops: 1
+    ambushCount: 0
     paperPlaneChance: 0
     ufoChance: 1
     shieldChance: 0
@@ -188,6 +201,7 @@ MonoBehaviour:
     spawnInterval: 0.18
     eliteChance: 0.65
     evolutionItemDrops: 0
+    ambushCount: 3
     paperPlaneChance: 0.11
     ufoChance: 0.08
     shieldChance: 0.18
@@ -201,6 +215,7 @@ MonoBehaviour:
     spawnInterval: 0.2
     eliteChance: 0.72
     evolutionItemDrops: 0
+    ambushCount: 3
     paperPlaneChance: 0.12
     ufoChance: 0.09
     shieldChance: 0.22
@@ -208,3 +223,9 @@ MonoBehaviour:
     enemyHpMultiplier: 14.5
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 3.05
+  extendedHpGrowth: 1.28
+  extendedDamageGrowth: 1.03
+  extendedSpeedGrowth: 1.01
+  extendedSpawnCountStep: 4
+  extendedSpawnIntervalMin: 0.16
+  extendedEvolutionItemEvery: 4
