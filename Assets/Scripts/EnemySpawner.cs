@@ -84,11 +84,22 @@ public class EnemySpawner : MonoBehaviour
         // (20판 승천에서도 15판은 보스전이다.) MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백.
         bool isBossStage = map.bossEnemyPrefab != null &&
             (gm != null ? Ascension.IsBossStage(currentStage) : currentStage == map.bossStage);
-        bool treasureStage = !isBossStage && map.treasureEnemyPrefab != null;
+        // 이 판을 깨면 게임이 끝나는가(GameManager.AdvanceStage의 클리어 조건과 같은 식).
+        // 최종 판의 보상은 쓸 데가 없으므로 상자도 진화 아이템도 건너뛴다.
+        bool isFinalStage = gm != null && currentStage >= gm.FinalStage;
+        // 보스 판이어도 **뒤에 판이 남아 있으면** 보상을 준다 — 다음 판을 준비할 자원이 필요하다.
+        bool bossStageWithRewards = isBossStage && !isFinalStage;
+        bool treasureStage = map.treasureEnemyPrefab != null && (!isBossStage || bossStageWithRewards);
 
-        // 스테이지 종료 보물상자: 일반 몹이 전부 나온 뒤(SpawnTarget-treasureCount 도달) 5초 텀을 두고 등장.
+        // 물량 꼬리에서 예약해 둬야 하는 칸 수. 보상 있는 보스 판은 상자 + 보스로 2칸이 필요하다.
+        // 🔴 중간 소환도 이 예약분을 침범하면 안 된다(TriggerAmbush에 같은 값을 넘긴다) —
+        //    넘기면 StageSpawnComplete가 먼저 참이 되어 상자/보스가 영영 안 나온다.
+        int reservedTail = (isBossStage ? 1 : 0) + (treasureStage ? treasureCount : 0);
+
+        // 스테이지 종료 보물상자: 일반 몹이 전부 나온 뒤 5초 텀을 두고 등장.
         // 그동안 스폰은 멈춰 있어 플레이어가 잔몹을 정리하고 보물상자를 확실히 먹을 수 있다.
-        if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - treasureCount)
+        // 보스 판에서는 상자가 먼저 나오고(=보스 직전 파워 스파이크) 그 다음 보스가 등장한다.
+        if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - reservedTail)
         {
             treasureDelayTimer += Time.deltaTime;
             if (treasureDelayTimer < TreasureDelay) return;
@@ -121,6 +132,8 @@ public class EnemySpawner : MonoBehaviour
         // 벽 스테이지 진화 엘리트: 확률이 아니라 확정으로, 스테이지 물량을 균등 분할한 지점마다 1마리씩.
         // (2마리면 33%·66% 지점) 이 엘리트만 진화 아이템을 떨군다.
         int evolutionDrops = stage != null ? stage.evolutionItemDrops : 0;
+        // 보상 있는 보스 판은 진화 아이템 1개를 보장한다(테이블에 이미 있으면 그대로) — 판 중반 지점에 나온다.
+        if (bossStageWithRewards) evolutionDrops = Mathf.Max(1, evolutionDrops);
         if (evolutionDrops > 0 && evolutionElitesSpawnedThisStage < evolutionDrops && map.eliteEnemyPrefab != null)
         {
             int threshold = SpawnTarget * (evolutionElitesSpawnedThisStage + 1) / (evolutionDrops + 1);
@@ -140,7 +153,7 @@ public class EnemySpawner : MonoBehaviour
             if (SpawnedThisStage >= threshold)
             {
                 ambushesTriggeredThisStage++;
-                TriggerAmbush(stage, currentStage);
+                TriggerAmbush(stage, currentStage, reservedTail);
                 return;
             }
         }
@@ -173,11 +186,12 @@ public class EnemySpawner : MonoBehaviour
     }
 
     // 화면 안 빈 구간에 예고 마커를 띄운다. 실제 부대는 마커가 다 찬 뒤 콜백에서 나온다.
-    private void TriggerAmbush(StageData stage, int currentStage)
+    private void TriggerAmbush(StageData stage, int currentStage, int reservedTail)
     {
-        // 마지막 물량 1칸은 스테이지 종료 보물상자(보스 스테이지면 보스) 몫이라 절대 침범하면 안 된다.
+        // 물량 꼬리의 reservedTail칸은 보물상자·보스 몫이라 절대 침범하면 안 된다
+        // (일반 판 1칸 = 상자 / 보상 있는 보스 판 2칸 = 상자+보스 / 최종 보스 판 1칸 = 보스).
         // 여길 넘기면 StageSpawnComplete가 먼저 참이 되어 보물상자/보스가 영영 안 나온다.
-        int room = SpawnTarget - 1 - SpawnedThisStage;
+        int room = SpawnTarget - reservedTail - SpawnedThisStage;
         int squad = Mathf.Min(Random.Range(BalanceConstants.AmbushSquadMin, BalanceConstants.AmbushSquadMax + 1), room);
         if (squad <= 0) return;
 
