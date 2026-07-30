@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Passive_Knowledge
   m_EditorClassIdentifier: Assembly-CSharp::PassiveProgression
   passive: 2
-  baseValue: 0.08
-  perLevelBonus: 0.08
+  baseValue: 0.1
+  perLevelBonus: 0.12

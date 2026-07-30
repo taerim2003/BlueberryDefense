@@ -20,7 +20,7 @@ public static class BalanceConstants
     // ── 레벨업 성장축의 "시작값" ──
     // 레벨업이 눈에 보이려면 시작이 낮아야 한다(2→5마리가 5→8마리보다 훨씬 크게 느껴짐).
     public const int OrbBaseTargets = 4;      // 오브가 사라지기 전까지 붙잡을 수 있는 총 적 수(소모성 예산, 4→7)
-    public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값 하향 5→3)
+    public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
     public const int EagleBaseDrops = 2;      // 독수리 투하 횟수(시작값 하향 3→2)
     public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
@@ -28,11 +28,14 @@ public static class BalanceConstants
 
     // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──
     // 적은 더 이상 스스로 사라지지 않는다. 죽여야만 없어지고, 그 대신 1회 피해가 훨씬 약하다.
-    public const float ContactStopDistance = 1.35f;   // 플레이어로부터 이 x거리에서 멈춰 선다(돌진할 여유를 두고 물러서 있음)
+    public const float ContactStopDistance = 2.55f;   // 플레이어로부터 이 x거리에서 멈춰 선다(돌진할 여유를 두고 물러서 있음). 딸기 한 칸(약 1.2유닛)만큼 더 물러서 있게 조정
     public const float HeadbuttInterval = 1f;         // 박치기 주기(초)
     public const float HeadbuttDamageScale = 0.35f;   // EnemyDefinition.damage에 곱해지는 1회 피해 배율
-    public const float HeadbuttLungeDistance = 0.5f;  // 박치기할 때 앞으로 튀어나가는 거리
-    public const float HeadbuttLungeDuration = 0.26f; // 나갔다 제자리로 돌아오는 총 시간(피해는 최전방 도달 순간)
+    // ⚠️ 돌진 거리는 ContactStopDistance와 한 세트다 — 대기 위치를 뒤로 물리면 이만큼 더 튀어나가야
+    //    최전방에서 실제로 플레이어에 닿는 그림이 된다(안 늘리면 허공을 향해 박치기한다).
+    //    현재: 2.55에서 서서 1.4 튀어나가 최근접 1.15 (물리기 전 0.85와 같은 급).
+    public const float HeadbuttLungeDistance = 1.4f;  // 박치기할 때 앞으로 튀어나가는 거리
+    public const float HeadbuttLungeDuration = 0.32f; // 나갔다 제자리로 돌아오는 총 시간(피해는 최전방 도달 순간)
     public const float HeadbuttLungeTilt = 18f;       // 돌진하며 앞으로 기우는 각도(도) — 튀어나간 만큼 같이 기울었다 돌아온다
     // 앞 적과의 **중심 간 x거리**. 적 스프라이트 폭이 약 1.1유닛(콜라이더 0.75 × scale 1.5)이라
     // 이 값이 그보다 훨씬 작아야 서로 깊게 겹쳐서 "두께 있는 무리"로 보인다(줄 서 있는 것처럼 보이면 이 값을 더 줄일 것).
@@ -46,7 +49,9 @@ public static class BalanceConstants
     // 화면 안 빈 구간에 예고 마커를 띄우고, 시간이 차면 그 자리에서 부대가 튀어나온다(전투를 플레이어 쪽으로 당김).
     public const float AmbushWarnDuration = 2.5f;     // 마커가 떠 있는 시간 — 예고 없이 튀어나오면 대응 불가라 반드시 필요
     public const float AmbushBandMinX = -3f;          // 소환 x 구간 하한(빈 땅 한가운데)
-    public const float AmbushBandMaxX = 5f;           // 상한. 박치기선(약 6.56)보다 앞이라 최소 1.5유닛의 대응 여유가 남는다
+    // 상한. ⚠️ **ContactStopDistance와 한 세트** — 박치기선(플레이어 7.91 − 2.55 = 약 5.36)보다
+    // 최소 1.5유닛 앞이어야 소환된 부대에 대응할 틈이 남는다. 접촉 거리를 만지면 여기도 같이 내릴 것.
+    public const float AmbushBandMaxX = 3.8f;
     public const int AmbushSquadMin = 4;
     public const int AmbushSquadMax = 6;
     public const float AmbushSquadSpreadX = 1.1f;     // 부대원이 마커 중심에서 좌우로 흩어지는 폭

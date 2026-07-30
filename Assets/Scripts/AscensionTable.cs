@@ -40,11 +40,22 @@ public class AscensionTable : ScriptableObject
         return tiers[Mathf.Clamp(level - 1, 0, tiers.Length - 1)];
     }
 
-    // 이 승천의 최종 스테이지(보스전). GameManager의 클리어 판정과 EnemySpawner의 보스 등장 판정이 같이 본다.
+    // 이 승천의 최종 스테이지(클리어 판정). GameManager가 본다.
     public int FinalStageFor(int level)
     {
         int s = Get(level).finalStage;
         return s > 0 ? s : DefaultFinalStage;
+    }
+
+    // 보스 판 = 어느 승천이든 최종 판으로 삼는 스테이지 전부(기본 15·20·25).
+    // **이번 판의 최종이 아니어도** 보스가 선다 — 20판짜리 승천이라도 15판엔 보스전이 있어야 한다.
+    // EnemySpawner의 보스 등장 판정이 이걸 본다(클리어 판정은 FinalStageFor 그대로).
+    public bool IsBossStage(int stage)
+    {
+        if (tiers == null || tiers.Length == 0) return stage == DefaultFinalStage;
+        foreach (AscensionTier t in tiers)
+            if ((t.finalStage > 0 ? t.finalStage : DefaultFinalStage) == stage) return true;
+        return false;
     }
 
     // 에셋 미할당 시 폴백(위 기본 tiers 그대로) — SampleScene 단독 실행도 동작.

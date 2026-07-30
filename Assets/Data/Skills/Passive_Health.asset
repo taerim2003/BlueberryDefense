@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Passive_Health
   m_EditorClassIdentifier: Assembly-CSharp::PassiveProgression
   passive: 1
-  baseValue: 20
-  perLevelBonus: 20
+  baseValue: 25
+  perLevelBonus: 30

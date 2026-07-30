@@ -212,7 +212,10 @@ public class Enemy : MonoBehaviour
         carriesEvolutionItem = false;
 
         popping = false; popVelY = 0f; popVelX = 0f; popGroundY = 0f;
-        headbuttTimer = 0f; holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
+        // 박치기 타이머를 주기만큼 채운 채로 시작한다 — 플레이어 앞에 도착하는 즉시 첫 박치기가 나간다
+        // (0으로 두면 도착 후 HeadbuttInterval만큼 멀뚱히 서 있다가 때린다).
+        headbuttTimer = BalanceConstants.HeadbuttInterval;
+        holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         diveDir = Vector2.right;
         // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.

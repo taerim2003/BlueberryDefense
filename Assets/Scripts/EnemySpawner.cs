@@ -80,10 +80,10 @@ public class EnemySpawner : MonoBehaviour
         if (pendingAmbush != null) return;             // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
         const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
-        // 보스는 **승천이 정한 최종 스테이지**에 나온다(승천1=15, 2=20, 3=25).
-        // MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백으로만 남는다.
-        int bossStage = gm != null ? gm.FinalStage : map.bossStage;
-        bool isBossStage = currentStage == bossStage && map.bossEnemyPrefab != null;
+        // 보스는 **승천표가 최종 판으로 삼는 스테이지 전부**(15·20·25)에 나온다 — 이번 판의 최종이 아니어도.
+        // (20판 승천에서도 15판은 보스전이다.) MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백.
+        bool isBossStage = map.bossEnemyPrefab != null &&
+            (gm != null ? Ascension.IsBossStage(currentStage) : currentStage == map.bossStage);
         bool treasureStage = !isBossStage && map.treasureEnemyPrefab != null;
 
         // 스테이지 종료 보물상자: 일반 몹이 전부 나온 뒤(SpawnTarget-treasureCount 도달) 5초 텀을 두고 등장.

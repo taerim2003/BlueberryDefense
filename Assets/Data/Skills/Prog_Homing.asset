@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Prog_Homing
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 6
-  baseCooldown: 9
-  baseDamage: 2.8
+  baseCooldown: 6
+  baseDamage: 4
   levels:
   - stat: 4
     op: 0
@@ -24,22 +24,22 @@ MonoBehaviour:
     amount: 1.3
   - stat: 4
     op: 0
-    amount: 1
+    amount: 2
+  - stat: 1
+    op: 1
+    amount: 0.88
+  - stat: 4
+    op: 0
+    amount: 2
   - stat: 0
     op: 1
     amount: 1.3
   - stat: 4
     op: 0
-    amount: 1
-  - stat: 0
+    amount: 2
+  - stat: 1
     op: 1
-    amount: 1.3
+    amount: 0.85
   - stat: 4
     op: 0
-    amount: 1
-  - stat: 0
-    op: 1
-    amount: 1.3
-  - stat: 4
-    op: 0
-    amount: 1
+    amount: 2

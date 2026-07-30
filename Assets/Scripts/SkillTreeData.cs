@@ -123,9 +123,9 @@ public static class SkillTreeSave
 
     // ── 노드 비용(정수) ── 등급(tier) 기반 선형변환.
     //   tier 0 = 1정수 고정(극초반 해금용). tier 1 = TierCostBase, 이후 등급마다 +TierCostStep (등속).
-    //   예) base 30·step 10 → 0=1, 1=30, 2=40, 3=50 … 밸런싱은 이 두 상수만 조정하면 전체 등급에 반영된다.
-    public const int TierCostBase = 30;
-    public const int TierCostStep = 10;
+    //   예) base 15·step 5 → 0=1, 1=15, 2=20, 3=25 … 밸런싱은 이 두 상수만 조정하면 전체 등급에 반영된다.
+    public const int TierCostBase = 15;
+    public const int TierCostStep = 5;
 
     public static int TierCost(int tier) => tier <= 0 ? 1 : TierCostBase + (tier - 1) * TierCostStep;
 
