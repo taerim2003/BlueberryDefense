@@ -48,10 +48,18 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private TMP_Text rerollLabel;
 
     [SerializeField] private TMP_Text headerText;        // 패널 제목(일반=레벨 업, 보물=보물 획득)
-    [SerializeField] private GameObject[] treasureDecor; // 보물 모드에서만 켜지는 장식(정수 비·보물상자)
+    [SerializeField] private GameObject[] treasureDecor; // 보물 패널의 장식(정수 비·보물상자)
 
-    private static readonly Color TreasureHeaderColor = new Color(1f, 0.82f, 0.2f, 1f);
-    private const string TreasureHeader = "보물 획득!";
+    // ── 보물상자 전용 패널 ──
+    // 🔴 레벨업 카드(LevelUpPanel)와 **완전히 다른 뷰**다. 고르는 게 아니라 받는 것이므로
+    //    제목/설명/버튼 없이 **획득한 아이콘만 하나씩 쌓이고**, 다 뜨면 클릭해서 넘긴다(뱀서 방식).
+    [SerializeField] private GameObject treasurePanel;       // Canvas/TreasurePanel
+    [SerializeField] private RectTransform treasureIconRow;  // 아이콘이 런타임으로 붙는 줄(HorizontalLayoutGroup)
+    [SerializeField] private TMP_Text treasureContinueText;  // 전부 뜬 뒤에만 보이는 "클릭하여 계속"
+    [SerializeField] private Button treasureDismissButton;   // 패널 전체를 덮는 투명 버튼(클릭=닫기)
+    [SerializeField] private Sprite treasureIconFrame;       // HUD 스킬 슬롯과 같은 틀(IconFrame) — 딤 위에서 아이콘이 묻히지 않게
+    [SerializeField] private float treasureIconSize = 130f;
+
     private const string EvolutionHeader = "진화!";
     private const string EvolutionFallbackHeader = "진화할 스킬이 없다 — 대신 레벨업";
     private const int EvolutionFallbackLevels = 3; // 진화 대상이 없을 때 주는 대체 레벨업 수
@@ -70,6 +78,7 @@ public class LevelUpUI : MonoBehaviour
     private int rerollsRemaining;  // 게임당 남은 리롤 횟수
     private bool rerollable;        // 이번 모달이 리롤 가능한가(진화 선택 모달은 불가)
     private bool treasureMode;      // 이번 모달이 보물상자 보너스(자동 레벨업)인가
+    private bool treasureDismissed; // 보물 패널을 클릭해 넘겼는가(아이콘이 전부 뜬 뒤에만 true가 된다)
     private bool evolutionMode;     // 이번 모달이 진화 아이템 보상인가
 
     // 모달이 열려 있는 동안 들어온 레벨업/보물상자 요청 — 닫힐 때 하나씩 이어서 띄운다.
@@ -97,11 +106,14 @@ public class LevelUpUI : MonoBehaviour
             headerDefaultColor = headerText.color;
         }
         SetTreasureDecor(false);
+        if (treasurePanel != null) treasurePanel.SetActive(false);
 
         optionButtonA.onClick.AddListener(() => Choose(0));
         optionButtonB.onClick.AddListener(() => Choose(1));
         optionButtonC.onClick.AddListener(() => Choose(2));
         if (rerollButton != null) rerollButton.onClick.AddListener(OnReroll);
+        // 보물 패널은 어디를 눌러도 넘어간다. 아이콘이 다 뜨기 전엔 interactable=false라 안 먹는다.
+        if (treasureDismissButton != null) treasureDismissButton.onClick.AddListener(() => treasureDismissed = true);
 
         // 진화 가능 레벨업 강조용 셀 아웃라인(기본 꺼짐)
         optionOutlines = new[] { MakeOutline(optionButtonA), MakeOutline(optionButtonB), MakeOutline(optionButtonC) };
@@ -136,24 +148,26 @@ public class LevelUpUI : MonoBehaviour
 
         rerollable = true;
         treasureMode = false;
-        SetTreasureDecor(false);
+        ResetHeader();
         currentOptions = BuildOptions(skills, passives);
         ShowOptions();
     }
 
-    // 보물 모드 장식(정수 비·보물상자)과 패널 제목을 일반/보물에 맞게 전환.
+    // 보물 패널 장식(정수 비·보물상자) 토글. 제목은 보물 패널이 자기 것을 갖고 있으므로 안 건드린다.
     // 배열 앞쪽부터 켜지므로 보물상자를 정수 비보다 먼저 두면 정수 비 OnEnable에서 상자 연출을 안전하게 건다.
     private void SetTreasureDecor(bool on)
     {
-        if (treasureDecor != null)
-            foreach (GameObject go in treasureDecor)
-                if (go != null) go.SetActive(on);
+        if (treasureDecor == null) return;
+        foreach (GameObject go in treasureDecor)
+            if (go != null) go.SetActive(on);
+    }
 
-        if (headerText != null)
-        {
-            headerText.text = on ? TreasureHeader : headerDefaultText;
-            headerText.color = on ? TreasureHeaderColor : headerDefaultColor;
-        }
+    // 레벨업 카드의 기본 제목으로 되돌린다 — 진화 모달이 "진화!"로 바꿔놓고 갈 수 있다.
+    private void ResetHeader()
+    {
+        if (headerText == null) return;
+        headerText.text = headerDefaultText;
+        headerText.color = headerDefaultColor;
     }
 
     // 밀려 있던 보상을 하나 이어서 연다(보물상자 우선). 닫힘 연출(UITransition.Hide)이 끝난 뒤에
@@ -371,29 +385,25 @@ public class LevelUpUI : MonoBehaviour
         ShowTreasure();
     }
 
-    // 보물상자는 선택지가 없다 — 가운데 셀 하나만 띄워 놓고 결과를 순서대로 채워 넣는다.
+    // 보물상자는 선택지가 없다 — 전용 패널에 획득 아이콘만 하나씩 쌓인다.
     private void ShowTreasure()
     {
         rerollable = false;   // 보물상자 보상은 리롤 불가
         treasureMode = true;
         evolutionMode = false;
-        SetTreasureDecor(true);
         currentOptions = new Option[0];
 
-        for (int i = 0; i < optionButtons.Length; i++)
-        {
-            if (optionButtons[i] == null) continue;
-            optionButtons[i].interactable = false;         // 눌러서 고르는 게 아니다
-            optionButtons[i].gameObject.SetActive(i == 1); // 가운데 셀만
-        }
-        if (optionOutlines != null)
-            foreach (Outline o in optionOutlines)
-                if (o != null) o.enabled = false;
-        UpdateRerollButton();
+        // 레벨업 카드가 떠 있었다면 감춘다(대기열에 이미 밀어 넣었으므로 사라지지 않는다).
+        if (panelTransition != null) panelTransition.Hide();
+        else if (panel != null) panel.SetActive(false);
+
+        ClearTreasureIcons();
+        if (treasureContinueText != null) treasureContinueText.gameObject.SetActive(false);
+        if (treasureDismissButton != null) treasureDismissButton.interactable = false;
+        if (treasurePanel != null) treasurePanel.SetActive(true);
+        SetTreasureDecor(true);
 
         bool alreadyOpen = isOpen;
-        if (panelTransition != null) panelTransition.Show();
-        else panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
         isOpen = true;
 
@@ -401,42 +411,99 @@ public class LevelUpUI : MonoBehaviour
     }
 
     // 뱀서식 상자: 몇 개 나올지 먼저 굴리고(1 → 3 → 5), 그 수만큼 하나씩 랜덤 레벨업을 떨군다.
+    // 아이콘은 **지워지지 않고 옆으로 쌓여서**, 끝나면 이번에 뭘 얻었는지 한눈에 남는다.
     // 만렙에 닿은 대상은 **다음 시행부터 후보에서 빠지므로** 초과분이 허공에 버려지지 않는다.
     private IEnumerator TreasureRollRoutine()
     {
         int rolls = 1;
         while (rolls < TreasureMaxRolls && Random.value < TreasureEscalateChance) rolls += 2;
 
-        RectTransform cell = optionButtons[1] != null ? (RectTransform)optionButtons[1].transform : null;
-
         for (int i = 0; i < rolls; i++)
         {
-            yield return new WaitForSecondsRealtime(i == 0 ? 0.35f : TreasureRevealInterval);
+            yield return new WaitForSecondsRealtime(i == 0 ? 0.4f : TreasureRevealInterval);
 
             // 후보는 매 시행마다 다시 만든다 — 방금 만렙이 된 것을 곧바로 걸러내기 위해.
             Option reward = PickTreasureUpgrade();
             reward.Apply?.Invoke();
-
-            SetRow(titleB, levelB, descB, iconB, reward);
-            if (levelB != null && rolls > 1)
-            {
-                string tag = $"({i + 1}/{rolls})";
-                levelB.text = string.IsNullOrEmpty(reward.LevelText) ? tag : $"{reward.LevelText}   {tag}";
-                levelB.color = EvolveTagColor;
-            }
-            if (cell != null)
-            {
-                cell.DOKill();
-                cell.localScale = Vector3.one;
-                cell.DOPunchScale(Vector3.one * 0.3f, 0.28f, 8, 0.6f).SetUpdate(true);
-            }
+            AddTreasureIcon(reward);
         }
 
-        yield return new WaitForSecondsRealtime(1f); // 마지막 결과 여운
+        // 전부 뜬 뒤에야 넘길 수 있다 — 마지막 아이콘이 튀는 걸 못 보고 닫는 사고를 막는다.
+        if (treasureContinueText != null) treasureContinueText.gameObject.SetActive(true);
+        if (treasureDismissButton != null) treasureDismissButton.interactable = true;
+        treasureDismissed = false;
+        yield return new WaitUntil(() => treasureDismissed);
 
         treasureMode = false;
-        Close();
+        CloseTreasure();
         QueueNextPending();
+    }
+
+    // 획득 아이콘 한 칸을 줄 끝에 붙인다(런타임 생성 — 씬에 아이콘을 미리 깔아두지 않는다).
+    // HUD 스킬 슬롯과 같은 틀을 깔고 그 위에 아이콘을 얹는다. 딤 배경 위에서 아이콘만 두면 묻힌다.
+    // 아이콘이 없는 보상(정수)은 스프라이트 대신 이름을 보여준다.
+    private void AddTreasureIcon(Option reward)
+    {
+        if (treasureIconRow == null) return;
+
+        GameObject go = new GameObject("TreasureIcon", typeof(RectTransform), typeof(Image));
+        RectTransform rt = (RectTransform)go.transform;
+        rt.SetParent(treasureIconRow, false);
+        rt.sizeDelta = new Vector2(treasureIconSize, treasureIconSize);
+
+        Image frame = go.GetComponent<Image>();
+        frame.raycastTarget = false;
+        frame.sprite = treasureIconFrame;
+        frame.enabled = treasureIconFrame != null;
+
+        // 틀 안쪽에 아이콘(또는 이름). 틀 두께만큼 여백을 준다.
+        GameObject inner = new GameObject("Icon", typeof(RectTransform));
+        RectTransform irt = (RectTransform)inner.transform;
+        irt.SetParent(rt, false);
+        irt.anchorMin = Vector2.zero; irt.anchorMax = Vector2.one;
+        float pad = treasureIconSize * 0.14f;
+        irt.offsetMin = new Vector2(pad, pad);
+        irt.offsetMax = new Vector2(-pad, -pad);
+
+        if (reward.Icon != null)
+        {
+            Image img = inner.AddComponent<Image>();
+            img.raycastTarget = false;
+            img.preserveAspect = true;
+            img.sprite = reward.Icon;
+        }
+        else if (!string.IsNullOrEmpty(reward.Title))
+        {
+            TMP_Text label = inner.AddComponent<TextMeshProUGUI>();
+            label.text = reward.Title;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 22f;
+            label.raycastTarget = false;
+        }
+
+        // 팡 튀어나오는 등장. 모달이 timeScale 0이므로 반드시 unscaled로 돌린다.
+        rt.localScale = Vector3.zero;
+        rt.DOScale(Vector3.one, 0.32f).SetEase(Ease.OutBack).SetUpdate(true);
+    }
+
+    private void ClearTreasureIcons()
+    {
+        if (treasureIconRow == null) return;
+        for (int i = treasureIconRow.childCount - 1; i >= 0; i--)
+        {
+            Transform child = treasureIconRow.GetChild(i);
+            child.DOKill();
+            Destroy(child.gameObject);
+        }
+    }
+
+    private void CloseTreasure()
+    {
+        isOpen = false;
+        ModalPause.Pop();
+        SetTreasureDecor(false);
+        if (treasurePanel != null) treasurePanel.SetActive(false);
+        ClearTreasureIcons();
     }
 
     // 지금 올릴 수 있는 것 중 하나를 무작위로. 전부 만렙이면 정수로 바꿔 준다(보상이 버려지지 않게).
@@ -497,7 +564,6 @@ public class LevelUpUI : MonoBehaviour
 
         rerollable = false;   // 진화 선택은 리롤 불가
         treasureMode = false;
-        SetTreasureDecor(false);
         currentOptions = BuildEvolutionOptions(skills, passives);
         evolutionMode = true;
         if (headerText != null)

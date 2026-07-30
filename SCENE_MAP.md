@@ -62,14 +62,16 @@ EnemySpawner           ← EnemySpawner (fallbackMap=Map_BlueberryField, scaling
 GameManager            ← GameManager + MetaRunApplier + RunBootstrap(defaultMap=Map_BlueberryField) + ComicBurst
 Canvas                 ← LevelUpUI · EvolutionTreeUI · DamageMeterUI  (+Canvas/Scaler/Raycaster)
  ├─ LevelUpPanel
- │    EssenceRain(Dialog 뒤·보물 모드 전용) · Dialog · TreasureChest(Dialog 앞·좌하단·보물 모드 전용)
+ │    Dialog
  ├─ HUD                ← HUDController
  │    StageText · HealthPanel · LevelText · PassiveSlot_0~3 · ExpBar
  │    · ActiveSlot_0~3 · ExpLevelText · StageBanner · BuffSlot_0~2(비활성)
  ├─ XpGemLayer         ← XpGemFlight (전체 스트레치·빈 RectTransform, 보석은 런타임 자식으로 생성)
  ├─ EvolutionPanel/Window          [activeSelf=false]
- └─ DamageMeterPanel               [activeSelf=false]
-        Dialog · EarnedEssenceText · ReturnToTitleButton
+ ├─ DamageMeterPanel               [activeSelf=false]
+ │    Dialog · EarnedEssenceText · ReturnToTitleButton
+ └─ TreasurePanel                  [activeSelf=false] ← 보물상자 전용(맨 뒤 형제 = 다른 UI 위에 그려짐)
+        EssenceRain · TreasureChest · HeaderText · IconRow · ContinueText
 EventSystem
 Background
 ```
@@ -82,7 +84,10 @@ Background
 - `GameManager` SerializeField: `stageTable`(RunBootstrap이 맵값으로 덮음, 기본맵이면 동일), `heartPickupPrefab`, `essencePickupPrefab`, **`evolutionItemPrefab`**(=`Assets/Prefabs/EvolutionItemPickup.prefab`, 벽 스테이지 엘리트 드랍), `stageBreakDuration`.
 - **`EvolutionPanel`은 여전히 3×3(9칸) 노드를 갖고 있지만 진화가 2루트×2티어로 바뀌어 `EvolutionTreeUI`가 런타임에 왼쪽 위 2×2(`Node_P0T1/P0T2/P1T1/P1T2` + `Arrow_P0_0`/`Arrow_P1_0`)만 켜고 나머지는 끈다.** 씬 배선은 그대로 두면 됨 — 3×3 → 2×2로 레이아웃을 정리하고 싶으면 남는 칸 5개(+화살표 4개)를 지우고 `EvolutionTreeUI.NodeIndex`/`HiddenNodes` 상수를 맞추면 된다.
 - **`Canvas` 루트에 UI 싱글톤 3개**(LevelUpUI/EvolutionTreeUI/DamageMeterUI)가 컴포넌트로 직접 붙음. 패널 오브젝트(LevelUpPanel/EvolutionPanel/DamageMeterPanel)는 각 UI가 제어하는 뷰.
-- **보물 획득 패널 연출**: 레벨업/보물 보상은 같은 `LevelUpPanel`을 재사용. 보물 모드에서만 `LevelUpUI`가 `treasureDecor`(=[TreasureChest, EssenceRain])를 켜고 HeaderText를 "보물 획득!"으로 교체. `EssenceRain`엔 `TreasureRewardDecor`(정수 비 낙하·회전 + 보물상자 등장/흔들림 연출, unscaled 시간)가 붙음. 순서(상자 먼저 활성)로 정수 비 OnEnable이 상자 트윈을 안전하게 건다.
+- **`TreasurePanel`은 레벨업 카드와 완전히 별개인 뷰**다(뱀서식 상자). 고르는 게 아니라 받는 것이라 제목/설명/버튼이 없고, **획득 아이콘만 `IconRow`에 하나씩 쌓인다**. 아이콘은 `LevelUpUI.AddTreasureIcon`이 **런타임에 생성**하므로 씬에 미리 깔아둘 것이 없다(HUD와 같은 `IconFrame` 스프라이트를 틀로 깔고 그 안에 스킬 아이콘). 전부 뜬 뒤에만 `ContinueText`가 켜지고 패널 전체를 덮는 버튼이 `interactable`이 되어 클릭으로 닫힌다.
+  - 여전히 `LevelUpUI`가 소유한다(아이콘 배열·대기열·`ModalPause`를 이미 갖고 있어서 별도 싱글톤을 만들면 아이콘 13개를 새로 배선해야 함). 배선 필드: `treasurePanel`·`treasureIconRow`·`treasureContinueText`·`treasureDismissButton`·`treasureIconFrame`.
+  - `treasureDecor`(=[TreasureChest, EssenceRain])는 **이 패널의 자식으로 옮겨졌다**(예전엔 LevelUpPanel 밑). `EssenceRain`엔 `TreasureRewardDecor`(정수 비 낙하·회전 + 보물상자 등장/흔들림, unscaled 시간)가 붙음. 순서(상자 먼저 활성)로 정수 비 OnEnable이 상자 트윈을 안전하게 건다.
+  - ⚠️ **Canvas의 맨 뒤 형제여야 한다** — uGUI는 형제 순서가 그리기 순서라, 앞으로 옮기면 HUD에 가린다.
 - **`XpGemLayer`**(신규) = 경험치 보석 연출 레이어. `HUD` 바로 다음 형제라 **바 위·모달 아래**로 그려진다. `XpGemFlight`가 `ExpBar/ExpFill`을 참조해 "현재 차 있는 끝 지점"을 목표로 잡고, 보석은 이 오브젝트의 자식으로 런타임 생성·풀링. **XP는 보석 도착 시점에 적립**(Enemy.Die는 `XpGemFlight.TrySpawn` 실패 시에만 즉시 적립).
 - `Background` = 맵 배경(단일 오브젝트). RunBootstrap이 `GameObject.Find("Background")`로 찾아 스프라이트 교체 → **맵 스왑됨.**
 - **BGM = 신규(Phase 1)**: `MapDefinition.bgm`(AudioClip) 있으면 RunBootstrap이 런타임 AudioSource를 GameManager에 추가해 루프 재생. 기본맵은 bgm=null → 무음(현행 유지). SfxPlayer/ObjectPool 효과음은 그대로.
