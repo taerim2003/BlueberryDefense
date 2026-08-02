@@ -137,7 +137,8 @@
 - ✅ **캐릭터 전용 풀** — 딸기는 휘두르기 제외, 파인애플은 화살 쏘기 제외(`allowedActivePool` 양쪽 명시)
 - ✅ **해금 조건**: 누적 정수 300 **+** 블루베리 밭 승천1 클리어(둘 다). `CharacterDefinition.unlockedFromStart/requiredEssenceEarned/requiredClearMap/requiredClearAscension`
 - ✅ **해금 포스터** — `SkillTreeRoot/UnlockPoster` (스킬트리 창 우측 하단, 실루엣 + 조건 진행도). 정수를 쓰는 화면에서 해금 진행도를 같이 본다
-- ⏳ 남은 것: **플레이 확인**(위 "확인 대기") · **휘두르기 아이콘**(`LevelUpUI.activeIcons` 9번 자리가 비어 있음) · **원티드 포스터 배경 그림** · 파인애플 전용 초상화(지금은 `Pinapple.png` 임시)
+- ⏳ 남은 것: **플레이 확인**(위 "확인 대기") · **휘두르기 아이콘**(`LevelUpUI.activeIcons` 9번 자리가 비어 있음) · **원티드 포스터 배경 그림** · 파인애플 전용 초상화(지금은 `Pinapple1` 임시)
+  · 🎨 **충격파 전용 도트** — 지금 `Effect_SwingShockwave.png`(61×13)는 **`Pinapple4`의 충격파 부분을 잘라낸 임시본**이다. 전용 그림이 나오면 **같은 파일명으로 덮으면 끝**(프리팹 재배선 불필요).
 - 범위: 출시까지 총 4종 예정이나 **버티컬 슬라이스에선 1종 해금만**.
 
 **⑤ 폴리싱 할일 리스트업** (카드 본문 비어 있음 — 이 카드가 아래 6항목을 칸반 카드로 쪼개는 작업이다)
