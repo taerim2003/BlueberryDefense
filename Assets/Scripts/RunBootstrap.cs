@@ -52,12 +52,18 @@ public class RunBootstrap : MonoBehaviour
 
         ApplyFieldScale(map.fieldScale, spawner);
 
-        // 배경
+        // 배경 — 컷이 2장 이상이면 돌리고(BackgroundAnimator가 첫 컷을 바로 깐다), 아니면 기존처럼 정지 한 장.
         GameObject bg = GameObject.Find("Background");
-        if (bg != null && map.background != null)
+        if (bg != null)
         {
             SpriteRenderer sr = bg.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.sprite = map.background;
+            if (sr != null)
+            {
+                if (map.backgroundFrames != null && map.backgroundFrames.Length > 1)
+                    bg.AddComponent<BackgroundAnimator>().Init(map.backgroundFrames, map.backgroundFrameSeconds);
+                else if (map.background != null)
+                    sr.sprite = map.background;
+            }
         }
 
         // 카메라 들어올리기 = 화면 안에서 레인 내리기. 배경은 카메라의 자식이 아니라서 **같이** 옮겨야

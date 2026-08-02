@@ -11,6 +11,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 Before implementing:
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them - don't pick silently.
+- 선택지를 낼 땐 **손잡이 이름(`ambushCount` 같은 필드명)이 아니라 화면에서 벌어지는 일로** 먼저 한 줄 설명할 것. 사용자는 코드 필드로 생각하지 않는다 — 세션25에 "게릴라를 늘린다"를 서로 다른 뜻으로 쓰다 선택지 전체가 헛다리를 짚었다(정답은 내가 낸 3안 밖에 있었다).
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
@@ -96,6 +97,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### 검증은 위에서부터 — 아래로 갈수록 비싸다
 ① **에디트모드 리플렉션 테스트**(순수 로직. `new GameObject().AddComponent<T>()`는 Awake가 안 돌아 프리팹 참조 없이도 된다 — 조용한 실패가 없어 가장 확실) → ② **`script-execute` 반환값 대조**(에셋 값·커브. 손계산 말고 게임이 실제로 쓰는 경로로) → ③ **플레이모드 스모크**(연출·물리처럼 정말 실행이 필요할 때만) → ④ **사용자에게 물어보기**(버튼 하나 눌러보면 되는 UI 동작은 "눌러보고 알려줘"가 더 빠르고 정확).
 ⚠️ **에디트모드 `Instantiate`는 Awake를 안 돈다** — 런타임 필드를 에디트모드에서 읽어 검증하려 들지 말 것.
+⚠️ **검산 스크립트를 새로 쓰면 대조군부터 돌린다** — 고치기 *전* 데이터처럼 **위반이 나와야 정상인 입력**에 먼저 돌려 실제로 실패가 찍히는지 볼 것. "전부 통과"는 검증이 아니라 **의심 신호**다. (세션25: PowerShell이 변수 대소문자를 안 가려 루프의 `$warn`이 상수 `$WARN`을 덮어 검사가 통째로 무력화됐다. before/after를 둘 다 돌린 덕에 걸렸다.)
 
 ### 플레이모드로 측정할 때 체크리스트
 1. **시간이 흐르는가** — `Time.timeScale`·`Time.time` 확인. **게임오버·모달이면 `timeScale=0`**이라 `Time.deltaTime` 기반 값이 마지막 값에 굳는다. 이걸 버그로 오판한 적 있음(세션20).
@@ -113,9 +115,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - 훅이 안 도는 것 같으면(위험 호출이 그냥 통과) 스크립트를 직접 실행해 확인할 것 — 훅은 조용히 실패한다. 스크립트는 **ASCII 전용**(no-BOM PowerShell 5.1이 한글을 깨뜨림).
 
 ### 🧰 못 미더운 MCP 툴 — 우회법
-> 아래 4줄은 위 훅과 중복이다. 훅이 실제 호출에서 도는 걸 한 번 확인하면 지울 것.
-- **`scene-open`** — 멀쩡한 경로를 "not found"로 거부(재발 잦음, 가끔 성공). → `script-execute` 안에서 `EditorSceneManager.OpenScene(path, mode)` 직접 호출.
-- **`console-get-logs`** — 누적 버퍼 전체(77KB+)를 뱉어 토큰 초과 + 한글 인코딩 에러. → **검증은 `Debug.Log`가 아니라 `script-execute`의 반환 문자열로 받는다.** 로그는 예외 확인용으로만.
+> `scene-open`·`console-get-logs`는 훅이 막고 대안까지 알려준다(세션25에 실제 차단 확인). 아래는 훅이 안 잡는 것들.
 - **`gameobject-duplicate`** — 반환값이 원본을 가리킨다. → 복제 후 **부모를 재조회**해 `"(N)"` 접미사로 찾기.
 - **`script-execute`** — 관련 동작은 한 호출에 몰되(중간 도메인 리로드로 상태 리셋), **플레이모드 상태 전이만은 한 호출에 하나씩**. 문자열에 이스케이프 따옴표(`\"`) 금지(`"a" + var + "b"`로).
 

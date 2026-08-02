@@ -14,10 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: "\uBE14\uB8E8\uBCA0\uB9AC \uBC2D"
   description: 
-  fieldScale: 1
-  background: {fileID: 21300000, guid: b530523d617fd474491f904c69d0917d, type: 3}
+  fieldScale: 1.25
+  cameraYLift: 1.15
+  background: {fileID: 21300000, guid: 740339be7033f014ba8217d7b8b2d326, type: 3}
+  backgroundFrames:
+  - {fileID: 21300000, guid: 740339be7033f014ba8217d7b8b2d326, type: 3}
+  - {fileID: 21300000, guid: 50e14eca959696040a688491a8101bc8, type: 3}
+  - {fileID: 21300000, guid: 0c3a9382d205d4540a78657ac78cb2b7, type: 3}
+  - {fileID: 21300000, guid: 500c9f5f23606f44c83ae1b308305b94, type: 3}
+  backgroundFrameSeconds: 0.4
   bgm: {fileID: 0}
-  stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
+  stageTable: {fileID: 11400000, guid: 66859e53cf514b53bbf0aa55e039fc3d, type: 2}
   bossStage: 15
   spawnInterval: 1.5
   defaultSpawnCount: 20
@@ -28,4 +35,6 @@ MonoBehaviour:
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
   shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
   riderEnemyPrefab: {fileID: 6695594374957680745, guid: 6712b983e4ac3c542bfcc99377910015, type: 3}
+  hopperEnemyPrefab: {fileID: 0}
+  surferEnemyPrefab: {fileID: 0}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}

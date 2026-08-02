@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: "\uAD11\uD65C\uD55C \uBC2D"
   description: 
-  fieldScale: 2
+  fieldScale: 1.8
   background: {fileID: 0}
   bgm: {fileID: 0}
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}

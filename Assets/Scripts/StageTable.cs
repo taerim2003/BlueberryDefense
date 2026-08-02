@@ -18,12 +18,18 @@ public class StageData
     public float burstRest = 0f;
 
     public float eliteChance = 0f;
-    // 벽 스테이지(능력시험) 표식. 0보다 크면 이 스테이지에 엘리트가 **확정으로** 그 수만큼 나오고,
-    // 그 엘리트를 잡으면 진화 아이템을 떨군다. 진화는 이 아이템으로만 열린다(§EvolutionRoutes).
+    // 벽 스테이지(능력시험) 표식. 0보다 크면 이 스테이지에 엘리트가 **확정으로** 그 수만큼 나온다.
+    // ⚠️ 이름과 달리 지금은 아이템을 안 떨군다 — 진화 경로가 보물상자로 통합됐다(세션25). 남은 역할은 "확정 엘리트 수".
     public int evolutionItemDrops = 0;
     // 중간 소환 횟수(0=없음). 진화 엘리트와 같은 방식으로 스테이지 물량을 균등 분할한 지점마다 1회씩,
     // 화면 안(BalanceConstants.AmbushBand*)에 예고 마커를 띄운 뒤 부대를 꽂는다. 부대원 수도 물량 쿼터에 포함된다.
     public int ambushCount = 0;
+    // 중간 소환 1회에 **동시에** 튀어나오는 부대 수(1 = 기존처럼 한 부대씩).
+    // ambushCount를 올리면 예고(2.5초)마다 정문 스폰이 멈춰 판이 늘어지는데, 이쪽은 예고 한 번에 여러 부대를
+    // 한꺼번에 쏟으므로 늘어짐 없이 게릴라 물량만 는다. 소환 구간을 등분해 부대끼리 안 겹치게 배치한다.
+    // 이 필드가 없던 기존 에셋(StageTable_Coast 등)은 여기 초기값 1로 읽힌다 — 확인함(세션25). 즉 현행 동작 그대로다.
+    // 다만 인스펙터에서 0을 넣을 수 있으므로 읽는 쪽은 Max(1, ...)로 받는다.
+    public int ambushSquads = 1;
     public float paperPlaneChance = 0f;
     public float ufoChance = 0f;
     public float shieldChance = 0f; // 방패 블루베리(관통·오브 차단) 스폰 확률
@@ -91,6 +97,7 @@ public class StageTable : ScriptableObject
             // 판이 길어진 만큼 진화 기회도 늘어난다(승천1=+1개, 2=+2, 3=+3).
             evolutionItemDrops = (extendedEvolutionItemEvery > 0 && n % extendedEvolutionItemEvery == 0) ? 1 : 0,
             ambushCount = last.ambushCount,
+            ambushSquads = last.ambushSquads,
             paperPlaneChance = last.paperPlaneChance,
             ufoChance = last.ufoChance,
             shieldChance = last.shieldChance,

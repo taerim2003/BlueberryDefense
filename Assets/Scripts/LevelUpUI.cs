@@ -62,6 +62,7 @@ public class LevelUpUI : MonoBehaviour
 
     private const string EvolutionHeader = "진화!";
     private const string EvolutionFallbackHeader = "진화할 스킬이 없다 — 대신 레벨업";
+    private const string TreasureChoiceHeader = "보물 상자 — 무엇을 받을까?";
     private const int EvolutionFallbackLevels = 3; // 진화 대상이 없을 때 주는 대체 레벨업 수
     private string headerDefaultText;
     private Color headerDefaultColor;
@@ -79,7 +80,8 @@ public class LevelUpUI : MonoBehaviour
     private bool rerollable;        // 이번 모달이 리롤 가능한가(진화 선택 모달은 불가)
     private bool treasureMode;      // 이번 모달이 보물상자 보너스(자동 레벨업)인가
     private bool treasureDismissed; // 보물 패널을 클릭해 넘겼는가(아이콘이 전부 뜬 뒤에만 true가 된다)
-    private bool evolutionMode;     // 이번 모달이 진화 아이템 보상인가
+    private bool evolutionMode;     // 이번 모달이 진화 선택(대상 고르기)인가
+    private bool treasureChoiceMode; // 이번 모달이 보물상자의 "레벨업 vs 진화" 갈림길인가
 
     // 모달이 열려 있는 동안 들어온 레벨업/보물상자 요청 — 닫힐 때 하나씩 이어서 띄운다.
     // (보물상자 블루베리 2마리를 연달아 먹으면 두 번째 보상이 첫 번째를 덮어써 사라지던 문제)
@@ -183,7 +185,7 @@ public class LevelUpUI : MonoBehaviour
         yield return new WaitWhile(() => panel.activeSelf);
 
         if (pendingEvolutions > 0) { pendingEvolutions--; ShowEvolution(); }
-        else if (pendingTreasures > 0) { pendingTreasures--; ShowTreasure(); }
+        else if (pendingTreasures > 0) { pendingTreasures--; ShowTreasureChoice(); } // 밀린 상자도 갈림길을 거친다
         else if (pendingLevelUps > 0) { pendingLevelUps--; ShowLevelUp(); }
     }
 
@@ -368,9 +370,9 @@ public class LevelUpUI : MonoBehaviour
         IsEssence = true,
     };
 
-    // 보물상자 블루베리 보상: **고르는 게 아니라 그냥 받는 보너스**(뱀서식 상자).
-    // 보통 1개, 운이 좋으면 3개, 더 좋으면 5개의 레벨업이 내가 가진 것 중 랜덤하게 떨어진다.
-    // (진화는 더 이상 보물상자가 아니라 '진화 가능 레벨 도달' 시 즉시 열린다.)
+    // 보물상자 블루베리 보상. **진화 획득 경로는 이 상자 하나로 통합돼 있다**(볼x핏 방식).
+    // 진화 가능한 게 없으면 예전처럼 그냥 받는 랜덤 레벨업 보너스고(1개 → 운 좋으면 3개 → 5개),
+    // 진화 가능한 게 있으면 "레벨업 보너스 vs 진화"를 고르게 된다 — 상자 하나로 둘 다는 못 받는 게 선택의 무게다.
     public void ShowTreasureReward()
     {
         // 보물상자 블루베리는 경험치가 커서 Enemy.Die가 ShowTreasureReward보다 먼저 AddXP를 호출하면
@@ -382,7 +384,74 @@ public class LevelUpUI : MonoBehaviour
             if (treasureMode) { pendingTreasures++; return; } // 보물 모달이 이미 떠 있으면 순서대로
             pendingLevelUps++;
         }
-        ShowTreasure();
+        ShowTreasureChoice();
+    }
+
+    // 상자를 열기 전 갈림길: 진화 가능한 게 하나라도 있으면 "레벨업 보너스 vs 진화"를 먼저 묻는다.
+    // 하나도 없으면 물어볼 게 없으므로 곧장 기존 상자 연출로 간다.
+    private void ShowTreasureChoice()
+    {
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
+        int evolvable = CountEvolvable(skills, passives);
+        if (evolvable == 0) { ShowTreasure(); return; }
+
+        rerollable = false;   // 갈림길은 리롤 불가
+        treasureMode = false;
+        evolutionMode = false;
+        treasureChoiceMode = true;
+
+        currentOptions = new Option[]
+        {
+            new Option
+            {
+                Title = "보물 상자",
+                Description = "가지고 있는 스킬이 무작위로 강화된다 (운이 좋으면 여러 번)",
+            },
+            new Option
+            {
+                Title = "진화",
+                LevelText = evolvable + "개 가능",
+                IsEvolution = true,
+                Description = "스킬 하나를 골라 진화시킨다",
+            },
+        };
+
+        if (headerText != null)
+        {
+            headerText.text = TreasureChoiceHeader;
+            headerText.color = EvolveTagColor;
+        }
+        ShowOptions();
+    }
+
+    private static int CountEvolvable(PlayerSkills skills, PlayerPassives passives)
+    {
+        int n = 0;
+        if (skills != null)
+            foreach (EquippedSkill s in skills.EquippedSkills) if (skills.CanEvolve(s)) n++;
+        if (passives != null)
+            foreach (EquippedPassive p in passives.EquippedPassives) if (passives.CanEvolve(p)) n++;
+        return n;
+    }
+
+    // 갈림길에서 고른 뒤. 모달이 완전히 닫힌 다음에 다음 모달을 열어야 새 모달이 같이 꺼지지 않는다.
+    private IEnumerator ResolveTreasureChoice(bool evolve)
+    {
+        yield return new WaitWhile(() => panel.activeSelf);
+
+        if (!evolve) { ShowTreasure(); yield break; }
+
+        // 진화 대상이 하나뿐이면 "어느 걸 진화할지" 고르는 단계는 의미가 없다 — 곧장 진화 트리로.
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
+        Option[] targets = BuildEvolutionOptions(skills, passives);
+        if (targets.Length == 1 && targets[0].IsEvolution)
+        {
+            yield return ResolveEvolutionChoice(targets[0]);
+            yield break;
+        }
+        ShowEvolution();
     }
 
     // 보물상자는 선택지가 없다 — 전용 패널에 획득 아이콘만 하나씩 쌓인다.
@@ -748,6 +817,15 @@ public class LevelUpUI : MonoBehaviour
         int index = OptionForSlot(slot);
         if (index < 0 || index >= currentOptions.Length) return;
         Option opt = currentOptions[index];
+
+        if (treasureChoiceMode)
+        {
+            treasureChoiceMode = false;
+            bool evolve = opt.IsEvolution;
+            Close();
+            StartCoroutine(ResolveTreasureChoice(evolve));
+            return;
+        }
 
         if (evolutionMode)
         {

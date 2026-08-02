@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
@@ -27,7 +28,7 @@ public class EnemySpawner : MonoBehaviour
     private bool bossSpawnedThisStage;
     private int evolutionElitesSpawnedThisStage; // 벽 스테이지 확정 엘리트를 몇 마리 내보냈나
     private int ambushesTriggeredThisStage;      // 중간 소환을 몇 번 예고했나
-    private AmbushMarker pendingAmbush;          // 예고 중인 마커(있으면 정문 스폰 정지)
+    private readonly List<AmbushMarker> pendingAmbushes = new List<AmbushMarker>(); // 예고 중인 마커들(하나라도 있으면 정문 스폰 정지)
     private int spawnedInBurst;                  // 현재 무리에서 몇 마리 내보냈나(웨이브 스폰. burstSize=0/1이면 안 쓰임)
 
     // 물량 기반 스폰 진행 상태 — GameManager가 클리어 판정에, HUD가 진행바에 참조
@@ -56,8 +57,9 @@ public class EnemySpawner : MonoBehaviour
         ambushesTriggeredThisStage = 0;
         spawnedInBurst = 0;
         // 예고 중에 스테이지가 넘어가면 마커는 다음 판에 부대를 쏟아낸다 — 판이 바뀌는 즉시 취소.
-        if (pendingAmbush != null) Destroy(pendingAmbush.gameObject);
-        pendingAmbush = null;
+        foreach (AmbushMarker marker in pendingAmbushes)
+            if (marker != null) Destroy(marker.gameObject);
+        pendingAmbushes.Clear();
         timer = 0f;
         treasureDelayTimer = 0f;
     }
@@ -77,7 +79,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
-        if (pendingAmbush != null) return;             // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
+        if (pendingAmbushes.Count > 0) return;          // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
         const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
         // 보스는 **승천표가 최종 판으로 삼는 스테이지 전부**(15·20·25)에 나온다 — 이번 판의 최종이 아니어도.
@@ -140,7 +142,9 @@ public class EnemySpawner : MonoBehaviour
             if (SpawnedThisStage >= threshold)
             {
                 evolutionElitesSpawnedThisStage++;
-                SpawnEnemies(map.eliteEnemyPrefab, 1, stage, currentStage, carriesEvolutionItem: true);
+                // 진화는 보물상자로 통합됐다(세션25) — 엘리트는 벽 스테이지의 난이도 요소로 그대로 두고 아이템만 안 떨군다.
+                // 되돌리려면 carriesEvolutionItem: true 하나만 되살리면 된다(EvolutionItemPickup 경로는 남겨 뒀다).
+                SpawnEnemies(map.eliteEnemyPrefab, 1, stage, currentStage);
                 return;
             }
         }
@@ -186,31 +190,49 @@ public class EnemySpawner : MonoBehaviour
     }
 
     // 화면 안 빈 구간에 예고 마커를 띄운다. 실제 부대는 마커가 다 찬 뒤 콜백에서 나온다.
+    // ambushSquads가 2 이상이면 마커를 그 수만큼 **한꺼번에** 띄운다 — 예고 시간은 한 번치(2.5초)만 쓰면서
+    // 게릴라 물량은 배로 는다. ambushCount를 올려 늘어지게 만드는 것과 여기가 갈린다.
     private void TriggerAmbush(StageData stage, int currentStage, int reservedTail)
     {
         // 물량 꼬리의 reservedTail칸은 보물상자·보스 몫이라 절대 침범하면 안 된다
         // (일반 판 1칸 = 상자 / 보상 있는 보스 판 2칸 = 상자+보스 / 최종 보스 판 1칸 = 보스).
         // 여길 넘기면 StageSpawnComplete가 먼저 참이 되어 보물상자/보스가 영영 안 나온다.
+        // ⚠️ 부대들이 동시에 예약되는데 SpawnedThisStage는 콜백에서야 오르므로, 남은 칸은 여기서 직접 깎아 나간다.
         int room = SpawnTarget - reservedTail - SpawnedThisStage;
-        int squad = Mathf.Min(Random.Range(BalanceConstants.AmbushSquadMin, BalanceConstants.AmbushSquadMax + 1), room);
-        if (squad <= 0) return;
+        if (room <= 0) return;
 
         // 소환 구간은 절대 좌표라 맵 필드 배율만큼 같이 벌려야 한다(넓은 맵에서 화면 왼쪽에만 몰리지 않게).
         // 부대원이 흩어지는 폭(AmbushSquadSpreadX)은 적 크기 기준이라 안 곱한다.
         float fieldScale = Map != null ? Map.fieldScale : 1f;
-        Vector3 center = new Vector3(
-            Random.Range(BalanceConstants.AmbushBandMinX * fieldScale, BalanceConstants.AmbushBandMaxX * fieldScale),
-            transform.position.y, // 스포너 y = 레인 기준선
-            0f);
+        float bandMin = BalanceConstants.AmbushBandMinX * fieldScale;
+        float bandMax = BalanceConstants.AmbushBandMaxX * fieldScale;
+
+        // 인스펙터에서 0이 들어와도 한 부대는 나오게 막아 둔다(필드가 없던 옛 에셋은 초기값 1로 읽히므로 무관).
+        int squads = Mathf.Max(1, stage != null ? stage.ambushSquads : 1);
+        float slot = (bandMax - bandMin) / squads; // 부대끼리 겹치지 않게 소환 구간을 등분해 한 칸씩 맡긴다
 
         // 중간 소환 부대 자체가 하나의 무리다 — 쏟은 직후 곧바로 휴식이 걸리게 무리 정원을 채워 둔다.
         if (stage != null && stage.burstSize > 1) spawnedInBurst = stage.burstSize;
 
-        pendingAmbush = AmbushMarker.Spawn(center, BalanceConstants.AmbushWarnDuration, () =>
+        for (int i = 0; i < squads && room > 0; i++)
         {
-            pendingAmbush = null;
-            SpawnAmbushSquad(center, squad, stage, currentStage);
-        });
+            int squad = Mathf.Min(Random.Range(BalanceConstants.AmbushSquadMin, BalanceConstants.AmbushSquadMax + 1), room);
+            if (squad <= 0) break;
+            room -= squad;
+
+            Vector3 center = new Vector3(
+                Random.Range(bandMin + slot * i, bandMin + slot * (i + 1)),
+                transform.position.y, // 스포너 y = 레인 기준선
+                0f);
+
+            AmbushMarker marker = null;
+            marker = AmbushMarker.Spawn(center, BalanceConstants.AmbushWarnDuration, () =>
+            {
+                pendingAmbushes.Remove(marker);
+                SpawnAmbushSquad(center, squad, stage, currentStage);
+            });
+            if (marker != null) pendingAmbushes.Add(marker);
+        }
     }
 
     // 마커 자리에서 부대가 팝콘처럼 튀어올랐다 레인에 착지한다. 튀는 동안은 Enemy가 무적이라

@@ -27,6 +27,10 @@ public class MapDefinition : ScriptableObject
 
     [Header("표시")]
     public Sprite background;
+    // 배경을 여러 컷으로 돌리고 싶을 때만 채운다(2장 이상이어야 동작). 비어 있으면 위 background로 정지 표시.
+    // 컷은 전부 같은 픽셀 규격이어야 한다 — 크기가 다르면 컷이 바뀔 때 화면 덮는 범위가 튄다.
+    public Sprite[] backgroundFrames;
+    public float backgroundFrameSeconds = 0.4f;
     public AudioClip bgm; // null이면 무음(현재 상태). RunBootstrap이 있으면 루프 재생
 
     [Header("스테이지 구성")]
