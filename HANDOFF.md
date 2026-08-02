@@ -49,7 +49,8 @@
 - 🎨 **프레임 간 몸통 흔들림** — 대기는 캔버스 48px, 공격은 72px이라 **중앙 pivot 기준으로 몸통이 좌우로 움직인다.** 휘두르는 무게감으로 의도한 것이면 그대로 두고, 아니면 각 PNG의 pivot을 맞춰야 한다(그림 수정 없이 `.meta`의 `spritePivot`만으로 조정 가능).
 - ⚔️ **휘두르기 사거리·판정** — `SwingReach` 3.2 / `SwingHalfHeight` 2.0은 **책상 계산값**이다. 적이 몰렸을 때 몇 마리가 맞는지, 비행 적이 실제로 닿는지 눈으로 볼 것.
 - 💨 **넉백 0.8유닛**이 체감되는지. 안 보이면 올리고, 적이 순간이동처럼 보이면 내릴 것.
-- 💥 **타격 폭발 크기 0.5** — 공격 범위(3.2유닛)에 견줘 너무 작거나 크면 `SwingImpactVfxScale`. 범위가 눈에 안 잡히면 Sword Slash 계열로 바꾸는 안도 있다.
+- 💥 **타격 이펙트는 별도 VFX가 아니라 4번째 프레임 그림에 그려져 있다**(사용자 아트). Vefects 파티클을 겹쳐 봤으나 도트를 가려서 뺐다 — 연출을 더하려면 코드가 아니라 **그림 쪽**을 먼저 볼 것.
+  ⚠️ 그림상 충격파는 pivot에서 왼쪽 **3.5유닛**까지인데 판정(`SwingReach`)은 **4.2**다. 판정이 0.7유닛 관대한 쪽이며 **의도된 것**(사용자 결정).
 - 🔒 **해금 포스터** — **스킬트리 창**(Btn_업그레이드) 우측 하단. 지금은 배경이 **단색 패널**이라 원티드 포스터 그림이 들어가야 한다.
 
 ### 🔎 플레이 확인 대기 (세션25 변경분)
@@ -174,8 +175,7 @@
 | 후반 난이도 | `StageTable.extendedHpGrowth` → `ambushCount` → 적 체력 순 |
 | 휘두르기 손맛 | `PlayerSkills.SwingReach`(**4.2** 앞쪽 사거리) / `SwingHalfHeight`(2.0 위아래) / `SwingKnockback`(0.8 밀어내는 거리). 피해·쿨은 `Prog_Swing.asset` |
 | 파인애플 맷집 | `Char_Pineapple.baseHealth`(**150**, 딸기의 1.5배). 사거리가 짧아 적을 가까이 붙여야 하는 근접 캐릭터라 체력으로 보상한 것 |
-| 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(0.375초 = 돌망치가 땅에 닿는 마지막 프레임). ⚠️ **`Pinapple_Attack.anim` 길이와 한 세트** — 클립을 8fps·4프레임(0.5초)에서 바꾸면 이 값도 같이 고칠 것 |
-| 휘두르기 이펙트 크기 | `PlayerSkills.SwingImpactVfxScale`(0.5). 프리팹은 씬 `Player`의 `swingImpactVfxPrefab`(Vefects Explosion Small) |
+| 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(**0.3초** = 충격파가 그려진 4번째 프레임). ⚠️ **`Pinapple_Attack.anim`과 한 세트** — 클립은 5프레임(1~4는 100ms, 5는 200ms, 총 0.6초)이라 프레임 타이밍을 바꾸면 이 값도 같이 고칠 것 |
 | 파인애플 해금 난이도 | `Char_Pineapple.requiredEssenceEarned`(300) / `requiredClearMap`+`requiredClearAscension`(블루베리 밭 승천1). **둘 다** 충족해야 열린다 |
 
 ---
