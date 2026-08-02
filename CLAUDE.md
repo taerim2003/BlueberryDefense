@@ -116,6 +116,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### 🧰 못 미더운 MCP 툴 — 우회법
 > `scene-open`·`console-get-logs`는 훅이 막고 대안까지 알려준다(세션25에 실제 차단 확인). 아래는 훅이 안 잡는 것들.
+- **씬의 컴포넌트를 코드로 찾기 전에 `SCENE_MAP.md`부터 볼 것.** "프리팹이겠지"라고 넘겨짚고 프리팹 전수 검색을 짰다가 헛돈 적 있다(세션26 — 플레이어는 프리팹이 아니라 **SampleScene의 씬 오브젝트**다. 지도에 적혀 있었다).
 - **`gameobject-duplicate`** — 반환값이 원본을 가리킨다. → 복제 후 **부모를 재조회**해 `"(N)"` 접미사로 찾기.
 - **`script-execute`** — 관련 동작은 한 호출에 몰되(중간 도메인 리로드로 상태 리셋), **플레이모드 상태 전이만은 한 호출에 하나씩**. 문자열에 이스케이프 따옴표(`\"`) 금지(`"a" + var + "b"`로).
 
