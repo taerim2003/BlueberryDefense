@@ -172,7 +172,8 @@
 | 맵의 레인 높이 | `MapDefinition.cameraYLift` (해안가 2.2). ⚠️ **서핑 강하 띠와 한 세트** — 리프트를 바꾸면 서핑 높이도 같이 움직인다 |
 | 적 접촉 거리 | `BalanceConstants.ContactStopDistance`(2.55). ⚠️ **`HeadbuttLungeDistance`·`AmbushBandMaxX`와 3종 세트** — 하나만 바꾸면 박치기가 허공을 치거나 중간 소환이 대응 불가가 된다 |
 | 후반 난이도 | `StageTable.extendedHpGrowth` → `ambushCount` → 적 체력 순 |
-| 휘두르기 손맛 | `PlayerSkills.SwingReach`(3.2 사거리) / `SwingHalfHeight`(2.0 위아래) / `SwingKnockback`(0.8 밀어내는 거리). 피해·쿨은 `Prog_Swing.asset` |
+| 휘두르기 손맛 | `PlayerSkills.SwingReach`(**4.2** 앞쪽 사거리) / `SwingHalfHeight`(2.0 위아래) / `SwingKnockback`(0.8 밀어내는 거리). 피해·쿨은 `Prog_Swing.asset` |
+| 파인애플 맷집 | `Char_Pineapple.baseHealth`(**150**, 딸기의 1.5배). 사거리가 짧아 적을 가까이 붙여야 하는 근접 캐릭터라 체력으로 보상한 것 |
 | 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(0.375초 = 돌망치가 땅에 닿는 마지막 프레임). ⚠️ **`Pinapple_Attack.anim` 길이와 한 세트** — 클립을 8fps·4프레임(0.5초)에서 바꾸면 이 값도 같이 고칠 것 |
 | 휘두르기 이펙트 크기 | `PlayerSkills.SwingImpactVfxScale`(0.5). 프리팹은 씬 `Player`의 `swingImpactVfxPrefab`(Vefects Explosion Small) |
 | 파인애플 해금 난이도 | `Char_Pineapple.requiredEssenceEarned`(300) / `requiredClearMap`+`requiredClearAscension`(블루베리 밭 승천1). **둘 다** 충족해야 열린다 |

@@ -17,7 +17,7 @@ MonoBehaviour:
   portrait: {fileID: 21300000, guid: 8aef0eec29c647e4490556bcad9dc15d, type: 3}
   sprite: {fileID: 21300000, guid: 8aef0eec29c647e4490556bcad9dc15d, type: 3}
   animatorController: {fileID: 9100000, guid: 00abcbb71ded0c5468aa1df1cd06665c, type: 2}
-  baseHealth: 100
+  baseHealth: 150
   unlockedFromStart: 0
   requiredEssenceEarned: 300
   requiredClearMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}

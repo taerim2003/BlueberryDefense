@@ -1281,7 +1281,7 @@ public class PlayerSkills : MonoBehaviour
     // 딸기의 화살 쏘기 자리를 대신하는 주력기. 사거리가 짧은 대신 쿨이 짧고, 맞은 적을 왼쪽으로
     // 밀어내 방어선을 되돌린다(디펜스에서 시간을 버는 것이 이 스킬의 정체성).
     // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
-    private const float SwingReach = 3.2f;       // 플레이어 앞(왼쪽) 사거리
+    private const float SwingReach = 4.2f;       // 플레이어 앞(왼쪽) 사거리
     private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
     private const float SwingKnockback = 0.8f;   // 밀어내는 거리
     private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
