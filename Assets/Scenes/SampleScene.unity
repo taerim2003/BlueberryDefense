@@ -17858,6 +17858,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 921380bd38169c04ca2e3e79b5c98768, type: 2}
   - {fileID: 11400000, guid: ba822b78bc448064092ed4d90b5ebc22, type: 2}
   - {fileID: 11400000, guid: fd55d38797e584443a8fb2f5dbae2b2b, type: 2}
+  - {fileID: 11400000, guid: 1e2e43137c3b25d4cbcd71a119f06c7e, type: 2}
   whirlwindCastSfx: {fileID: 8300000, guid: d67f03353b0af11458c48b58c4fb6643, type: 3}
   orbCastSfx: {fileID: 8300000, guid: 8128e2ee266d24e44a191ae9c3c17422, type: 3}
   eagleDropCastSfx: {fileID: 8300000, guid: 083749770b551ea4788c541137ab631b, type: 3}

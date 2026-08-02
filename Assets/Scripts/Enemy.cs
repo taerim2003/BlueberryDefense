@@ -584,6 +584,17 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
     }
 
+    // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 즉시 물러나게 한다.
+    // x만 만지므로 콩콩이 도약(y 절대 대입)·서핑 너울(y 차분 누적)과 섞여도 높이가 어긋나 쌓이지 않는다.
+    // 박치기 돌진 중이면 AdvanceLunge가 매 프레임 holdBaseX 기준으로 x를 덮어쓰므로 복귀 기준점도 같이 밀어야
+    // 돌진이 끝나는 순간 원래 자리로 되돌아가 버리지 않는다.
+    public void ApplyKnockback(float distance)
+    {
+        if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
+        transform.position += Vector3.left * distance;
+        holdBaseX -= distance;
+    }
+
     public void ApplyVulnerable(float multiplier, float duration)
     {
         vulnerableMultiplier = multiplier;

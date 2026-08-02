@@ -252,7 +252,7 @@ public class PlayerPassives : MonoBehaviour
         {
             case PassiveSkillId.Strength:
                 if (skills != null) lines.Add($"전체 피해량 +{Pct(skills.PassiveDamageMultiplier - 1f)}%");
-                if (BasicAttackDamageMultiplierBonus > 0f) lines.Add($"기본 공격 피해량 +{Pct(BasicAttackDamageMultiplierBonus)}%");
+                if (BasicAttackDamageMultiplierBonus > 0f) lines.Add($"화살 쏘기 피해량 +{Pct(BasicAttackDamageMultiplierBonus)}%");
                 break;
 
             case PassiveSkillId.Health:

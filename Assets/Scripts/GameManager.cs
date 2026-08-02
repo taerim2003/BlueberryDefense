@@ -116,6 +116,9 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Clear");
         BankRunCurrency();
         AscensionSave.UnlockUpTo(RunConfig.AscensionLevel + 1); // 이 등급 클리어 → 다음 승천 해금(StS식 루프)
+        // 어느 맵을 어느 등급까지 깼는지 따로 남긴다 — 캐릭터 해금 조건이 맵을 특정해서 묻는다.
+        if (RunConfig.Map != null)
+            MapClearSave.RecordClear(RunConfig.Map.name, RunConfig.AscensionLevel);
         Time.timeScale = 0f;
     }
 

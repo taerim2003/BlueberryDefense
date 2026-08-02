@@ -23,6 +23,9 @@ public class CharacterSelectUI : MonoBehaviour
     // 선택이 바뀌면 발생. MapSelectUI가 구독해 현재 캐릭터 표시를 갱신한다.
     public event Action OnSelectionChanged;
 
+    // 잠긴 캐릭터 카드의 초상화 색 — 거의 검은 실루엣만 남긴다.
+    private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
+
     private readonly List<GameObject> cardFrames = new List<GameObject>();
     private int selectedIndex;   // 기본 0 = 로스터 첫 캐릭터(= 프리팹 기본값과 동일)
     private bool built;
@@ -62,17 +65,22 @@ public class CharacterSelectUI : MonoBehaviour
             var card = Instantiate(cardTemplate, cardContainer);
             card.SetActive(true);
 
+            bool locked = chr != null && !chr.IsUnlocked;
+
             var thumb = card.transform.Find("Thumb")?.GetComponent<Image>();
             if (thumb != null)
             {
                 bool hasPortrait = chr != null && chr.portrait != null;
                 if (hasPortrait) thumb.sprite = chr.portrait;
                 thumb.enabled = hasPortrait; // 초상화 없으면 빈 박스 대신 숨김(이름만 표시)
+                // 잠긴 캐릭터는 실루엣으로만 보여준다 — 뭐가 있는지는 알되 누군지는 모르게.
+                thumb.color = locked ? LockedSilhouette : Color.white;
             }
 
             var nameText = card.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null && chr != null)
-                nameText.text = string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName;
+                nameText.text = locked ? "???"
+                    : (string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName);
 
             var frame = card.transform.Find("Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);
@@ -80,13 +88,20 @@ public class CharacterSelectUI : MonoBehaviour
 
             int idx = i; // 클로저 캡처
             var btn = card.GetComponent<Button>();
-            if (btn != null) btn.onClick.AddListener(() => Pick(idx));
+            if (btn != null)
+            {
+                btn.interactable = !locked; // 잠긴 카드는 눌러도 선택되지 않는다
+                btn.onClick.AddListener(() => Pick(idx));
+            }
         }
     }
 
     // 카드 클릭: 선택 확정 → 표시 갱신 알림 → 팝업 닫기.
     private void Pick(int index)
     {
+        if (characters != null && index >= 0 && index < characters.Length
+            && characters[index] != null && !characters[index].IsUnlocked) return; // 잠긴 캐릭터는 선택 불가
+
         selectedIndex = index;
         Highlight(index);
         OnSelectionChanged?.Invoke();

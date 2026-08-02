@@ -18,6 +18,10 @@ MonoBehaviour:
   sprite: {fileID: 0}
   animatorController: {fileID: 0}
   baseHealth: 100
+  unlockedFromStart: 1
+  requiredEssenceEarned: 0
+  requiredClearMap: {fileID: 0}
+  requiredClearAscension: 1
   startingSkill: 0
-  allowedActivePool: 
+  allowedActivePool: 000000000100000002000000030000000400000005000000060000000700000008000000
   allowedPassivePool: 

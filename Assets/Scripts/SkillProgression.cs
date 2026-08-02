@@ -55,8 +55,9 @@ public class SkillProgression : ScriptableObject
     // ── 현행 재현 규칙 (폴백 + 에셋 생성의 단일 진실원) ─────────────────────
     // 리팩토링 전 PlayerSkills의 레벨업 로직·기본 수치를 그대로 옮긴 것(현행 재현의 기준).
     public const float DefaultCooldownMult = 0.95f;
+    // 캐릭터 주력기(딸기 화살 쏘기·파인애플 휘두르기)는 매 판 쓰는 기본 딜링이라 후반 과성장을 억제한다.
     public static float DefaultDamageMult(ActiveSkillId id) =>
-        id == ActiveSkillId.BasicAttack ? 1.13f : 1.2f; // 기본공격은 후반 과성장 억제
+        id == ActiveSkillId.BasicAttack || id == ActiveSkillId.Swing ? 1.13f : 1.2f;
 
     public static float DefaultBaseCooldown(ActiveSkillId id) => id switch
     {
@@ -69,6 +70,7 @@ public class SkillProgression : ScriptableObject
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 14f,
         ActiveSkillId.Rewind => 6f,
+        ActiveSkillId.Swing => 1.8f,
         _ => 1f,
     };
 
@@ -83,6 +85,7 @@ public class SkillProgression : ScriptableObject
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 12f,
         ActiveSkillId.Rewind => 0f,
+        ActiveSkillId.Swing => 20f,
         _ => 6f,
     };
 

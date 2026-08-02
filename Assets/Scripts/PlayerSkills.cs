@@ -15,6 +15,7 @@ public enum ActiveSkillId
     Homing,   // 신규: 적 추적 미사일(성장형)
     Shotgun,  // 신규: 산탄 장착(타수 버프)
     Rewind,   // 신규: 다른 스킬 쿨타임을 앞당김(되감기)
+    Swing,    // 신규: 파인애플 전용 근접 광역 — 후려쳐서 뒤로 밀어낸다
     // enum 끝에 추가 — 아이콘 인덱스/저장값 유지
 }
 
@@ -504,6 +505,15 @@ public class PlayerSkills : MonoBehaviour
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.7f); // 쿨감 30%
                 break;
             // 되감기 Route1(되감기 정도)·Route2(다음 스킬 피해)는 FireRewind에서 실시간 계산
+
+            // 휘두르기 — 밀어내기 강화(path1 T2)·기절(T3)·판정 확대(path2 T2)·2연타(T3)는 FireSwing에서 실시간.
+            // 여기 T1 둘은 진화 1티어의 "체감되는 첫 걸음"을 만드는 영구 스탯이다.
+            case (ActiveSkillId.Swing, 1, 1):
+                skill.Damage *= 1.25f; // Route1 T1: 더 무거운 돌 = 피해 25%
+                break;
+            case (ActiveSkillId.Swing, 2, 1):
+                skill.Scale += 0.15f;  // Route2 T1: 휘두르는 반경(사거리·높이)이 커진다
+                break;
         }
     }
 
@@ -516,6 +526,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => PassiveSkillId.Knowledge,
         ActiveSkillId.Lightning => PassiveSkillId.Strength,
         ActiveSkillId.EagleDrop => PassiveSkillId.Health,
+        ActiveSkillId.Swing => PassiveSkillId.Strength,
         _ => null,
     };
 
@@ -526,12 +537,13 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Orb => ActiveSkillId.Lightning,
         ActiveSkillId.Lightning => ActiveSkillId.Whirlwind,
         ActiveSkillId.EagleDrop => ActiveSkillId.Whirlwind,
+        ActiveSkillId.Swing => ActiveSkillId.Whirlwind,
         _ => null,
     };
 
     public static string GetActiveSkillName(ActiveSkillId id) => id switch
     {
-        ActiveSkillId.BasicAttack => "기본 공격",
+        ActiveSkillId.BasicAttack => "화살 쏘기",
         ActiveSkillId.Whirlwind => "회오리",
         ActiveSkillId.Orb => "오브",
         ActiveSkillId.Lightning => "낙뢰",
@@ -540,6 +552,7 @@ public class PlayerSkills : MonoBehaviour
         ActiveSkillId.Homing => "호밍 미사일",
         ActiveSkillId.Shotgun => "산탄 장착",
         ActiveSkillId.Rewind => "되감기",
+        ActiveSkillId.Swing => "휘두르기",
         _ => id.ToString(),
     };
 
@@ -757,6 +770,13 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Rewind, 2, 2) => "더 빨라진다",
         (ActiveSkillId.Rewind, 2, 3) => "모든 것이 절반의 시간에 돌아온다",
 
+        (ActiveSkillId.Swing, 1, 1) => "돌이 더 무거워진다",
+        (ActiveSkillId.Swing, 1, 2) => "맞으면 저만치 나가떨어진다",
+        (ActiveSkillId.Swing, 1, 3) => "얻어맞고는 한참을 못 일어난다",
+        (ActiveSkillId.Swing, 2, 1) => "팔이 더 크게 돈다",
+        (ActiveSkillId.Swing, 2, 2) => "한 번에 훨씬 넓게 쓸어담는다",
+        (ActiveSkillId.Swing, 2, 3) => "한 번 휘두르면 두 번 지나간다",
+
         _ => "",
     };
 
@@ -853,6 +873,13 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Rewind, 2, 2) => "더 빨리",
         (ActiveSkillId.Rewind, 2, 3) => "절반의 시간",
 
+        (ActiveSkillId.Swing, 1, 1) => "무거워진 돌",
+        (ActiveSkillId.Swing, 1, 2) => "나가떨어진다",
+        (ActiveSkillId.Swing, 1, 3) => "일어나질 못한다",
+        (ActiveSkillId.Swing, 2, 1) => "크게 도는 팔",
+        (ActiveSkillId.Swing, 2, 2) => "한 아름씩",
+        (ActiveSkillId.Swing, 2, 3) => "두 번 지나간다",
+
         _ => "",
     };
 
@@ -904,6 +931,9 @@ public class PlayerSkills : MonoBehaviour
                 break;
             case ActiveSkillId.Rewind:
                 FireRewind(skill);
+                break;
+            case ActiveSkillId.Swing:
+                FireSwing(damage, critChance, skill);
                 break;
         }
 
@@ -1244,6 +1274,53 @@ public class PlayerSkills : MonoBehaviour
             if (s.Damage > bestDmg) { bestDmg = s.Damage; best = s.Id; }
         }
         return best;
+    }
+
+    // ── 휘두르기(파인애플 전용): 앞의 적을 돌망치로 후려쳐 뒤로 밀어낸다 ──
+    // 딸기의 화살 쏘기 자리를 대신하는 주력기. 사거리가 짧은 대신 쿨이 짧고, 맞은 적을 왼쪽으로
+    // 밀어내 방어선을 되돌린다(디펜스에서 시간을 버는 것이 이 스킬의 정체성).
+    // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
+    private const float SwingReach = 3.2f;       // 플레이어 앞(왼쪽) 사거리
+    private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
+    private const float SwingKnockback = 0.8f;   // 밀어내는 거리
+    private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
+
+    private void FireSwing(float damage, float critChance, EquippedSkill skill)
+    {
+        animator.SetTrigger("Attack");
+
+        // Route2(회오리 연계, path2): 사거리·판정 확대 → T3에서 한 번 더 휘두른다.
+        float reachMult = skill.PathTier[2] >= 2 ? 1.45f : 1f;
+        int swings = skill.PathTier[2] >= 3 ? 2 : 1;
+        // Route1(힘 연계, path1): 밀어내는 거리 증가 → T3에서 기절까지.
+        float knockMult = skill.PathTier[1] >= 2 ? 1.8f : 1f;
+        bool stun = skill.PathTier[1] >= 3;
+
+        float reach = SwingReach * reachMult * skill.Scale;
+        float halfHeight = SwingHalfHeight * reachMult * skill.Scale;
+        float knockback = SwingKnockback * knockMult;
+
+        for (int s = 0; s < swings; s++)
+            SwingHit(damage, critChance, reach, halfHeight, knockback, stun);
+    }
+
+    private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun)
+    {
+        float px = transform.position.x;
+        float py = transform.position.y;
+
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (e == null || !e.IsAlive) continue;
+            Vector3 p = e.transform.position;
+            float dx = px - p.x;
+            if (dx < -SwingBehindMargin || dx > reach) continue;
+            if (Mathf.Abs(p.y - py) > halfHeight) continue;
+
+            e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);
+            e.ApplyKnockback(knockback);
+            if (stun) e.ApplySlow(0f, 0.8f);
+        }
     }
 
     // ── 되감기: 다른 스킬의 쿨타임을 앞당긴다 ──

@@ -37,6 +37,7 @@ public static class EvolutionRoutes
     //   호밍     0(미사일 수)   — 레벨업 축(ProjectileCount)과 중복
     //   산탄     0(타수)        — 레벨업 축과 중복
     //   되감기   0(되감기 시간) — 레벨업 축(RewindAmount)과 중복
+    //   휘두르기 0(사거리·크기) — 레벨업 축(Scale)과 중복
     public static int RoutePath(ActiveSkillId id, int route) => (id, route) switch
     {
         (ActiveSkillId.BasicAttack, 0) => 1, (ActiveSkillId.BasicAttack, _) => 2,
@@ -48,6 +49,7 @@ public static class EvolutionRoutes
         (ActiveSkillId.Homing, 0) => 1,      (ActiveSkillId.Homing, _) => 2,
         (ActiveSkillId.Shotgun, 0) => 1,     (ActiveSkillId.Shotgun, _) => 2,
         (ActiveSkillId.Rewind, 0) => 1,      (ActiveSkillId.Rewind, _) => 2,
+        (ActiveSkillId.Swing, 0) => 1,       (ActiveSkillId.Swing, _) => 2,
         _ => route == 0 ? 0 : 1,
     };
 
@@ -141,6 +143,11 @@ public static class EvolutionRoutes
         (ActiveSkillId.Rewind, 0, 2) => "과부하 되감기",
         (ActiveSkillId.Rewind, 1, 1) => "가속 되감기",
         (ActiveSkillId.Rewind, 1, 2) => "시간 붕괴",
+
+        (ActiveSkillId.Swing, 0, 1) => "박살내기",
+        (ActiveSkillId.Swing, 0, 2) => "지진 강타",
+        (ActiveSkillId.Swing, 1, 1) => "휩쓸기",
+        (ActiveSkillId.Swing, 1, 2) => "폭풍 휩쓸기",
 
         _ => PlayerSkills.GetActiveSkillName(id),
     };
