@@ -32,6 +32,7 @@ Canvas
  ├─ Btn_플레이 · Btn_업그레이드 · Btn_컬렉션 · Btn_설정 · Btn_종료   (각 +Text 자식)
  ├─ SkillTreeRoot  [activeSelf=false — 버튼으로 여는 전체화면 패널]
  │    Viewport/Content · Title · EssenceText · CloseButton · Tooltip(Name/Desc/Cost)
+ │    · UnlockPoster(우측 하단, 다음 해금 캐릭터 실루엣+조건)   ← 세션26
  ├─ MapSelectRoot  [activeSelf=false — Btn_플레이가 여는 맵 선택 패널, Phase 2]
  │    Title · CardContainer(HorizontalLayoutGroup) · CardTemplate(비활성 원본:
  │    Frame/Bg/Thumb/Name 자식) · StartButton · BackButton
@@ -45,6 +46,7 @@ Controllers   ← TitleController + SkillTreeUI + MapSelectUI + CharacterSelectU
 **핵심 배선:**
 - **`Controllers`** = 씬의 로직 허브. `TitleController`(메뉴 버튼), `SkillTreeUI`(SkillTreeRoot 패널), `MapSelectUI`(MapSelectRoot 패널), `CharacterSelectUI`(CharacterSelectRoot 팝업)가 여기 함께 붙어 있음. **새 화면 컨트롤러도 여기 붙이는 게 일관적.**
 - **`SkillTreeRoot`** = "버튼으로 토글하는 전체화면 패널"의 **모범 사례**. 기본 비활성, `Controllers`의 컨트롤러가 On/Off.
+  - **`UnlockPoster`**(세션26) = 다음에 열릴 캐릭터를 실루엣+조건 진행도로 띄우는 원티드 포스터. `CharacterUnlockPoster`가 붙어 있고, 자식 `Panel`을 껐다 켠다(**컴포넌트가 붙은 오브젝트 자체는 항상 켜 둘 것** — 자기를 끄면 다음에 패널이 열려도 `OnEnable`이 안 돌아 갱신 기회를 잃는다). 해금 조건이 누적 정수라 **정수를 쓰는 이 화면**에 둔다 — 캐릭터를 *고르는* 것은 `CharacterSelectRoot` 담당으로 역할이 갈린다.
 - **`MapSelectRoot`**(Phase 2) = 맵 선택 패널. `Btn_플레이`→`TitleController.Play()`→`MapSelectUI.Open()`. 카드는 `CardTemplate`(자식 Frame/Bg/Thumb/Name)을 맵 수만큼 런타임 복제. 카드 클릭=선택(Frame 하이라이트), **`StartButton`이 확인 단계** — `RunConfig.Map=선택맵`+`RunConfig.Character=선택캐릭터` 후 `SampleScene` 로드. `maps[]`(SerializeField)에 MapDefinition 드래그로 로스터 확장(**현재 3장** — 블루베리 밭 / 해안가 / 광활한 밭).
 - **`CharacterSelectRoot`**(Phase 4) = 맵 화면 위에 뜨는 캐릭터 선택 팝업. `MapSelectRoot`를 복제해 만듦(StartButton 제거). `MapSelectRoot/ChangeCharButton`→`CharacterSelectUI.Open()`. **카드 클릭 = 즉시 선택+팝업 닫힘**(맵과 달리 확인 단계 없음), `OnSelectionChanged`로 `MapSelectUI`가 `CharNameLabel`을 갱신. `characters[]`(SerializeField)에 CharacterDefinition 드래그로 로스터 확장(현재 `Char_Strawberry` 1종, `displayName`="딸기"). 초상화(`portrait`)는 아직 미설정 → 카드 Thumb 숨김·이름만 표시.
 - `Btn_컬렉션`·`Btn_설정`은 현재 리스너 미연결(향후 자리).
