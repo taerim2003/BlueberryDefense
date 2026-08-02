@@ -129,7 +129,11 @@
 - ✅ `Pinapple_Idle`(대기 1장) / `Pinapple_Attack`(공격 4프레임·10fps) / `Pinapple.controller`(딸기와 같은 `Attack` 트리거 구조 → 코드 수정 없이 붙음)
 - ✅ `Char_Pineapple.asset` — Title 씬 `CharacterSelectUI.characters`에 배선됨
 - ✅ 딸기 기본공격 → **"화살 쏘기"** (`PlayerSkills.GetActiveSkillName` + `PlayerPassives` 힘 설명줄)
-- ✅ **휘두르기**(`ActiveSkillId.Swing`) — 앞 근접 광역 즉발 + 넉백. 비행 적도 맞음. 진화 2루트(힘 연계=밀어내기↑→기절 / 회오리 연계=범위↑→2연타)
+- ✅ **휘두르기**(`ActiveSkillId.Swing`) — 앞 근접 광역 즉발 + 넉백. 비행 적도 맞음. 피해는 **4번째 프레임**(0.225초)에 들어간다
+- ✅ **휘두르기 진화 2루트** (사용자 설계)
+  - **1루트**(힘 연계) — 1차 `쓸어치기`: 타격 범위 1.45배 / 2차 `박살내기`: 밀쳐진 적 **0.5초 기절**
+  - **2루트**(회오리 연계) — 1차 `지진파`: 맵 끝까지 달리는 **충격파**(본체 피해 60%·살짝 밀침) / 2차 `대지 균열`: 충격파 피해 100%·넉백 강화
+  - 충격파는 [SwingShockwave.cs](Assets/Scripts/SwingShockwave.cs) + `Assets/Prefabs/Swing_Shockwave.prefab`. **관통 무제한**(방패도 못 막음), 같은 적은 1회만
 - ✅ **캐릭터 전용 풀** — 딸기는 휘두르기 제외, 파인애플은 화살 쏘기 제외(`allowedActivePool` 양쪽 명시)
 - ✅ **해금 조건**: 누적 정수 300 **+** 블루베리 밭 승천1 클리어(둘 다). `CharacterDefinition.unlockedFromStart/requiredEssenceEarned/requiredClearMap/requiredClearAscension`
 - ✅ **해금 포스터** — `SkillTreeRoot/UnlockPoster` (스킬트리 창 우측 하단, 실루엣 + 조건 진행도). 정수를 쓰는 화면에서 해금 진행도를 같이 본다
@@ -175,6 +179,7 @@
 | 후반 난이도 | `StageTable.extendedHpGrowth` → `ambushCount` → 적 체력 순 |
 | 휘두르기 손맛 | `PlayerSkills.SwingReach`(**4.8** 앞쪽 사거리) / `SwingHalfHeight`(2.0 위아래) / `SwingKnockback`(0.8 밀어내는 거리). 피해 20·쿨 **1.5초**는 `Prog_Swing.asset` |
 | 파인애플 맷집 | `Char_Pineapple.baseHealth`(**150**, 딸기의 1.5배). 사거리가 짧아 적을 가까이 붙여야 하는 근접 캐릭터라 체력으로 보상한 것 |
+| 휘두르기 진화 세기 | `PlayerSkills`의 `Shockwave*` 상수(피해비 0.6/1.0 · 넉백 0.35/0.55 · 출발점 1.6) / `SwingStunDuration`(0.5초). 충격파 속도·수명은 프리팹 `Swing_Shockwave`의 `moveSpeed`(16)·`lifetime`(2.5초) |
 | 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(**0.225초** = 충격파가 그려진 4번째 프레임). ⚠️ **`Pinapple_Attack.anim`과 한 세트** — 클립은 5프레임(1~4는 75ms, 5는 **225ms**, 총 0.525초)이라 프레임 타이밍을 바꾸면 이 값도 같이 고칠 것 |
 | 휘두르기 모션 속도 | `Pinapple_Attack.anim` 키 시각. ⚠️ Unity는 PPtr 클립 길이를 **마지막 키 + 1/frameRate**로 잡는다 — 마지막 프레임을 길게 유지하려면 같은 스프라이트로 유지 키를 하나 더 박고 frameRate로 끝을 맞출 것(지금은 frameRate 40, 유지 키 0.5s → length 0.525s) |
 | 파인애플 해금 난이도 | `Char_Pineapple.requiredEssenceEarned`(300) / `requiredClearMap`+`requiredClearAscension`(블루베리 밭 승천1). **둘 다** 충족해야 열린다 |

@@ -147,6 +147,7 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject overkillSplashVfxPrefab;  // Route2 초과데미지 연쇄 전용 VFX(Vefects Impact Sparks)
     [SerializeField] private float overkillSplashVfxScale = 0.5f;
     [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
+    [SerializeField] private GameObject swingShockwavePrefab;     // 휘두르기 2루트 진화: 맵 끝까지 달리는 충격파
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
     [SerializeField] private SkillProgression[] progressions; // 스킬별 시작값+레벨 커브(Tier A). 미할당/미포함 스킬은 코드 기본 규칙 폴백(=현행)
@@ -506,14 +507,9 @@ public class PlayerSkills : MonoBehaviour
                 break;
             // 되감기 Route1(되감기 정도)·Route2(다음 스킬 피해)는 FireRewind에서 실시간 계산
 
-            // 휘두르기 — 밀어내기 강화(path1 T2)·기절(T3)·판정 확대(path2 T2)·2연타(T3)는 FireSwing에서 실시간.
-            // 여기 T1 둘은 진화 1티어의 "체감되는 첫 걸음"을 만드는 영구 스탯이다.
-            case (ActiveSkillId.Swing, 1, 1):
-                skill.Damage *= 1.25f; // Route1 T1: 더 무거운 돌 = 피해 25%
-                break;
-            case (ActiveSkillId.Swing, 2, 1):
-                skill.Scale += 0.15f;  // Route2 T1: 휘두르는 반경(사거리·높이)이 커진다
-                break;
+            // 휘두르기는 영구 스탯 변경이 없다 — 범위 확대·기절(path1)·충격파(path2) 전부
+            // FireSwing/SwingRoutine에서 PathTier를 실시간으로 읽어 처리한다.
+            // (진화 자체의 피해 1.5배·쿨 0.9배는 EvolutionRoutes가 공통으로 얹는다.)
         }
     }
 
@@ -770,12 +766,12 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Rewind, 2, 2) => "더 빨라진다",
         (ActiveSkillId.Rewind, 2, 3) => "모든 것이 절반의 시간에 돌아온다",
 
-        (ActiveSkillId.Swing, 1, 1) => "돌이 더 무거워진다",
-        (ActiveSkillId.Swing, 1, 2) => "맞으면 저만치 나가떨어진다",
-        (ActiveSkillId.Swing, 1, 3) => "얻어맞고는 한참을 못 일어난다",
-        (ActiveSkillId.Swing, 2, 1) => "팔이 더 크게 돈다",
-        (ActiveSkillId.Swing, 2, 2) => "한 번에 훨씬 넓게 쓸어담는다",
-        (ActiveSkillId.Swing, 2, 3) => "한 번 휘두르면 두 번 지나간다",
+        (ActiveSkillId.Swing, 1, 1) => "팔이 더 크게 돈다",
+        (ActiveSkillId.Swing, 1, 2) => "한 번에 훨씬 넓게 쓸어담는다",
+        (ActiveSkillId.Swing, 1, 3) => "밀쳐진 것들이 한동안 일어나질 못한다",
+        (ActiveSkillId.Swing, 2, 1) => "내려찍은 충격이 땅을 타고 번진다",
+        (ActiveSkillId.Swing, 2, 2) => "그 충격이 저 끝까지 달려나간다",
+        (ActiveSkillId.Swing, 2, 3) => "달려나가는 충격이 훨씬 사나워진다",
 
         _ => "",
     };
@@ -873,12 +869,12 @@ public class PlayerSkills : MonoBehaviour
         (ActiveSkillId.Rewind, 2, 2) => "더 빨리",
         (ActiveSkillId.Rewind, 2, 3) => "절반의 시간",
 
-        (ActiveSkillId.Swing, 1, 1) => "무거워진 돌",
-        (ActiveSkillId.Swing, 1, 2) => "나가떨어진다",
+        (ActiveSkillId.Swing, 1, 1) => "크게 도는 팔",
+        (ActiveSkillId.Swing, 1, 2) => "한 아름씩",
         (ActiveSkillId.Swing, 1, 3) => "일어나질 못한다",
-        (ActiveSkillId.Swing, 2, 1) => "크게 도는 팔",
-        (ActiveSkillId.Swing, 2, 2) => "한 아름씩",
-        (ActiveSkillId.Swing, 2, 3) => "두 번 지나간다",
+        (ActiveSkillId.Swing, 2, 1) => "땅을 타는 충격",
+        (ActiveSkillId.Swing, 2, 2) => "끝까지 달린다",
+        (ActiveSkillId.Swing, 2, 3) => "사나운 진동",
 
         _ => "",
     };
@@ -1290,7 +1286,13 @@ public class PlayerSkills : MonoBehaviour
     // Pinapple_Attack = 5프레임: 1~4는 각 75ms, 마지막 5번째만 225ms(총 0.525초). 4번째 시작 = 0.225초.
     // ⚠️ 클립 타이밍을 바꾸면 이 값도 같이 고칠 것 — 어긋나면 휘두르기도 전에 적이 날아간다.
     private const float SwingImpactDelay = 0.225f;
-    private const float SwingSecondHitDelay = 0.12f;  // 진화 2연타(회오리 연계 T3)의 두 번째 타격 간격
+    // 2루트 진화 충격파 — 본체보다 약하게 때리고 "살짝" 밀어낸다(기본 넉백 0.8의 절반 이하).
+    private const float ShockwaveSpawnOffset = 1.6f;            // 내려찍은 지점에서 출발
+    private const float ShockwaveDamageRatio = 0.6f;            // 진화 1차: 본체 피해의 60%
+    private const float ShockwaveEmpoweredDamageRatio = 1f;     // 진화 2차: 본체와 같은 피해
+    private const float ShockwaveKnockback = 0.35f;
+    private const float ShockwaveEmpoweredKnockback = 0.55f;
+    private const float SwingStunDuration = 0.5f;               // 1루트 진화 2차: 밀쳐진 적 기절
 
     private void FireSwing(float damage, float critChance, EquippedSkill skill)
     {
@@ -1300,26 +1302,36 @@ public class PlayerSkills : MonoBehaviour
 
     private IEnumerator SwingRoutine(float damage, float critChance, EquippedSkill skill)
     {
-        // Route2(회오리 연계, path2): 사거리·판정 확대 → T3에서 한 번 더 휘두른다.
-        float reachMult = skill.PathTier[2] >= 2 ? 1.45f : 1f;
-        int swings = skill.PathTier[2] >= 3 ? 2 : 1;
-        // Route1(힘 연계, path1): 밀어내는 거리 증가 → T3에서 기절까지.
-        float knockMult = skill.PathTier[1] >= 2 ? 1.8f : 1f;
+        // Route1(힘 연계, path1): 진화 1차 = 타격 범위 확대 / 2차 = 밀쳐진 적 기절.
+        float reachMult = skill.PathTier[1] >= 2 ? 1.45f : 1f;
         bool stun = skill.PathTier[1] >= 3;
+        // Route2(회오리 연계, path2): 진화 1차 = 맵 끝까지 가는 충격파 / 2차 = 그 충격파가 강해진다.
+        bool shockwave = skill.PathTier[2] >= 2;
+        bool empoweredShock = skill.PathTier[2] >= 3;
 
         float reach = SwingReach * reachMult * skill.Scale;
         float halfHeight = SwingHalfHeight * reachMult * skill.Scale;
-        float knockback = SwingKnockback * knockMult;
 
         yield return new WaitForSeconds(SwingImpactDelay); // 내려찍는 순간까지 기다린다
 
         // 타격 이펙트는 별도 VFX가 아니라 **4번째 프레임 그림에 그려져 있다**(사용자 아트).
         // 파티클을 겹쳐 봤지만 도트 그림을 가려서 뺐다 — 연출을 더하려면 그림 쪽을 먼저 볼 것.
-        for (int s = 0; s < swings; s++)
-        {
-            SwingHit(damage, critChance, reach, halfHeight, knockback, stun);
-            if (s + 1 < swings) yield return new WaitForSeconds(SwingSecondHitDelay);
-        }
+        SwingHit(damage, critChance, reach, halfHeight, SwingKnockback, stun);
+
+        if (shockwave) SpawnShockwave(damage, critChance, empoweredShock);
+    }
+
+    // 내려찍은 자리에서 맵 끝까지 달려나가는 충격파. 본체보다 약하게 때리고 살짝만 밀어낸다.
+    private void SpawnShockwave(float damage, float critChance, bool empowered)
+    {
+        if (swingShockwavePrefab == null) return;
+
+        Vector3 pos = transform.position + Vector3.left * ShockwaveSpawnOffset;
+        GameObject obj = Instantiate(swingShockwavePrefab, pos, Quaternion.identity);
+        SwingShockwave wave = obj.GetComponent<SwingShockwave>();
+        wave.Damage = damage * (empowered ? ShockwaveEmpoweredDamageRatio : ShockwaveDamageRatio);
+        wave.CritChance = critChance;
+        wave.Knockback = empowered ? ShockwaveEmpoweredKnockback : ShockwaveKnockback;
     }
 
     private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun)
@@ -1337,7 +1349,7 @@ public class PlayerSkills : MonoBehaviour
 
             e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);
             e.ApplyKnockback(knockback);
-            if (stun) e.ApplySlow(0f, 0.8f);
+            if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
         }
     }
 

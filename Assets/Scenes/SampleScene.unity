@@ -17846,6 +17846,7 @@ MonoBehaviour:
   overkillSplashVfxPrefab: {fileID: 4748681987041982144, guid: 69737fbfadd51ad49acee7f444182f95, type: 3}
   overkillSplashVfxScale: 0.5
   homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
+  swingShockwavePrefab: {fileID: 830679570193835966, guid: 4d97f9d976d13194084297fcab195f5f, type: 3}
   animator: {fileID: 2031227614}
   evolutionTextOverrides: {fileID: 11400000, guid: 82f64ce823e197443ae5ae43db44ee1f, type: 2}
   progressions:

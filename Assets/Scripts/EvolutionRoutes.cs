@@ -144,10 +144,10 @@ public static class EvolutionRoutes
         (ActiveSkillId.Rewind, 1, 1) => "가속 되감기",
         (ActiveSkillId.Rewind, 1, 2) => "시간 붕괴",
 
-        (ActiveSkillId.Swing, 0, 1) => "박살내기",
-        (ActiveSkillId.Swing, 0, 2) => "지진 강타",
-        (ActiveSkillId.Swing, 1, 1) => "휩쓸기",
-        (ActiveSkillId.Swing, 1, 2) => "폭풍 휩쓸기",
+        (ActiveSkillId.Swing, 0, 1) => "쓸어치기",
+        (ActiveSkillId.Swing, 0, 2) => "박살내기",
+        (ActiveSkillId.Swing, 1, 1) => "지진파",
+        (ActiveSkillId.Swing, 1, 2) => "대지 균열",
 
         _ => PlayerSkills.GetActiveSkillName(id),
     };
