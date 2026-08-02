@@ -138,6 +138,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 7. 세션 시작 루틴
 
 0. **코딩 첫 세션이면**: `SESSION_ZERO.md` 완료 여부 확인. 미완성이면 코딩 전에 채울 것.
+0-1. **노션 칸반보드 "POC 할일" 조회** — 할 일의 **원본**이다(§6-2). `시작 전`/`진행 중` 카드를 훑고, 이미 끝난 게 있으면 `완료`로 옮긴다. `HANDOFF.md`와 어긋나면 **칸반이 이긴다** — 어긋난 부분을 HANDOFF에 반영할 것.
 1. `HANDOFF.md` 읽어서 현재 상태 파악
 2. 코드 작업이 예상되면 `ARCHITECTURE.md` 함께 읽어 구조 파악 (폴더 책임·매니저 호출관계·"X 추가하려면 어디 손대나" 표)
 3. `GDD.md`는 `grep`으로 필요한 섹션만 조각내어 읽을 것 (`cat GDD.md` 금지)
@@ -158,8 +159,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 9. 세션 종료 시 반드시 할 것
 
-1. `HANDOFF.md` 업데이트 (빌드 상태 / 미해결 이슈 / 다음 할 일)
-2. **세션 일기 작성** → `d:\unity\prototyping-kit\journal\YYYY-MM-DD.md`
+1. **노션 칸반보드 정리** (§6-2) — 이번 세션에 끝낸 카드를 `완료`로, 손대기 시작한 카드를 `진행 중`으로 옮긴다. 새로 생긴 할 일은 카드로 만든다.
+   ⚠️ **"완료"는 코드로 확인한 것만.** 커밋했다고 완료가 아니라 동작을 확인한 것만 옮긴다. 애매하면 `진행 중`으로 두고 남은 것을 카드 본문에 적을 것.
+2. `HANDOFF.md` 업데이트 (빌드 상태 / 미해결 이슈 / 다음 할 일) — 칸반을 정리한 **뒤에** 그 결과를 반영한다.
+3. **세션 일기 작성** → `d:\unity\prototyping-kit\journal\YYYY-MM-DD.md`
    (틀: `templates\JOURNAL_ENTRY.md`. 게임이 아니라 *과정*의 회고. 하루 두 번째 세션이면 같은 파일에 `## 세션 N` 추가)
 3. git commit + push (변경 파일 전체 스테이징, origin main)
 
