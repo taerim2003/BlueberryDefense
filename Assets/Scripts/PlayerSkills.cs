@@ -1280,16 +1280,16 @@ public class PlayerSkills : MonoBehaviour
     // 딸기의 화살 쏘기 자리를 대신하는 주력기. 사거리가 짧은 대신 쿨이 짧고, 맞은 적을 왼쪽으로
     // 밀어내 방어선을 되돌린다(디펜스에서 시간을 버는 것이 이 스킬의 정체성).
     // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
-    private const float SwingReach = 4.2f;       // 플레이어 앞(왼쪽) 사거리
+    private const float SwingReach = 4.8f;       // 플레이어 앞(왼쪽) 사거리
     private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
     private const float SwingKnockback = 0.8f;   // 밀어내는 거리
     private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
 
     // 피해는 캐스트 순간이 아니라 **돌망치가 땅에 꽂히는 4번째 프레임**에 들어간다
     // (그 프레임에 사용자가 충격파를 직접 그려 넣었다 — 그림과 판정이 같은 순간이어야 한다).
-    // Pinapple_Attack = 5프레임: 1~4는 각 100ms, 마지막 5번째만 200ms(총 0.6초). 4번째 시작 = 0.3초.
+    // Pinapple_Attack = 5프레임: 1~4는 각 75ms, 마지막 5번째만 150ms(총 0.45초). 4번째 시작 = 0.225초.
     // ⚠️ 클립 타이밍을 바꾸면 이 값도 같이 고칠 것 — 어긋나면 휘두르기도 전에 적이 날아간다.
-    private const float SwingImpactDelay = 0.3f;
+    private const float SwingImpactDelay = 0.225f;
     private const float SwingSecondHitDelay = 0.12f;  // 진화 2연타(회오리 연계 T3)의 두 번째 타격 간격
 
     private void FireSwing(float damage, float critChance, EquippedSkill skill)

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Prog_Swing
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 9
-  baseCooldown: 1.8
+  baseCooldown: 1.5
   baseDamage: 20
   levels: []
