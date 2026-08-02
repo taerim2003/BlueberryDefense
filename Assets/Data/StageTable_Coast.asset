@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageTable
   stages:
   - stageNumber: 1
-    spawnCount: 6
+    spawnCount: 9
     duration: 15
-    spawnInterval: 1
+    spawnInterval: 0.33
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -28,13 +28,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 1
+    enemyHpMultiplier: 1.5
     enemySpeedMultiplier: 1.08
     enemyDamageMultiplier: 1
   - stageNumber: 2
-    spawnCount: 16
+    spawnCount: 18
     duration: 15
-    spawnInterval: 0.65
+    spawnInterval: 0.3
     burstSize: 0
     burstRest: 0
     eliteChance: 0.03
@@ -46,14 +46,14 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.1
     surferChance: 0.3
-    enemyHpMultiplier: 1.08
+    enemyHpMultiplier: 1.7
     enemySpeedMultiplier: 1.11
     enemyDamageMultiplier: 1.08
   - stageNumber: 3
-    spawnCount: 28
+    spawnCount: 30
     duration: 15
-    spawnInterval: 0.12
-    burstSize: 5
+    spawnInterval: 0.1
+    burstSize: 15
     burstRest: 2
     eliteChance: 0.06
     evolutionItemDrops: 0
@@ -64,13 +64,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.15
     surferChance: 0.4
-    enemyHpMultiplier: 1.2
+    enemyHpMultiplier: 2.2
     enemySpeedMultiplier: 1.14
     enemyDamageMultiplier: 1.15
   - stageNumber: 4
     spawnCount: 40
     duration: 15
-    spawnInterval: 0.45
+    spawnInterval: 0.15
     burstSize: 0
     burstRest: 0
     eliteChance: 0.1
@@ -82,14 +82,14 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.3
     surferChance: 0.35
-    enemyHpMultiplier: 1.35
+    enemyHpMultiplier: 2.7
     enemySpeedMultiplier: 1.17
     enemyDamageMultiplier: 1.24
   - stageNumber: 5
-    spawnCount: 50
+    spawnCount: 60
     duration: 15
-    spawnInterval: 0.1
-    burstSize: 8
+    spawnInterval: 0.05
+    burstSize: 24
     burstRest: 2.2
     eliteChance: 0.08
     evolutionItemDrops: 0
@@ -100,13 +100,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.15
     surferChance: 0.85
-    enemyHpMultiplier: 1.55
+    enemyHpMultiplier: 3.5
     enemySpeedMultiplier: 1.21
     enemyDamageMultiplier: 1.32
   - stageNumber: 6
-    spawnCount: 62
+    spawnCount: 80
     duration: 15
-    spawnInterval: 0.4
+    spawnInterval: 0.13
     burstSize: 0
     burstRest: 0
     eliteChance: 0.18
@@ -118,13 +118,13 @@ MonoBehaviour:
     riderChance: 0.15
     hopperChance: 0.4
     surferChance: 0.35
-    enemyHpMultiplier: 1.85
+    enemyHpMultiplier: 4.6
     enemySpeedMultiplier: 1.25
     enemyDamageMultiplier: 1.42
   - stageNumber: 7
-    spawnCount: 44
+    spawnCount: 50
     duration: 15
-    spawnInterval: 0.38
+    spawnInterval: 0.13
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -136,14 +136,14 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 2.3
+    enemyHpMultiplier: 6.2
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
-    spawnCount: 78
+    spawnCount: 100
     duration: 15
-    spawnInterval: 0.11
-    burstSize: 9
+    spawnInterval: 0.037
+    burstSize: 27
     burstRest: 2
     eliteChance: 0.25
     evolutionItemDrops: 0
@@ -154,13 +154,13 @@ MonoBehaviour:
     riderChance: 0.12
     hopperChance: 0.45
     surferChance: 0.55
-    enemyHpMultiplier: 3
+    enemyHpMultiplier: 9
     enemySpeedMultiplier: 1.31
     enemyDamageMultiplier: 1.65
   - stageNumber: 9
     spawnCount: 40
     duration: 15
-    spawnInterval: 0.6
+    spawnInterval: 0.2
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -172,13 +172,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.5
     surferChance: 0
-    enemyHpMultiplier: 3.1
+    enemyHpMultiplier: 9.9
     enemySpeedMultiplier: 1.34
     enemyDamageMultiplier: 1.7
   - stageNumber: 10
-    spawnCount: 95
+    spawnCount: 140
     duration: 15
-    spawnInterval: 0.24
+    spawnInterval: 0.08
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -190,14 +190,14 @@ MonoBehaviour:
     riderChance: 0.12
     hopperChance: 0.48
     surferChance: 0.6
-    enemyHpMultiplier: 4.8
+    enemyHpMultiplier: 16.3
     enemySpeedMultiplier: 1.37
     enemyDamageMultiplier: 1.9
   - stageNumber: 11
-    spawnCount: 62
+    spawnCount: 150
     duration: 15
-    spawnInterval: 0.12
-    burstSize: 7
+    spawnInterval: 0.04
+    burstSize: 21
     burstRest: 1.8
     eliteChance: 0
     evolutionItemDrops: 0
@@ -208,14 +208,14 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.9
     surferChance: 0.3
-    enemyHpMultiplier: 5.6
+    enemyHpMultiplier: 20.2
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
-    spawnCount: 108
+    spawnCount: 160
     duration: 15
-    spawnInterval: 0.1
-    burstSize: 12
+    spawnInterval: 0.033
+    burstSize: 36
     burstRest: 1.9
     eliteChance: 0.32
     evolutionItemDrops: 0
@@ -226,13 +226,13 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.5
     surferChance: 0.65
-    enemyHpMultiplier: 9.5
+    enemyHpMultiplier: 36
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 2.55
   - stageNumber: 13
-    spawnCount: 18
+    spawnCount: 36
     duration: 15
-    spawnInterval: 1
+    spawnInterval: 0.4
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -244,14 +244,14 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 9
+    enemyHpMultiplier: 36
     enemySpeedMultiplier: 1.47
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
-    spawnCount: 122
+    spawnCount: 200
     duration: 15
-    spawnInterval: 0.09
-    burstSize: 16
+    spawnInterval: 0.03
+    burstSize: 48
     burstRest: 2.4
     eliteChance: 0.3
     evolutionItemDrops: 0
@@ -262,13 +262,13 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.5
     surferChance: 0.7
-    enemyHpMultiplier: 15
+    enemyHpMultiplier: 63
     enemySpeedMultiplier: 1.5
     enemyDamageMultiplier: 2.8
   - stageNumber: 15
-    spawnCount: 100
+    spawnCount: 200
     duration: 15
-    spawnInterval: 0.1
+    spawnInterval: 0.033
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -280,13 +280,13 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.5
     surferChance: 0.65
-    enemyHpMultiplier: 21
+    enemyHpMultiplier: 92
     enemySpeedMultiplier: 1.53
     enemyDamageMultiplier: 3.05
   - stageNumber: 16
-    spawnCount: 130
+    spawnCount: 250
     duration: 15
-    spawnInterval: 0.09
+    spawnInterval: 0.03
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -298,14 +298,14 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.55
     surferChance: 0.7
-    enemyHpMultiplier: 29
+    enemyHpMultiplier: 120
     enemySpeedMultiplier: 1.55
     enemyDamageMultiplier: 3.2
   - stageNumber: 17
-    spawnCount: 120
+    spawnCount: 280
     duration: 15
-    spawnInterval: 0.09
-    burstSize: 14
+    spawnInterval: 0.03
+    burstSize: 42
     burstRest: 1.7
     eliteChance: 0.28
     evolutionItemDrops: 0
@@ -316,13 +316,13 @@ MonoBehaviour:
     riderChance: 0.15
     hopperChance: 0.6
     surferChance: 0.75
-    enemyHpMultiplier: 38
+    enemyHpMultiplier: 155
     enemySpeedMultiplier: 1.57
     enemyDamageMultiplier: 3.35
   - stageNumber: 18
-    spawnCount: 140
+    spawnCount: 350
     duration: 15
-    spawnInterval: 0.09
+    spawnInterval: 0.03
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -334,14 +334,14 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.55
     surferChance: 0.7
-    enemyHpMultiplier: 50
+    enemyHpMultiplier: 195
     enemySpeedMultiplier: 1.58
     enemyDamageMultiplier: 3.45
   - stageNumber: 19
-    spawnCount: 90
+    spawnCount: 270
     duration: 15
-    spawnInterval: 0.09
-    burstSize: 12
+    spawnInterval: 0.03
+    burstSize: 36
     burstRest: 1.7
     eliteChance: 0
     evolutionItemDrops: 1
@@ -352,13 +352,13 @@ MonoBehaviour:
     riderChance: 0.6
     hopperChance: 0
     surferChance: 0.9
-    enemyHpMultiplier: 63
+    enemyHpMultiplier: 240
     enemySpeedMultiplier: 1.6
     enemyDamageMultiplier: 3.55
   - stageNumber: 20
-    spawnCount: 120
+    spawnCount: 360
     duration: 15
-    spawnInterval: 0.09
+    spawnInterval: 0.03
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -370,14 +370,14 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.55
     surferChance: 0.7
-    enemyHpMultiplier: 85
+    enemyHpMultiplier: 310
     enemySpeedMultiplier: 1.61
     enemyDamageMultiplier: 3.65
   - stageNumber: 21
-    spawnCount: 150
+    spawnCount: 450
     duration: 15
-    spawnInterval: 0.09
-    burstSize: 18
+    spawnInterval: 0.03
+    burstSize: 54
     burstRest: 1.6
     eliteChance: 0.3
     evolutionItemDrops: 0
@@ -388,13 +388,13 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.55
     surferChance: 0.75
-    enemyHpMultiplier: 108
+    enemyHpMultiplier: 380
     enemySpeedMultiplier: 1.63
     enemyDamageMultiplier: 3.8
   - stageNumber: 22
-    spawnCount: 28
+    spawnCount: 50
     duration: 15
-    spawnInterval: 0.9
+    spawnInterval: 0.36
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -406,13 +406,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 135
+    enemyHpMultiplier: 460
     enemySpeedMultiplier: 1.64
     enemyDamageMultiplier: 3.9
   - stageNumber: 23
-    spawnCount: 170
+    spawnCount: 510
     duration: 15
-    spawnInterval: 0.09
+    spawnInterval: 0.03
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -424,14 +424,14 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.55
     surferChance: 0.75
-    enemyHpMultiplier: 172
+    enemyHpMultiplier: 570
     enemySpeedMultiplier: 1.66
     enemyDamageMultiplier: 4
   - stageNumber: 24
-    spawnCount: 60
+    spawnCount: 180
     duration: 15
-    spawnInterval: 0.13
-    burstSize: 10
+    spawnInterval: 0.043
+    burstSize: 30
     burstRest: 2
     eliteChance: 0
     evolutionItemDrops: 1
@@ -442,13 +442,13 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.5
     surferChance: 0
-    enemyHpMultiplier: 215
+    enemyHpMultiplier: 690
     enemySpeedMultiplier: 1.67
     enemyDamageMultiplier: 4.1
   - stageNumber: 25
-    spawnCount: 190
+    spawnCount: 570
     duration: 15
-    spawnInterval: 0.09
+    spawnInterval: 0.03
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3
@@ -460,12 +460,12 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.6
     surferChance: 0.78
-    enemyHpMultiplier: 275
+    enemyHpMultiplier: 860
     enemySpeedMultiplier: 1.69
     enemyDamageMultiplier: 4.3
   extendedHpGrowth: 1.28
   extendedDamageGrowth: 1.03
   extendedSpeedGrowth: 1.01
-  extendedSpawnCountStep: 4
-  extendedSpawnIntervalMin: 0.09
+  extendedSpawnCountStep: 12
+  extendedSpawnIntervalMin: 0.03
   extendedEvolutionItemEvery: 4
