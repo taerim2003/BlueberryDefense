@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__ai-game-developer__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"D:\\unity\\BlueberryDefense\\.claude\\hooks\\block-unity-hazards.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}

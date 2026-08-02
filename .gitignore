@@ -32,7 +32,13 @@
 *.lscache
 
 # Claude Code local memory
-.claude/
+# ⚠️ `.claude/`가 아니라 `.claude/*`여야 한다 — 디렉터리 자체를 제외하면 git이
+#    그 안을 탐색하지 않아 아래 `!` 예외가 통째로 무시된다.
+.claude/*
+# ...단, 프로젝트 규칙에 해당하는 것은 버전관리한다.
+# 위험 호출 차단 훅은 CLAUDE.md 규칙의 대체재라 유실되면 방어가 통째로 사라진다.
+!.claude/settings.json
+!.claude/hooks/
 
 # Gradle cache directory
 .gradle/

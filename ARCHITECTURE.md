@@ -114,6 +114,10 @@
 
 ## 자주 헷갈리는 것
 
+- 🔴 **새 `SerializeField`를 추가할 때 클래스 기본값을 믿지 말 것.** 이미 임포트된 에셋·프리팹은 그 필드가 YAML에 없어도 **Unity 임포트 캐시에 구워진 옛 값**을 계속 쓴다. 스크립트 기본값만 고치면 소급되지 않는다. 두 번 크게 당했다 — `requiresAntiAir`를 `true`로 두는 바람에 **모든 지상 적이 "대공 필요"가 되어 기본공격·오브·회오리가 전부 적을 통과**했고, `extendedHpGrowth`는 1.08로 고쳐도 계속 1.28이 나왔다. 그래서:
+  1. 필드를 추가하면 **그 즉시 모든 기존 에셋에 값을 명시적으로 써 넣는다.**
+  2. **불리언 기본값은 언제나 "기존 동작과 같은 쪽"으로** — 특수 케이스를 기본값에 두지 않는다.
+  3. 쓴 뒤 `AssetDatabase.LoadAssetAtPath`로 **되읽어 확인한다.**
 - **static 상태가 도메인 리로드 없이는 안 풀린다.** `PlayerPassives`의 static 필드들, `LightningStorm.*`, `PlayerSkills.MiniWhirlwindDamageBonus`는 전역 static이라 `GameManager.Awake`에서 리셋하는 건 `DamageMeter`뿐이다. 씬 재시작(도메인 리로드 없이)이나 자동화 테스트에서 이전 판의 진화 보너스가 그대로 남아있을 수 있음 — "Enter Play Mode Options"로 도메인 리로드를 끄면 특히 주의.
 - **진화는 레벨업의 연장이 아니라 리셋이다.** 레벨업은 **만렙(`BalanceConstants.MaxSkillLevel`=10)**에서 막히고(`CanUpgradeSkill`), 그 스킬은 레벨업 후보에서 빠진다. 만렙 스킬은 **진화 아이템**(벽 스테이지 엘리트 드랍 → `LevelUpUI.ShowEvolutionReward`)을 먹어야 진화하고, 진화하면 Lv.1로 리셋되어 다시 큰다. 루트는 2개뿐이고 **연계 스킬을 보유해야 열린다**(`IsRouteUnlocked` — path1=패시브 연계·path2=액티브 연계). 1차에서 고른 루트는 2차까지 고정. 좌표 번역은 전부 `EvolutionRoutes`가 하고, 저장은 여전히 `PathTier[3]`이다.
 - **3번째 슬롯 레벨업은 occurrence(`ThirdSlotCount`) 순환이다.** `DescribeThirdUpgradeEffect`(미리보기)와 `ApplyThirdUpgradeEffect`(적용)가 **증가 전 같은 값**을 읽어야 미리보기와 실제가 일치한다. Apply가 끝에서 `ThirdSlotCount++`.

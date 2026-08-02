@@ -87,14 +87,41 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()` → **`EditorSceneManager.SaveScene(scene)`을 쓸 것**
 - `EditorUtility.DisplayDialog` / `DisplayDialogComplex` / `OpenFilePanel` 계열
 
+### 🔒 사용자 작업물을 파괴하지 말 것
+에디터는 사용자와 **공유**한다. 미저장 편집을 날리면 git에도 없어 복구가 안 된다(세션15에 실제로 날렸다).
+- 씬을 **읽기만 하면 additive로 열고 저장 없이 닫는다.** `OpenScene(..., Single)`은 사용자가 보던 씬을 갈아치운다. Single로 열어야 하면 **저장 여부부터 묻는다**(dirty면 확인 모달 → 위 "MCP 사망"까지 겹친다).
+- 사람이 편집하는 에셋(SO·씬)은 **손대기 직전에 다시 읽는다.** 읽은 시점과 판단 시점이 벌어지면 감사·대조 결과가 통째로 틀어진다.
+- **커밋 직전 `git status`의 모든 줄을 설명할 수 있어야 한다.** 설명 못 하는 줄이 사고다(내 컴파일 요청이 사용자의 미저장 편집을 디스크로 밀어낸 적 있음).
+
+### 검증은 위에서부터 — 아래로 갈수록 비싸다
+① **에디트모드 리플렉션 테스트**(순수 로직. `new GameObject().AddComponent<T>()`는 Awake가 안 돌아 프리팹 참조 없이도 된다 — 조용한 실패가 없어 가장 확실) → ② **`script-execute` 반환값 대조**(에셋 값·커브. 손계산 말고 게임이 실제로 쓰는 경로로) → ③ **플레이모드 스모크**(연출·물리처럼 정말 실행이 필요할 때만) → ④ **사용자에게 물어보기**(버튼 하나 눌러보면 되는 UI 동작은 "눌러보고 알려줘"가 더 빠르고 정확).
+⚠️ **에디트모드 `Instantiate`는 Awake를 안 돈다** — 런타임 필드를 에디트모드에서 읽어 검증하려 들지 말 것.
+
 ### 플레이모드로 측정할 때 체크리스트
 1. **시간이 흐르는가** — `Time.timeScale`·`Time.time` 확인. **게임오버·모달이면 `timeScale=0`**이라 `Time.deltaTime` 기반 값이 마지막 값에 굳는다. 이걸 버그로 오판한 적 있음(세션20).
 2. **새 코드가 컴파일됐는가** — **플레이 중엔 스크립트가 컴파일되지 않는다.** 코드 수정 → 플레이 종료 → `EditorApplication.isCompiling == false` 확인 → 재진입.
 3. **한 프레임에 판정 가능한가** — `script-execute`는 호출마다 **독립 어셈블리**라 static으로 프레임 간 상태를 못 넘긴다. 시계열 샘플링보다 **"어기면 반드시 벗어나는 불변식"**을 세워 한 번에 판정하는 쪽이 낫다.
 4. **씬을 임시로 고쳤으면 되돌리고 `git status`로 확인**할 것.
+5. **화면을 눈으로 판정하기 전에 대조 실험을 한 번 넣는다** — 색을 불투명으로 바꿔 재촬영, 값을 극단으로 밀어보기. 스크린샷만 보고 "안 그려진다"고 판단했다가 **처음부터 정상이었던** 적이 있다(세션21). 로그로 찍은 상태값이 전부 정상이면 코드가 아니라 관측이 틀린 것이다.
 
 ### 에셋을 코드로 만들면 되읽어서 검증할 것
 `SpriteRenderer.sprite` 직접 대입이 **조용히 무시된** 적 있다(세션20 — 다른 필드는 다 들어갔는데 스프라이트만 안 들어감). 생성 직후 `AssetDatabase.LoadAssetAtPath`로 되읽어 로그를 찍으면 잡힌다. 프리팹 수정은 `PrefabUtility.LoadPrefabContents` + `SerializedObject`가 가장 확실하다.
+
+### 🪝 위험 호출은 훅이 막는다
+`.claude/settings.json`의 `PreToolUse` 훅(`.claude/hooks/block-unity-hazards.ps1`)이 `mcp__ai-game-developer__*` 호출을 검사해 **모달 API · `scene-open` · `console-get-logs` · Additive 없는 `OpenScene`**을 차단하고 대안을 알려준다. 차단되면 stderr 메시지를 읽고 그대로 따를 것.
+- 정말 필요하면 인자 어딘가에 `HOOK-OK`를 넣어 통과시킬 수 있다. **사용자 승인을 받은 뒤에만.**
+- 훅이 안 도는 것 같으면(위험 호출이 그냥 통과) 스크립트를 직접 실행해 확인할 것 — 훅은 조용히 실패한다. 스크립트는 **ASCII 전용**(no-BOM PowerShell 5.1이 한글을 깨뜨림).
+
+### 🧰 못 미더운 MCP 툴 — 우회법
+> 아래 4줄은 위 훅과 중복이다. 훅이 실제 호출에서 도는 걸 한 번 확인하면 지울 것.
+- **`scene-open`** — 멀쩡한 경로를 "not found"로 거부(재발 잦음, 가끔 성공). → `script-execute` 안에서 `EditorSceneManager.OpenScene(path, mode)` 직접 호출.
+- **`console-get-logs`** — 누적 버퍼 전체(77KB+)를 뱉어 토큰 초과 + 한글 인코딩 에러. → **검증은 `Debug.Log`가 아니라 `script-execute`의 반환 문자열로 받는다.** 로그는 예외 확인용으로만.
+- **`gameobject-duplicate`** — 반환값이 원본을 가리킨다. → 복제 후 **부모를 재조회**해 `"(N)"` 접미사로 찾기.
+- **`script-execute`** — 관련 동작은 한 호출에 몰되(중간 도메인 리로드로 상태 리셋), **플레이모드 상태 전이만은 한 호출에 하나씩**. 문자열에 이스케이프 따옴표(`\"`) 금지(`"a" + var + "b"`로).
+
+### 📄 씬·프리팹·에셋에 직렬화되는 클래스는 독립 파일로
+`MonoBehaviour`·`ScriptableObject`는 **반드시 파일명 = 클래스명인 자기 파일**에 둔다. 다른 .cs에 곁다리로 넣으면 `m_Script: {fileID: 0}`이 되어 **에디터에선 멀쩡한데 빌드에서만** 컴포넌트가 안 붙거나 SO가 null로 로드된다(빌드 데미지 숫자 "0" · 빌드에서 전 스테이지 동일 — 둘 다 이것). 런타임 `AddComponent` 전용이면 합쳐도 된다.
+→ **에디터에서 재현이 안 되는 버그는 추측하지 말고 `Player.log`부터.**
 
 ---
 
@@ -116,7 +143,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 3. `GDD.md`는 `grep`으로 필요한 섹션만 조각내어 읽을 것 (`cat GDD.md` 금지)
 4. 씬 작업이 예상되면 Unity-MCP 툴(`mcp__ai-game-developer__*`)이 로드됐는지 확인. 안 보이면 사용자에게 Claude Code 재시작 요청 (§6 참고). **씬 구조는 `SCENE_MAP.md` 먼저 읽어 파악**(오브젝트 위치·배선·"X 씬에 추가하려면 어디"). 밸런스 수치는 문서가 아니라 **에셋이 정답** — `StageTable*`·`EnemyDefinition`·`Prog_*`·`BalanceConstants.cs`
 5. (선택) 최근 일기 `d:\unity\prototyping-kit\journal\` 의 마지막 1~2편 훑어 과정상 미해결 마찰 확인
-6. 한 줄 브리핑 후 사용자에게 다음 목표 확인
+6. 한 줄 브리핑 후 사용자에게 다음 목표 확인 — 이때 **HANDOFF의 미해결 목록을 같이 훑어 이번 세션 범위를 확정**할 것. 인계 문서에 적힌 항목이 자동으로 작업 범위가 되지는 않아서, 짚지 않으면 통째로 빠뜨린다.
+   ⚠️ **HANDOFF는 할 일의 목록이지 코드의 진실이 아니다.** 거기 적힌 "~해야 함"을 사용자에게 말하기 전에 **코드로 1건이라도 확인**할 것 — 이미 해결됐거나 필드명이 틀렸던 적이 여러 번 있다.
 
 ---
 
