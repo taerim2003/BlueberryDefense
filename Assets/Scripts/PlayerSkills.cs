@@ -1287,7 +1287,7 @@ public class PlayerSkills : MonoBehaviour
 
     // 피해는 캐스트 순간이 아니라 **돌망치가 땅에 꽂히는 4번째 프레임**에 들어간다
     // (그 프레임에 사용자가 충격파를 직접 그려 넣었다 — 그림과 판정이 같은 순간이어야 한다).
-    // Pinapple_Attack = 5프레임: 1~4는 각 75ms, 마지막 5번째만 150ms(총 0.45초). 4번째 시작 = 0.225초.
+    // Pinapple_Attack = 5프레임: 1~4는 각 75ms, 마지막 5번째만 225ms(총 0.525초). 4번째 시작 = 0.225초.
     // ⚠️ 클립 타이밍을 바꾸면 이 값도 같이 고칠 것 — 어긋나면 휘두르기도 전에 적이 날아간다.
     private const float SwingImpactDelay = 0.225f;
     private const float SwingSecondHitDelay = 0.12f;  // 진화 2연타(회오리 연계 T3)의 두 번째 타격 간격

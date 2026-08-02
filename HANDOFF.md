@@ -175,8 +175,8 @@
 | 후반 난이도 | `StageTable.extendedHpGrowth` → `ambushCount` → 적 체력 순 |
 | 휘두르기 손맛 | `PlayerSkills.SwingReach`(**4.8** 앞쪽 사거리) / `SwingHalfHeight`(2.0 위아래) / `SwingKnockback`(0.8 밀어내는 거리). 피해 20·쿨 **1.5초**는 `Prog_Swing.asset` |
 | 파인애플 맷집 | `Char_Pineapple.baseHealth`(**150**, 딸기의 1.5배). 사거리가 짧아 적을 가까이 붙여야 하는 근접 캐릭터라 체력으로 보상한 것 |
-| 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(**0.225초** = 충격파가 그려진 4번째 프레임). ⚠️ **`Pinapple_Attack.anim`과 한 세트** — 클립은 5프레임(1~4는 75ms, 5는 150ms, 총 0.45초)이라 프레임 타이밍을 바꾸면 이 값도 같이 고칠 것 |
-| 휘두르기 모션 속도 | `Pinapple_Attack.anim` 키 시각. ⚠️ Unity는 PPtr 클립 길이를 **마지막 키 + 1/frameRate**로 잡는다 — 마지막 프레임을 길게 유지하려면 같은 스프라이트로 유지 키를 하나 더 박고 frameRate로 끝을 맞출 것(지금은 frameRate 40, 유지 키 0.425s → length 0.45s) |
+| 휘두르기 타격 타이밍 | `PlayerSkills.SwingImpactDelay`(**0.225초** = 충격파가 그려진 4번째 프레임). ⚠️ **`Pinapple_Attack.anim`과 한 세트** — 클립은 5프레임(1~4는 75ms, 5는 **225ms**, 총 0.525초)이라 프레임 타이밍을 바꾸면 이 값도 같이 고칠 것 |
+| 휘두르기 모션 속도 | `Pinapple_Attack.anim` 키 시각. ⚠️ Unity는 PPtr 클립 길이를 **마지막 키 + 1/frameRate**로 잡는다 — 마지막 프레임을 길게 유지하려면 같은 스프라이트로 유지 키를 하나 더 박고 frameRate로 끝을 맞출 것(지금은 frameRate 40, 유지 키 0.5s → length 0.525s) |
 | 파인애플 해금 난이도 | `Char_Pineapple.requiredEssenceEarned`(300) / `requiredClearMap`+`requiredClearAscension`(블루베리 밭 승천1). **둘 다** 충족해야 열린다 |
 
 ---
