@@ -147,6 +147,7 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject overkillSplashVfxPrefab;  // Route2 초과데미지 연쇄 전용 VFX(Vefects Impact Sparks)
     [SerializeField] private float overkillSplashVfxScale = 0.5f;
     [SerializeField] private GameObject homingMissilePrefab;      // 호밍 미사일 프리팹(추적)
+    [SerializeField] private GameObject swingImpactVfxPrefab;     // 휘두르기 타격 폭발(Vefects Explosion Small)
     [SerializeField] private Animator animator;
     [SerializeField] private EvolutionTierTextTableSO evolutionTextOverrides;
     [SerializeField] private SkillProgression[] progressions; // 스킬별 시작값+레벨 커브(Tier A). 미할당/미포함 스킬은 코드 기본 규칙 폴백(=현행)
@@ -1285,10 +1286,21 @@ public class PlayerSkills : MonoBehaviour
     private const float SwingKnockback = 0.8f;   // 밀어내는 거리
     private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
 
+    // 피해는 캐스트 순간이 아니라 **돌망치가 실제로 땅에 닿는 마지막 프레임**에 들어간다.
+    // Pinapple_Attack = 4프레임 0.5초이므로 마지막 프레임이 시작되는 3/4 지점 = 0.375초.
+    // ⚠️ 클립 길이를 바꾸면 이 값도 같이 고칠 것 — 어긋나면 휘두르기도 전에 적이 날아간다.
+    private const float SwingImpactDelay = 0.375f;
+    private const float SwingSecondHitDelay = 0.12f;  // 진화 2연타(회오리 연계 T3)의 두 번째 타격 간격
+    private const float SwingImpactVfxScale = 0.5f;   // 타격 범위에 터지는 폭발 크기
+
     private void FireSwing(float damage, float critChance, EquippedSkill skill)
     {
         animator.SetTrigger("Attack");
+        StartCoroutine(SwingRoutine(damage, critChance, skill));
+    }
 
+    private IEnumerator SwingRoutine(float damage, float critChance, EquippedSkill skill)
+    {
         // Route2(회오리 연계, path2): 사거리·판정 확대 → T3에서 한 번 더 휘두른다.
         float reachMult = skill.PathTier[2] >= 2 ? 1.45f : 1f;
         int swings = skill.PathTier[2] >= 3 ? 2 : 1;
@@ -1300,8 +1312,25 @@ public class PlayerSkills : MonoBehaviour
         float halfHeight = SwingHalfHeight * reachMult * skill.Scale;
         float knockback = SwingKnockback * knockMult;
 
+        yield return new WaitForSeconds(SwingImpactDelay); // 내려찍는 순간까지 기다린다
+
         for (int s = 0; s < swings; s++)
+        {
             SwingHit(damage, critChance, reach, halfHeight, knockback, stun);
+            SpawnSwingImpact(reach, halfHeight);
+            if (s + 1 < swings) yield return new WaitForSeconds(SwingSecondHitDelay);
+        }
+    }
+
+    // 때린 범위 한가운데에 폭발을 띄운다 — "어디까지 맞는지"가 눈에 보이게.
+    private void SpawnSwingImpact(float reach, float halfHeight)
+    {
+        if (swingImpactVfxPrefab == null) return;
+
+        Vector3 pos = transform.position + Vector3.left * (reach * 0.5f);
+        GameObject vfx = ObjectPool.Instance.Spawn(swingImpactVfxPrefab, pos, Quaternion.identity);
+        vfx.transform.localScale = Vector3.one * SwingImpactVfxScale * (reach / SwingReach);
+        ObjectPool.Instance.Despawn(vfx, 2f);
     }
 
     private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun)
