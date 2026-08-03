@@ -11,6 +11,8 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 Before implementing:
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them - don't pick silently.
+- **UI·연출을 만들 땐 "어느 화면의 어디에 붙는가"를 기능만큼 중요한 결정으로 취급할 것.** 요청에 화면이 안 적혀 있으면 **코드를 쓰기 전에 묻는다**. 세션26에 "화면 우측 하단 원티드 포스터"만 보고 맵 선택 화면에 만들었다가 통째로 옮겼다(정답은 스킬트리 창). 기능 스펙은 갈림길마다 물어놓고 배치만 추측한 게 사고였다.
+- **사용자 아트를 반영할 땐 파일 수정 시각부터 확인할 것.** 여러 번 다시 그리는 워크플로에서 "내가 배선한 그림"과 "지금 디스크에 있는 그림"이 쉽게 어긋난다(세션26: 애니 작업 1시간 전의 낡은 스케치를 대기 프레임으로 쓰고 있었다).
 - 선택지를 낼 땐 **손잡이 이름(`ambushCount` 같은 필드명)이 아니라 화면에서 벌어지는 일로** 먼저 한 줄 설명할 것. 사용자는 코드 필드로 생각하지 않는다 — 세션25에 "게릴라를 늘린다"를 서로 다른 뜻으로 쓰다 선택지 전체가 헛다리를 짚었다(정답은 내가 낸 3안 밖에 있었다).
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
