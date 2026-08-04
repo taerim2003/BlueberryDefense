@@ -23,6 +23,8 @@ public class LevelUpUI : MonoBehaviour
         public ActiveSkillId? SkillId;
         public PassiveSkillId? PassiveId;
         public bool IsEssence;
+        // 갈림길의 진화 카드에만 채운다 — 카드 아래에 "무엇 + 무엇" 짝을 미리 보여준다.
+        public List<(Sprite target, Sprite prereq)> ComboPreview;
     }
 
     [SerializeField] private GameObject panel;
@@ -199,6 +201,7 @@ public class LevelUpUI : MonoBehaviour
     private void ShowOptions()
     {
         bool alreadyOpen = isOpen;
+        SetChoiceLayout(treasureChoiceMode); // 갈림길(2택)만 세로 카드, 나머지는 씬 원본(가로 3택)
 
         // 선택지는 1~3개로 가변 — 남는 슬롯의 옵션 카드(버튼)는 통째로 숨긴다.
         // 슬롯은 씬에 y=+190/0/-190으로 고정 배치돼 있어서, 1개짜리는 가운데 슬롯에 넣어야 덩그러니 위에 붙지 않는다.
@@ -230,6 +233,231 @@ public class LevelUpUI : MonoBehaviour
         if (optionOutlines != null && optionOutlines[index] != null)
             optionOutlines[index].enabled = option != null && option.IsEvolution;
         if (option != null) SetRow(title, level, desc, icon, option);
+        SetComboPreview(desc, option?.ComboPreview);
+    }
+
+    // ── 갈림길 전용 세로 레이아웃 ────────────────────────────────────────────
+    // 보물상자 갈림길("보물 상자 vs 진화")은 선택지가 **2개뿐**이라, 가로로 긴 카드 3장 자리에
+    // 두 장만 뜨면 화면이 휑하다. 이 화면에서만 카드를 세로로 세워 둘을 나란히 놓는다.
+    // ⚠️ 일반 레벨업(3택)은 씬에 저작된 가로 배치를 **그대로 쓴다** — 그래서 원본을 캐시해 두고 되돌린다.
+    private const float ChoiceCardWidth = 340f;
+    private const float ChoiceCardHeight = 540f;
+    private const float ChoiceCardGap = 30f;
+
+    private readonly Dictionary<RectTransform, (Vector2 pos, Vector2 size)> savedRects
+        = new Dictionary<RectTransform, (Vector2, Vector2)>();
+    private readonly Dictionary<TMP_Text, TextAlignmentOptions> savedAligns
+        = new Dictionary<TMP_Text, TextAlignmentOptions>();
+    private bool verticalLayout;
+
+    private void SetChoiceLayout(bool vertical)
+    {
+        if (vertical == verticalLayout) return; // 매 모달마다 좌표를 다시 쓰지 않게
+        verticalLayout = vertical;
+
+        Button[] buttons = { optionButtonA, optionButtonB, optionButtonC };
+        TMP_Text[] titles = { titleA, titleB, titleC };
+        TMP_Text[] levels = { levelA, levelB, levelC };
+        TMP_Text[] descs = { descA, descB, descC };
+        Image[] icons = { iconA, iconB, iconC };
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] == null) continue;
+            RectTransform card = (RectTransform)buttons[i].transform;
+            RectTransform frame = card.Find("Frame") as RectTransform;
+            RectTransform icon = icons[i] != null ? icons[i].rectTransform : null;
+
+            if (!vertical)
+            {
+                Restore(card); Restore(frame); Restore(icon);
+                Restore(titles[i]); Restore(levels[i]); Restore(descs[i]);
+                continue;
+            }
+
+            // 갈림길은 늘 2택이라 두 장을 화면 가운데 기준 좌우로 놓는다(i=0 → 왼쪽, i=1 → 오른쪽).
+            Place(card, new Vector2((i - 0.5f) * (ChoiceCardWidth + ChoiceCardGap), 0f),
+                        new Vector2(ChoiceCardWidth, ChoiceCardHeight));
+            Place(frame, new Vector2(0f, 175f), new Vector2(120f, 120f));
+            Place(icon, new Vector2(0f, 175f), new Vector2(108f, 108f));
+            Place(titles[i], new Vector2(0f, 82f), new Vector2(300f, 44f), TextAlignmentOptions.Center);
+            Place(levels[i], new Vector2(0f, 40f), new Vector2(300f, 34f), TextAlignmentOptions.Center);
+            // 설명 박스를 위로 당겨(하단 -90) 카드 바닥에 미리보기 3줄분 공간을 남긴다.
+            Place(descs[i], new Vector2(0f, -35f), new Vector2(300f, 110f), TextAlignmentOptions.Top);
+        }
+    }
+
+    private void Place(RectTransform rt, Vector2 pos, Vector2 size)
+    {
+        if (rt == null) return;
+        if (!savedRects.ContainsKey(rt)) savedRects[rt] = (rt.anchoredPosition, rt.sizeDelta);
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = size;
+    }
+
+    private void Place(TMP_Text t, Vector2 pos, Vector2 size, TextAlignmentOptions align)
+    {
+        if (t == null) return;
+        if (!savedAligns.ContainsKey(t)) savedAligns[t] = t.alignment;
+        Place(t.rectTransform, pos, size);
+        t.alignment = align;
+    }
+
+    private void Restore(RectTransform rt)
+    {
+        if (rt == null || !savedRects.TryGetValue(rt, out (Vector2 pos, Vector2 size) s)) return;
+        rt.anchoredPosition = s.pos;
+        rt.sizeDelta = s.size;
+    }
+
+    private void Restore(TMP_Text t)
+    {
+        if (t == null) return;
+        Restore(t.rectTransform);
+        if (savedAligns.TryGetValue(t, out TextAlignmentOptions a)) t.alignment = a;
+    }
+
+    // ── 진화 카드 조합 미리보기 ──────────────────────────────────────────────
+    // 세로 카드의 **바닥에 박아 둔다**(설명 길이와 무관하게 늘 같은 자리 = 눈이 찾기 쉽다).
+    private const string ComboRowName = "ComboPreview";
+    private const float ComboIconSize = 46f;      // 아이콘 한 변 — 한 줄에 욱여넣지 않고 크게 보여준다
+    private const float ComboPlusWidth = 16f;     // 짝 사이 "+" 자리
+    private const float ComboEntryGap = 14f;      // 짝과 짝 사이(가로)
+    private const float ComboLineGap = 8f;        // 줄과 줄 사이(세로)
+    private const float ComboRowMaxWidth = 300f;  // 한 줄 최대 폭(세로 카드 340 안)
+    private const int ComboMaxLines = 3;          // 이보다 많아지면 그때 전체를 줄인다
+    private const float ComboRowYOffset = 14f;    // 카드 바닥에서 띄우는 거리
+
+    private static float ComboEntryWidth(bool paired) =>
+        paired ? ComboIconSize * 2f + ComboPlusWidth : ComboIconSize;
+
+    // 항목을 순서대로 줄에 채운다. 반환값은 줄별 항목 개수.
+    private static List<int> ComboLineBreaks(List<(Sprite target, Sprite prereq)> combos, float scale)
+    {
+        List<int> lines = new List<int>();
+        float used = 0f;
+        int inLine = 0;
+        foreach ((Sprite target, Sprite prereq) c in combos)
+        {
+            float w = ComboEntryWidth(c.prereq != null) * scale;
+            float add = inLine == 0 ? w : w + ComboEntryGap * scale;
+            if (inLine > 0 && used + add > ComboRowMaxWidth)
+            {
+                lines.Add(inLine);
+                used = w; inLine = 1;
+            }
+            else { used += add; inLine++; }
+        }
+        if (inLine > 0) lines.Add(inLine);
+        return lines;
+    }
+
+    private void SetComboPreview(TMP_Text desc, List<(Sprite target, Sprite prereq)> combos)
+    {
+        if (desc == null) return;
+        RectTransform card = desc.rectTransform.parent as RectTransform; // 설명의 부모 = 카드(버튼)
+        if (card == null) return;
+
+        // 같은 프레임에 다시 만들기 때문에 Destroy(지연 파괴)만으론 Find가 옛것을 잡는다 — 이름을 먼저 뗀다.
+        Transform old = card.Find(ComboRowName);
+        if (old != null) { old.name = ComboRowName + "_dead"; Destroy(old.gameObject); }
+
+        if (combos == null || combos.Count == 0) return;
+
+        // 크기를 유지한 채 **여러 줄로 편다**. 줄이 너무 많아질 때만 전체를 줄인다.
+        float scale = 1f;
+        List<int> lines = ComboLineBreaks(combos, scale);
+        if (lines.Count > ComboMaxLines)
+        {
+            scale = (float)ComboMaxLines / lines.Count; // 줄이면 한 줄에 더 들어가므로 실제 줄 수는 이보다 적어진다
+            lines = ComboLineBreaks(combos, scale);
+        }
+
+        float iconH = ComboIconSize * scale;
+        float totalH = lines.Count * iconH + (lines.Count - 1) * ComboLineGap * scale;
+
+        GameObject row = new GameObject(ComboRowName, typeof(RectTransform));
+        RectTransform rowRT = (RectTransform)row.transform;
+        // 카드 바닥 기준으로 앉힌다 — 설명이 몇 줄이든 미리보기 위치는 고정된다.
+        rowRT.SetParent(card, false);
+        rowRT.anchorMin = rowRT.anchorMax = rowRT.pivot = new Vector2(0.5f, 0f);
+        rowRT.anchoredPosition = new Vector2(0f, ComboRowYOffset);
+        rowRT.sizeDelta = new Vector2(ComboRowMaxWidth, totalH);
+
+        int idx = 0;
+        for (int li = 0; li < lines.Count; li++)
+        {
+            // 줄마다 실제 폭을 재서 가운데 정렬한다(마지막 줄이 짧아도 치우치지 않게).
+            float lineW = 0f;
+            for (int k = 0; k < lines[li]; k++)
+            {
+                lineW += ComboEntryWidth(combos[idx + k].prereq != null) * scale;
+                if (k > 0) lineW += ComboEntryGap * scale;
+            }
+
+            float x = -lineW * 0.5f;
+            float y = totalH * 0.5f - iconH * 0.5f - li * (iconH + ComboLineGap * scale);
+            float half = iconH * 0.5f;
+
+            for (int k = 0; k < lines[li]; k++, idx++)
+            {
+                (Sprite target, Sprite prereq) c = combos[idx];
+                float w = ComboEntryWidth(c.prereq != null) * scale;
+                AddComboIcon(rowRT, c.target, new Vector2(x + half, y), scale);
+                if (c.prereq != null)
+                {
+                    AddComboPlus(rowRT, new Vector2(x + w * 0.5f, y), scale);
+                    AddComboIcon(rowRT, c.prereq, new Vector2(x + w - half, y), scale);
+                }
+                x += w + ComboEntryGap * scale;
+            }
+        }
+    }
+
+    private void AddComboIcon(RectTransform parent, Sprite sprite, Vector2 center, float scale)
+    {
+        RectTransform rt = NewComboChild(parent, "Icon", center);
+        rt.sizeDelta = Vector2.one * (ComboIconSize * scale);
+
+        // HUD 스킬 슬롯과 같은 틀을 깔아 준다 — 도트 아이콘이 어두운 카드 배경에 묻히지 않게.
+        Image frame = rt.gameObject.AddComponent<Image>();
+        frame.raycastTarget = false; // 카드 버튼의 클릭을 가리면 안 된다
+        frame.sprite = treasureIconFrame;
+        frame.enabled = treasureIconFrame != null;
+
+        RectTransform inner = NewComboChild(rt, "Fill", Vector2.zero);
+        inner.anchorMin = Vector2.zero; inner.anchorMax = Vector2.one;
+        float pad = ComboIconSize * scale * 0.14f;
+        inner.offsetMin = new Vector2(pad, pad);
+        inner.offsetMax = new Vector2(-pad, -pad);
+
+        Image img = inner.gameObject.AddComponent<Image>();
+        img.raycastTarget = false;
+        img.preserveAspect = true;
+        img.sprite = sprite;
+        img.enabled = sprite != null; // 아이콘이 아직 없는 스킬(휘두르기)은 빈 틀로 남는다
+    }
+
+    private static void AddComboPlus(RectTransform parent, Vector2 center, float scale)
+    {
+        RectTransform rt = NewComboChild(parent, "Plus", center);
+        rt.sizeDelta = new Vector2(ComboPlusWidth * scale, ComboIconSize * scale);
+
+        TMP_Text plus = rt.gameObject.AddComponent<TextMeshProUGUI>();
+        plus.text = "+";
+        plus.alignment = TextAlignmentOptions.Center;
+        plus.fontSize = 26f * scale;
+        plus.raycastTarget = false;
+    }
+
+    private static RectTransform NewComboChild(RectTransform parent, string name, Vector2 center)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        RectTransform rt = (RectTransform)go.transform;
+        rt.SetParent(parent, false);
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = center;
+        return rt;
     }
 
     private void UpdateRerollButton()
@@ -414,6 +642,7 @@ public class LevelUpUI : MonoBehaviour
                 LevelText = evolvable + "개 가능",
                 IsEvolution = true,
                 Description = "스킬 하나를 골라 진화시킨다",
+                ComboPreview = BuildComboPreview(skills, passives),
             },
         };
 
@@ -433,6 +662,50 @@ public class LevelUpUI : MonoBehaviour
         if (passives != null)
             foreach (EquippedPassive p in passives.EquippedPassives) if (passives.CanEvolve(p)) n++;
         return n;
+    }
+
+    // 진화 카드에 미리 보여줄 조합 목록 — **루트 하나 = 항목 하나**.
+    // 한 스킬의 두 루트가 다 열려 있으면 그 스킬 아이콘이 두 번 나온다(루트가 곧 선택지라서).
+    // 연계 조건이 없는 루트(회오리·낙뢰의 path0)는 prereq가 null이라 아이콘 하나로만 그려진다.
+    private List<(Sprite target, Sprite prereq)> BuildComboPreview(PlayerSkills skills, PlayerPassives passives)
+    {
+        List<(Sprite, Sprite)> combos = new List<(Sprite, Sprite)>();
+
+        if (skills != null)
+            foreach (EquippedSkill s in skills.EquippedSkills)
+            {
+                if (!skills.CanEvolve(s)) continue;
+                foreach (int r in PlayerSkills.SelectableRoutes(s))
+                    if (skills.IsRouteUnlocked(s.Id, r))
+                        combos.Add((GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
+            }
+
+        if (passives != null)
+            foreach (EquippedPassive p in passives.EquippedPassives)
+            {
+                if (!passives.CanEvolve(p)) continue;
+                foreach (int r in PlayerPassives.SelectableRoutes(p))
+                    if (passives.IsRouteUnlocked(p.Id, r))
+                        combos.Add((GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
+            }
+
+        return combos;
+    }
+
+    private Sprite PrereqIcon(ActiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue) return GetPassiveIcon(p.Value);
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return a.HasValue ? GetActiveIcon(a.Value) : null;
+    }
+
+    private Sprite PrereqIcon(PassiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue) return GetPassiveIcon(p.Value);
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return a.HasValue ? GetActiveIcon(a.Value) : null;
     }
 
     // 갈림길에서 고른 뒤. 모달이 완전히 닫힌 다음에 다음 모달을 열어야 새 모달이 같이 꺼지지 않는다.

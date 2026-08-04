@@ -92,6 +92,13 @@ public class Enemy : MonoBehaviour
     private float lungeTimer = -1f; // 0 이상이면 돌진 중
     private bool lungeDamageDone;
     private bool isHolding;         // 이번 프레임에 멈춰 서 있는가(추월 판정에서 참조)
+
+    // 넉백은 등속이 아니라 **처음에 확 튕겨나갔다가 끝에서 멎는다**(EaseOutCubic).
+    // 등속으로 밀면 "질질 끌려가는" 느낌이라 타격감이 죽는다.
+    private const float KnockbackDuration = 0.25f;
+    private float knockbackDistance; // 이번 넉백의 총 거리(0이면 넉백 중이 아님)
+    private float knockbackElapsed;
+    private float knockbackMoved;    // 지금까지 실제로 이동한 거리
     private Vector2 diveDir = Vector2.right; // 대각선 강하 방향(스폰 시 1회 결정)
     private Quaternion baseRotation; // 돌진 기울기를 얹기 전의 원래 회전(복귀 기준)
     private float laneJitter;       // 스폰 시 부여되는 y 흔들림 — 줄이 딱 맞게 정렬되지 않도록
@@ -216,6 +223,7 @@ public class Enemy : MonoBehaviour
         // (0으로 두면 도착 후 HeadbuttInterval만큼 멀뚱히 서 있다가 때린다).
         headbuttTimer = BalanceConstants.HeadbuttInterval;
         holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
+        knockbackDistance = 0f; knockbackElapsed = 0f; knockbackMoved = 0f;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         diveDir = Vector2.right;
         // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.
@@ -331,7 +339,10 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        if (slowTimer > 0f)
+        // ⚠️ 넉백 중엔 기절 타이머가 흐르지 않는다. 밀려나는 동안 기절이 소진되면
+        //    "밀친 뒤 굳는다"는 연출이 통째로 사라진다(박살내기 기절 0.5초를 넉백이 다 먹었다).
+        //    캐리어는 ApplyKnockback에서 걸러져 knockbackDistance가 늘 0이라 영향받지 않는다.
+        if (slowTimer > 0f && knockbackDistance <= 0f)
         {
             slowTimer -= Time.deltaTime;
             if (slowTimer <= 0f)
@@ -351,6 +362,23 @@ public class Enemy : MonoBehaviour
         if (isCarrier)
         {
             UpdateCarrier();
+            return;
+        }
+
+        // 밀려나는 동안엔 전진도 박치기도 하지 않는다 — 넉백만 한다.
+        // ⚠️ 이 분기가 없으면 덜덜 떨린다: 박치기 돌진(AdvanceLunge)이 매 프레임 x를 holdBaseX 기준으로
+        //    **덮어쓰기** 때문에, 넉백으로 민 위치가 sin 곡선에 먹히고 돌진이 끝날 때 holdBaseX로 스냅한다.
+        //    전진도 마찬가지로 넉백과 매 프레임 반대 방향으로 싸워 정지 판정 경계에서 진동한다.
+        if (knockbackDistance > 0f)
+        {
+            if (lungeTimer >= 0f) { lungeTimer = -1f; transform.localRotation = baseRotation; } // 돌진 취소
+            TickKnockback();
+            holdBaseX = transform.position.x; // 밀려난 자리가 곧 새 제자리
+            isHolding = false;
+            SetAnimatorFrozen(true);
+            if (isHopper) UpdateHop();
+            if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(false);
+            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
 
@@ -584,15 +612,32 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
     }
 
-    // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 즉시 물러나게 한다.
-    // x만 만지므로 콩콩이 도약(y 절대 대입)·서핑 너울(y 차분 누적)과 섞여도 높이가 어긋나 쌓이지 않는다.
-    // 박치기 돌진 중이면 AdvanceLunge가 매 프레임 holdBaseX 기준으로 x를 덮어쓰므로 복귀 기준점도 같이 밀어야
-    // 돌진이 끝나는 순간 원래 자리로 되돌아가 버리지 않는다.
+    // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 물러나게 한다.
+    // 예전엔 한 프레임에 순간이동시켰는데, 그러면 "밀렸다"가 눈에 안 보인다(특히 타격 이펙트가
+    // 그 프레임을 가린다). 거리를 KnockbackSpeed로 나눠 몇 프레임에 걸쳐 미끄러지게 한다.
     public void ApplyKnockback(float distance)
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
-        transform.position += Vector3.left * distance;
-        holdBaseX -= distance;
+        // 밀리는 도중에 또 맞으면 **끊고 처음부터 다시** 튕긴다. 남은 거리에 더하기만 하면
+        // 이징이 이미 감속 구간에 들어가 있어서 두 번째 타격이 "씹힌" 것처럼 보인다.
+        knockbackDistance = distance;
+        knockbackElapsed = 0f;
+        knockbackMoved = 0f;
+    }
+
+    // 이징 곡선 위의 "지금 있어야 할 위치"와 실제 이동량의 차이만큼 옮긴다.
+    // x만 만지므로 콩콩이 도약(y 절대 대입)·서핑 너울(y 차분 누적)과 섞여도 높이가 어긋나 쌓이지 않는다.
+    private void TickKnockback()
+    {
+        knockbackElapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(knockbackElapsed / KnockbackDuration);
+        float eased = 1f - Mathf.Pow(1f - t, 3f); // EaseOutCubic: 초반이 가장 빠르다
+        float target = knockbackDistance * eased;
+
+        transform.position += Vector3.left * (target - knockbackMoved);
+        knockbackMoved = target;
+
+        if (t >= 1f) knockbackDistance = 0f; // 끝 — 다음 프레임부터 평소대로 움직인다
     }
 
     public void ApplyVulnerable(float multiplier, float duration)

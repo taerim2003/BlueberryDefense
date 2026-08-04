@@ -460,8 +460,11 @@ public class PlayerSkills : MonoBehaviour
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.9f);
                 break;
             case (ActiveSkillId.Orb, 1, 2):
-                skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.75f); // 쿨감 25%
-                skill.Scale += 0.3f; // 오브 크기 증가 (스프라이트 교체는 별도 아트 필요, 수치만 우선 적용)
+                // "대형 오브" — 크기 증가 + **관통 무한**(FireOrb에서 MaxTargets를 무제한으로).
+                // 예전엔 여기에 쿨감 25%까지 붙어 크기·쿨·관통이 전부 좋아지는 이중 강화였다.
+                // 관통이 무한이 된 대신 쿨타임을 늘려 "한 번 던지면 다 뚫지만 자주 못 던진다"로 만든다.
+                skill.Cooldown *= 1.6f;
+                skill.Scale += 0.3f;
                 break;
             case (ActiveSkillId.BasicAttack, 1, 3):
                 skill.Cooldown = Mathf.Max(GlobalCooldown, skill.Cooldown * 0.5f); // 쿨감 50%
@@ -507,7 +510,14 @@ public class PlayerSkills : MonoBehaviour
                 break;
             // 되감기 Route1(되감기 정도)·Route2(다음 스킬 피해)는 FireRewind에서 실시간 계산
 
-            // 휘두르기는 영구 스탯 변경이 없다 — 범위 확대·기절(path1)·충격파(path2) 전부
+            // 휘두르기 path1(힘 연계) 1차 = 타격 범위 1.45배. 범위가 곧 그대로 화력이라
+            // 진화 공통 보너스(피해 1.5배·쿨 0.9배)까지 겹치면 혼자 압도적으로 세진다 —
+            // 쿨타임 3배로 대가를 치르게 한다("한 방은 크지만 자주 못 쓴다").
+            case (ActiveSkillId.Swing, 1, 2):
+                skill.Cooldown *= 3f;
+                break;
+
+            // 나머지 휘두르기 진화는 영구 스탯 변경이 없다 — 기절(path1)·충격파(path2) 전부
             // FireSwing/SwingRoutine에서 PathTier를 실시간으로 읽어 처리한다.
             // (진화 자체의 피해 1.5배·쿨 0.9배는 EvolutionRoutes가 공통으로 얹는다.)
         }
@@ -1029,18 +1039,24 @@ public class PlayerSkills : MonoBehaviour
 
         // 첫 발은 즉시(입력 반응성), 추가 발사는 시간차를 두고 연사한다.
         SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0f, allowBonusShot);
-        if (skill.ExtraProjectiles > 0)
+        if (BasicAttackBurstCount(skill) > 0)
             StartCoroutine(BasicAttackBurst(skill, damage, critChance, pierce, allowBonusShot));
 
         animator.SetTrigger("Attack");
         return true;
     }
 
+    // 매사냥(독수리 연계 T2+)은 화살이 맞을 때마다 미니 독수리가 주변까지 퍼져 화력이 배로 뛴다.
+    // 발사 수까지 그대로 두면 혼자 압도적이라, 진화하면 추가 연사를 **절반으로** 깎는다.
+    // ⚠️ 영구 스탯을 깎지 않고 매 캐스트 실시간으로 계산한다 — 진화 후 레벨업으로 발수를 더 얻어도 절반이 유지된다.
+    private static int BasicAttackBurstCount(EquippedSkill skill) =>
+        skill.PathTier[2] >= 2 ? skill.ExtraProjectiles / 2 : skill.ExtraProjectiles;
+
     // 추가 발사체를 "두두두둑" 쏟아낸다 — 발사마다 간격을 두고, 세로로 위·아래 번갈아 조금씩 어긋나게.
     // 예전엔 전부 같은 프레임에 0.4씩 위로 쌓아 올려 한 덩어리로 보였다(여러 발 맞는 게 안 보임).
     private IEnumerator BasicAttackBurst(EquippedSkill skill, float damage, float critChance, int pierce, bool allowBonusShot)
     {
-        int count = skill.ExtraProjectiles; // 캐스트 시점 값으로 고정(도중에 레벨업해도 이번 연사는 그대로)
+        int count = BasicAttackBurstCount(skill); // 캐스트 시점 값으로 고정(도중에 레벨업해도 이번 연사는 그대로)
         for (int i = 1; i <= count; i++)
         {
             yield return new WaitForSeconds(BalanceConstants.BasicAttackBurstInterval);
@@ -1278,7 +1294,7 @@ public class PlayerSkills : MonoBehaviour
     // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
     private const float SwingReach = 4.8f;       // 플레이어 앞(왼쪽) 사거리
     private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
-    private const float SwingKnockback = 0.8f;   // 밀어내는 거리
+    private const float SwingKnockback = 2.4f;   // 밀어내는 거리
     private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
 
     // 피해는 캐스트 순간이 아니라 **돌망치가 땅에 꽂히는 4번째 프레임**에 들어간다
@@ -1293,6 +1309,18 @@ public class PlayerSkills : MonoBehaviour
     private const float ShockwaveKnockback = 0.35f;
     private const float ShockwaveEmpoweredKnockback = 0.55f;
     private const float SwingStunDuration = 0.5f;               // 1루트 진화 2차: 밀쳐진 적 기절
+    // 1루트 진화 1차: 맞은 적 **한 마리당** 초과체력 회복(독수리 "흡혈 군단"과 같은 방식).
+    // 광역이라 여럿 맞히면 그만큼 크게 회복된다 — 근접으로 파고드는 위험의 보상.
+    private const int SwingLifestealPerHit = 2;
+
+    // ── 범위 표시 ──
+    // 피해 판정이 직사각형이라 표시도 직사각형이다(원으로 그리면 모서리가 어긋난다).
+    // 휘두르기 전용 — 시전하고 피해가 들어갈 때까지 떠 있다가 타격 후 사라진다.
+    private const float SwingRangeAlpha = 0.28f;
+    private const float SwingRangeFadeDuration = 0.25f;
+    private const int SwingRangeSortingOrder = 0;   // 적(100+)보다 뒤에 깔린다
+    private static readonly Color SwingRangeColor = new Color(1f, 0.85f, 0.15f, SwingRangeAlpha);
+    private static Sprite swingRangeSprite;
 
     private void FireSwing(float damage, float critChance, EquippedSkill skill)
     {
@@ -1312,13 +1340,51 @@ public class PlayerSkills : MonoBehaviour
         float reach = SwingReach * reachMult * skill.Scale;
         float halfHeight = SwingHalfHeight * reachMult * skill.Scale;
 
+        SpriteRenderer range = SpawnSwingRange(reach, halfHeight);
+
         yield return new WaitForSeconds(SwingImpactDelay); // 내려찍는 순간까지 기다린다
 
         // 타격 이펙트는 별도 VFX가 아니라 **4번째 프레임 그림에 그려져 있다**(사용자 아트).
         // 파티클을 겹쳐 봤지만 도트 그림을 가려서 뺐다 — 연출을 더하려면 그림 쪽을 먼저 볼 것.
-        SwingHit(damage, critChance, reach, halfHeight, SwingKnockback, stun);
+        // 1루트 1차부터 흡혈이 붙는다 — 범위·피해만 늘던 루트에 "버티는" 성격을 준다.
+        int lifesteal = skill.PathTier[1] >= 2 ? SwingLifestealPerHit : 0;
+        SwingHit(damage, critChance, reach, halfHeight, SwingKnockback, stun, lifesteal);
 
         if (shockwave) SpawnShockwave(damage, critChance, empoweredShock);
+
+        // 피해가 들어간 뒤에야 범위 표시가 사라진다 — "어디까지 맞았는지"를 결과와 함께 보여준다.
+        float t = 0f;
+        while (range != null && t < SwingRangeFadeDuration)
+        {
+            t += Time.deltaTime;
+            Color c = SwingRangeColor;
+            c.a = Mathf.Lerp(SwingRangeAlpha, 0f, t / SwingRangeFadeDuration);
+            range.color = c;
+            yield return null;
+        }
+        if (range != null) Destroy(range.gameObject);
+    }
+
+    // 판정과 **똑같은** 사각형을 깔아 준다: 앞(왼쪽)으로 reach, 등 뒤로 SwingBehindMargin, 위아래 halfHeight.
+    // ⚠️ 플레이어의 localScale이 1.5라 자식으로 붙이면 크기가 곱해진다 — 월드에 독립으로 둔다.
+    private SpriteRenderer SpawnSwingRange(float reach, float halfHeight)
+    {
+        if (swingRangeSprite == null)
+        {
+            // 1×1유닛짜리 흰 사각형 하나면 충분하다(크기는 localScale로 준다) — 별도 아트 파일이 필요 없다.
+            Texture2D tex = Texture2D.whiteTexture;
+            swingRangeSprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+        }
+
+        GameObject go = new GameObject("SwingRange", typeof(SpriteRenderer));
+        SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+        sr.sprite = swingRangeSprite;
+        sr.color = SwingRangeColor;
+        sr.sortingOrder = SwingRangeSortingOrder;
+
+        go.transform.position = transform.position + Vector3.left * ((reach - SwingBehindMargin) * 0.5f);
+        go.transform.localScale = new Vector3(reach + SwingBehindMargin, halfHeight * 2f, 1f);
+        return sr;
     }
 
     // 내려찍은 자리에서 맵 끝까지 달려나가는 충격파. 본체보다 약하게 때리고 살짝만 밀어낸다.
@@ -1334,7 +1400,7 @@ public class PlayerSkills : MonoBehaviour
         wave.Knockback = empowered ? ShockwaveEmpoweredKnockback : ShockwaveKnockback;
     }
 
-    private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun)
+    private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun, int lifestealPerHit)
     {
         float px = transform.position.x;
         float py = transform.position.y;
@@ -1350,6 +1416,7 @@ public class PlayerSkills : MonoBehaviour
             e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);
             e.ApplyKnockback(knockback);
             if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
+            if (lifestealPerHit > 0 && health != null) health.AddOverheal(lifestealPerHit);
         }
     }
 
@@ -1541,7 +1608,9 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[1] >= 3) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
         orb.SlowMultiplierBonus = slowMultBonus;
         orb.SlowDurationBonus = slowDurBonus;
-        orb.MaxTargets = OrbBaseTargets + skill.ExtraTargets; // 레벨업 주 성장축: 사라지기 전까지 붙잡는 총 적 수
+        // 레벨업 주 성장축: 사라지기 전까지 붙잡는 총 적 수.
+        // 대형 오브(지식 연계 T2+)는 **관통 무한** — 줄을 통째로 뚫고 지나간다(대가는 늘어난 쿨타임).
+        orb.MaxTargets = skill.PathTier[1] >= 2 ? int.MaxValue : OrbBaseTargets + skill.ExtraTargets;
     }
 
     private void SpawnOrbAltar(Vector3 position, float damage, float critChance, EquippedSkill skill)

@@ -39,8 +39,10 @@
 # 위험 호출 차단 훅은 CLAUDE.md 규칙의 대체재라 유실되면 방어가 통째로 사라진다.
 !.claude/settings.json
 !.claude/hooks/
-# 칸반 조회 스크립트는 CLAUDE.md §6-2의 세션 시작 루틴이 직접 호출한다 — 없으면 루틴이 깨진다.
+# 칸반 조회 스크립트는 세션 시작 루틴(CLAUDE.md §7-0-1)이 직접 호출한다 — 없으면 루틴이 깨진다.
 !.claude/scripts/
+# 스킬은 CLAUDE.md에서 옮겨온 절차 본문이다 — 유실되면 규칙이 통째로 사라진다.
+!.claude/skills/
 
 # Gradle cache directory
 .gradle/
