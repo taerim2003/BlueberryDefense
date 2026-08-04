@@ -22,6 +22,7 @@ Before implementing:
 - 선택지를 낼 땐 **손잡이 이름(`ambushCount` 같은 필드명)이 아니라 화면에서 벌어지는 일로** 먼저 한 줄 설명할 것. 사용자는 코드 필드로 생각하지 않는다 — 세션25에 "게릴라를 늘린다"를 서로 다른 뜻으로 쓰다 선택지 전체가 헛다리를 짚었다(정답은 내가 낸 3안 밖에 있었다).
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- **메모리·문서에는 규칙만 적고, 변하는 것(현재 값·구현 상태·프리팹 목록)은 "어디서 확인하는지"만 적을 것.** 상태를 박아두면 낡아서 다음 세션이 틀린 걸 사실로 읊는다. 세션27에 메모리 3건이 그렇게 낡아 있었고, 그중 하나는 **다른 메모리가 "틀렸다"고 기록해 둔 주장**을 그대로 갖고 있었다(둘 다 매 세션 주입된다). 일하는 방식 규칙(`feedback`)은 24일이 지나도 안 낡았다 — 차이는 그 시점 상태가 섞였는지뿐이다.
 
 ## 2. Simplicity First
 
