@@ -12109,6 +12109,7 @@ MonoBehaviour:
   - {fileID: 8771009198065084442, guid: 3e6314f2f3d7b5a4a8da49ab70c55f13, type: 3}
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
   passiveIcons:
   - {fileID: 6929312441436723685, guid: 20aa78e88f1917048bd470c011e76354, type: 3}
   - {fileID: -5499187749238686383, guid: 881e17147270f7141ab54205b1b2f26a, type: 3}
@@ -12239,6 +12240,11 @@ MonoBehaviour:
   - {fileID: -5657532419524129085, guid: 9c5c0501abcdf054e9773e631af7798f, type: 3}
   - {fileID: 5052037539827192933, guid: fed774b2ef99fad46999ac5aa8e1b2db, type: 3}
   - {fileID: -7527278547198261715, guid: 2ec07df7e663e4f44a441707583b3ff0, type: 3}
+  - {fileID: 21300000, guid: 61009159887bb664d9e658ab43caeafb, type: 3}
+  - {fileID: 8771009198065084442, guid: 3e6314f2f3d7b5a4a8da49ab70c55f13, type: 3}
+  - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
+  - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
   passiveIcons:
   - {fileID: 6929312441436723685, guid: 20aa78e88f1917048bd470c011e76354, type: 3}
   - {fileID: -5499187749238686383, guid: 881e17147270f7141ab54205b1b2f26a, type: 3}
@@ -15073,6 +15079,7 @@ MonoBehaviour:
   - {fileID: 8771009198065084442, guid: 3e6314f2f3d7b5a4a8da49ab70c55f13, type: 3}
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
+  - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
   gemIconSprites:
   - {fileID: 6613588427734777530, guid: a0edddfd4847ab5428cd00cea6a70ca8, type: 3}
   - {fileID: 1592231510907667000, guid: 6b1b0bbcc1e04d842bdbb96f08bbceb9, type: 3}

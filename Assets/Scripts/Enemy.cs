@@ -7,10 +7,14 @@ public class Enemy : MonoBehaviour
     [SerializeField] private EnemyDefinition definition; // 밸런스 스탯(속도·피해·체력·xp·정수드랍). Awake에서 런타임 필드로 복사
     [SerializeField] private bool isTreasure;
 
-    // 벽 스테이지 진화 엘리트 표식. 프리팹 값이 아니라 EnemySpawner가 스폰 직후 켜준다
-    // (같은 엘리트 프리팹이 일반 스테이지에도 나오기 때문).
-    private bool carriesEvolutionItem;
-    public void MarkEvolutionItemCarrier() => carriesEvolutionItem = true;
+    // 보스 표식. 프리팹이 아니라 EnemySpawner가 스폰 직후 켜준다
+    // (보스 여부는 "어떤 프리팹이냐"가 아니라 "보스 슬롯으로 스폰됐느냐"로 정해진다 —
+    //  같은 프리팹이 다른 슬롯으로도 나올 수 있다).
+    // 쓰임: 군중제어 감쇄. 보스는 둔화·기절·넉백을 절반만 받는다 — 안 그러면 넉백·기절을 연달아 걸어
+    // 보스가 한 발짝도 못 오는 **무한 스톨링**이 된다(디펜스에서 보스전이 통째로 무력화된다).
+    private bool isBoss;
+    public void MarkAsBoss() => isBoss = true;
+    private const float BossCrowdControlScale = 0.5f;
 
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
@@ -215,8 +219,6 @@ public class Enemy : MonoBehaviour
         appliedHpMult = appliedSpeedMult = appliedDamageMult = 1f;
 
         isDead = false;
-        // 엘리트 프리팹은 일반 스테이지에도 재사용된다 — 표식이 남아 있으면 진화 아이템이 공짜로 쏟아진다.
-        carriesEvolutionItem = false;
 
         popping = false; popVelY = 0f; popVelX = 0f; popGroundY = 0f;
         // 박치기 타이머를 주기만큼 채운 채로 시작한다 — 플레이어 앞에 도착하는 즉시 첫 박치기가 나간다
@@ -607,6 +609,10 @@ public class Enemy : MonoBehaviour
 
     public void ApplySlow(float multiplier, float duration)
     {
+        // 보스는 **감속의 세기**만 절반으로 받는다(지속시간은 그대로). 세기를 깎는 쪽이라
+        // 기절(multiplier 0)조차 "느려짐"으로 바뀌어 보스가 계속 전진한다 — 무한 스톨링을 끊는 지점이 여기다.
+        if (isBoss) multiplier = 1f - (1f - multiplier) * BossCrowdControlScale;
+
         slowMultiplier = multiplier;
         slowTimer = duration;
         SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
@@ -618,6 +624,7 @@ public class Enemy : MonoBehaviour
     public void ApplyKnockback(float distance)
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
+        if (isBoss) distance *= BossCrowdControlScale; // 보스는 절반만 밀린다
         // 밀리는 도중에 또 맞으면 **끊고 처음부터 다시** 튕긴다. 남은 거리에 더하기만 하면
         // 이징이 이미 감속 구간에 들어가 있어서 두 번째 타격이 "씹힌" 것처럼 보인다.
         knockbackDistance = distance;
@@ -718,9 +725,6 @@ public class Enemy : MonoBehaviour
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);
             if (isTreasure) LevelUpUI.Instance.ShowTreasureReward();
-
-            // 벽 스테이지 엘리트만 진화 아이템을 떨군다 — 진화를 여는 유일한 경로(§EvolutionRoutes)
-            if (carriesEvolutionItem) EvolutionItemPickup.Drop(transform.position);
 
             // 아웃게임 정수(태양빛) 드랍 — 하트처럼 물리적 픽업이 플레이어에게 흡입되어 적립됨
             if (isTreasure || Random.value < essenceDropChance)

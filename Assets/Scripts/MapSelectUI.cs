@@ -34,6 +34,9 @@ public class MapSelectUI : MonoBehaviour
     [SerializeField] private TMP_Text characterNameText;          // 현재 선택된 캐릭터 이름
     [SerializeField] private Image characterPortrait;             // 현재 캐릭터 초상화(선택, 없으면 숨김)
 
+    // 잠긴 맵 카드의 썸네일 색 — 실루엣만 남긴다(CharacterSelectUI와 같은 규칙).
+    private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
+
     private readonly List<GameObject> cardFrames = new List<GameObject>();
     private int selectedIndex = -1;
     private bool built;
@@ -62,7 +65,7 @@ public class MapSelectUI : MonoBehaviour
     {
         if (!built) BuildCards();
         if (panelRoot != null) panelRoot.SetActive(true);
-        Select(maps != null && maps.Length > 0 ? 0 : -1);
+        Select(FirstUnlockedIndex());
         RefreshCharacter();
         // 지난 선택을 이어받되 해금 범위로 클램프
         ascensionLevel = Mathf.Clamp(RunConfig.AscensionLevel, 1, MaxSelectableAscension);
@@ -140,12 +143,21 @@ public class MapSelectUI : MonoBehaviour
             var card = Instantiate(cardTemplate, cardContainer);
             card.SetActive(true);
 
+            bool locked = map != null && !map.IsUnlocked;
+
             var thumb = card.transform.Find("Thumb")?.GetComponent<Image>();
-            if (thumb != null && map != null) thumb.sprite = map.background;
+            if (thumb != null && map != null)
+            {
+                thumb.sprite = map.background;
+                // 잠긴 맵은 실루엣으로만 — 뭐가 있는지는 알되 어떤 곳인지는 모르게.
+                thumb.color = locked ? LockedSilhouette : Color.white;
+            }
 
             var nameText = card.transform.Find("Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
-                nameText.text = string.IsNullOrEmpty(map.displayName) ? map.name : map.displayName;
+                nameText.text = locked
+                    ? "🔒 " + map.UnlockConditionText()
+                    : (string.IsNullOrEmpty(map.displayName) ? map.name : map.displayName);
 
             var frame = card.transform.Find("Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);
@@ -153,12 +165,28 @@ public class MapSelectUI : MonoBehaviour
 
             int idx = i; // 클로저 캡처
             var btn = card.GetComponent<Button>();
-            if (btn != null) btn.onClick.AddListener(() => Select(idx));
+            if (btn != null)
+            {
+                btn.interactable = !locked; // 잠긴 맵은 눌러도 선택되지 않는다
+                btn.onClick.AddListener(() => Select(idx));
+            }
         }
+    }
+
+    // 처음 열 때 커서를 둘 곳. 잠긴 맵에 커서가 앉으면 "시작"이 눌리는 순간 잠긴 판이 시작된다.
+    private int FirstUnlockedIndex()
+    {
+        if (maps == null) return -1;
+        for (int i = 0; i < maps.Length; i++)
+            if (maps[i] != null && maps[i].IsUnlocked) return i;
+        return -1;
     }
 
     private void Select(int index)
     {
+        // 잠긴 맵은 선택 자체를 막는다(버튼도 비활성이지만 코드 경로가 하나 더 있다 — Open의 초기 선택).
+        if (maps != null && index >= 0 && index < maps.Length && maps[index] != null && !maps[index].IsUnlocked) return;
+
         selectedIndex = index;
         for (int i = 0; i < cardFrames.Count; i++)
             if (cardFrames[i] != null) cardFrames[i].SetActive(i == index);
@@ -168,6 +196,7 @@ public class MapSelectUI : MonoBehaviour
     private void Confirm()
     {
         if (maps == null || selectedIndex < 0 || selectedIndex >= maps.Length) return;
+        if (maps[selectedIndex] != null && !maps[selectedIndex].IsUnlocked) return; // 잠긴 맵으로는 판이 시작되지 않는다
         RunConfig.Map = maps[selectedIndex];
         RunConfig.Character = characterSelect != null ? characterSelect.Selected : null;
         RunConfig.AscensionLevel = Mathf.Clamp(ascensionLevel, 1, MaxSelectableAscension);

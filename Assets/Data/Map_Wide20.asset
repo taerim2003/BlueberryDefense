@@ -15,8 +15,14 @@ MonoBehaviour:
   displayName: "\uAD11\uD65C\uD55C \uBC2D"
   description: 
   fieldScale: 1.8
+  cameraYLift: 0
   background: {fileID: 0}
+  backgroundFrames: []
+  backgroundFrameSeconds: 0.4
   bgm: {fileID: 0}
+  unlockedFromStart: 0
+  requiredClearMap: {fileID: 11400000, guid: 6e8e7f7751a96b746afa6b8fd4d9b777, type: 2}
+  requiredClearAscension: 2
   stageTable: {fileID: 11400000, guid: e2c29317494310b4bbff126f4d82c824, type: 2}
   bossStage: 15
   spawnInterval: 1.5
@@ -28,4 +34,6 @@ MonoBehaviour:
   ufoEnemyPrefab: {fileID: 8099291569125172224, guid: cbd37ef36de04401b09db271f5ebd8d9, type: 3}
   shieldEnemyPrefab: {fileID: 2590007705602640116, guid: b3f9c2a7e1d84c6b9a05f7e2c1d63b48, type: 3}
   riderEnemyPrefab: {fileID: 6695594374957680745, guid: 6712b983e4ac3c542bfcc99377910015, type: 3}
+  hopperEnemyPrefab: {fileID: 0}
+  surferEnemyPrefab: {fileID: 0}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}

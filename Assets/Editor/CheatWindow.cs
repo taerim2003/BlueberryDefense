@@ -80,6 +80,36 @@ public class CheatWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
+        DrawMapUnlockSection();
+    }
+
+    // 맵 해금은 MapClearSave(맵별 클리어 기록)로 판정하는데, 이 기록은 세션26에 생겨서
+    // **그 이전 클리어가 소급되지 않는다.** 그래서 개발 세이브에서도 첫 맵 말고는 전부 잠겨 보인다 —
+    // 테스트할 때마다 실제로 깨고 올 수는 없으니 여기서 직접 기록을 넣고 뺀다.
+    private void DrawMapUnlockSection()
+    {
+        EditorGUILayout.LabelField("맵 해금 (MapClearSave)", EditorStyles.boldLabel);
+
+        string[] guids = AssetDatabase.FindAssets("t:MapDefinition");
+        foreach (string g in guids)
+        {
+            var map = AssetDatabase.LoadAssetAtPath<MapDefinition>(AssetDatabase.GUIDToAssetPath(g));
+            if (map == null) continue;
+
+            int cleared = MapClearSave.ClearedAscension(map.name);
+            string label = string.IsNullOrEmpty(map.displayName) ? map.name : map.displayName;
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField($"{label} — 클리어 승천 {cleared} {(map.IsUnlocked ? "(해금됨)" : "(잠김)")}",
+                GUILayout.Width(260));
+            if (GUILayout.Button("승천+1 클리어 기록", GUILayout.Width(140)))
+                MapClearSave.RecordClear(map.name, cleared + 1);
+            if (GUILayout.Button("기록 삭제", GUILayout.Width(80)))
+                MapClearSave.Reset(map.name);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        EditorGUILayout.Space();
     }
 
     private void DrawExperienceSection()

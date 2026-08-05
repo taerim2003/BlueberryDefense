@@ -33,6 +33,32 @@ public class MapDefinition : ScriptableObject
     public float backgroundFrameSeconds = 0.4f;
     public AudioClip bgm; // null이면 무음(현재 상태). RunBootstrap이 있으면 루프 재생
 
+    // ── 해금 조건 ──────────────────────────────────────────────────────────────
+    // 앞 맵을 특정 승천까지 깨야 다음 맵이 열린다(StS식 진행). CharacterDefinition과 **같은 구조·같은 이유**로 만든다.
+    // ⚠️ unlockedFromStart 기본값이 true인 것도 같은 이유다: 이 필드가 없던 시절 임포트된 기존 에셋이
+    //    직렬화 캐시의 옛 값을 쓰기 때문에, 기본값은 반드시 "기존 동작(전부 해금)"과 같은 쪽이어야 한다.
+    //    새로 잠글 맵만 명시적으로 false로 둘 것.
+    // ⚠️ 판정 근거인 MapClearSave는 **세션26에 생겨서 그 이전 클리어가 소급되지 않는다** —
+    //    이미 게임을 깬 세이브에서도 첫 맵부터 다시 깨야 다음 맵이 열린다(치트 창에 해금 버튼을 둔 이유).
+    [Header("해금 조건 (unlockedFromStart면 무시)")]
+    public bool unlockedFromStart = true;
+    public MapDefinition requiredClearMap;    // null이면 맵 조건 없음
+    public int requiredClearAscension = 2;    // 그 맵에서 클리어해야 하는 승천 등급
+
+    public bool IsUnlocked => unlockedFromStart || ClearConditionMet;
+
+    private bool ClearConditionMet =>
+        requiredClearMap == null || MapClearSave.HasCleared(requiredClearMap.name, requiredClearAscension);
+
+    // 잠긴 카드에 그대로 띄우는 조건 문구. 없으면 빈 문자열.
+    public string UnlockConditionText()
+    {
+        if (unlockedFromStart || requiredClearMap == null) return "";
+        string mapName = string.IsNullOrEmpty(requiredClearMap.displayName)
+            ? requiredClearMap.name : requiredClearMap.displayName;
+        return $"{mapName} 승천{requiredClearAscension} 클리어";
+    }
+
     [Header("스테이지 구성")]
     public StageTable stageTable;
     public int bossStage = 15;

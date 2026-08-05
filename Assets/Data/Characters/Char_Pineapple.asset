@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinition
   displayName: "\uD30C\uC778\uC560\uD50C"
   description: 
-  portrait: {fileID: 21300000, guid: 8aef0eec29c647e4490556bcad9dc15d, type: 3}
+  portrait: {fileID: 21300000, guid: 0a40f48424a0c914d9ef76ae0dd90faf, type: 3}
   sprite: {fileID: 21300000, guid: 8aef0eec29c647e4490556bcad9dc15d, type: 3}
   animatorController: {fileID: 9100000, guid: 00abcbb71ded0c5468aa1df1cd06665c, type: 2}
   baseHealth: 150

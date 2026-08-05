@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AscensionTable ascension; // 미할당 시 AscensionTable.Default 폴백
     [SerializeField] private GameObject heartPickupPrefab;
     [SerializeField] private GameObject essencePickupPrefab;
-    [SerializeField] private GameObject evolutionItemPrefab; // 벽 스테이지 엘리트가 떨구는 진화 아이템
 
     public static GameManager Instance { get; private set; }
 
@@ -49,7 +48,6 @@ public class GameManager : MonoBehaviour
         RunState.ResetAll(); // 지난 판의 static 효과(진화 보정·낙뢰 상태 등)가 넘어오지 않도록 전부 초기화
         Enemy.HeartPickupPrefab = heartPickupPrefab;
         EssencePickup.Prefab = essencePickupPrefab;
-        EvolutionItemPickup.Prefab = evolutionItemPrefab;
     }
 
     private void Update()

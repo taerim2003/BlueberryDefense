@@ -517,6 +517,12 @@ public class PlayerSkills : MonoBehaviour
                 skill.Cooldown *= 3f;
                 break;
 
+            // 휘두르기 path2(회오리 연계) 1차 = 맵 끝까지 가는 충격파. 본체 판정 밖의 적까지 닿는
+            // 사실상 사거리 무제한 공격이라, 1루트와 마찬가지로 쿨타임으로 대가를 치르게 한다.
+            case (ActiveSkillId.Swing, 2, 2):
+                skill.Cooldown *= 1.8f;
+                break;
+
             // 나머지 휘두르기 진화는 영구 스탯 변경이 없다 — 기절(path1)·충격파(path2) 전부
             // FireSwing/SwingRoutine에서 PathTier를 실시간으로 읽어 처리한다.
             // (진화 자체의 피해 1.5배·쿨 0.9배는 EvolutionRoutes가 공통으로 얹는다.)
@@ -1292,10 +1298,16 @@ public class PlayerSkills : MonoBehaviour
     // 딸기의 화살 쏘기 자리를 대신하는 주력기. 사거리가 짧은 대신 쿨이 짧고, 맞은 적을 왼쪽으로
     // 밀어내 방어선을 되돌린다(디펜스에서 시간을 버는 것이 이 스킬의 정체성).
     // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
-    private const float SwingReach = 4.8f;       // 플레이어 앞(왼쪽) 사거리
+    private const float SwingReach = 4.8f;       // 플레이어 앞(왼쪽) 사거리 = 판정의 **끝점**
     private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
     private const float SwingKnockback = 2.4f;   // 밀어내는 거리
-    private const float SwingBehindMargin = 0.5f; // 등 뒤로 지나친 적 제외 여유
+    // 판정의 **시작점** — 파인애플 몸통 바로 앞. 몸통을 덮던 예전 판정(등 뒤 0.5까지)을 앞으로 밀어낸 것.
+    // ⚠️ 일부러 skill.Scale을 곱하지 않는다. 시작점은 "몸통 위치"라 크기 진화와 무관하게 고정돼야 한다
+    //    — 곱하면 크기를 올릴수록 코앞이 비어서 근접 캐릭터가 눈앞의 적을 못 때린다.
+    //    덕분에 크기 증가는 **앞쪽으로만** 자라고, 초반 화력은 유지되면서 면적 증가폭은 완만해진다.
+    // (실측: 플레이어 pivot→앞 몸통 끝 0.75. 파인애플은 스프라이트 폭에 돌망치가 포함돼 더 넓지만
+    //  "몸통"만 치면 딸기와 비슷하다 — 눈으로 보고 조정할 손잡이다.)
+    private const float SwingNearOffset = 0.7f;
 
     // 피해는 캐스트 순간이 아니라 **돌망치가 땅에 꽂히는 4번째 프레임**에 들어간다
     // (그 프레임에 사용자가 충격파를 직접 그려 넣었다 — 그림과 판정이 같은 순간이어야 한다).
@@ -1303,7 +1315,11 @@ public class PlayerSkills : MonoBehaviour
     // ⚠️ 클립 타이밍을 바꾸면 이 값도 같이 고칠 것 — 어긋나면 휘두르기도 전에 적이 날아간다.
     private const float SwingImpactDelay = 0.225f;
     // 2루트 진화 충격파 — 본체보다 약하게 때리고 "살짝" 밀어낸다(기본 넉백 0.8의 절반 이하).
-    private const float ShockwaveSpawnOffset = 1.6f;            // 내려찍은 지점에서 출발
+    private const float ShockwaveSpawnOffset = 1.6f;            // 내려찍은 지점에서 출발(앞쪽)
+    // 땅을 타고 번지는 연출이라 플레이어 중심이 아니라 **발밑 높이**에서 나가야 한다.
+    // (0이면 몸통 한가운데서 나가 공중에 뜬 것처럼 보인다.)
+    // (실측: 플레이어 pivot→발밑 1.125, 충격파 스프라이트 반높이 약 0.3 → 발밑에 얹으면 -0.85)
+    private const float ShockwaveSpawnYOffset = -0.85f;
     private const float ShockwaveDamageRatio = 0.6f;            // 진화 1차: 본체 피해의 60%
     private const float ShockwaveEmpoweredDamageRatio = 1f;     // 진화 2차: 본체와 같은 피해
     private const float ShockwaveKnockback = 0.35f;
@@ -1365,7 +1381,7 @@ public class PlayerSkills : MonoBehaviour
         if (range != null) Destroy(range.gameObject);
     }
 
-    // 판정과 **똑같은** 사각형을 깔아 준다: 앞(왼쪽)으로 reach, 등 뒤로 SwingBehindMargin, 위아래 halfHeight.
+    // 판정과 **똑같은** 사각형을 깔아 준다: 앞(왼쪽)으로 SwingNearOffset~reach, 위아래 halfHeight.
     // ⚠️ 플레이어의 localScale이 1.5라 자식으로 붙이면 크기가 곱해진다 — 월드에 독립으로 둔다.
     private SpriteRenderer SpawnSwingRange(float reach, float halfHeight)
     {
@@ -1382,8 +1398,8 @@ public class PlayerSkills : MonoBehaviour
         sr.color = SwingRangeColor;
         sr.sortingOrder = SwingRangeSortingOrder;
 
-        go.transform.position = transform.position + Vector3.left * ((reach - SwingBehindMargin) * 0.5f);
-        go.transform.localScale = new Vector3(reach + SwingBehindMargin, halfHeight * 2f, 1f);
+        go.transform.position = transform.position + Vector3.left * ((SwingNearOffset + reach) * 0.5f);
+        go.transform.localScale = new Vector3(reach - SwingNearOffset, halfHeight * 2f, 1f);
         return sr;
     }
 
@@ -1392,7 +1408,7 @@ public class PlayerSkills : MonoBehaviour
     {
         if (swingShockwavePrefab == null) return;
 
-        Vector3 pos = transform.position + Vector3.left * ShockwaveSpawnOffset;
+        Vector3 pos = transform.position + Vector3.left * ShockwaveSpawnOffset + Vector3.up * ShockwaveSpawnYOffset;
         GameObject obj = Instantiate(swingShockwavePrefab, pos, Quaternion.identity);
         SwingShockwave wave = obj.GetComponent<SwingShockwave>();
         wave.Damage = damage * (empowered ? ShockwaveEmpoweredDamageRatio : ShockwaveDamageRatio);
@@ -1410,7 +1426,7 @@ public class PlayerSkills : MonoBehaviour
             if (e == null || !e.IsAlive) continue;
             Vector3 p = e.transform.position;
             float dx = px - p.x;
-            if (dx < -SwingBehindMargin || dx > reach) continue;
+            if (dx < SwingNearOffset || dx > reach) continue;
             if (Mathf.Abs(p.y - py) > halfHeight) continue;
 
             e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);

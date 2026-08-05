@@ -24,7 +24,8 @@ public class LevelUpUI : MonoBehaviour
         public PassiveSkillId? PassiveId;
         public bool IsEssence;
         // 갈림길의 진화 카드에만 채운다 — 카드 아래에 "무엇 + 무엇" 짝을 미리 보여준다.
-        public List<(Sprite target, Sprite prereq)> ComboPreview;
+        // 바깥 리스트 = 스킬(화면의 한 줄), 안쪽 = 그 스킬의 열린 루트들.
+        public List<List<(Sprite target, Sprite prereq)>> ComboPreview;
     }
 
     [SerializeField] private GameObject panel;
@@ -325,34 +326,26 @@ public class LevelUpUI : MonoBehaviour
     private const float ComboEntryGap = 14f;      // 짝과 짝 사이(가로)
     private const float ComboLineGap = 8f;        // 줄과 줄 사이(세로)
     private const float ComboRowMaxWidth = 300f;  // 한 줄 최대 폭(세로 카드 340 안)
-    private const int ComboMaxLines = 3;          // 이보다 많아지면 그때 전체를 줄인다
+    private const int ComboMaxPerLine = 2;        // 한 줄에 최대 두 짝 — 스킬 하나의 루트가 둘뿐이라 이걸로 딱 맞는다
+    private const int ComboMaxLines = 4;          // 이보다 많아지면 그때 전체를 줄인다
     private const float ComboRowYOffset = 14f;    // 카드 바닥에서 띄우는 거리
 
     private static float ComboEntryWidth(bool paired) =>
         paired ? ComboIconSize * 2f + ComboPlusWidth : ComboIconSize;
 
-    // 항목을 순서대로 줄에 채운다. 반환값은 줄별 항목 개수.
-    private static List<int> ComboLineBreaks(List<(Sprite target, Sprite prereq)> combos, float scale)
+    // 스킬 묶음을 줄로 편다 — **한 스킬이 한 줄**을 차지한다(폭이 남아도 다음 스킬을 끌어올리지 않는다).
+    // 루트가 셋 이상인 스킬이 생기면 그때만 그 스킬 안에서 줄이 나뉜다.
+    private static List<List<(Sprite target, Sprite prereq)>> ComboLines(
+        List<List<(Sprite target, Sprite prereq)>> groups)
     {
-        List<int> lines = new List<int>();
-        float used = 0f;
-        int inLine = 0;
-        foreach ((Sprite target, Sprite prereq) c in combos)
-        {
-            float w = ComboEntryWidth(c.prereq != null) * scale;
-            float add = inLine == 0 ? w : w + ComboEntryGap * scale;
-            if (inLine > 0 && used + add > ComboRowMaxWidth)
-            {
-                lines.Add(inLine);
-                used = w; inLine = 1;
-            }
-            else { used += add; inLine++; }
-        }
-        if (inLine > 0) lines.Add(inLine);
+        var lines = new List<List<(Sprite target, Sprite prereq)>>();
+        foreach (var g in groups)
+            for (int i = 0; i < g.Count; i += ComboMaxPerLine)
+                lines.Add(g.GetRange(i, Mathf.Min(ComboMaxPerLine, g.Count - i)));
         return lines;
     }
 
-    private void SetComboPreview(TMP_Text desc, List<(Sprite target, Sprite prereq)> combos)
+    private void SetComboPreview(TMP_Text desc, List<List<(Sprite target, Sprite prereq)>> groups)
     {
         if (desc == null) return;
         RectTransform card = desc.rectTransform.parent as RectTransform; // 설명의 부모 = 카드(버튼)
@@ -362,16 +355,11 @@ public class LevelUpUI : MonoBehaviour
         Transform old = card.Find(ComboRowName);
         if (old != null) { old.name = ComboRowName + "_dead"; Destroy(old.gameObject); }
 
-        if (combos == null || combos.Count == 0) return;
+        if (groups == null || groups.Count == 0) return;
 
-        // 크기를 유지한 채 **여러 줄로 편다**. 줄이 너무 많아질 때만 전체를 줄인다.
-        float scale = 1f;
-        List<int> lines = ComboLineBreaks(combos, scale);
-        if (lines.Count > ComboMaxLines)
-        {
-            scale = (float)ComboMaxLines / lines.Count; // 줄이면 한 줄에 더 들어가므로 실제 줄 수는 이보다 적어진다
-            lines = ComboLineBreaks(combos, scale);
-        }
+        // 줄 수는 스킬 수로 정해진다(폭과 무관). 줄이 너무 많을 때만 전체를 줄여 카드 안에 넣는다.
+        var lines = ComboLines(groups);
+        float scale = lines.Count > ComboMaxLines ? (float)ComboMaxLines / lines.Count : 1f;
 
         float iconH = ComboIconSize * scale;
         float totalH = lines.Count * iconH + (lines.Count - 1) * ComboLineGap * scale;
@@ -384,14 +372,15 @@ public class LevelUpUI : MonoBehaviour
         rowRT.anchoredPosition = new Vector2(0f, ComboRowYOffset);
         rowRT.sizeDelta = new Vector2(ComboRowMaxWidth, totalH);
 
-        int idx = 0;
         for (int li = 0; li < lines.Count; li++)
         {
-            // 줄마다 실제 폭을 재서 가운데 정렬한다(마지막 줄이 짧아도 치우치지 않게).
+            var line = lines[li];
+
+            // 줄마다 실제 폭을 재서 가운데 정렬한다(짝이 하나뿐인 줄도 치우치지 않게).
             float lineW = 0f;
-            for (int k = 0; k < lines[li]; k++)
+            for (int k = 0; k < line.Count; k++)
             {
-                lineW += ComboEntryWidth(combos[idx + k].prereq != null) * scale;
+                lineW += ComboEntryWidth(line[k].prereq != null) * scale;
                 if (k > 0) lineW += ComboEntryGap * scale;
             }
 
@@ -399,9 +388,9 @@ public class LevelUpUI : MonoBehaviour
             float y = totalH * 0.5f - iconH * 0.5f - li * (iconH + ComboLineGap * scale);
             float half = iconH * 0.5f;
 
-            for (int k = 0; k < lines[li]; k++, idx++)
+            for (int k = 0; k < line.Count; k++)
             {
-                (Sprite target, Sprite prereq) c = combos[idx];
+                (Sprite target, Sprite prereq) c = line[k];
                 float w = ComboEntryWidth(c.prereq != null) * scale;
                 AddComboIcon(rowRT, c.target, new Vector2(x + half, y), scale);
                 if (c.prereq != null)
@@ -448,6 +437,8 @@ public class LevelUpUI : MonoBehaviour
         plus.alignment = TextAlignmentOptions.Center;
         plus.fontSize = 26f * scale;
         plus.raycastTarget = false;
+        plus.color = EvolveTagColor; // 흰색은 밝은 카드 배경에 묻힌다 — 진화 강조와 같은 주황
+        plus.fontStyle = FontStyles.Bold;
     }
 
     private static RectTransform NewComboChild(RectTransform parent, string name, Vector2 center)
@@ -664,32 +655,38 @@ public class LevelUpUI : MonoBehaviour
         return n;
     }
 
-    // 진화 카드에 미리 보여줄 조합 목록 — **루트 하나 = 항목 하나**.
-    // 한 스킬의 두 루트가 다 열려 있으면 그 스킬 아이콘이 두 번 나온다(루트가 곧 선택지라서).
+    // 진화 카드에 미리 보여줄 조합 목록 — **루트 하나 = 항목 하나, 스킬 하나 = 묶음 하나**.
+    // 바깥 리스트가 스킬(=화면의 한 줄), 안쪽 리스트가 그 스킬의 열린 루트들이다.
+    // 두 루트가 다 열려 있으면 한 줄에 둘, 하나만 열려 있으면 그 줄엔 하나만 두고 다음 스킬은 새 줄로 간다
+    // — 줄이 곧 스킬의 경계라서 "어느 아이콘이 어느 스킬 것인지"가 눈에 바로 들어온다.
     // 연계 조건이 없는 루트(회오리·낙뢰의 path0)는 prereq가 null이라 아이콘 하나로만 그려진다.
-    private List<(Sprite target, Sprite prereq)> BuildComboPreview(PlayerSkills skills, PlayerPassives passives)
+    private List<List<(Sprite target, Sprite prereq)>> BuildComboPreview(PlayerSkills skills, PlayerPassives passives)
     {
-        List<(Sprite, Sprite)> combos = new List<(Sprite, Sprite)>();
+        var groups = new List<List<(Sprite, Sprite)>>();
 
         if (skills != null)
             foreach (EquippedSkill s in skills.EquippedSkills)
             {
                 if (!skills.CanEvolve(s)) continue;
+                var g = new List<(Sprite, Sprite)>();
                 foreach (int r in PlayerSkills.SelectableRoutes(s))
                     if (skills.IsRouteUnlocked(s.Id, r))
-                        combos.Add((GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
+                        g.Add((GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
+                if (g.Count > 0) groups.Add(g);
             }
 
         if (passives != null)
             foreach (EquippedPassive p in passives.EquippedPassives)
             {
                 if (!passives.CanEvolve(p)) continue;
+                var g = new List<(Sprite, Sprite)>();
                 foreach (int r in PlayerPassives.SelectableRoutes(p))
                     if (passives.IsRouteUnlocked(p.Id, r))
-                        combos.Add((GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
+                        g.Add((GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
+                if (g.Count > 0) groups.Add(g);
             }
 
-        return combos;
+        return groups;
     }
 
     private Sprite PrereqIcon(ActiveSkillId id, int route)
@@ -1074,7 +1071,7 @@ public class LevelUpUI : MonoBehaviour
         ActiveSkillId.EagleDrop => "화면 전체에 독수리를 1초 간격으로 2회 투하해 모든 적에게 피해",
         ActiveSkillId.Sniping => "가장 체력이 높은 적을 3회 저격해 큰 피해를 줌",
         ActiveSkillId.Homing => "적을 추적하는 미사일 3개를 발사. 레벨업마다 미사일이 크게 늘고, 사용할수록 강해짐(이번 판 한정)",
-        ActiveSkillId.Shotgun => "5초 동안 모든 스킬의 공격 횟수가 1회 증가",
+        ActiveSkillId.Shotgun => "전방으로 산탄을 뿌리고, 5초 동안 모든 스킬의 공격 횟수가 1회 증가",
         ActiveSkillId.Rewind => "다른 모든 스킬의 재사용 대기시간을 1초 앞당김. 레벨업할수록 더 크게 되감음",
         _ => "",
     };

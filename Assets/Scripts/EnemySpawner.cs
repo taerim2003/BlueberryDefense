@@ -142,8 +142,8 @@ public class EnemySpawner : MonoBehaviour
             if (SpawnedThisStage >= threshold)
             {
                 evolutionElitesSpawnedThisStage++;
-                // 진화는 보물상자로 통합됐다(세션25) — 엘리트는 벽 스테이지의 난이도 요소로 그대로 두고 아이템만 안 떨군다.
-                // 되돌리려면 carriesEvolutionItem: true 하나만 되살리면 된다(EvolutionItemPickup 경로는 남겨 뒀다).
+                // 진화는 보물상자로 통합됐다(세션25) — 엘리트는 벽 스테이지의 난이도 요소로 그대로 남기고 아이템은 안 떨군다.
+                // ⚠️ 필드명(`evolutionItemDrops`)만 낡았다. 0으로 만들면 벽 스테이지 엘리트까지 사라진다.
                 SpawnEnemies(map.eliteEnemyPrefab, 1, stage, currentStage);
                 return;
             }
@@ -163,11 +163,13 @@ public class EnemySpawner : MonoBehaviour
         }
 
         GameObject prefabToSpawn = map.enemyPrefab;
+        bool spawnAsBoss = false;
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어)
         if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
         {
             prefabToSpawn = map.bossEnemyPrefab;
             bossSpawnedThisStage = true;
+            spawnAsBoss = true;
         }
         else if (map.treasureEnemyPrefab != null && ExtraTreasureChance > 0f && Random.value < ExtraTreasureChance)
             prefabToSpawn = map.treasureEnemyPrefab;
@@ -186,7 +188,7 @@ public class EnemySpawner : MonoBehaviour
         else if (map.surferEnemyPrefab != null && Random.value < surferChance)
             prefabToSpawn = map.surferEnemyPrefab;
 
-        SpawnEnemies(prefabToSpawn, 1, stage, currentStage);
+        SpawnEnemies(prefabToSpawn, 1, stage, currentStage, spawnAsBoss);
     }
 
     // 화면 안 빈 구간에 예고 마커를 띄운다. 실제 부대는 마커가 다 찬 뒤 콜백에서 나온다.
@@ -279,7 +281,7 @@ public class EnemySpawner : MonoBehaviour
         enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
     }
 
-    private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage, bool carriesEvolutionItem = false)
+    private void SpawnEnemies(GameObject prefab, int count, StageData stage, int currentStage, bool isBoss = false)
     {
         for (int i = 0; i < count; i++)
         {
@@ -288,7 +290,7 @@ public class EnemySpawner : MonoBehaviour
             Enemy enemy = Enemy.Spawn(prefab, spawnPos);
             if (enemy != null)
             {
-                if (carriesEvolutionItem) enemy.MarkEvolutionItemCarrier();
+                if (isBoss) enemy.MarkAsBoss(); // 군중제어 감쇄 대상 — 프리팹이 아니라 이 슬롯으로 스폰됐는지가 기준
                 ApplyStageScaling(enemy, stage, currentStage);
             }
         }

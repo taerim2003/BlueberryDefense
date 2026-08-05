@@ -24,6 +24,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 500c9f5f23606f44c83ae1b308305b94, type: 3}
   backgroundFrameSeconds: 1.2
   bgm: {fileID: 0}
+  unlockedFromStart: 1
+  requiredClearMap: {fileID: 0}
+  requiredClearAscension: 2
   stageTable: {fileID: 11400000, guid: 66859e53cf514b53bbf0aa55e039fc3d, type: 2}
   bossStage: 15
   spawnInterval: 1.5

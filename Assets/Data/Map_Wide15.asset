@@ -17,7 +17,12 @@ MonoBehaviour:
   fieldScale: 1.5
   cameraYLift: 2.2
   background: {fileID: 21300000, guid: 9c4d3f446a9975a48a04ab8381e61c94, type: 3}
+  backgroundFrames: []
+  backgroundFrameSeconds: 0.4
   bgm: {fileID: 0}
+  unlockedFromStart: 0
+  requiredClearMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
+  requiredClearAscension: 2
   stageTable: {fileID: 11400000, guid: b10847536e04b494096fac13aa5dfa58, type: 2}
   bossStage: 15
   spawnInterval: 1.5

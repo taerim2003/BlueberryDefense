@@ -37,9 +37,26 @@ public class CharacterSelectUI : MonoBehaviour
 
     private void Awake()
     {
+        RestoreSelection(); // 카드를 짓기 전에 복원해야 Open() 없이도 Selected가 옳다(MapSelectUI가 바로 읽는다)
         if (backButton != null) backButton.onClick.AddListener(Close);
         if (cardTemplate != null) cardTemplate.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    // 지난 판에서 고른 캐릭터를 되살린다. 저장된 이름이 로스터에 없거나(에셋 개명) 아직 잠겨 있으면
+    // 조용히 첫 캐릭터로 돌아간다 — 선택 불가 캐릭터로 판이 시작되는 것보다 낫다.
+    private void RestoreSelection()
+    {
+        string saved = CharacterSave.Selected;
+        if (string.IsNullOrEmpty(saved) || characters == null) return;
+
+        for (int i = 0; i < characters.Length; i++)
+        {
+            if (characters[i] == null || characters[i].name != saved) continue;
+            if (!characters[i].IsUnlocked) return; // 잠긴 상태면 폴백(selectedIndex=0 유지)
+            selectedIndex = i;
+            return;
+        }
     }
 
     public void Open()
@@ -103,6 +120,7 @@ public class CharacterSelectUI : MonoBehaviour
             && characters[index] != null && !characters[index].IsUnlocked) return; // 잠긴 캐릭터는 선택 불가
 
         selectedIndex = index;
+        if (characters[index] != null) CharacterSave.Save(characters[index].name); // 다음 판에도 이 캐릭터로 시작한다
         Highlight(index);
         OnSelectionChanged?.Invoke();
         Close();
