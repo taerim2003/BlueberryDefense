@@ -14,6 +14,7 @@ public class CharacterSelectUI : MonoBehaviour
 
     [Header("Shell")]
     [SerializeField] private GameObject panelRoot;
+    [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
     [SerializeField] private Transform cardContainer;   // 카드들이 담기는 컨테이너
     [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본. 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
 
@@ -62,13 +63,15 @@ public class CharacterSelectUI : MonoBehaviour
     public void Open()
     {
         if (!built) BuildCards();
-        if (panelRoot != null) panelRoot.SetActive(true);
+        if (panelTransition != null) panelTransition.Show();
+        else if (panelRoot != null) panelRoot.SetActive(true);
         Highlight(selectedIndex);
     }
 
     public void Close()
     {
-        if (panelRoot != null) panelRoot.SetActive(false);
+        if (panelTransition != null) panelTransition.Hide();
+        else if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     private void BuildCards()
@@ -109,6 +112,10 @@ public class CharacterSelectUI : MonoBehaviour
             {
                 btn.interactable = !locked; // 잠긴 카드는 눌러도 선택되지 않는다
                 btn.onClick.AddListener(() => Pick(idx));
+
+                // JuicyButton은 Button.interactable을 보지 않는다 — 끄지 않으면 잠긴 카드도 호버에 반응한다.
+                var juicy = card.GetComponent<JuicyButton>();
+                if (juicy != null) juicy.enabled = !locked;
             }
         }
     }

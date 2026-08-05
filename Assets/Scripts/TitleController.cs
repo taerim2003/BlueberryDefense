@@ -16,8 +16,15 @@ public class TitleController : MonoBehaviour
     {
         if (playButton != null) playButton.onClick.AddListener(Play);
         if (upgradeButton != null) upgradeButton.onClick.AddListener(OpenUpgrade);
+        if (settingsButton != null) settingsButton.onClick.AddListener(OpenSettings);
         if (quitButton != null) quitButton.onClick.AddListener(Quit);
-        // 컬렉션/설정은 Phase 2 — 지금은 자리만
+        // 컬렉션은 아직 자리만
+    }
+
+    // OptionsMenu는 씬에 없고 런타임에 자기를 만든다(PauseMenu와 같은 방식) — 클릭 시점에 찾는다.
+    private void OpenSettings()
+    {
+        if (OptionsMenu.Instance != null) OptionsMenu.Instance.Open();
     }
 
     private void Play()

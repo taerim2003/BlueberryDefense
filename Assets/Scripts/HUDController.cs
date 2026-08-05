@@ -249,21 +249,21 @@ public class HUDController : MonoBehaviour
         RectTransform rt = stageBannerGroup.GetComponent<RectTransform>();
         stageBannerSeq?.Kill();
         rt.DOKill();
-        rt.localScale = Vector3.one * 0.7f;
+        rt.localScale = Vector3.one * 0.6f;
         stageBannerGroup.alpha = 0f;
 
         stageBannerSeq = DOTween.Sequence();
-        stageBannerSeq.Append(stageBannerGroup.DOFade(1f, 0.3f));
-        stageBannerSeq.Join(rt.DOScale(1f, 0.4f).SetEase(Ease.OutBack));
+        stageBannerSeq.Append(stageBannerGroup.DOFade(1f, 0.14f));
+        stageBannerSeq.Join(rt.DOScale(1f, 0.24f).SetEase(Ease.OutBack));
         stageBannerSeq.AppendInterval(2.2f);
-        stageBannerSeq.Append(stageBannerGroup.DOFade(0f, 0.5f));
+        stageBannerSeq.Append(stageBannerGroup.DOFade(0f, 0.3f));
     }
 
     private static void PunchIcon(RectTransform rect)
     {
         rect.localScale = Vector3.one;
         rect.DOKill();
-        rect.DOPunchScale(Vector3.one * 0.4f, 0.18f, 6, 0.4f);
+        rect.DOPunchScale(Vector3.one * 0.45f, 0.16f, 9, 0.5f);
     }
 
     private void UpdateActiveSlots()

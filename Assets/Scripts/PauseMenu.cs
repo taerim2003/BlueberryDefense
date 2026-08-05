@@ -3,6 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using DG.Tweening;
 using TMPro;
 
 // ESC로 게임 일시정지 + 현재 획득한 스킬/패시브의 레벨·진화 효과 요약 표시.
@@ -19,6 +20,9 @@ public class PauseMenu : MonoBehaviour
     }
 
     private GameObject panel;
+    private CanvasGroup panelGroup;
+    private RectTransform boxRect;
+    private Tween showTween;
     private Transform leftColumn;
     private Transform rightColumn;
     private TMP_FontAsset font;
@@ -30,6 +34,14 @@ public class PauseMenu : MonoBehaviour
     {
         var kb = Keyboard.current;
         if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
+
+        // 설정 패널이 이 창 위에 떠 있으면 ESC는 그것부터 닫는다(일시정지는 유지).
+        if (OptionsMenu.Instance != null && OptionsMenu.Instance.IsOpen)
+        {
+            OptionsMenu.Instance.Close();
+            return;
+        }
+
         if (paused) Resume();
         else if (CanPause()) PauseAndShow();
     }
@@ -47,13 +59,28 @@ public class PauseMenu : MonoBehaviour
         ModalPause.Push();
         PopulateColumns();
         panel.SetActive(true);
+
+        // timeScale 0에서 열리므로 SetUpdate(true).
+        showTween?.Kill();
+        panelGroup.alpha = 0f;
+        boxRect.localScale = Vector3.one * 0.78f;
+        var seq = DOTween.Sequence().SetUpdate(true);
+        seq.Append(panelGroup.DOFade(1f, 0.09f));
+        seq.Join(boxRect.DOScale(1f, 0.2f).SetEase(Ease.OutBack));
+        showTween = seq;
     }
 
     private void Resume()
     {
         paused = false;
+        showTween?.Kill();
         panel.SetActive(false);
         ModalPause.Pop();
+    }
+
+    private void OpenSettings()
+    {
+        if (OptionsMenu.Instance != null) OptionsMenu.Instance.Open();
     }
 
     // 판을 포기하고 게임오버 흐름을 탄다 — 정수 적립·결과 패널·타이틀 복귀는 전부 기존 경로가 처리한다.
@@ -197,10 +224,12 @@ public class PauseMenu : MonoBehaviour
         panel = NewUI("Panel", canvasGo.transform);
         Stretch(panel);
         AddImage(panel, new Color(0f, 0f, 0f, 0.8f), true);
+        panelGroup = panel.AddComponent<CanvasGroup>();
 
         var box = NewUI("Box", panel.transform);
         Center(box, new Vector2(1760, 940));
         AddImage(box, new Color(0.06f, 0.06f, 0.1f, 0.98f), true);
+        boxRect = (RectTransform)box.transform;
 
         var title = NewUI("Title", box.transform);
         Top(title, new Vector2(0, -22), new Vector2(1680, 64));
@@ -220,11 +249,22 @@ public class PauseMenu : MonoBehaviour
         leftColumn = MakeColumn(columns.transform);
         rightColumn = MakeColumn(columns.transform);
 
+        var settings = NewUI("SettingsButton", box.transform);
+        Bottom(settings, new Vector2(-190, 66), new Vector2(340, 56));
+        var settingsBtn = settings.AddComponent<Button>();
+        settingsBtn.targetGraphic = AddImage(settings, new Color(0.24f, 0.24f, 0.32f, 1f), true);
+        settingsBtn.onClick.AddListener(OpenSettings);
+        JuicyTuning.Attach(settings);
+        var settingsLabel = NewUI("Label", settings.transform);
+        Stretch(settingsLabel);
+        AddText(settingsLabel, font, "설정", 26, TextAlignmentOptions.Center, new Color(0.92f, 0.92f, 0.95f));
+
         var giveUp = NewUI("GiveUpButton", box.transform);
-        Bottom(giveUp, new Vector2(0, 66), new Vector2(340, 56));
+        Bottom(giveUp, new Vector2(190, 66), new Vector2(340, 56));
         var giveUpBtn = giveUp.AddComponent<Button>();
         giveUpBtn.targetGraphic = AddImage(giveUp, new Color(0.34f, 0.11f, 0.15f, 1f), true);
         giveUpBtn.onClick.AddListener(GiveUpToTitle);
+        JuicyTuning.Attach(giveUp);
         var giveUpLabel = NewUI("Label", giveUp.transform);
         Stretch(giveUpLabel);
         AddText(giveUpLabel, font, "타이틀로 돌아가기", 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));

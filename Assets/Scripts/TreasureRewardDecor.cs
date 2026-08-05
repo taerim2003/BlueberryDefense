@@ -79,9 +79,9 @@ public class TreasureRewardDecor : MonoBehaviour
     private void AnimateChest()
     {
         chest.DOKill();
-        chest.localScale = chestBaseScale * 0.4f;
+        chest.localScale = chestBaseScale * 0.3f;
         chest.localRotation = Quaternion.identity;
-        chest.DOScale(chestBaseScale, 0.5f).SetEase(Ease.OutBack).SetUpdate(true).OnComplete(() =>
+        chest.DOScale(chestBaseScale, 0.3f).SetEase(Ease.OutBack).SetUpdate(true).OnComplete(() =>
         {
             chest.DOLocalRotate(new Vector3(0f, 0f, 6f), 1.6f)
                  .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetUpdate(true);

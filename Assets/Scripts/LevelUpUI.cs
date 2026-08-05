@@ -822,7 +822,7 @@ public class LevelUpUI : MonoBehaviour
 
         // 팡 튀어나오는 등장. 모달이 timeScale 0이므로 반드시 unscaled로 돌린다.
         rt.localScale = Vector3.zero;
-        rt.DOScale(Vector3.one, 0.32f).SetEase(Ease.OutBack).SetUpdate(true);
+        rt.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
     private void ClearTreasureIcons()

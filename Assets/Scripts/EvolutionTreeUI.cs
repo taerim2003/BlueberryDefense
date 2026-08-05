@@ -118,7 +118,7 @@ public class EvolutionTreeUI : MonoBehaviour
         if (!alreadyOpen && skillIcon != null)
         {
             skillIcon.rectTransform.localScale = Vector3.one;
-            nodeTweens.Add(skillIcon.rectTransform.DOPunchScale(Vector3.one * 0.35f, 0.4f, 6, 0.5f).SetUpdate(true));
+            nodeTweens.Add(skillIcon.rectTransform.DOPunchScale(Vector3.one * 0.4f, 0.26f, 8, 0.5f).SetUpdate(true));
         }
 
         foreach (int i in HiddenNodes)
@@ -228,10 +228,10 @@ public class EvolutionTreeUI : MonoBehaviour
         float pulseDelay = 0f;
         if (!alreadyOpen)
         {
-            float delay = order * 0.05f;
-            rt.localScale = Vector3.one * 0.55f;
-            nodeTweens.Add(rt.DOScale(1f, 0.35f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true));
-            pulseDelay = delay + 0.35f;
+            float delay = order * 0.03f;
+            rt.localScale = Vector3.one * 0.5f;
+            nodeTweens.Add(rt.DOScale(1f, 0.2f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true));
+            pulseDelay = delay + 0.2f;
         }
 
         if (available)

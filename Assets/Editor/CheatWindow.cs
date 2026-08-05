@@ -66,7 +66,9 @@ public class CheatWindow : EditorWindow
     private void DrawAscensionSection()
     {
         EditorGUILayout.LabelField("승천 (난이도 등급)", EditorStyles.boldLabel);
-        EditorGUILayout.LabelField($"이번 판 승천 {RunConfig.AscensionLevel}  ·  해금 최고 {AscensionSave.Unlocked}");
+        EditorGUILayout.LabelField($"이번 판 승천 {RunConfig.AscensionLevel}  ·  전역 최고 {AscensionSave.Unlocked}");
+        EditorGUILayout.HelpBox("선택 화면의 승천 상한은 이 전역값이 아니라 아래 **맵별 클리어 기록 + 1**이다."
+            + " 승천을 열어보려면 아래 '승천+1 클리어 기록'을 쓸 것.", MessageType.Info);
 
         // 이번 판 등급 설정(Play 중이면 다음 스폰부터 즉시 반영). 버튼 수 = 기본표 최고 레벨.
         EditorGUILayout.BeginHorizontal();
@@ -88,7 +90,7 @@ public class CheatWindow : EditorWindow
     // 테스트할 때마다 실제로 깨고 올 수는 없으니 여기서 직접 기록을 넣고 뺀다.
     private void DrawMapUnlockSection()
     {
-        EditorGUILayout.LabelField("맵 해금 (MapClearSave)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("맵 해금 · 맵별 승천 (MapClearSave)", EditorStyles.boldLabel);
 
         string[] guids = AssetDatabase.FindAssets("t:MapDefinition");
         foreach (string g in guids)

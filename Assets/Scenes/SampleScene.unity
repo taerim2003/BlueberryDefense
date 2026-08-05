@@ -2720,7 +2720,7 @@ MonoBehaviour:
   visualRoot: {fileID: 0}
   transitionType: 1
   delay: 0
-  duration: 0.35
+  duration: 0.2
   ease: 27
   popStartScale: 0.7
   slideFrom: 2
@@ -3325,6 +3325,7 @@ GameObject:
   - component: {fileID: 387541602}
   - component: {fileID: 387541601}
   - component: {fileID: 387541600}
+  - component: {fileID: 387541604}
   m_Layer: 0
   m_Name: ReturnToTitleButton
   m_TagString: Untagged
@@ -3434,6 +3435,35 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 40}
   m_SizeDelta: {x: 260, y: 66}
   m_Pivot: {x: 0.5, y: 0}
+--- !u!114 &387541604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 387541599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
+  visualRoot: {fileID: 387541603}
+  hoverScale: 1.15
+  squashX: 1.3
+  squashDuration: 0.05
+  hoverDuration: 0.08
+  pressScale: 0.88
+  pressDuration: 0.04
+  shakeOnHover: 1
+  shakeStrength: 7
+  colorOnHover: 0
+  targetGraphic: {fileID: 0}
+  colorDuration: 0.15
+  hoverColor: {r: 1, g: 1, b: 0.85, a: 1}
+  pressColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &387868420
 GameObject:
   m_ObjectHideFlags: 0
@@ -4120,7 +4150,6 @@ MonoBehaviour:
   ascension: {fileID: 11400000, guid: 8273c9a8898f0b1409cbf7b89b9b86ff, type: 2}
   heartPickupPrefab: {fileID: 8256105624388431671, guid: 513016e82fbf3b0479cb1793e0e5422a, type: 3}
   essencePickupPrefab: {fileID: 1671577611472205520, guid: 22659feae7b22a14cbd43feda69664f5, type: 3}
-  evolutionItemPrefab: {fileID: 7465877528327835503, guid: 5c327c79b1977244382fbb1c84a74265, type: 3}
 --- !u!4 &487568133
 Transform:
   m_ObjectHideFlags: 0
@@ -6391,15 +6420,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
-  visualRoot: {fileID: 0}
-  hoverScale: 1.1
-  squashX: 1.2
-  squashDuration: 0.1
-  hoverDuration: 0.15
-  pressScale: 0.93
-  pressDuration: 0.08
-  shakeOnHover: 0
-  shakeStrength: 10
+  visualRoot: {fileID: 749098614}
+  hoverScale: 1.15
+  squashX: 1.3
+  squashDuration: 0.05
+  hoverDuration: 0.08
+  pressScale: 0.88
+  pressDuration: 0.04
+  shakeOnHover: 1
+  shakeStrength: 7
   colorOnHover: 0
   targetGraphic: {fileID: 0}
   colorDuration: 0.15
@@ -7319,15 +7348,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
-  visualRoot: {fileID: 0}
-  hoverScale: 1.1
-  squashX: 1.2
-  squashDuration: 0.1
-  hoverDuration: 0.15
-  pressScale: 0.93
-  pressDuration: 0.08
-  shakeOnHover: 0
-  shakeStrength: 10
+  visualRoot: {fileID: 846847322}
+  hoverScale: 1.15
+  squashX: 1.3
+  squashDuration: 0.05
+  hoverDuration: 0.08
+  pressScale: 0.88
+  pressDuration: 0.04
+  shakeOnHover: 1
+  shakeStrength: 7
   colorOnHover: 0
   targetGraphic: {fileID: 0}
   colorDuration: 0.15
@@ -8887,6 +8916,8 @@ GameObject:
   - component: {fileID: 1111993052}
   - component: {fileID: 1111993054}
   - component: {fileID: 1111993053}
+  - component: {fileID: 1111993056}
+  - component: {fileID: 1111993055}
   m_Layer: 0
   m_Name: DamageMeterPanel
   m_TagString: Untagged
@@ -8954,6 +8985,40 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1111993051}
   m_CullTransparentMesh: 1
+--- !u!114 &1111993055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1111993051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b7af9f2c45e8f44ea624dfe30cb9c5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: JuicyUI.Runtime::UITransition
+  visualRoot: {fileID: 1037791332}
+  transitionType: 1
+  delay: 0
+  duration: 0.2
+  ease: 27
+  popStartScale: 0.75
+  slideFrom: 2
+  slideDistance: 50
+  wobbleOnShow: 0
+  wobbleAngle: 8
+--- !u!225 &1111993056
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1111993051}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1123458177
 GameObject:
   m_ObjectHideFlags: 0
@@ -10368,6 +10433,7 @@ GameObject:
   - component: {fileID: 1230292639}
   - component: {fileID: 1230292638}
   - component: {fileID: 1230292640}
+  - component: {fileID: 1230292641}
   m_Layer: 0
   m_Name: RerollButton
   m_TagString: Untagged
@@ -10475,6 +10541,35 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 1230292638}
   m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1230292641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1230292636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
+  visualRoot: {fileID: 1230292637}
+  hoverScale: 1.15
+  squashX: 1.3
+  squashDuration: 0.05
+  hoverDuration: 0.08
+  pressScale: 0.88
+  pressDuration: 0.04
+  shakeOnHover: 1
+  shakeStrength: 7
+  colorOnHover: 0
+  targetGraphic: {fileID: 0}
+  colorDuration: 0.15
+  hoverColor: {r: 1, g: 1, b: 0.85, a: 1}
+  pressColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  onClick:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &1235302472
@@ -12322,6 +12417,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DamageMeterUI
   panelRoot: {fileID: 1111993051}
+  panelTransition: {fileID: 1111993055}
   titleText: {fileID: 1815414080}
   bodyText: {fileID: 436036977}
   earnedText: {fileID: 721101954}
@@ -12381,7 +12477,7 @@ MonoBehaviour:
   visualRoot: {fileID: 1445629382}
   transitionType: 1
   delay: 0
-  duration: 0.3
+  duration: 0.2
   ease: 27
   popStartScale: 0.7
   slideFrom: 2
@@ -18738,15 +18834,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
-  visualRoot: {fileID: 0}
-  hoverScale: 1.1
-  squashX: 1.2
-  squashDuration: 0.1
-  hoverDuration: 0.15
-  pressScale: 0.93
-  pressDuration: 0.08
-  shakeOnHover: 0
-  shakeStrength: 10
+  visualRoot: {fileID: 2108942715}
+  hoverScale: 1.15
+  squashX: 1.3
+  squashDuration: 0.05
+  hoverDuration: 0.08
+  pressScale: 0.88
+  pressDuration: 0.04
+  shakeOnHover: 1
+  shakeStrength: 7
   colorOnHover: 0
   targetGraphic: {fileID: 0}
   colorDuration: 0.15

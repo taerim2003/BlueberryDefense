@@ -14,6 +14,7 @@ public class MapSelectUI : MonoBehaviour
 
     [Header("Shell")]
     [SerializeField] private GameObject panelRoot;
+    [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
     [SerializeField] private Transform cardContainer;   // HorizontalLayoutGroup — 카드들이 담김
     [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본(container 안). 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
 
@@ -43,8 +44,21 @@ public class MapSelectUI : MonoBehaviour
 
     private int ascensionLevel = 1;
     private AscensionTable AscTable => ascensionTable != null ? ascensionTable : AscensionTable.Default;
-    // 고를 수 있는 최고 등급 = 해금된 만큼(표에 존재하는 범위 내)
-    private int MaxSelectableAscension => Mathf.Clamp(AscensionSave.Unlocked, 1, AscTable.MaxLevel);
+    // 고를 수 있는 최고 등급 = **선택한 맵에서** 깬 만큼 + 1 (표에 존재하는 범위 내).
+    // 맵마다 따로 올린다 — 앞 맵에서 승천을 올려놨다고 새 맵이 고승천으로 시작하면
+    // 맵을 넘어갈 때 난이도가 안 떨어져 진행이 무너진다(StS가 캐릭터별로 승천을 나누는 것과 같은 이유).
+    // ⚠️ 근거가 전역 AscensionSave가 아니라 맵별 MapClearSave다. 맵을 바꾸면 이 값도 바뀌므로
+    //    Select()에서 RefreshAscension()을 반드시 다시 부를 것.
+    private int MaxSelectableAscension
+    {
+        get
+        {
+            MapDefinition map = (maps != null && selectedIndex >= 0 && selectedIndex < maps.Length)
+                ? maps[selectedIndex] : null;
+            int cleared = map != null ? MapClearSave.ClearedAscension(map.name) : 0;
+            return Mathf.Clamp(cleared + 1, 1, AscTable.MaxLevel);
+        }
+    }
 
     private const string GameSceneName = "SampleScene";
 
@@ -64,7 +78,8 @@ public class MapSelectUI : MonoBehaviour
     public void Open()
     {
         if (!built) BuildCards();
-        if (panelRoot != null) panelRoot.SetActive(true);
+        if (panelTransition != null) panelTransition.Show();
+        else if (panelRoot != null) panelRoot.SetActive(true);
         Select(FirstUnlockedIndex());
         RefreshCharacter();
         // 지난 선택을 이어받되 해금 범위로 클램프
@@ -129,7 +144,8 @@ public class MapSelectUI : MonoBehaviour
 
     public void Close()
     {
-        if (panelRoot != null) panelRoot.SetActive(false);
+        if (panelTransition != null) panelTransition.Hide();
+        else if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     private void BuildCards()
@@ -169,6 +185,10 @@ public class MapSelectUI : MonoBehaviour
             {
                 btn.interactable = !locked; // 잠긴 맵은 눌러도 선택되지 않는다
                 btn.onClick.AddListener(() => Select(idx));
+
+                // JuicyButton은 Button.interactable을 보지 않는다 — 끄지 않으면 잠긴 카드도 호버에 반응한다.
+                var juicy = card.GetComponent<JuicyButton>();
+                if (juicy != null) juicy.enabled = !locked;
             }
         }
     }
@@ -191,6 +211,9 @@ public class MapSelectUI : MonoBehaviour
         for (int i = 0; i < cardFrames.Count; i++)
             if (cardFrames[i] != null) cardFrames[i].SetActive(i == index);
         if (startButton != null) startButton.interactable = index >= 0;
+
+        // 승천 상한은 맵마다 다르다 — 맵을 바꾸면 범위와 화살표 활성 상태를 다시 계산해야 한다.
+        RefreshAscension();
     }
 
     private void Confirm()

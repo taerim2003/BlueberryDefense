@@ -34,6 +34,7 @@ public class SkillTreeUI : MonoBehaviour
     [Header("Shell")]
     [SerializeField] private RectTransform panelRect;  // panelRoot의 RectTransform (툴팁 좌표계)
     [SerializeField] private GameObject panelRoot;
+    [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
     [SerializeField] private RectTransform content;    // 팬/줌 대상: 노드+연결선을 담음
     [SerializeField] private RectTransform nodeLayer;
     [SerializeField] private RectTransform lineLayer;
@@ -96,7 +97,8 @@ public class SkillTreeUI : MonoBehaviour
     public void Open()
     {
         if (!built) Build();
-        if (panelRoot != null) panelRoot.SetActive(true);
+        if (panelTransition != null) panelTransition.Show();
+        else if (panelRoot != null) panelRoot.SetActive(true);
         hoveredId = null;
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
         prevEssence = -1; // 재오픈 시 자원 펀치 생략
@@ -107,7 +109,8 @@ public class SkillTreeUI : MonoBehaviour
     public void Close()
     {
         KillAllTweens();
-        if (panelRoot != null) panelRoot.SetActive(false);
+        if (panelTransition != null) panelTransition.Hide();
+        else if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     // 패널 열 때 노드 스태거 pop-in
@@ -119,7 +122,7 @@ public class SkillTreeUI : MonoBehaviour
             if (v.rt == null || !v.rt.gameObject.activeSelf) continue; // 안개에 가려진 노드는 건너뜀
             v.scaleTween?.Kill();
             v.rt.localScale = Vector3.one * 0.4f;
-            v.scaleTween = v.rt.DOScale(1f, 0.35f).SetDelay(i * 0.015f).SetEase(Ease.OutBack).SetUpdate(true);
+            v.scaleTween = v.rt.DOScale(1f, 0.2f).SetDelay(i * 0.01f).SetEase(Ease.OutBack).SetUpdate(true);
             i++;
         }
     }
@@ -204,7 +207,7 @@ public class SkillTreeUI : MonoBehaviour
         if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
         v.scaleTween?.Kill();
         v.rt.localScale = Vector3.one;
-        v.scaleTween = v.rt.DOPunchScale(Vector3.one * strength, 0.45f, 8, 0.6f).SetUpdate(true);
+        v.scaleTween = v.rt.DOPunchScale(Vector3.one * strength, 0.28f, 10, 0.6f).SetUpdate(true);
     }
 
     private void OnNodeHoverEnter(string id) { hoveredId = id; RefreshTooltip(); AnimateHover(id, true); }
@@ -220,7 +223,7 @@ public class SkillTreeUI : MonoBehaviour
     {
         if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
         v.scaleTween?.Kill();
-        v.scaleTween = v.rt.DOScale(entering ? 1.12f : 1f, 0.18f).SetEase(Ease.OutBack).SetUpdate(true);
+        v.scaleTween = v.rt.DOScale(entering ? JuicyTuning.HoverScale : 1f, JuicyTuning.HoverDuration).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
     // ── 안개(공개 범위) ──
@@ -258,7 +261,7 @@ public class SkillTreeUI : MonoBehaviour
     {
         t.rectTransform.DOKill();
         t.rectTransform.localScale = Vector3.one;
-        t.rectTransform.DOPunchScale(Vector3.one * 0.3f, 0.4f, 6, 0.6f).SetUpdate(true);
+        t.rectTransform.DOPunchScale(Vector3.one * 0.34f, 0.26f, 8, 0.6f).SetUpdate(true);
     }
 
     private void RefreshNodes()

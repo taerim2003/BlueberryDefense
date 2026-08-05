@@ -113,10 +113,13 @@ public class GameManager : MonoBehaviour
         IsGameClear = true;
         Debug.Log("Game Clear");
         BankRunCurrency();
-        AscensionSave.UnlockUpTo(RunConfig.AscensionLevel + 1); // 이 등급 클리어 → 다음 승천 해금(StS식 루프)
-        // 어느 맵을 어느 등급까지 깼는지 따로 남긴다 — 캐릭터 해금 조건이 맵을 특정해서 묻는다.
+        // 승천 해금의 근거는 **맵별 기록**이다(MapSelectUI.MaxSelectableAscension = 이 맵 클리어 등급 + 1).
+        // 캐릭터·맵 해금 조건도 맵을 특정해 묻기 때문에 같은 기록을 본다.
         if (RunConfig.Map != null)
             MapClearSave.RecordClear(RunConfig.Map.name, RunConfig.AscensionLevel);
+
+        // 전역 최고 기록. 선택 화면은 더 이상 이걸 보지 않고 표시·치트용으로만 남는다.
+        AscensionSave.UnlockUpTo(RunConfig.AscensionLevel + 1);
         Time.timeScale = 0f;
     }
 

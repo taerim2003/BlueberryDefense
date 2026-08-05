@@ -7,6 +7,7 @@ using TMPro;
 public class DamageMeterUI : MonoBehaviour
 {
     [SerializeField] private GameObject panelRoot;
+    [SerializeField] private UITransition panelTransition; // 있으면 뜰 때 팝 연출을 대신 태운다
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private TMP_Text earnedText;       // 이번 판 획득 정수
@@ -35,7 +36,8 @@ public class DamageMeterUI : MonoBehaviour
 
     private void Show(bool isClear)
     {
-        if (panelRoot != null) panelRoot.SetActive(true);
+        if (panelTransition != null) panelTransition.Show();
+        else if (panelRoot != null) panelRoot.SetActive(true);
         if (titleText != null)
         {
             titleText.text = isClear ? "GAME CLEAR" : "GAME OVER";

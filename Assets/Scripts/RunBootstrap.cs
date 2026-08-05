@@ -84,6 +84,7 @@ public class RunBootstrap : MonoBehaviour
             bgmSource.clip = map.bgm;
             bgmSource.loop = true;
             bgmSource.playOnAwake = false;
+            VolumeSettings.RegisterBgm(bgmSource); // 옵션의 배경음 볼륨을 재생 전에 반영
             bgmSource.Play();
         }
     }

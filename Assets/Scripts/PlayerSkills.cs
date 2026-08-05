@@ -1308,6 +1308,11 @@ public class PlayerSkills : MonoBehaviour
     // (실측: 플레이어 pivot→앞 몸통 끝 0.75. 파인애플은 스프라이트 폭에 돌망치가 포함돼 더 넓지만
     //  "몸통"만 치면 딸기와 비슷하다 — 눈으로 보고 조정할 손잡이다.)
     private const float SwingNearOffset = 0.7f;
+    // 판정 사각형의 **중심 높이**를 플레이어 y에서 위로 얼마나 올릴지. 0이면 위아래가 대칭이라
+    // 아래쪽(땅 밑)이 남고 위쪽(비행 적)이 모자란다 — 돌망치를 머리 위로 휘두르는 그림과도 안 맞는다.
+    // ⚠️ skill.Scale·reachMult를 곱하지 않는다. 몸통 기준 높이라 크기 진화와 무관하게 고정돼야 한다
+    //    (곱하면 크기를 키울수록 판정이 통째로 떠올라 지상 적을 놓친다).
+    private const float SwingCenterYOffset = 0.6f;
 
     // 피해는 캐스트 순간이 아니라 **돌망치가 땅에 꽂히는 4번째 프레임**에 들어간다
     // (그 프레임에 사용자가 충격파를 직접 그려 넣었다 — 그림과 판정이 같은 순간이어야 한다).
@@ -1398,7 +1403,9 @@ public class PlayerSkills : MonoBehaviour
         sr.color = SwingRangeColor;
         sr.sortingOrder = SwingRangeSortingOrder;
 
-        go.transform.position = transform.position + Vector3.left * ((SwingNearOffset + reach) * 0.5f);
+        go.transform.position = transform.position
+            + Vector3.left * ((SwingNearOffset + reach) * 0.5f)
+            + Vector3.up * SwingCenterYOffset;
         go.transform.localScale = new Vector3(reach - SwingNearOffset, halfHeight * 2f, 1f);
         return sr;
     }
@@ -1419,7 +1426,7 @@ public class PlayerSkills : MonoBehaviour
     private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun, int lifestealPerHit)
     {
         float px = transform.position.x;
-        float py = transform.position.y;
+        float py = transform.position.y + SwingCenterYOffset; // 범위 표시(SpawnSwingRange)와 같은 중심을 쓴다
 
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
         {
