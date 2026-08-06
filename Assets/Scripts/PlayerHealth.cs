@@ -40,6 +40,11 @@ public class PlayerHealth : MonoBehaviour
     {
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
 
+        // 방어 패시브: 들어온 피해를 먼저 깎고, 남은 것만 보호막·체력이 받는다.
+        // 최소 1은 남긴다 — 감소율이 커져도 완전 무적이 되지 않게.
+        if (PlayerPassives.DamageReduction > 0f && amount > 0)
+            amount = Mathf.Max(1, Mathf.RoundToInt(amount * (1f - PlayerPassives.DamageReduction)));
+
         if (Overheal > 0)
         {
             int absorbed = Mathf.Min(Overheal, amount);

@@ -255,6 +255,7 @@ public class PauseMenu : MonoBehaviour
         settingsBtn.targetGraphic = AddImage(settings, new Color(0.24f, 0.24f, 0.32f, 1f), true);
         settingsBtn.onClick.AddListener(OpenSettings);
         JuicyTuning.Attach(settings);
+        JuicyTuning.CenterPivot(settings);
         var settingsLabel = NewUI("Label", settings.transform);
         Stretch(settingsLabel);
         AddText(settingsLabel, font, "설정", 26, TextAlignmentOptions.Center, new Color(0.92f, 0.92f, 0.95f));
@@ -265,6 +266,7 @@ public class PauseMenu : MonoBehaviour
         giveUpBtn.targetGraphic = AddImage(giveUp, new Color(0.34f, 0.11f, 0.15f, 1f), true);
         giveUpBtn.onClick.AddListener(GiveUpToTitle);
         JuicyTuning.Attach(giveUp);
+        JuicyTuning.CenterPivot(giveUp);
         var giveUpLabel = NewUI("Label", giveUp.transform);
         Stretch(giveUpLabel);
         AddText(giveUpLabel, font, "타이틀로 돌아가기", 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));

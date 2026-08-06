@@ -40,6 +40,18 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private Tween _scaleTween;
     private Tween _colorTween;
 
+    // visualRoot에 버튼 자신을 넣어 쓰면(JuicyTuning) 회전이 히트박스를 통째로 돌린다.
+    // 그러면 커서가 가만히 있어도 "회전 → 커서가 rect 밖 → Exit → 회전 복귀 → 커서가 안 → Enter"가
+    // 무한 반복돼 버튼이 덜덜 떤다(가로로 긴 버튼일수록 심하다 — 900x170 카드는 모서리가 5px 가까이 벗어난다).
+    // 회전이 도는 동안 들어온 Exit는 버튼이 스스로 밀어낸 것으로 보고 미뤄뒀다가,
+    // 회전이 원각도로 돌아온 뒤(=히트박스가 정상인 시점) 실제 커서 위치로 한 번만 판정한다.
+    private Vector2 _lastPointerPos;
+    private Camera _lastPointerCam;
+    private bool _exitSuppressed;
+
+    private bool RotationInProgress =>
+        shakeOnHover && CanRotate && _scaleTween != null && _scaleTween.IsActive() && _scaleTween.IsPlaying();
+
     private void Awake()
     {
         _rect = GetComponent<RectTransform>();
@@ -62,6 +74,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (CanRotate) _animTarget.localEulerAngles = _originalEulerAngles;
         if (colorOnHover && targetGraphic != null) targetGraphic.color = _originalColor;
         _isHovering = false;
+        _exitSuppressed = false;
     }
 
     // rotation은 visualRoot(child)에만 적용 — root _rect를 rotate하면 hitbox가 어긋남
@@ -69,6 +82,9 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        RememberPointer(eventData);
+        if (_isHovering) return; // 회전이 밀어낸 뒤 다시 들어온 것 — 연출을 재시작하지 않는다
+
         _isHovering = true;
         _scaleTween?.Kill();
 
@@ -80,6 +96,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         seq.Join(_animTarget.DOScaleY(_originalScale.y * hoverScale, hoverDuration).SetEase(Ease.OutBack));
         if (shakeOnHover && CanRotate)
             seq.Join(_animTarget.DOLocalRotate(_originalEulerAngles, hoverDuration * 0.67f).SetEase(Ease.OutBack));
+        seq.OnComplete(ResolveSuppressedExit);
         _scaleTween = seq;
 
         if (colorOnHover && targetGraphic != null)
@@ -91,7 +108,15 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        RememberPointer(eventData);
+        if (RotationInProgress) { _exitSuppressed = true; return; }
+        EndHover();
+    }
+
+    private void EndHover()
+    {
         _isHovering = false;
+        _exitSuppressed = false;
         _scaleTween?.Kill();
 
         var seq = DOTween.Sequence();
@@ -114,6 +139,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         pressSeq.Append(_animTarget.DOScale(_originalScale * pressScale, pressDuration).SetEase(Ease.OutCubic));
         if (CanRotate)
             pressSeq.Join(_animTarget.DOLocalRotate(_originalEulerAngles, pressDuration).SetEase(Ease.OutCubic));
+        pressSeq.OnComplete(ResolveSuppressedExit);
         _scaleTween = pressSeq;
 
         if (colorOnHover && targetGraphic != null)
@@ -131,6 +157,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         upSeq.Append(_animTarget.DOScale(_originalScale * target, hoverDuration).SetEase(Ease.OutBack));
         if (CanRotate)
             upSeq.Join(_animTarget.DOLocalRotate(_originalEulerAngles, hoverDuration).SetEase(Ease.OutBack));
+        upSeq.OnComplete(ResolveSuppressedExit);
         _scaleTween = upSeq;
 
         if (colorOnHover && targetGraphic != null)
@@ -143,5 +170,38 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void OnPointerClick(PointerEventData eventData)
     {
         onClick?.Invoke();
+    }
+
+    private void RememberPointer(PointerEventData eventData)
+    {
+        if (eventData == null) return;
+        _lastPointerPos = eventData.position;
+        _lastPointerCam = eventData.enterEventCamera != null ? eventData.enterEventCamera : eventData.pressEventCamera;
+    }
+
+    // 회전이 원각도로 돌아온 시점 = 히트박스가 다시 정상이다. 미뤄둔 Exit를 여기서 한 번만 판정한다.
+    private void ResolveSuppressedExit()
+    {
+        if (!_exitSuppressed) return;
+        _exitSuppressed = false;
+        if (!PointerInsideBaseRect(_lastPointerPos, _lastPointerCam))
+            EndHover();
+    }
+
+    // 호버 연출(확대·회전)을 잠시 걷어내고 **원래 크기·각도**의 사각형으로 판정한다.
+    // 확대된 rect(1.15배)로 재판정하면 커서가 이미 버튼을 벗어났는데도 "아직 안"으로 읽혀
+    // 호버가 커진 채로 굳는다 — 버튼 사이를 빠르게 지나갈 때 실제로 났다.
+    private bool PointerInsideBaseRect(Vector2 screenPos, Camera cam)
+    {
+        Vector3 scale = _animTarget.localScale;
+        Quaternion rot = _animTarget.localRotation;
+        _animTarget.localScale = _originalScale;
+        _animTarget.localRotation = Quaternion.Euler(_originalEulerAngles);
+
+        bool inside = RectTransformUtility.RectangleContainsScreenPoint(_rect, screenPos, cam);
+
+        _animTarget.localScale = scale;
+        _animTarget.localRotation = rot;
+        return inside;
     }
 }

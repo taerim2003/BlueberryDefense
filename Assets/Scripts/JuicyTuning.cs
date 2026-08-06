@@ -63,4 +63,25 @@ public static class JuicyTuning
         Apply(jb);
         return jb;
     }
+
+    // JuicyButton은 스케일을 pivot 기준으로 키운다. pivot이 끝(0 또는 1)에 있으면 버튼이
+    // 중앙이 아니라 한쪽 끝을 축으로 자라 보인다. 배치가 끝난 뒤 pivot만 중앙으로 옮긴다.
+    // ⚠️ 배치 함수(Bottom/Anchored 등)가 pivot을 덮으므로 반드시 **배치 다음에** 부를 것.
+    public static void CenterPivot(GameObject go)
+    {
+        if (go == null) return;
+        var rt = go.GetComponent<RectTransform>();
+        if (rt == null) return;
+
+        Vector2 delta = new Vector2(0.5f, 0.5f) - rt.pivot;
+        if (delta == Vector2.zero) return;
+
+        // anchorMin==anchorMax(한 점 앵커)일 때만 pivot이 화면 위치를 정한다 —
+        // 그 경우에만 anchoredPosition으로 되밀어 보이는 위치를 유지한다.
+        // stretch 앵커·레이아웃 자식은 pivot이 위치에 관여하지 않으므로 보정하지 않는다.
+        bool pointAnchor = rt.anchorMin == rt.anchorMax;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        if (pointAnchor)
+            rt.anchoredPosition += new Vector2(delta.x * rt.rect.width, delta.y * rt.rect.height);
+    }
 }

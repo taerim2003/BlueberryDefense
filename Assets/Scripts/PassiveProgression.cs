@@ -20,6 +20,7 @@ public class PassiveProgression : ScriptableObject
         PassiveSkillId.Knowledge => 0.08f,  // 경험치 배율
         PassiveSkillId.Assassinate => 0.15f, // 치명타 확률
         PassiveSkillId.Refresh => 0.10f,    // 재사용 초기화 확률
+        PassiveSkillId.Defense => 0.06f,    // 받는 피해 감소 비율
         _ => 0f,
     };
 
@@ -30,6 +31,7 @@ public class PassiveProgression : ScriptableObject
         PassiveSkillId.Knowledge => 0.08f,
         PassiveSkillId.Assassinate => 0.04f,
         PassiveSkillId.Refresh => 0.02f,
+        PassiveSkillId.Defense => 0.04f,
         _ => 0f,
     };
 }

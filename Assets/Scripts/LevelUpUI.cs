@@ -522,7 +522,7 @@ public class LevelUpUI : MonoBehaviour
 
         if (!passives.HasMaxPassives)
         {
-            foreach (PassiveSkillId id in new[] { PassiveSkillId.Strength, PassiveSkillId.Health, PassiveSkillId.Knowledge, PassiveSkillId.Assassinate, PassiveSkillId.Refresh })
+            foreach (PassiveSkillId id in new[] { PassiveSkillId.Strength, PassiveSkillId.Health, PassiveSkillId.Knowledge, PassiveSkillId.Assassinate, PassiveSkillId.Refresh, PassiveSkillId.Defense })
             {
                 if (passives.HasPassive(id)) continue;
                 if (character != null && !character.AllowsPassive(id)) continue;

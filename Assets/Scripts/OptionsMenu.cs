@@ -168,6 +168,7 @@ public class OptionsMenu : MonoBehaviour
 
         var close = MakeButton(boxGo.transform, "닫기", ButtonColor, Close);
         Bottom(close, new Vector2(0, 30), new Vector2(260, 60));
+        JuicyTuning.CenterPivot(close);
 
         panel.SetActive(false);
     }
@@ -219,6 +220,7 @@ public class OptionsMenu : MonoBehaviour
 
         var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepResolution(-1));
         Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
+        JuicyTuning.CenterPivot(prev);
 
         var valueGo = NewUI("ResolutionValue", row.transform);
         Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
@@ -228,6 +230,7 @@ public class OptionsMenu : MonoBehaviour
 
         var next = MakeButton(row.transform, "▶", ButtonColor, () => StepResolution(1));
         Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
+        JuicyTuning.CenterPivot(next);
     }
 
     private void MakeSaveResetRow(Transform parent, ref float y)

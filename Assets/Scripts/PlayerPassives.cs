@@ -9,6 +9,8 @@ public enum PassiveSkillId
     Knowledge,
     Assassinate,
     Refresh,
+    // ↓ 아래는 뒤에만 추가할 것 — Passive_* 에셋이 이 enum을 정수로 직렬화해 두어서 중간에 끼우면 값이 밀린다.
+    Defense,
 }
 
 public class EquippedPassive
@@ -47,6 +49,9 @@ public class PlayerPassives : MonoBehaviour
     public static float AssassinateWhirlwindCritBonus = 0f; // 암살 연계 path2: 회오리 전용 추가 치명타 확률
     public static bool AssassinateWhirlwindTargetHighest = false; // 암살 연계 path2: 회오리가 최고 체력 적을 타겟팅
     public static int EagleDropCastXpBonus = 0; // 지식 연계 path2: 독수리 투하 시전마다 즉시 획득하는 경험치
+    // 방어: 받는 피해 감소 비율(0~1). PlayerHealth.TakeDamage가 읽는다.
+    // 건강(최대체력)과 역할이 다르다 — 이쪽은 들어오는 피해 자체를 깎는다.
+    public static float DamageReduction = 0f;
 
     [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
 
@@ -97,6 +102,7 @@ public class PlayerPassives : MonoBehaviour
         BuffSkillCooldownMult = 1f;
         HealthDamagePerHp = 0f;
         HealthRetaliationMultiplier = 0f;
+        DamageReduction = 0f;
         BasicAttackDamageMultiplierBonus = 0f;
         AssassinateWhirlwindCritBonus = 0f;
         AssassinateWhirlwindTargetHighest = false;
@@ -208,6 +214,9 @@ public class PlayerPassives : MonoBehaviour
             case PassiveSkillId.Refresh:
                 RefreshChance += amount;
                 break;
+            case PassiveSkillId.Defense:
+                DamageReduction += amount;
+                break;
         }
     }
 
@@ -222,6 +231,7 @@ public class PlayerPassives : MonoBehaviour
             PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(v)}% 증가",
             PassiveSkillId.Assassinate => $"치명타 확률 {Pct(v)}%p 증가",
             PassiveSkillId.Refresh => $"재사용 초기화 확률 {Pct(v)}%p 증가",
+            PassiveSkillId.Defense => $"받는 피해 {Pct(v)}%p 감소",
             _ => "",
         };
     }
@@ -237,6 +247,7 @@ public class PlayerPassives : MonoBehaviour
             PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(b)}% 증가",
             PassiveSkillId.Assassinate => $"모든 피해가 {Pct(b)}% 확률로 3배 피해",
             PassiveSkillId.Refresh => $"스킬 사용 시 {Pct(b)}% 확률로 쿨타임 초기화",
+            PassiveSkillId.Defense => $"받는 피해 {Pct(b)}% 감소",
             _ => "",
         };
     }
@@ -286,11 +297,18 @@ public class PlayerPassives : MonoBehaviour
         return lines;
     }
 
+    // 진화 트리가 아직 설계되지 않은 패시브 — 만렙에 닿아도 진화 목록에 띄우지 않는다.
+    // IsRouteUnlocked는 연계 조건이 null이면 "조건 없음 = 열림"으로 보기 때문에, 이 가드가 없으면
+    // 진화는 뜨는데 이름도 효과도 그대로인 빈 진화가 된다.
+    // 🔜 방어 진화 4종을 설계하면 이 목록에서 빼면 된다(2026-08-06 신설, 진화는 다음 세션 예정).
+    private static bool HasEvolutionDesign(PassiveSkillId id) => id != PassiveSkillId.Defense;
+
     // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) — 액티브 스킬과 동일 규칙 ──
     public bool CanEvolve(EquippedPassive passive)
     {
         if (passive == null || passive.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
         if (passive.Level < EvolutionRoutes.RequiredLevel) return false;
+        if (!HasEvolutionDesign(passive.Id)) return false;
         return SelectableRoutes(passive).Any(r => IsRouteUnlocked(passive.Id, r));
     }
 

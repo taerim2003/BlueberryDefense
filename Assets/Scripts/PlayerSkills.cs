@@ -658,6 +658,7 @@ public class PlayerSkills : MonoBehaviour
         PassiveSkillId.Knowledge => "지식",
         PassiveSkillId.Assassinate => "암살",
         PassiveSkillId.Refresh => "리프레쉬",
+        PassiveSkillId.Defense => "방어",
         _ => id.ToString(),
     };
 
