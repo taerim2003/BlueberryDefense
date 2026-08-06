@@ -522,7 +522,8 @@ public class LevelUpUI : MonoBehaviour
 
         if (!passives.HasMaxPassives)
         {
-            foreach (PassiveSkillId id in new[] { PassiveSkillId.Strength, PassiveSkillId.Health, PassiveSkillId.Knowledge, PassiveSkillId.Assassinate, PassiveSkillId.Refresh, PassiveSkillId.Defense })
+            // ⚠️ 패시브를 새로 만들면 여기 안 넣으면 게임에 안 뜬다. Refresh는 폐지돼 빠졌다(PassiveSkillId 주석 참고).
+            foreach (PassiveSkillId id in new[] { PassiveSkillId.Strength, PassiveSkillId.Health, PassiveSkillId.Knowledge, PassiveSkillId.Assassinate, PassiveSkillId.Defense, PassiveSkillId.Accel })
             {
                 if (passives.HasPassive(id)) continue;
                 if (character != null && !character.AllowsPassive(id)) continue;

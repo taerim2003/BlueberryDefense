@@ -12211,6 +12211,8 @@ MonoBehaviour:
   - {fileID: -768345814793887488, guid: 194cbbfdd0d21f64f90d796207aef564, type: 3}
   - {fileID: 4071282061374129999, guid: 4816b78f2aa8b2849ac35270c9be130b, type: 3}
   - {fileID: -112224647317780986, guid: a29d6d0715caf4f4eb81847fd66c8ce4, type: 3}
+  - {fileID: 21300000, guid: e82edddea7b96134f977848f32a5fb11, type: 3}
+  - {fileID: 21300000, guid: 7126185e447f9e44ba8198d4d8be61bb, type: 3}
   rerollButton: {fileID: 1230292640}
   rerollLabel: {fileID: 897104643}
   headerText: {fileID: 561662893}
@@ -12346,6 +12348,8 @@ MonoBehaviour:
   - {fileID: -768345814793887488, guid: 194cbbfdd0d21f64f90d796207aef564, type: 3}
   - {fileID: 4071282061374129999, guid: 4816b78f2aa8b2849ac35270c9be130b, type: 3}
   - {fileID: -112224647317780986, guid: a29d6d0715caf4f4eb81847fd66c8ce4, type: 3}
+  - {fileID: 21300000, guid: e82edddea7b96134f977848f32a5fb11, type: 3}
+  - {fileID: 21300000, guid: 7126185e447f9e44ba8198d4d8be61bb, type: 3}
   pathIconSprites:
   - {fileID: 6613588427734777530, guid: a0edddfd4847ab5428cd00cea6a70ca8, type: 3}
   - {fileID: 1592231510907667000, guid: 6b1b0bbcc1e04d842bdbb96f08bbceb9, type: 3}
@@ -15165,6 +15169,8 @@ MonoBehaviour:
   - {fileID: -768345814793887488, guid: 194cbbfdd0d21f64f90d796207aef564, type: 3}
   - {fileID: 4071282061374129999, guid: 4816b78f2aa8b2849ac35270c9be130b, type: 3}
   - {fileID: -112224647317780986, guid: a29d6d0715caf4f4eb81847fd66c8ce4, type: 3}
+  - {fileID: 21300000, guid: e82edddea7b96134f977848f32a5fb11, type: 3}
+  - {fileID: 21300000, guid: 7126185e447f9e44ba8198d4d8be61bb, type: 3}
   activeIcons:
   - {fileID: 1961856024513103716, guid: ad28e468568153748a069011bb8420a2, type: 3}
   - {fileID: 7031623406027357048, guid: fbd09173ec3e7df41a68e58498abf6bb, type: 3}
@@ -18027,6 +18033,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 90315abe00229b542a19af257bf9cd08, type: 2}
   - {fileID: 11400000, guid: a74d1aa4199dd814097b5547390dc80a, type: 2}
   - {fileID: 11400000, guid: 6a1186ecebcd6ab4785581b98049c747, type: 2}
+  - {fileID: 11400000, guid: 53236617135cf084f838fbc9e1fb42df, type: 2}
 --- !u!1 &2038761906
 GameObject:
   m_ObjectHideFlags: 0

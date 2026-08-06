@@ -38,7 +38,7 @@ public static class MetaBonuses
     public static bool OrbCanHitFlying = false;         // 기본 오브도 비행 적 타격 가능
     public static bool HomingMissileGrowth = false;     // 호밍: 10회 사용마다 미사일 +1 (스킬트리 해금 시에만)
     public static bool WhirlwindCooldownBonus = false;  // 회오리는 쿨타임 감소 효과를 1.5배로 받음
-    public static float RefreshChanceBonus = 0f;        // 리프레시(재사용 초기화) 확률 가산(0~1)
+    public static float AccelCooldownBonus = 0f;        // 가속 패시브 보유 시 추가되는 쿨타임 감소 가산(0~1)
     public static float ThunderCooldownPerStrike = 0f;  // 낙뢰 1회 타격마다 낙뢰 쿨타임 감소(초)
     public static bool SnipingExtraTarget = false;      // 스나이핑 저격 타겟 +1
     public static bool RewindSlowAll = false;           // 되감기 사용 시 모든 적 둔화
@@ -70,7 +70,7 @@ public static class MetaBonuses
         OrbCanHitFlying = false;
         HomingMissileGrowth = false;
         WhirlwindCooldownBonus = false;
-        RefreshChanceBonus = 0f;
+        AccelCooldownBonus = 0f;
         ThunderCooldownPerStrike = 0f;
         SnipingExtraTarget = false;
         RewindSlowAll = false;
@@ -116,7 +116,7 @@ public static class SkillEffects
         public bool OrbFly;          // 오브 비행 타격 가능
         public bool HomingGrowth;    // 호밍 10회 사용마다 미사일 +1
         public bool WhirlwindCdBonus;// 회오리 쿨감 1.5배
-        public float RefreshPct;     // 리프레시 확률 가산
+        public float AccelCdPct;     // 가속 패시브 추가 쿨감(%p)
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;  // 화살 시작 레벨(0=미설정)
         public int RerollCount;      // 레벨업 리롤 횟수(게임당)
@@ -171,7 +171,9 @@ public static class SkillEffects
                 case "Sniping_TwoTarget": t.SnipingExtraTarget = true; break;
                 case "Rewind_Slow": t.RewindSlow = true; break;
                 case "Shotgun_CloseBonus": t.ShotgunClose = true; break;
-                case "refresh_bonus": t.RefreshPct += 5f * lv; break;
+                // 리프레쉬 폐지(2026-08-06)로 가속 패시브에 재배선. 노드 id·에셋 텍스트는 트리 쪽이라 그대로다.
+                // ⚠️ 확률 5%p/레벨을 쿨감 5%p/레벨로 그대로 옮기면 과하다(maxLevel 5 → 25%p) → 2%p/레벨로 낮춤.
+                case "refresh_bonus": t.AccelCdPct += 2f * lv; break;
                 case "thunder_Cooldown": t.ThunderCdPerStrike += 0.01f; break;
                 case "arrow_StartLev": t.ArrowStartLevel = 3; break;
                 // 레벨업 리롤: New_Reroll(해금)=첫 리롤 +1, reroll_1/reroll_2(리롤 I)=레벨당 추가

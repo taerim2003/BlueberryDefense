@@ -50,7 +50,7 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.OrbCanHitFlying = totals.OrbFly;
         MetaBonuses.HomingMissileGrowth = totals.HomingGrowth;
         MetaBonuses.WhirlwindCooldownBonus = totals.WhirlwindCdBonus;
-        MetaBonuses.RefreshChanceBonus = 0.01f * totals.RefreshPct;
+        MetaBonuses.AccelCooldownBonus = 0.01f * totals.AccelCdPct;
         MetaBonuses.ThunderCooldownPerStrike = totals.ThunderCdPerStrike;
         MetaBonuses.SnipingExtraTarget = totals.SnipingExtraTarget;
         MetaBonuses.RewindSlowAll = totals.RewindSlow;

@@ -529,29 +529,7 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    // 루트 잠금 조건 — 이 스킬을 **보유**해야 해당 루트(path1=패시브 연계 / path2=액티브 연계)가 열린다.
-    // 레벨 조건은 걸지 않는다(아이템이 희소해서 조건이 과하면 아이템이 버려지는 판이 생김).
-    public static PassiveSkillId? GetPassivePrereq(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.BasicAttack => PassiveSkillId.Assassinate,
-        ActiveSkillId.Whirlwind => PassiveSkillId.Refresh,
-        ActiveSkillId.Orb => PassiveSkillId.Knowledge,
-        ActiveSkillId.Lightning => PassiveSkillId.Strength,
-        ActiveSkillId.EagleDrop => PassiveSkillId.Health,
-        ActiveSkillId.Swing => PassiveSkillId.Strength,
-        _ => null,
-    };
-
-    public static ActiveSkillId? GetActivePrereq(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.BasicAttack => ActiveSkillId.EagleDrop,
-        ActiveSkillId.Whirlwind => ActiveSkillId.Orb,
-        ActiveSkillId.Orb => ActiveSkillId.Lightning,
-        ActiveSkillId.Lightning => ActiveSkillId.Whirlwind,
-        ActiveSkillId.EagleDrop => ActiveSkillId.Whirlwind,
-        ActiveSkillId.Swing => ActiveSkillId.Whirlwind,
-        _ => null,
-    };
+    // 루트 잠금 조건은 EvolutionRoutes.RoutePrereq가 (스킬, 루트)별로 단독 소유한다(2026-08-06 개편).
 
     public static string GetActiveSkillName(ActiveSkillId id) => id switch
     {
@@ -659,6 +637,7 @@ public class PlayerSkills : MonoBehaviour
         PassiveSkillId.Assassinate => "암살",
         PassiveSkillId.Refresh => "리프레쉬",
         PassiveSkillId.Defense => "방어",
+        PassiveSkillId.Accel => "가속",
         _ => id.ToString(),
     };
 
@@ -964,9 +943,17 @@ public class PlayerSkills : MonoBehaviour
         // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소
         if (PlayerPassives.BuffSkillCooldownMult < 1f && IsBuffSkill(skill.Id))
             cdMult *= PlayerPassives.BuffSkillCooldownMult;
+        // 패시브 "가속": 전 스킬 쿨타임 감소. 스킬트리 전역 쿨감과 같은 축이라 곱해서 들어간다.
+        // 스킬트리 보너스는 리프레쉬와 같은 방식으로 **가속을 보유했을 때만** 얹힌다.
+        if (passives != null && passives.HasPassive(PassiveSkillId.Accel))
+        {
+            float cut = PlayerPassives.AccelCooldownReduction + MetaBonuses.AccelCooldownBonus;
+            if (cut > 0f) cdMult *= Mathf.Max(0.05f, 1f - cut);
+        }
         skill.CooldownTimer = baseCd * cdMult;
 
-        if (passives != null && passives.HasPassive(PassiveSkillId.Refresh) && Random.value < PlayerPassives.RefreshChance + MetaBonuses.RefreshChanceBonus)
+        // 리프레쉬는 폐지돼 획득 경로가 없다 — 이 분기는 도달 불가지만 진화 효과 코드가 얽혀 있어 남겨 둔다.
+        if (passives != null && passives.HasPassive(PassiveSkillId.Refresh) && Random.value < PlayerPassives.RefreshChance)
         {
             skill.CooldownTimer = 0f;
             OnRefreshProc?.Invoke();

@@ -57,20 +57,82 @@ public static class EvolutionRoutes
     public static int RoutePath(PassiveSkillId id, int route) => route == 0 ? 1 : 2;
 
     // ── 루트 잠금(연계 조건) ─────────────────────────────────────────────────
-    // 기존 path 좌표계가 그대로 조건이 된다: path1 = 패시브 연계, path2 = 액티브 연계, path0 = 무의존.
     // 연계 대상을 **보유**해야 그 루트가 열린다(레벨 조건은 없음 — 아이템이 희소해서 레벨까지 걸면
     // 아이템이 버려지는 판이 생긴다). 두 루트가 다 잠긴 스킬은 진화 목록에 아예 안 뜬다.
-    public static PassiveSkillId? RoutePassivePrereq(ActiveSkillId id, int route) =>
-        RoutePath(id, route) == 1 ? PlayerSkills.GetPassivePrereq(id) : null;
+    //
+    // ⚠️ 조건은 **RoutePath와 무관하다**(2026-08-06 개편). 예전엔 path 좌표가 곧 조건이었지만
+    //    (path1=패시브 연계 / path2=액티브 연계 / path0=무조건) 새 조건표는 그 틀을 셋 다 깬다:
+    //      · 한 스킬의 두 루트가 **둘 다 액티브** 조건(회오리·독수리·산탄) 또는 **둘 다 패시브**(되감기)
+    //      · R0이 액티브 · R1이 패시브인 **반대 배치**(낙뢰·스나이핑·호밍·가속·방어)
+    //      · 옛 path0(무조건) 자리에도 조건이 붙는다 — 이제 **조건 없는 루트는 없다**
+    //    RoutePath는 진화 **효과** 매핑에만 계속 쓰인다. 조건은 아래 표가 단독 소유다.
+    //    (원본: 노션 "스킬 데이터 시트 > NEW 진화조건 표")
+    private static (PassiveSkillId?, ActiveSkillId?) Need(PassiveSkillId p) => (p, null);
+    private static (PassiveSkillId?, ActiveSkillId?) Need(ActiveSkillId a) => (null, a);
 
-    public static ActiveSkillId? RouteActivePrereq(ActiveSkillId id, int route) =>
-        RoutePath(id, route) == 2 ? PlayerSkills.GetActivePrereq(id) : null;
+    public static (PassiveSkillId? Passive, ActiveSkillId? Active) RoutePrereq(ActiveSkillId id, int route) => (id, route) switch
+    {
+        (ActiveSkillId.BasicAttack, 0) => Need(PassiveSkillId.Assassinate),
+        (ActiveSkillId.BasicAttack, _) => Need(ActiveSkillId.EagleDrop),
 
-    public static PassiveSkillId? RoutePassivePrereq(PassiveSkillId id, int route) =>
-        RoutePath(id, route) == 1 ? PlayerPassives.GetPassivePrereq(id) : null;
+        (ActiveSkillId.Whirlwind, 0) => Need(ActiveSkillId.BasicAttack),
+        (ActiveSkillId.Whirlwind, _) => Need(ActiveSkillId.Orb),
 
-    public static ActiveSkillId? RouteActivePrereq(PassiveSkillId id, int route) =>
-        RoutePath(id, route) == 2 ? PlayerPassives.GetActivePrereq(id) : null;
+        (ActiveSkillId.Orb, 0) => Need(PassiveSkillId.Knowledge),
+        (ActiveSkillId.Orb, _) => Need(ActiveSkillId.Homing),
+
+        (ActiveSkillId.Lightning, 0) => Need(ActiveSkillId.Rewind),
+        (ActiveSkillId.Lightning, _) => Need(PassiveSkillId.Strength),
+
+        (ActiveSkillId.EagleDrop, 0) => Need(ActiveSkillId.Shotgun),
+        (ActiveSkillId.EagleDrop, _) => Need(ActiveSkillId.Whirlwind),
+
+        (ActiveSkillId.Sniping, 0) => Need(ActiveSkillId.EagleDrop),
+        (ActiveSkillId.Sniping, _) => Need(PassiveSkillId.Defense),
+
+        (ActiveSkillId.Homing, 0) => Need(ActiveSkillId.Shotgun),
+        (ActiveSkillId.Homing, _) => Need(PassiveSkillId.Accel),
+
+        (ActiveSkillId.Shotgun, 0) => Need(ActiveSkillId.Sniping),
+        (ActiveSkillId.Shotgun, _) => Need(ActiveSkillId.Swing),
+
+        (ActiveSkillId.Rewind, 0) => Need(PassiveSkillId.Strength),
+        (ActiveSkillId.Rewind, _) => Need(PassiveSkillId.Accel),
+
+        (ActiveSkillId.Swing, 0) => Need(PassiveSkillId.Health),
+        (ActiveSkillId.Swing, _) => Need(ActiveSkillId.Lightning),
+
+        _ => (null, null),
+    };
+
+    public static (PassiveSkillId? Passive, ActiveSkillId? Active) RoutePrereq(PassiveSkillId id, int route) => (id, route) switch
+    {
+        (PassiveSkillId.Strength, 0) => Need(PassiveSkillId.Assassinate),
+        (PassiveSkillId.Strength, _) => Need(ActiveSkillId.Shotgun),
+
+        (PassiveSkillId.Health, 0) => Need(PassiveSkillId.Strength),
+        (PassiveSkillId.Health, _) => Need(ActiveSkillId.Orb),
+
+        (PassiveSkillId.Knowledge, 0) => Need(PassiveSkillId.Accel),
+        (PassiveSkillId.Knowledge, _) => Need(ActiveSkillId.Homing),
+
+        (PassiveSkillId.Assassinate, 0) => Need(PassiveSkillId.Knowledge),
+        (PassiveSkillId.Assassinate, _) => Need(ActiveSkillId.Sniping),
+
+        (PassiveSkillId.Defense, 0) => Need(ActiveSkillId.Swing),
+        (PassiveSkillId.Defense, _) => Need(PassiveSkillId.Health),
+
+        (PassiveSkillId.Accel, 0) => Need(ActiveSkillId.Rewind),
+        (PassiveSkillId.Accel, _) => Need(PassiveSkillId.Defense),
+
+        // Refresh는 폐지돼 조건표에 없다(레벨업 후보에서 빠져 획득 자체가 안 된다).
+        _ => (null, null),
+    };
+
+    public static PassiveSkillId? RoutePassivePrereq(ActiveSkillId id, int route) => RoutePrereq(id, route).Passive;
+    public static ActiveSkillId? RouteActivePrereq(ActiveSkillId id, int route) => RoutePrereq(id, route).Active;
+    public static PassiveSkillId? RoutePassivePrereq(PassiveSkillId id, int route) => RoutePrereq(id, route).Passive;
+    public static ActiveSkillId? RouteActivePrereq(PassiveSkillId id, int route) => RoutePrereq(id, route).Active;
 
     // 잠금 사유 표기용 — 필요한 연계 스킬 이름. 조건이 없으면 null.
     public static string RoutePrereqName(ActiveSkillId id, int route)

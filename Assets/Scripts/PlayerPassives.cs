@@ -8,9 +8,12 @@ public enum PassiveSkillId
     Health,
     Knowledge,
     Assassinate,
+    // 🚫 폐지(2026-08-06) — 진화 조건표 개편에서 빠지고 역할이 Accel(가속)로 넘어갔다.
+    //    레벨업 후보 배열(LevelUpUI)에서만 뺐고 enum·에셋은 남긴다: 정수 직렬화라 지우면 뒤 값이 밀린다.
     Refresh,
     // ↓ 아래는 뒤에만 추가할 것 — Passive_* 에셋이 이 enum을 정수로 직렬화해 두어서 중간에 끼우면 값이 밀린다.
     Defense,
+    Accel,
 }
 
 public class EquippedPassive
@@ -52,6 +55,10 @@ public class PlayerPassives : MonoBehaviour
     // 방어: 받는 피해 감소 비율(0~1). PlayerHealth.TakeDamage가 읽는다.
     // 건강(최대체력)과 역할이 다르다 — 이쪽은 들어오는 피해 자체를 깎는다.
     public static float DamageReduction = 0f;
+    // 가속: 전 스킬 쿨타임 감소 비율(0~1). 방어(DamageReduction)와 같은 가산 방식이다.
+    // PlayerSkills가 쿨을 걸 때 (1 - 이 값)을 곱한다 — 스킬트리 MetaBonuses.CooldownMult와 같은 축이라
+    // 둘이 곱해져 들어가고, 최종 하한은 GlobalCooldown(0.4초).
+    public static float AccelCooldownReduction = 0f;
 
     [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
 
@@ -103,6 +110,7 @@ public class PlayerPassives : MonoBehaviour
         HealthDamagePerHp = 0f;
         HealthRetaliationMultiplier = 0f;
         DamageReduction = 0f;
+        AccelCooldownReduction = 0f;
         BasicAttackDamageMultiplierBonus = 0f;
         AssassinateWhirlwindCritBonus = 0f;
         AssassinateWhirlwindTargetHighest = false;
@@ -217,6 +225,9 @@ public class PlayerPassives : MonoBehaviour
             case PassiveSkillId.Defense:
                 DamageReduction += amount;
                 break;
+            case PassiveSkillId.Accel:
+                AccelCooldownReduction += amount;
+                break;
         }
     }
 
@@ -232,6 +243,7 @@ public class PlayerPassives : MonoBehaviour
             PassiveSkillId.Assassinate => $"치명타 확률 {Pct(v)}%p 증가",
             PassiveSkillId.Refresh => $"재사용 초기화 확률 {Pct(v)}%p 증가",
             PassiveSkillId.Defense => $"받는 피해 {Pct(v)}%p 감소",
+            PassiveSkillId.Accel => $"모든 스킬 쿨타임 {Pct(v)}%p 감소",
             _ => "",
         };
     }
@@ -248,6 +260,7 @@ public class PlayerPassives : MonoBehaviour
             PassiveSkillId.Assassinate => $"모든 피해가 {Pct(b)}% 확률로 3배 피해",
             PassiveSkillId.Refresh => $"스킬 사용 시 {Pct(b)}% 확률로 쿨타임 초기화",
             PassiveSkillId.Defense => $"받는 피해 {Pct(b)}% 감소",
+            PassiveSkillId.Accel => $"모든 스킬 쿨타임 {Pct(b)}% 감소",
             _ => "",
         };
     }
@@ -293,6 +306,14 @@ public class PlayerPassives : MonoBehaviour
                 if (BuffSkillCooldownMult < 1f) lines.Add($"버프류 스킬(산탄·낙뢰) 쿨타임 -{Pct(1f - BuffSkillCooldownMult)}%");
                 if (RefreshLightningCooldownProcChance > 0f) lines.Add($"낙뢰 발동 시 {Pct(RefreshLightningCooldownProcChance)}% 확률로 전체 쿨타임 -0.5초");
                 break;
+
+            case PassiveSkillId.Defense:
+                lines.Add($"받는 피해 -{Pct(DamageReduction)}%");
+                break;
+
+            case PassiveSkillId.Accel:
+                lines.Add($"모든 스킬 쿨타임 -{Pct(AccelCooldownReduction)}%");
+                break;
         }
         return lines;
     }
@@ -300,8 +321,10 @@ public class PlayerPassives : MonoBehaviour
     // 진화 트리가 아직 설계되지 않은 패시브 — 만렙에 닿아도 진화 목록에 띄우지 않는다.
     // IsRouteUnlocked는 연계 조건이 null이면 "조건 없음 = 열림"으로 보기 때문에, 이 가드가 없으면
     // 진화는 뜨는데 이름도 효과도 그대로인 빈 진화가 된다.
-    // 🔜 방어 진화 4종을 설계하면 이 목록에서 빼면 된다(2026-08-06 신설, 진화는 다음 세션 예정).
-    private static bool HasEvolutionDesign(PassiveSkillId id) => id != PassiveSkillId.Defense;
+    // 🔜 방어·가속 진화를 설계하면 이 목록에서 빼면 된다(진화 효과는 노션 진화조건 표에 명세만 있고 미구현).
+    //    ⚠️ 조건표에는 둘 다 이미 들어가 있다 — 다른 스킬이 방어/가속을 **연계 조건으로** 쓰는 건 지금도 동작한다.
+    private static bool HasEvolutionDesign(PassiveSkillId id) =>
+        id != PassiveSkillId.Defense && id != PassiveSkillId.Accel;
 
     // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) — 액티브 스킬과 동일 규칙 ──
     public bool CanEvolve(EquippedPassive passive)
@@ -411,25 +434,7 @@ public class PlayerPassives : MonoBehaviour
     }
 
 
-    public static PassiveSkillId? GetPassivePrereq(PassiveSkillId id) => id switch
-    {
-        PassiveSkillId.Strength => PassiveSkillId.Assassinate,
-        PassiveSkillId.Health => PassiveSkillId.Strength,
-        PassiveSkillId.Knowledge => PassiveSkillId.Refresh,
-        PassiveSkillId.Assassinate => PassiveSkillId.Knowledge,
-        PassiveSkillId.Refresh => PassiveSkillId.Health,
-        _ => null,
-    };
-
-    public static ActiveSkillId? GetActivePrereq(PassiveSkillId id) => id switch
-    {
-        PassiveSkillId.Strength => ActiveSkillId.BasicAttack,
-        PassiveSkillId.Health => ActiveSkillId.Orb,
-        PassiveSkillId.Knowledge => ActiveSkillId.EagleDrop,
-        PassiveSkillId.Assassinate => ActiveSkillId.Whirlwind,
-        PassiveSkillId.Refresh => ActiveSkillId.Lightning,
-        _ => null,
-    };
+    // 루트 잠금 조건은 EvolutionRoutes.RoutePrereq가 (패시브, 루트)별로 단독 소유한다(2026-08-06 개편).
 
     // 🔴 액티브 진화와 같은 규칙 — **수치를 쓰지 않는다.** 그림만 보고 호기심으로 고르게 한다.
     //    실제 수치는 ApplyPassivePathTierEffect와 소비처에 있다.
