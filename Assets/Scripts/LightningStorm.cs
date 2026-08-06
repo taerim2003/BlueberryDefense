@@ -25,9 +25,12 @@ public static class LightningStorm
     public const float ChainRadius = 4f;
     public static int ChainCount = 3;
 
-    // 회오리 연계 (path2): 중첩당 전체 공격 피해량 증가
+    // 중첩당 전체 공격 피해량 증가.
+    // ⚠️ 원래 도달 불가능한 path2에 잠들어 있던 효과다 — 2026-08-06 명세에서 **R0(되감기 연계, path0)** 으로 옮겨
+    //    실제로 열리게 됐다. 2차 진화가 스택당 보너스를 키우므로 const가 아니라 static이다.
     public static bool StackDamageEnabled;
-    public const float StackDamageBonusPerStack = 0.15f;
+    public const float BaseStackDamageBonus = 0.15f;
+    public static float StackDamageBonusPerStack = BaseStackDamageBonus;
 
     // 리프레쉬 연계 (패시브 path2): 낙뢰가 실제로 떨어질 때마다 호출
     public static System.Action OnProc;
@@ -65,6 +68,7 @@ public static class LightningStorm
         ChainEnabled = false;
         ChainCount = 3;
         StackDamageEnabled = false;
+        StackDamageBonusPerStack = BaseStackDamageBonus;
     }
 
     // 낙뢰 시전: 기존 스택을 지우지 않고 새 스택을 추가한다(평소엔 이전 스택이 이미 만료된 상태라 사실상 1개).

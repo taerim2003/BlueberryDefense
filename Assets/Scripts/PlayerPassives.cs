@@ -47,10 +47,11 @@ public class PlayerPassives : MonoBehaviour
     public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path3 T2+: 낙뢰 발동시 전체 쿨타임 감소 확률
     public static float BuffSkillCooldownMult = 1f; // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
     public static float HealthDamagePerHp = 0f; // 건강 연계 path1: 최대체력 1당 피해량 배율 보너스
-    public static float HealthRetaliationMultiplier = 0f; // 건강 연계 path2: 피격 시 피격 피해량 대비 전체 피해 배율
+    // 피격 시 받은 피해의 이 배수를 전체 적에게 되돌려준다.
+    // ⚠️ 예전엔 건강 path2("가시 갑주")가 이걸 켰지만, 2026-08-06 명세에서 **방어 path2**로 옮겨졌다
+    //    (건강 path2는 하트 드랍으로 교체). 소비처는 HandleDamageTaken 한 곳뿐이라 필드는 그대로 쓴다.
+    public static float HealthRetaliationMultiplier = 0f;
     public static float BasicAttackDamageMultiplierBonus = 0f; // 힘 연계 path2: 기본공격 전용 추가 피해 배율
-    public static float AssassinateWhirlwindCritBonus = 0f; // 암살 연계 path2: 회오리 전용 추가 치명타 확률
-    public static bool AssassinateWhirlwindTargetHighest = false; // 암살 연계 path2: 회오리가 최고 체력 적을 타겟팅
     public static int EagleDropCastXpBonus = 0; // 지식 연계 path2: 독수리 투하 시전마다 즉시 획득하는 경험치
     // 방어: 받는 피해 감소 비율(0~1). PlayerHealth.TakeDamage가 읽는다.
     // 건강(최대체력)과 역할이 다르다 — 이쪽은 들어오는 피해 자체를 깎는다.
@@ -59,6 +60,14 @@ public class PlayerPassives : MonoBehaviour
     // PlayerSkills가 쿨을 걸 때 (1 - 이 값)을 곱한다 — 스킬트리 MetaBonuses.CooldownMult와 같은 축이라
     // 둘이 곱해져 들어가고, 최종 하한은 GlobalCooldown(0.4초).
     public static float AccelCooldownReduction = 0f;
+    // 방어 연계 path1(휘두르기): 피격 시 휘두르기를 쿨과 무관하게 자동 발동. 값은 본체 피해 대비 배율(0=미보유).
+    public static float DefenseAutoSwingDamageMult = 0f;
+    // 가속 연계 path2(방어): 피격할 때마다 모든 스킬 쿨타임을 이 초만큼 앞당긴다(0=미보유).
+    public static float AccelCooldownCutOnHit = 0f;
+    // 건강 연계 path2(오브): 하트(체력회복) 드랍 확률 배율. Enemy가 처치 시 읽는다.
+    public static float HeartDropMultiplier = 1f;
+    // 암살 연계 path2(스나이핑): 이 쿨타임 이상인 스킬은 치명타 확률 100%(상한 무시). 0=미보유.
+    public static float AssassinateSlowSkillCritCooldown = 0f;
 
     [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
 
@@ -111,9 +120,11 @@ public class PlayerPassives : MonoBehaviour
         HealthRetaliationMultiplier = 0f;
         DamageReduction = 0f;
         AccelCooldownReduction = 0f;
+        DefenseAutoSwingDamageMult = 0f;
+        AccelCooldownCutOnHit = 0f;
+        HeartDropMultiplier = 1f;
+        AssassinateSlowSkillCritCooldown = 0f;
         BasicAttackDamageMultiplierBonus = 0f;
-        AssassinateWhirlwindCritBonus = 0f;
-        AssassinateWhirlwindTargetHighest = false;
         EagleDropCastXpBonus = 0;
     }
 
@@ -153,13 +164,26 @@ public class PlayerPassives : MonoBehaviour
         }
     }
 
+    // 피격 반응 3종이 전부 여기 모인다(전부 "맞을 때마다" 발동하는 진화라 트리거가 같다).
+    // ⚠️ 이 콜백은 오버힐(보호막)이 흡수하고 **남은 피해가 실제로 체력을 깎을 때만** 온다 —
+    //    보호막으로 다 막은 타격은 반사도 자동 휘두르기도 안 나간다(의도, PlayerHealth.TakeDamage 참고).
     private void HandleDamageTaken(int amount)
     {
-        if (HealthRetaliationMultiplier <= 0f) return;
+        // 방어 path2(건강 연계): 받은 피해의 배수를 전체 적에게 되돌려준다.
+        if (HealthRetaliationMultiplier > 0f)
+        {
+            float damage = amount * HealthRetaliationMultiplier;
+            foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+                enemy.TakeDamage(damage);
+        }
 
-        float damage = amount * HealthRetaliationMultiplier;
-        foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            enemy.TakeDamage(damage);
+        // 가속 path2(방어 연계): 맞을 때마다 모든 스킬이 그만큼 빨리 돌아온다.
+        if (AccelCooldownCutOnHit > 0f && skills != null)
+            skills.ReduceAllCooldowns(AccelCooldownCutOnHit);
+
+        // 방어 path1(휘두르기 연계): 맞으면 반사적으로 휘두른다.
+        if (DefenseAutoSwingDamageMult > 0f && skills != null)
+            skills.TriggerAutoSwing(DefenseAutoSwingDamageMult);
     }
 
     private void HandleLightningProc()
@@ -283,7 +307,7 @@ public class PlayerPassives : MonoBehaviour
                 if (health != null) lines.Add($"최대 체력 {health.MaxHealth}");
                 if (regenInterval > 0f && regenAmount > 0f) lines.Add($"{regenInterval:0.#}초마다 체력 {regenAmount:0.#} 재생");
                 if (HealthDamagePerHp > 0f) lines.Add($"최대 체력 1당 피해량 +{Pct(HealthDamagePerHp)}%");
-                if (HealthRetaliationMultiplier > 0f) lines.Add($"피격 시 받은 피해의 {Pct(HealthRetaliationMultiplier)}%를 전체 적에게");
+                if (HeartDropMultiplier > 1f) lines.Add($"체력 회복 드랍률 x{HeartDropMultiplier:0.#}");
                 break;
 
             case PassiveSkillId.Knowledge:
@@ -295,8 +319,7 @@ public class PlayerPassives : MonoBehaviour
             case PassiveSkillId.Assassinate:
                 lines.Add($"치명타 확률 {Pct(AssassinateCritChance)}%");
                 lines.Add($"치명타 피해 배율 x{AssassinateCritMultiplier:0.##}");
-                if (AssassinateWhirlwindCritBonus > 0f) lines.Add($"회오리 치명타 확률 +{Pct(AssassinateWhirlwindCritBonus)}%");
-                if (AssassinateWhirlwindTargetHighest) lines.Add("회오리가 최고 체력 적을 우선 추격");
+                if (AssassinateSlowSkillCritCooldown > 0f) lines.Add($"재사용 {AssassinateSlowSkillCritCooldown:0.#}초 이상 스킬은 항상 치명타");
                 if (AssassinateKillXpMultiplier > 1f) lines.Add($"치명타 처치 시 경험치 x{AssassinateKillXpMultiplier:0.##}");
                 break;
 
@@ -309,29 +332,27 @@ public class PlayerPassives : MonoBehaviour
 
             case PassiveSkillId.Defense:
                 lines.Add($"받는 피해 -{Pct(DamageReduction)}%");
+                if (health != null && DefenseAutoSwingDamageMult > 0f) lines.Add($"피격 시 휘두르기 자동 발동 (피해 {Pct(DefenseAutoSwingDamageMult)}%)");
+                if (HealthRetaliationMultiplier > 0f) lines.Add($"피격 시 받은 피해의 {Pct(HealthRetaliationMultiplier)}%를 전체 적에게");
                 break;
 
             case PassiveSkillId.Accel:
                 lines.Add($"모든 스킬 쿨타임 -{Pct(AccelCooldownReduction)}%");
+                if (RefreshChance > 0f) lines.Add($"스킬 사용 시 {Pct(RefreshChance)}% 확률로 쿨타임 초기화");
+                if (AccelCooldownCutOnHit > 0f) lines.Add($"피격 시 전체 쿨타임 -{AccelCooldownCutOnHit:0.#}초");
                 break;
         }
         return lines;
     }
 
-    // 진화 트리가 아직 설계되지 않은 패시브 — 만렙에 닿아도 진화 목록에 띄우지 않는다.
-    // IsRouteUnlocked는 연계 조건이 null이면 "조건 없음 = 열림"으로 보기 때문에, 이 가드가 없으면
-    // 진화는 뜨는데 이름도 효과도 그대로인 빈 진화가 된다.
-    // 🔜 방어·가속 진화를 설계하면 이 목록에서 빼면 된다(진화 효과는 노션 진화조건 표에 명세만 있고 미구현).
-    //    ⚠️ 조건표에는 둘 다 이미 들어가 있다 — 다른 스킬이 방어/가속을 **연계 조건으로** 쓰는 건 지금도 동작한다.
-    private static bool HasEvolutionDesign(PassiveSkillId id) =>
-        id != PassiveSkillId.Defense && id != PassiveSkillId.Accel;
-
     // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) — 액티브 스킬과 동일 규칙 ──
+    // ⚠️ 폐지된 리프레쉬는 획득 경로가 없어 여기 닿지 않는다. 방어·가속은 2026-08-06에 진화가 설계돼
+    //    "설계 없는 패시브를 목록에서 빼던 가드"(HasEvolutionDesign)가 필요 없어져 사라졌다.
+    //    새 패시브를 또 만들 거면 진화까지 같이 만들 것 — 안 그러면 이름도 효과도 그대로인 빈 진화가 뜬다.
     public bool CanEvolve(EquippedPassive passive)
     {
         if (passive == null || passive.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
         if (passive.Level < EvolutionRoutes.RequiredLevel) return false;
-        if (!HasEvolutionDesign(passive.Id)) return false;
         return SelectableRoutes(passive).Any(r => IsRouteUnlocked(passive.Id, r));
     }
 
@@ -394,9 +415,11 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Health, 1, 1): HealthDamagePerHp += 0.0005f; break;
             case (PassiveSkillId.Health, 1, 2): HealthDamagePerHp += 0.0005f; break;
             case (PassiveSkillId.Health, 1, 3): HealthDamagePerHp += 0.0005f; break;
-            case (PassiveSkillId.Health, 2, 1): HealthRetaliationMultiplier += 0.5f; break;
-            case (PassiveSkillId.Health, 2, 2): HealthRetaliationMultiplier += 0.5f; break;
-            case (PassiveSkillId.Health, 2, 3): HealthRetaliationMultiplier += 0.5f; break;
+            // 건강 path2(오브 연계) — "가시 갑주"(피해 반사)에서 **하트 드랍**으로 교체(2026-08-06 명세).
+            // 반사는 방어 path2로 옮겨갔다. 1차는 T1+T2를 순서대로 밟으므로 최종값만 의미가 있다(=5배).
+            case (PassiveSkillId.Health, 2, 1): HeartDropMultiplier = 3f; break;
+            case (PassiveSkillId.Health, 2, 2): HeartDropMultiplier = 5f; break;
+            case (PassiveSkillId.Health, 2, 3): HeartDropMultiplier = 10f; break;
 
             // 지식
             case (PassiveSkillId.Knowledge, 0, 1): PlayerExperience.Instance.IncreaseXPMultiplier(0.08f); break;
@@ -416,9 +439,11 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Assassinate, 1, 1): AssassinateKillXpMultiplier += 0.25f; break;
             case (PassiveSkillId.Assassinate, 1, 2): AssassinateKillXpMultiplier += 0.75f; break;
             case (PassiveSkillId.Assassinate, 1, 3): AssassinateKillXpMultiplier += 0.5f; break;
-            case (PassiveSkillId.Assassinate, 2, 1): AssassinateWhirlwindTargetHighest = true; AssassinateWhirlwindCritBonus += 0.1f; break;
-            case (PassiveSkillId.Assassinate, 2, 2): AssassinateWhirlwindCritBonus += 0.1f; break;
-            case (PassiveSkillId.Assassinate, 2, 3): AssassinateWhirlwindCritBonus += 0.1f; break;
+            // 암살 path2(스나이핑 연계) — "폭풍 암살"(회오리 전용 치명타)에서 **긴 쿨 스킬 확정 치명타**로 교체(2026-08-06 명세).
+            // 치명타 배율 +0.6은 기본 3배 대비 +20%다. 2차는 임계 쿨을 낮춰 해당 스킬을 늘린다.
+            case (PassiveSkillId.Assassinate, 2, 1): AssassinateSlowSkillCritCooldown = 5f; break;
+            case (PassiveSkillId.Assassinate, 2, 2): AssassinateCritMultiplier += 0.6f; break;
+            case (PassiveSkillId.Assassinate, 2, 3): AssassinateSlowSkillCritCooldown = 3f; AssassinateCritMultiplier += 0.6f; break;
 
             // 리프레쉬
             case (PassiveSkillId.Refresh, 0, 1): RefreshChance += 0.03f; break;
@@ -430,6 +455,29 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Refresh, 2, 1): BuffSkillCooldownMult = 0.9f; break; // 버프류 스킬 쿨타임 10% 감소
             case (PassiveSkillId.Refresh, 2, 2): RefreshLightningCooldownProcChance += 0.05f; break;
             case (PassiveSkillId.Refresh, 2, 3): RefreshLightningCooldownProcChance += 0.03f; break;
+
+            // 방어 (2026-08-06 신설) — R0=path1(휘두르기 연계) / R1=path2(건강 연계)
+            // path1: 맞으면 반사적으로 휘두른다. 휘두르기 보유가 루트 조건이라 스킬이 없을 일은 없다.
+            case (PassiveSkillId.Defense, 1, 1): DefenseAutoSwingDamageMult = 0.6f; break;
+            case (PassiveSkillId.Defense, 1, 2): DefenseAutoSwingDamageMult = 1f; break;
+            case (PassiveSkillId.Defense, 1, 3): DefenseAutoSwingDamageMult = 2f; break;
+            // path2: 최대체력 +200%와 피해 3배 반사. 최대체력은 **현재 최대치 기준 배수**라 T1에 한 번만 얹는다
+            // (T1·T2에 나눠 걸면 순차 적용이라 100→200→400으로 +300%가 된다).
+            case (PassiveSkillId.Defense, 2, 1): if (health != null) health.IncreaseMaxHealth(health.MaxHealth * 2); break;
+            case (PassiveSkillId.Defense, 2, 2): HealthRetaliationMultiplier += 3f; break;
+            case (PassiveSkillId.Defense, 2, 3):
+                if (health != null) health.IncreaseMaxHealth(health.MaxHealth / 2); // 2차: 다시 +50%
+                HealthRetaliationMultiplier += 2f;                                   // 반사 총 5배
+                break;
+
+            // 가속 (2026-08-06 신설) — R0=path1(되감기 연계) / R1=path2(방어 연계)
+            // path1: 폐지된 리프레쉬의 "쿨타임 초기화"를 그대로 물려받는다(PlayerSkills.TryUseSkill이 소비).
+            case (PassiveSkillId.Accel, 1, 1): RefreshChance += 0.10f; break;
+            case (PassiveSkillId.Accel, 1, 2): RefreshChance += 0.08f; break;
+            case (PassiveSkillId.Accel, 1, 3): RefreshChance += 0.10f; break;
+            // path2: 맞을 때마다 전체 쿨타임이 앞당겨진다.
+            case (PassiveSkillId.Accel, 2, 1): AccelCooldownCutOnHit += 0.5f; break;
+            case (PassiveSkillId.Accel, 2, 3): AccelCooldownCutOnHit += 0.5f; break;
         }
     }
 
@@ -456,9 +504,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Health, 1, 1) => "버틸수록 세진다",
         (PassiveSkillId.Health, 1, 2) => "더 세진다",
         (PassiveSkillId.Health, 1, 3) => "두꺼운 몸이 그대로 힘이 된다",
-        (PassiveSkillId.Health, 2, 1) => "맞으면 되돌려준다",
-        (PassiveSkillId.Health, 2, 2) => "곱절로 되돌려준다",
-        (PassiveSkillId.Health, 2, 3) => "때린 쪽이 더 후회한다",
+        (PassiveSkillId.Health, 2, 1) => "쓰러진 자리에 먹을 게 남는다",
+        (PassiveSkillId.Health, 2, 2) => "훨씬 자주 남는다",
+        (PassiveSkillId.Health, 2, 3) => "발밑이 늘 붉다",
 
         (PassiveSkillId.Knowledge, 0, 1) => "보고 배우는 게 빠르다",
         (PassiveSkillId.Knowledge, 0, 2) => "더 빠르다",
@@ -476,9 +524,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Assassinate, 1, 1) => "깔끔하게 끝낸 값을 받는다",
         (PassiveSkillId.Assassinate, 1, 2) => "값이 오른다",
         (PassiveSkillId.Assassinate, 1, 3) => "끝낼수록 배가 부르다",
-        (PassiveSkillId.Assassinate, 2, 1) => "바람이 제일 큰 놈을 노린다",
-        (PassiveSkillId.Assassinate, 2, 2) => "바람의 눈이 더 매서워진다",
-        (PassiveSkillId.Assassinate, 2, 3) => "바람은 급소만 문다",
+        (PassiveSkillId.Assassinate, 2, 1) => "묵직한 것일수록 급소만 노린다",
+        (PassiveSkillId.Assassinate, 2, 2) => "그 한 방이 더 깊다",
+        (PassiveSkillId.Assassinate, 2, 3) => "웬만한 건 전부 급소로 들어간다",
 
         (PassiveSkillId.Refresh, 0, 1) => "가끔 방금 쓴 게 다시 준비된다",
         (PassiveSkillId.Refresh, 0, 2) => "더 자주 그런다",
@@ -489,6 +537,20 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Refresh, 2, 1) => "몸을 데우는 것들이 빨리 돌아온다",
         (PassiveSkillId.Refresh, 2, 2) => "번개가 치면 전부 앞당겨진다",
         (PassiveSkillId.Refresh, 2, 3) => "번개가 더 자주 편을 든다",
+
+        (PassiveSkillId.Defense, 1, 1) => "맞으면 몸이 먼저 반응한다",
+        (PassiveSkillId.Defense, 1, 2) => "그 반사가 무거워진다",
+        (PassiveSkillId.Defense, 1, 3) => "맞는 순간이 곧 반격이다",
+        (PassiveSkillId.Defense, 2, 1) => "몸집이 통째로 불어난다",
+        (PassiveSkillId.Defense, 2, 2) => "때린 만큼 그대로 돌아간다",
+        (PassiveSkillId.Defense, 2, 3) => "건드린 쪽이 먼저 무너진다",
+
+        (PassiveSkillId.Accel, 1, 1) => "가끔 방금 쓴 게 다시 준비된다",
+        (PassiveSkillId.Accel, 1, 2) => "더 자주 그런다",
+        (PassiveSkillId.Accel, 1, 3) => "기다리는 일이 드물어진다",
+        (PassiveSkillId.Accel, 2, 1) => "맞을수록 손이 빨라진다",
+        (PassiveSkillId.Accel, 2, 2) => "더 빨라진다",
+        (PassiveSkillId.Accel, 2, 3) => "맞는 것이 곧 재촉이 된다",
 
         _ => "",
     };
@@ -512,9 +574,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Health, 1, 1) => "버틸수록 세진다",
         (PassiveSkillId.Health, 1, 2) => "더 세진다",
         (PassiveSkillId.Health, 1, 3) => "두꺼운 몸이 힘이다",
-        (PassiveSkillId.Health, 2, 1) => "되돌려준다",
-        (PassiveSkillId.Health, 2, 2) => "곱절로",
-        (PassiveSkillId.Health, 2, 3) => "때린 쪽이 후회한다",
+        (PassiveSkillId.Health, 2, 1) => "먹을 게 남는다",
+        (PassiveSkillId.Health, 2, 2) => "자주 남는다",
+        (PassiveSkillId.Health, 2, 3) => "발밑이 붉다",
 
         (PassiveSkillId.Knowledge, 0, 1) => "빨리 배운다",
         (PassiveSkillId.Knowledge, 0, 2) => "더 빨리",
@@ -532,9 +594,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Assassinate, 1, 1) => "깔끔한 값",
         (PassiveSkillId.Assassinate, 1, 2) => "오르는 값",
         (PassiveSkillId.Assassinate, 1, 3) => "끝낼수록 배부르다",
-        (PassiveSkillId.Assassinate, 2, 1) => "바람이 노린다",
-        (PassiveSkillId.Assassinate, 2, 2) => "매서워진 눈",
-        (PassiveSkillId.Assassinate, 2, 3) => "급소만 문다",
+        (PassiveSkillId.Assassinate, 2, 1) => "묵직한 급소",
+        (PassiveSkillId.Assassinate, 2, 2) => "더 깊게",
+        (PassiveSkillId.Assassinate, 2, 3) => "전부 급소로",
 
         (PassiveSkillId.Refresh, 0, 1) => "다시 준비된다",
         (PassiveSkillId.Refresh, 0, 2) => "더 자주",
@@ -545,6 +607,20 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Refresh, 2, 1) => "빨리 돌아온다",
         (PassiveSkillId.Refresh, 2, 2) => "번개가 앞당긴다",
         (PassiveSkillId.Refresh, 2, 3) => "번개가 편을 든다",
+
+        (PassiveSkillId.Defense, 1, 1) => "몸이 먼저 반응한다",
+        (PassiveSkillId.Defense, 1, 2) => "무거운 반사",
+        (PassiveSkillId.Defense, 1, 3) => "맞는 순간이 반격",
+        (PassiveSkillId.Defense, 2, 1) => "통째로 불어난다",
+        (PassiveSkillId.Defense, 2, 2) => "그대로 돌아간다",
+        (PassiveSkillId.Defense, 2, 3) => "건드린 쪽이 무너진다",
+
+        (PassiveSkillId.Accel, 1, 1) => "다시 준비된다",
+        (PassiveSkillId.Accel, 1, 2) => "더 자주",
+        (PassiveSkillId.Accel, 1, 3) => "기다릴 일이 없다",
+        (PassiveSkillId.Accel, 2, 1) => "맞을수록 빨라진다",
+        (PassiveSkillId.Accel, 2, 2) => "더 빨라진다",
+        (PassiveSkillId.Accel, 2, 3) => "맞는 것이 재촉",
 
         _ => "",
     };

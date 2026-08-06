@@ -736,7 +736,9 @@ public class Enemy : MonoBehaviour
                     MetaRun.Collect(essenceDropAmount); // 프리팹 미설정 시 즉시 적립(폴백)
             }
 
-            if (HeartPickupPrefab != null && Random.value < BaseHealDropChance + MetaBonuses.HealDropChanceBonus)
+            // 건강 진화 path2(오브 연계)가 배율을 올린다 — 기본 3%에 스킬트리 가산을 더한 뒤 곱한다.
+            if (HeartPickupPrefab != null
+                && Random.value < (BaseHealDropChance + MetaBonuses.HealDropChanceBonus) * PlayerPassives.HeartDropMultiplier)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
 
             // 만화식 의성어: 보스(사망분출을 가진 대왕)는 무조건 SMASH!,

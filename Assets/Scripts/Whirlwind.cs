@@ -27,8 +27,21 @@ public class Whirlwind : MonoBehaviour
     public int MaxHitCount { get; set; } // 0이면 비활성화(기존처럼 lifetime 기준으로 소멸)
     public float SlowDuration { get; set; } = 3f;
     public float ExtraLifetime { get; set; } // 레벨업 고유 강화: 지속시간(초) 추가
-    public bool TargetHighestHealth { get; set; } // 암살 연계 (패시브 path2): 최고 체력 적을 타겟팅
+    public bool TargetHighestHealth { get; set; } // 최고 체력 적을 타겟팅 (지금은 켜는 진화가 없다 — 재활용 가능)
     public bool CanHitFlying { get; set; } = true; // 미니 회오리는 비행 적을 타격할 수 없다
+
+    // 회오리 R0(화살 연계): 이 회오리가 사라질 때 그 자리(소멸 시점 위치)를 알려준다 — PlayerSkills가 미니를 남긴다.
+    // ⚠️ 씬 언로드·게임 종료로 파괴될 때는 부르지 않는다. 안 그러면 판이 끝나는 순간 미니가 우수수 생긴다.
+    public System.Action<Vector3> OnExpired;
+
+    private static bool quitting;
+    private void OnApplicationQuit() => quitting = true;
+
+    private void OnDestroy()
+    {
+        if (quitting || !gameObject.scene.isLoaded) return;
+        OnExpired?.Invoke(transform.position);
+    }
 
     private int hitCount;
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
