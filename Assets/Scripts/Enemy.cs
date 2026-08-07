@@ -183,7 +183,72 @@ public class Enemy : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
+        CreateShadow();
         InitializeSpawn(transform.position);
+    }
+
+    // ── 발밑 픽셀 그림자 ──
+    // 전용 도트가 아직 없어 16×8 타원을 코드로 구워 **모든 적이 한 장을 공유**한다.
+    // 전용 그림이 나오면 BuildShadowSprite만 로드로 바꾸면 된다.
+    // 그림자는 자식이지만 **몸이 떠도 따라 뜨지 않는다** — LateUpdate가 지면에 붙잡아 둔다.
+    private static Sprite shadowSprite;
+    private Transform shadowTr;
+    private float shadowBaseLocalY;
+
+    private void CreateShadow()
+    {
+        if (isFlying || spriteRenderer == null || spriteRenderer.sprite == null) return; // 공중 적은 발밑이 없다
+
+        Transform existing = transform.Find("Shadow");
+        if (existing != null) { shadowTr = existing; shadowBaseLocalY = existing.localPosition.y; return; } // 풀 재사용
+
+        if (shadowSprite == null) shadowSprite = BuildShadowSprite();
+
+        Bounds lb = spriteRenderer.sprite.bounds;   // 로컬(유닛). 부모 스케일은 자식이 자동으로 물려받는다
+        var go = new GameObject("Shadow");
+        go.transform.SetParent(transform, false);
+        go.transform.localPosition = new Vector3(lb.center.x, lb.min.y + 0.03f, 0f);
+        // 스프라이트 원본이 0.5×0.25유닛(16×8px / PPU32)이라, 몸통 폭의 70%가 되도록 늘린다.
+        go.transform.localScale = new Vector3(lb.size.x * 0.7f / 0.5f, 1f, 1f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = shadowSprite;
+        sr.color = new Color(0f, 0f, 0f, 0.35f);
+        sr.sortingLayerID = spriteRenderer.sortingLayerID;
+        sr.sortingOrder = spriteRenderer.sortingOrder - 1;   // 본체 바로 뒤
+
+        shadowTr = go.transform;
+        shadowBaseLocalY = go.transform.localPosition.y;
+    }
+
+    // 몸이 떠도 그림자는 땅에 남는다 — 콩콩이 도약(hopBaseY)·팝콘 분출(popGroundY)이 y를 들어올린다.
+    // 뜬 높이만큼 자식 좌표를 아래로 내려 월드 y를 지면에 고정한다(부모 스케일로 나눠 보정).
+    private void LateUpdate()
+    {
+        if (shadowTr == null) return;
+
+        float groundY = popping ? popGroundY : (isHopper ? hopBaseY : transform.position.y);
+        float lift = transform.position.y - groundY;
+        float scaleY = transform.localScale.y;
+
+        Vector3 lp = shadowTr.localPosition;
+        lp.y = shadowBaseLocalY - (Mathf.Abs(scaleY) > 0.0001f ? lift / scaleY : 0f);
+        shadowTr.localPosition = lp;
+    }
+
+    private static Sprite BuildShadowSprite()
+    {
+        const int w = 16, h = 8;
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float nx = (x + 0.5f) / w * 2f - 1f;
+                float ny = (y + 0.5f) / h * 2f - 1f;
+                tex.SetPixel(x, y, nx * nx + ny * ny <= 1f ? Color.white : Color.clear);
+            }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0f, 0f, w, h), new Vector2(0.5f, 0.5f), 32f);
     }
 
     // 풀에서 꺼내 적을 스폰한다. 신규 생성이면 Awake가, 재사용이면 여기서 InitializeSpawn이 초기화한다.

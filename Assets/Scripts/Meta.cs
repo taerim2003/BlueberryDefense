@@ -44,6 +44,7 @@ public static class MetaBonuses
     public static bool RewindSlowAll = false;           // 되감기 사용 시 모든 적 둔화
     public static bool ShotgunCloseBonus = false;       // 산탄 버프 받은 공격이 근거리 적에게 +2타
     public static int ArrowStartLevel = 1;              // 기본공격(화살) 시작 레벨
+    public static int SwingStartLevel = 1;              // 기본공격(휘두르기) 시작 레벨 — 파인애플용
     public static int RerollCount = 0;                  // 레벨업 선택지 리롤 가능 횟수(게임당)
 
     // 스킬 해금 게이팅(스킬트리): Gated=트리에 해금 노드가 있는 스킬 / TreeUnlocked=그중 실제 해금된 것.
@@ -76,6 +77,7 @@ public static class MetaBonuses
         RewindSlowAll = false;
         ShotgunCloseBonus = false;
         ArrowStartLevel = 1;
+        SwingStartLevel = 1;
         RerollCount = 0;
     }
 }
@@ -119,6 +121,7 @@ public static class SkillEffects
         public float AccelCdPct;     // 가속 패시브 추가 쿨감(%p)
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;  // 화살 시작 레벨(0=미설정)
+        public int SwingStartLevel;  // 휘두르기 시작 레벨(0=미설정)
         public int RerollCount;      // 레벨업 리롤 횟수(게임당)
         public bool SnipingExtraTarget; // 스나이핑 타겟 +1
         public bool RewindSlow;      // 되감기 시 모든 적 둔화
@@ -176,6 +179,7 @@ public static class SkillEffects
                 case "refresh_bonus": t.AccelCdPct += 2f * lv; break;
                 case "thunder_Cooldown": t.ThunderCdPerStrike += 0.01f; break;
                 case "arrow_StartLev": t.ArrowStartLevel = 3; break;
+                case "swing_StartLev": t.SwingStartLevel = 3; break;
                 // 레벨업 리롤: New_Reroll(해금)=첫 리롤 +1, reroll_1/reroll_2(리롤 I)=레벨당 추가
                 case "New_Reroll": t.RerollCount += 1; break;
                 case "reroll_1": t.RerollCount += 1 * lv; break;

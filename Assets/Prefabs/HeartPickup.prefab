@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -110,6 +110,7 @@ MonoBehaviour:
   homingSpeed: 8
   homingAcceleration: 10
   absorbDistance: 0.3
+  curveTurnDegPerSec: 260
   absorbVfxPrefab: {fileID: 4748681987041982144, guid: e896e353751e25a4ab545a268625c0df, type: 3}
 --- !u!95 &2875671805316558955
 Animator:

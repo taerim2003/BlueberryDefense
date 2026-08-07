@@ -68,8 +68,12 @@ public class SkillTreeUI : MonoBehaviour
     private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f); // 특수 해금 = 노랑
     private static readonly Color ColLineDim = new Color(1f, 1f, 1f, 0.12f);
     private static readonly Color ColLineOn = new Color(1f, 1f, 1f, 0.6f);
-    private static readonly Color RingUnlocked = new Color(0.4f, 1f, 0.5f, 1f);
-    private static readonly Color RingBuyable = new Color(1f, 1f, 1f, 0.9f);
+    // 노드 테두리 4상태(칸반 "폴리싱 할일 리스트업"): 만렙=파랑 / 지금 찍을 수 있음=초록 /
+    // 선행은 됐는데 정수가 모자람=빨강 / 선행이 안 됨=회색.
+    private static readonly Color RingMaxed = new Color(0.35f, 0.62f, 1f, 1f);
+    private static readonly Color RingBuyable = new Color(0.4f, 1f, 0.5f, 1f);
+    private static readonly Color RingUnaffordable = new Color(1f, 0.35f, 0.35f, 1f);
+    private static readonly Color RingLocked = new Color(0.55f, 0.55f, 0.55f, 0.9f);
 
     private class NodeView
     {
@@ -281,6 +285,8 @@ public class SkillTreeUI : MonoBehaviour
 
             bool isUnlocked = fog == Fog.Revealed;
             bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
+            int lv = SkillTreeSave.LevelOf(v.node.id);
+            int max = SkillTreeSave.MaxLevelOf(v.node);
 
             // 미보유(힌트) 노드도 타입 색으로 내용을 공개하되, 아직 안 산 상태임을 어둡게 구분(구매 가능하면 살짝 밝게).
             Color c = isUnlocked ? BaseColor(v.node.type) : BaseColor(v.node.type) * (buyable ? 0.7f : 0.5f);
@@ -289,8 +295,6 @@ public class SkillTreeUI : MonoBehaviour
 
             if (v.label != null)
             {
-                int lv = SkillTreeSave.LevelOf(v.node.id);
-                int max = SkillTreeSave.MaxLevelOf(v.node);
                 // 이름은 인접 노드부터 공개. 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기.
                 v.label.text = (isUnlocked && lv >= 1 && max > 1)
                     ? v.node.displayName + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
@@ -299,9 +303,14 @@ public class SkillTreeUI : MonoBehaviour
 
             if (v.ring != null)
             {
-                bool show = isUnlocked || buyable;
-                v.ring.enabled = show;
-                v.ring.color = isUnlocked ? RingUnlocked : RingBuyable;
+                // 보이는 노드는 전부 테두리를 켠다 — 테두리 색 자체가 "지금 이 노드를 어떻게 할 수 있는가"의 표시다.
+                bool maxed = lv >= max;
+                bool prereqOk = lv > 0 || SkillTreeSave.PrereqMet(tree, v.node);
+                v.ring.enabled = true;
+                v.ring.color = maxed ? RingMaxed
+                    : buyable ? RingBuyable
+                    : prereqOk ? RingUnaffordable
+                    : RingLocked;
 
                 // 구매 가능 노드만 링 알파 펄스(스케일과 별도 채널). 상태 바뀔 때만 재구성.
                 v.ringPulse?.Kill(); v.ringPulse = null;

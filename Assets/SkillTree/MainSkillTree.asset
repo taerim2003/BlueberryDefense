@@ -455,3 +455,17 @@ MonoBehaviour:
     prereqIds:
     - hp_2
     editorPos: {x: 975.80005, y: 539.4}
+  - id: swing_StartLev
+    displayName: "휘두르기 숙련"
+    description: "(파인애플 선택 시) 휘두르기
+      3레벨로 시작"
+    type: 2
+    skill: 9
+    tier: 2
+    hasEffect: 0
+    effect: 0
+    perLevel: 5
+    maxLevel: 5
+    prereqIds:
+    - atk_1
+    editorPos: {x: 650, y: -790}

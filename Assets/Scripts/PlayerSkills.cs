@@ -234,6 +234,11 @@ public class PlayerSkills : MonoBehaviour
 
     private void Update()
     {
+        // 레벨업·보물·진화·ESC 창이 떠 있는 동안엔 스킬이 나가지 않는다.
+        // Update는 timeScale 0에도 계속 돌아서, 쿨이 차 있던 스킬이 카드 뒤에서 발동돼 버렸다
+        // (자동시전 스나이핑도 같은 이유로 매 프레임 나갔다).
+        if (ModalPause.IsPaused) return;
+
         globalCooldownTimer -= Time.deltaTime;
         if (shotgunTimer > 0f) shotgunTimer -= Time.deltaTime;
 
@@ -1343,9 +1348,13 @@ public class PlayerSkills : MonoBehaviour
         float explodeRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
         float explodeRadius = skill.PathTier[1] >= 3 ? 2.5f : 1.5f;
 
+        // 발사각을 매번 조금씩 흔든다 — 같은 부채꼴로만 나가면 여러 발이 한 줄처럼 보인다.
+        const float spreadJitter = 15f;
+
         for (int i = 0; i < count; i++)
         {
             float spread = count > 1 ? Mathf.Lerp(-60f, 60f, i / (float)(count - 1)) : 0f;
+            spread += Random.Range(-spreadJitter, spreadJitter);
             Vector2 dir = Quaternion.Euler(0f, 0f, spread) * Vector2.right; // 적 방향(오른쪽) 부채꼴
             GameObject obj = Instantiate(homingMissilePrefab, transform.position + Vector3.up * 0.2f, Quaternion.identity);
             obj.transform.localScale *= missileScale;
@@ -1355,6 +1364,7 @@ public class PlayerSkills : MonoBehaviour
             m.Explode = explode;
             m.ExplodeRadius = explodeRadius;
             m.ExplodeRatio = explodeRatio;
+            m.TargetRank = i; // 미사일마다 다른 적을 노리게 하는 순번(비행 우선 → 가까운 순으로 i번째)
             // 폭발 VFX는 HomingMissile 프리팹이 자체 보유(실제 폭발 에셋). 여기서 스나이핑 이펙트를 물리지 않는다.
             m.Init(dir);
         }

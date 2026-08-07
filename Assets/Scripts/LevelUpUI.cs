@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 using DG.Tweening;
 
@@ -777,11 +778,21 @@ public class LevelUpUI : MonoBehaviour
         if (treasureContinueText != null) treasureContinueText.gameObject.SetActive(true);
         if (treasureDismissButton != null) treasureDismissButton.interactable = true;
         treasureDismissed = false;
-        yield return new WaitUntil(() => treasureDismissed);
+        yield return new WaitUntil(() => treasureDismissed || TreasureSkipKeyPressed());
 
         treasureMode = false;
         CloseTreasure();
         QueueNextPending();
+    }
+
+    // 보물 화면은 마우스 클릭 전용이었다 — 키보드로도 넘길 수 있게 한다(칸반 "플테후 제안사항").
+    // ESC는 일부러 뺐다. 일시정지 메뉴가 같은 키를 먹는다.
+    private static bool TreasureSkipKeyPressed()
+    {
+        Keyboard kb = Keyboard.current;
+        if (kb == null) return false;
+        return kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame
+            || kb.numpadEnterKey.wasPressedThisFrame;
     }
 
     // 획득 아이콘 한 칸을 줄 끝에 붙인다(런타임 생성 — 씬에 아이콘을 미리 깔아두지 않는다).

@@ -6,6 +6,10 @@ public static class ModalPause
 {
     private static int count;
 
+    // 모달이 하나라도 떠 있는가. Update는 timeScale 0에도 계속 돌기 때문에,
+    // "시간이 멈춘 동안 입력을 받으면 안 되는" 쪽이 이 값을 직접 봐야 한다.
+    public static bool IsPaused => count > 0;
+
     public static void Push()
     {
         count++;

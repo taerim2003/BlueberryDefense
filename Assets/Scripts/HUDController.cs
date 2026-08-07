@@ -66,6 +66,8 @@ public class HUDController : MonoBehaviour
     private bool[] activeSlotWasFilled;
     private bool[] activeSlotWasOnCooldown;
     private int lastSeenStage = -1;
+    private int lastSeenCurrency = -1;
+    private TMP_Text essenceText;      // 이번 판 정수 표시 — 씬에 없어서 런타임 생성한다
     private Sequence stageBannerSeq;
     private float baseHealthPanelWidth = -1f;
 
@@ -116,9 +118,40 @@ public class HUDController : MonoBehaviour
             UpdateExpFill();
         }
 
+        UpdateEssenceText();
         UpdatePassiveSlots();
         UpdateActiveSlots();
         UpdateBuffSlots();
+    }
+
+    // ── 이번 판에 모은 정수(HUD 좌상단) ──
+    // 씬에 없는 요소라 런타임에 만든다. HUD 좌상단은 유일하게 비어 있는 모서리다
+    // (중앙 위=스테이지 / 우상단=체력·버프 / 좌하단=레벨·패시브 / 우하단=액티브).
+    private void UpdateEssenceText()
+    {
+        if (essenceText == null)
+        {
+            if (levelText == null) return;   // 폰트·크기를 빌려올 원본이 있어야 만든다
+            GameObject go = new GameObject("EssenceText", typeof(RectTransform));
+            go.transform.SetParent(transform, false);
+            RectTransform rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = new Vector2(28f, -28f);
+            rt.sizeDelta = new Vector2(320f, 44f);
+
+            essenceText = go.AddComponent<TextMeshProUGUI>();
+            essenceText.font = levelText.font;
+            essenceText.fontSize = levelText.fontSize;
+            essenceText.color = new Color(1f, 0.85f, 0.25f); // 정수(태양빛)
+            essenceText.alignment = TextAlignmentOptions.TopLeft;
+            essenceText.raycastTarget = false;
+        }
+
+        if (MetaRun.RunCurrency == lastSeenCurrency) return;
+        bool grew = lastSeenCurrency >= 0;
+        lastSeenCurrency = MetaRun.RunCurrency;
+        essenceText.text = MetaRun.RunCurrency + " 정수";
+        if (grew) PunchIcon(essenceText.rectTransform);
     }
 
     // BuffTracker에 등록된 버프를 슬롯 개수만큼 순서대로 채운다. 새 버프가 늘어나도
