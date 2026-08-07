@@ -104,7 +104,7 @@ public class PauseMenu : MonoBehaviour
         if (skills != null)
             foreach (var s in skills.EquippedSkills)
                 BuildEntry(leftColumn,
-                    levelUp != null ? levelUp.GetActiveIcon(s.Id) : null,
+                    levelUp != null ? levelUp.GetActiveIcon(s) : null,
                     PlayerSkills.GetActiveSkillBadge(s.Id) + TitleLine(s.DisplayName, s.Level),
                     BuildActiveDetail(s));
 
@@ -112,7 +112,7 @@ public class PauseMenu : MonoBehaviour
         if (passives != null)
             foreach (var pv in passives.EquippedPassives)
                 BuildEntry(rightColumn,
-                    levelUp != null ? levelUp.GetPassiveIcon(pv.Id) : null,
+                    levelUp != null ? levelUp.GetPassiveIcon(pv) : null,
                     TitleLine(pv.DisplayName, pv.Level),
                     BuildPassiveDetail(passives, pv));
     }

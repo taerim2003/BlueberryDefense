@@ -133,6 +133,11 @@ public class PlayerSkills : MonoBehaviour
     public static System.Action OnRefreshProc;
 
     [SerializeField] private GameObject basicAttackProjectilePrefab;
+    // 화살 R0(암살 연계, path1) = 관통 무한 **큰 화살 한 발**. 그 한 발만 전용 그림으로 갈아끼운다
+    // (뒤따르는 추적 화살은 명세상 "기본 화살"이라 원본 그대로 둔다).
+    // 1차(T2)=암살 사격 / 2차(T3)=처형 사격으로 그림이 한 번 더 바뀐다.
+    [SerializeField] private Sprite evolvedArrowSprite;
+    [SerializeField] private Sprite evolvedArrowSpriteTier2;
     private const float FlyingArrowSpawnRaise = BalanceConstants.FlyingArrowSpawnRaise; // 비행 적 타격 진화 시 발사점 상승(세로 긴 히트박스와 합쳐 지상/비행 동시 커버)
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject bigTornadoPrefab;
@@ -1023,11 +1028,13 @@ public class PlayerSkills : MonoBehaviour
 
     private float ComputeBaseDamage(float baseDamage, ActiveSkillId skillId)
     {
-        // 힘 패시브 계열 피해 배율은 하나의 덧셈 풀로 합친다 — path0(전 스킬 공통)과 path2(기본공격 전용)를
-        // 곱연산으로 각각 겹쳐 쌓으면 기본공격에서 배율이 폭발한다. 같은 풀에서 더한 뒤 한 번만 곱한다.
+        // 힘 패시브 계열 피해 배율은 하나의 덧셈 풀로 합친다 — path0(전 스킬 공통)과 path2(Q 슬롯 전용)를
+        // 곱연산으로 각각 겹쳐 쌓으면 그 스킬에서 배율이 폭발한다. 같은 풀에서 더한 뒤 한 번만 곱한다.
         float damageMultiplier = passiveDamageMultiplier;
-        if (skillId == ActiveSkillId.BasicAttack) // 힘 연계 path2(패시브): 기본공격 전용 추가 피해량 (덧셈 합류)
-            damageMultiplier += PlayerPassives.BasicAttackDamageMultiplierBonus;
+        // 힘 연계 path2(패시브): **Q키에 할당된 스킬** 전용 추가 피해량 (덧셈 합류).
+        // Q = 가장 먼저 얻은 스킬 = equippedSkills[0] (AcquireSkill이 SlotKeys를 순서대로 붙인다).
+        if (PlayerPassives.FirstSlotDamageMultiplierBonus > 0f && equippedSkills.Count > 0 && equippedSkills[0].Id == skillId)
+            damageMultiplier += PlayerPassives.FirstSlotDamageMultiplierBonus;
 
         float damage = baseDamage * damageMultiplier;
 
@@ -1156,6 +1163,7 @@ public class PlayerSkills : MonoBehaviour
         projectile.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
         projectile.PierceRemaining = pierce;
         projectile.CanHitFlying = canHitFlying;
+        if (skill.PathTier[1] >= 2) ApplyEvolvedArrowSprite(obj, skill.PathTier[1] >= 3);
 
         // R0(암살 연계, path1): 이 화살이 **치명타로 때린 적마다** 기본 화살이 따로 날아가 그 적만 노린다.
         // 관통 무한이라 한 발이 여러 적에게 치명타를 낼 수 있고, 그때마다 각각 따라붙는다(명세 그대로).
@@ -1168,6 +1176,16 @@ public class PlayerSkills : MonoBehaviour
                 for (int i = 0; i < chaseArrows; i++)
                     SpawnChasingArrow(skill, hitEnemy, damage, critChance);
         };
+    }
+
+    // 진화한 화살 그림으로 교체. 프리팹의 SpriteRenderer가 자식에 있을 수도 있어 자식까지 훑는다.
+    // 2차 그림이 안 배선돼 있으면 1차 그림으로, 그것도 없으면 아무것도 안 한다(원본 화살로 그대로 날아간다).
+    private void ApplyEvolvedArrowSprite(GameObject projectileObj, bool tier2)
+    {
+        Sprite sprite = tier2 && evolvedArrowSpriteTier2 != null ? evolvedArrowSpriteTier2 : evolvedArrowSprite;
+        if (sprite == null) return;
+        SpriteRenderer sr = projectileObj.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null) sr.sprite = sprite;
     }
 
     // R0의 따라붙는 기본 화살 — 맞은 그 적을 향해 조준해 쏘고, **관통은 없다**(그 대상만 때리고 사라진다).

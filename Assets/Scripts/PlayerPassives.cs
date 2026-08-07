@@ -51,7 +51,11 @@ public class PlayerPassives : MonoBehaviour
     // ⚠️ 예전엔 건강 path2("가시 갑주")가 이걸 켰지만, 2026-08-06 명세에서 **방어 path2**로 옮겨졌다
     //    (건강 path2는 하트 드랍으로 교체). 소비처는 HandleDamageTaken 한 곳뿐이라 필드는 그대로 쓴다.
     public static float HealthRetaliationMultiplier = 0f;
-    public static float BasicAttackDamageMultiplierBonus = 0f; // 힘 연계 path2: 기본공격 전용 추가 피해 배율
+    // 힘 연계 path2("완력/괴력"): **Q키에 할당된 스킬** 전용 추가 피해 배율.
+    // ⚠️ 예전엔 기본공격(화살 쏘기) 고정이었는데 2026-08-07 명세대로 슬롯 기준으로 바꿨다.
+    //    Q는 슬롯 이름이 아니라 **가장 먼저 얻은 스킬**에 붙는다(PlayerSkills.AcquireSkill) —
+    //    화살 쏘기로 시작하지 않는 캐릭터(파인애플=휘두르기)에선 대상이 달라진다.
+    public static float FirstSlotDamageMultiplierBonus = 0f;
     public static int EagleDropCastXpBonus = 0; // 지식 연계 path2: 독수리 투하 시전마다 즉시 획득하는 경험치
     // 방어: 받는 피해 감소 비율(0~1). PlayerHealth.TakeDamage가 읽는다.
     // 건강(최대체력)과 역할이 다르다 — 이쪽은 들어오는 피해 자체를 깎는다.
@@ -124,7 +128,7 @@ public class PlayerPassives : MonoBehaviour
         AccelCooldownCutOnHit = 0f;
         HeartDropMultiplier = 1f;
         AssassinateSlowSkillCritCooldown = 0f;
-        BasicAttackDamageMultiplierBonus = 0f;
+        FirstSlotDamageMultiplierBonus = 0f;
         EagleDropCastXpBonus = 0;
     }
 
@@ -300,7 +304,12 @@ public class PlayerPassives : MonoBehaviour
         {
             case PassiveSkillId.Strength:
                 if (skills != null) lines.Add($"전체 피해량 +{Pct(skills.PassiveDamageMultiplier - 1f)}%");
-                if (BasicAttackDamageMultiplierBonus > 0f) lines.Add($"화살 쏘기 피해량 +{Pct(BasicAttackDamageMultiplierBonus)}%");
+                if (FirstSlotDamageMultiplierBonus > 0f)
+                {
+                    // 대상이 캐릭터·획득 순서마다 달라서 이름을 박아 두면 틀린다 — 지금 Q에 있는 스킬을 그때그때 읽는다.
+                    string qSkill = skills != null && skills.EquippedSkills.Count > 0 ? skills.EquippedSkills[0].DisplayName : "Q 스킬";
+                    lines.Add($"Q({qSkill}) 피해량 +{Pct(FirstSlotDamageMultiplierBonus)}%");
+                }
                 break;
 
             case PassiveSkillId.Health:
@@ -404,9 +413,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Strength, 1, 1): AssassinateCritMultiplier += 0.15f; break;
             case (PassiveSkillId.Strength, 1, 2): AssassinateCritMultiplier += 0.35f; break;
             case (PassiveSkillId.Strength, 1, 3): AssassinateCritMultiplier += 0.5f; break;
-            case (PassiveSkillId.Strength, 2, 1): BasicAttackDamageMultiplierBonus += 0.10f; break;
-            case (PassiveSkillId.Strength, 2, 2): BasicAttackDamageMultiplierBonus += 0.175f; break;
-            case (PassiveSkillId.Strength, 2, 3): BasicAttackDamageMultiplierBonus += 0.25f; break;
+            case (PassiveSkillId.Strength, 2, 1): FirstSlotDamageMultiplierBonus += 0.10f; break;
+            case (PassiveSkillId.Strength, 2, 2): FirstSlotDamageMultiplierBonus += 0.175f; break;
+            case (PassiveSkillId.Strength, 2, 3): FirstSlotDamageMultiplierBonus += 0.25f; break;
 
             // 건강
             case (PassiveSkillId.Health, 0, 1): regenAmount = 2f; regenInterval = 5f; break;
@@ -494,9 +503,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Strength, 1, 1) => "제대로 들어간 한 방이 더 깊다",
         (PassiveSkillId.Strength, 1, 2) => "훨씬 더 깊다",
         (PassiveSkillId.Strength, 1, 3) => "제대로 맞으면 남는 게 없다",
-        (PassiveSkillId.Strength, 2, 1) => "손에 든 것부터 강해진다",
-        (PassiveSkillId.Strength, 2, 2) => "더 강해진다",
-        (PassiveSkillId.Strength, 2, 3) => "맨손이 무기가 된다",
+        (PassiveSkillId.Strength, 2, 1) => "가장 먼저 든 것이 손에 익는다",
+        (PassiveSkillId.Strength, 2, 2) => "더 익숙해진다",
+        (PassiveSkillId.Strength, 2, 3) => "첫 손에 든 것이 가장 강하다",
 
         (PassiveSkillId.Health, 0, 1) => "상처가 알아서 아문다",
         (PassiveSkillId.Health, 0, 2) => "더 빨리 아문다",
@@ -564,9 +573,9 @@ public class PlayerPassives : MonoBehaviour
         (PassiveSkillId.Strength, 1, 1) => "깊게 들어간다",
         (PassiveSkillId.Strength, 1, 2) => "더 깊게",
         (PassiveSkillId.Strength, 1, 3) => "남는 게 없다",
-        (PassiveSkillId.Strength, 2, 1) => "손에 든 것부터",
+        (PassiveSkillId.Strength, 2, 1) => "첫 손에 익는다",
         (PassiveSkillId.Strength, 2, 2) => "더 단단히",
-        (PassiveSkillId.Strength, 2, 3) => "맨손이 무기다",
+        (PassiveSkillId.Strength, 2, 3) => "첫 손이 가장 강하다",
 
         (PassiveSkillId.Health, 0, 1) => "알아서 아문다",
         (PassiveSkillId.Health, 0, 2) => "빨리 아문다",

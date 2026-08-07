@@ -231,7 +231,7 @@ public class HUDController : MonoBehaviour
 
             if (hasPassive)
             {
-                slot.icon.sprite = GetIcon(passiveIcons, (int)acquired[i].Id);
+                slot.icon.sprite = EvoIcon(acquired[i]) ?? GetIcon(passiveIcons, (int)acquired[i].Id);
                 if (slot.levelLabel != null) slot.levelLabel.text = "Lv." + acquired[i].Level;
             }
 
@@ -295,7 +295,7 @@ public class HUDController : MonoBehaviour
             activeSlotWasFilled[i] = true;
 
             EquippedSkill skill = equipped[i];
-            slot.icon.sprite = GetIcon(activeIcons, (int)skill.Id);
+            slot.icon.sprite = EvoIcon(skill) ?? GetIcon(activeIcons, (int)skill.Id);
             slot.keyLabel.text = skill.Key.ToString();
 
             if (slot.levelLabel != null)
@@ -377,4 +377,12 @@ public class HUDController : MonoBehaviour
 
     private static Sprite GetIcon(Sprite[] icons, int index) =>
         index >= 0 && index < icons.Length ? icons[index] : null;
+
+    // 진화 아이콘은 LevelUpUI가 단독으로 배선해 두고 여기선 빌려 쓴다(같은 32칸 배열을 두 벌 두지 않으려고).
+    // 미진화이거나 그림이 비어 있으면 null → 호출부가 원본 아이콘으로 떨어진다.
+    private static Sprite EvoIcon(EquippedSkill s) => LevelUpUI.Instance != null && s.EvolutionStage > 0 && s.Route >= 0
+        ? LevelUpUI.Instance.GetActiveEvoIcon(s.Id, s.Route) : null;
+
+    private static Sprite EvoIcon(EquippedPassive p) => LevelUpUI.Instance != null && p.EvolutionStage > 0 && p.Route >= 0
+        ? LevelUpUI.Instance.GetPassiveEvoIcon(p.Id, p.Route) : null;
 }

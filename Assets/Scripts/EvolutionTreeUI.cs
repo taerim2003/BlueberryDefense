@@ -114,7 +114,7 @@ public class EvolutionTreeUI : MonoBehaviour
                     : "1차에서 고른 루트를 이어갑니다";
         }
 
-        SetIcon(skillIcon, isPassiveMode ? GetIcon(passiveIcons, (int)currentPassive.Id) : GetIcon(activeIcons, (int)currentSkill.Id));
+        SetIcon(skillIcon, CurrentIcon());
         if (!alreadyOpen && skillIcon != null)
         {
             skillIcon.rectTransform.localScale = Vector3.one;
@@ -149,7 +149,7 @@ public class EvolutionTreeUI : MonoBehaviour
                 bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1;
                 bool locked = !owned && !available;
 
-                SetIcon(node.icon, GetIcon(pathIconSprites, route));
+                SetIcon(node.icon, RouteIcon(route) ?? GetIcon(pathIconSprites, route));
                 node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
                                          : (locked ? LockedFrameColor : Color.white);
                 node.icon.color = locked ? new Color(0.55f, 0.55f, 0.55f, 1f) : Color.white;
@@ -255,6 +255,23 @@ public class EvolutionTreeUI : MonoBehaviour
         System.Action cb = onClosed;
         onClosed = null;
         cb?.Invoke();
+    }
+
+    // 헤더 아이콘 = 지금 상태(진화했으면 고른 루트의 그림).
+    private Sprite CurrentIcon()
+    {
+        int stage = isPassiveMode ? currentPassive.EvolutionStage : currentSkill.EvolutionStage;
+        int route = isPassiveMode ? currentPassive.Route : currentSkill.Route;
+        Sprite evo = stage > 0 && route >= 0 ? RouteIcon(route) : null;
+        return evo ?? (isPassiveMode ? GetIcon(passiveIcons, (int)currentPassive.Id) : GetIcon(activeIcons, (int)currentSkill.Id));
+    }
+
+    // 노드 아이콘 = 그 루트로 진화하면 되는 그림. 진화 아이콘 배열은 LevelUpUI가 단독 소유한다(HUD와 같은 이유).
+    private Sprite RouteIcon(int route)
+    {
+        LevelUpUI ui = LevelUpUI.Instance;
+        if (ui == null) return null;
+        return isPassiveMode ? ui.GetPassiveEvoIcon(currentPassive.Id, route) : ui.GetActiveEvoIcon(currentSkill.Id, route);
     }
 
     private static void SetIcon(Image image, Sprite sprite)

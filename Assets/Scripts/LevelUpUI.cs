@@ -47,6 +47,10 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Image iconC;
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
+    // 진화 아이콘 — 인덱스 = (int)id * 2 + route. 액티브 10종 × 2 = 20칸, 패시브 7종 × 2 = 14칸
+    // (폐지된 Refresh 자리도 비운 채 세어야 뒤가 안 밀린다). 배선은 Tools > 진화 아이콘 배선 메뉴가 한다.
+    [SerializeField] private Sprite[] activeEvoIcons;
+    [SerializeField] private Sprite[] passiveEvoIcons;
     [SerializeField] private Button rerollButton;   // 스킬트리 리롤 해금 시 노출
     [SerializeField] private TMP_Text rerollLabel;
 
@@ -549,7 +553,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = "레벨: " + (captured.Level + 1),
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
-                Icon = GetIcon(activeIcons, (int)captured.Id),
+                Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
             });
@@ -564,7 +568,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = "레벨: " + (captured.Level + 1),
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
-                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,
             });
@@ -672,7 +676,8 @@ public class LevelUpUI : MonoBehaviour
                 var g = new List<(Sprite, Sprite)>();
                 foreach (int r in PlayerSkills.SelectableRoutes(s))
                     if (skills.IsRouteUnlocked(s.Id, r))
-                        g.Add((GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
+                        // 타겟은 **진화 후** 그림 — 루트마다 달라서 "이 조합을 하면 뭐가 되는지"가 그림으로 보인다.
+                        g.Add((GetActiveEvoIcon(s.Id, r) ?? GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
                 if (g.Count > 0) groups.Add(g);
             }
 
@@ -683,7 +688,7 @@ public class LevelUpUI : MonoBehaviour
                 var g = new List<(Sprite, Sprite)>();
                 foreach (int r in PlayerPassives.SelectableRoutes(p))
                     if (passives.IsRouteUnlocked(p.Id, r))
-                        g.Add((GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
+                        g.Add((GetPassiveEvoIcon(p.Id, r) ?? GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
                 if (g.Count > 0) groups.Add(g);
             }
 
@@ -862,7 +867,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = "레벨: " + (captured.Level + 1),
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
-                Icon = GetIcon(activeIcons, (int)captured.Id),
+                Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
             });
@@ -877,7 +882,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = "레벨: " + (captured.Level + 1),
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
-                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,
             });
@@ -928,7 +933,7 @@ public class LevelUpUI : MonoBehaviour
                 LevelText = (captured.EvolutionStage + 1) + "차 진화",
                 IsEvolution = true,
                 Description = DescribeEvolutionChoice(skills, captured),
-                Icon = GetIcon(activeIcons, (int)captured.Id),
+                Icon = GetActiveIcon(captured), // 2차 진화 대상이면 1차 때 고른 루트의 그림이 뜬다
                 SkillId = captured.Id,
             });
         }
@@ -943,7 +948,7 @@ public class LevelUpUI : MonoBehaviour
                 LevelText = (captured.EvolutionStage + 1) + "차 진화",
                 IsEvolution = true,
                 Description = DescribeEvolutionChoice(passives, captured),
-                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Icon = GetPassiveIcon(captured),
                 PassiveId = captured.Id,
             });
         }
@@ -977,7 +982,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = $"레벨: {captured.Level} → {target}",
                 Description = $"{target - captured.Level}레벨 즉시 상승",
-                Icon = GetIcon(activeIcons, (int)captured.Id),
+                Icon = GetActiveIcon(captured),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) skills.UpgradeSkillLevel(captured.Id); },
                 SkillId = captured.Id,
             });
@@ -993,7 +998,7 @@ public class LevelUpUI : MonoBehaviour
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = $"레벨: {captured.Level} → {target}",
                 Description = $"{target - captured.Level}레벨 즉시 상승",
-                Icon = GetIcon(passiveIcons, (int)captured.Id),
+                Icon = GetPassiveIcon(captured),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) passives.UpgradePassiveLevel(captured.Id); },
                 PassiveId = captured.Id,
             });
@@ -1063,6 +1068,20 @@ public class LevelUpUI : MonoBehaviour
     // 다른 UI(일시정지 요약 등)가 스킬 아이콘을 재사용할 수 있도록 노출.
     public Sprite GetActiveIcon(ActiveSkillId id) => GetIcon(activeIcons, (int)id);
     public Sprite GetPassiveIcon(PassiveSkillId id) => GetIcon(passiveIcons, (int)id);
+
+    // ── 진화 아이콘 ─────────────────────────────────────────────────────────
+    // 루트마다 그림이 다르다(파일명 R1=루트0 / R2=루트1). 1차·2차는 같은 그림을 쓴다.
+    // 진화 아이콘 배열은 **여기 하나만** 배선한다 — HUD·진화 트리는 LevelUpUI.Instance에서 빌려 간다.
+    // (원본 아이콘처럼 3곳에 중복 배선하면 32칸짜리 배열이 3벌이 되어 서로 어긋난다.)
+    public Sprite GetActiveEvoIcon(ActiveSkillId id, int route) => GetIcon(activeEvoIcons, (int)id * 2 + route);
+    public Sprite GetPassiveEvoIcon(PassiveSkillId id, int route) => GetIcon(passiveEvoIcons, (int)id * 2 + route);
+
+    // "지금 이 스킬의 아이콘" — 진화했으면 고른 루트의 진화 아이콘, 아니면 원본. 그림이 비면 원본으로 떨어진다.
+    public Sprite GetActiveIcon(EquippedSkill s) =>
+        (s.EvolutionStage > 0 && s.Route >= 0 ? GetActiveEvoIcon(s.Id, s.Route) : null) ?? GetActiveIcon(s.Id);
+
+    public Sprite GetPassiveIcon(EquippedPassive p) =>
+        (p.EvolutionStage > 0 && p.Route >= 0 ? GetPassiveEvoIcon(p.Id, p.Route) : null) ?? GetPassiveIcon(p.Id);
 
     private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
     {
