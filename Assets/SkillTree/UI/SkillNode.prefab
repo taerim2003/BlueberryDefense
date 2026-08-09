@@ -142,8 +142,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uB178\uB4DC"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 822a5685edcd07449af3364eb7b7c672, type: 2}
-  m_sharedMaterial: {fileID: 1737365532784014945, guid: 822a5685edcd07449af3364eb7b7c672, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 38c26e4dba2e2e54c840776b115c00df, type: 2}
+  m_sharedMaterial: {fileID: -1074507806955782807, guid: 38c26e4dba2e2e54c840776b115c00df, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
