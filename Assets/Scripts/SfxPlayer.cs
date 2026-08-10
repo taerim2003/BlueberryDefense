@@ -30,6 +30,31 @@ public static class SfxPlayer
         }
     }
 
+    // UI 버튼 클릭음. JuicyButton은 별도 어셈블리(JuicyUI.Runtime)라 SfxPlayer를 못 부르므로,
+    // 그쪽이 알려주는 이벤트를 이쪽에서 구독한다. 씬의 버튼 19개가 전부 그 컴포넌트를 쓰므로 배선은 이 한 곳뿐.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void HookButtonClick()
+    {
+        JuicyButton.Clicked -= PlayButtonClick; // 도메인 리로드를 끈 설정에서 중복 구독되지 않게
+        JuicyButton.Clicked += PlayButtonClick;
+    }
+
+    private static void PlayButtonClick() => Play(SfxId.ButtonClick);
+
+    // 게임 사건용 재생. 클립은 SfxLibrary 에셋이 쥐고 있어서 호출부는 무슨 소리인지만 말하면 된다.
+    // 라이브러리가 없거나 슬롯이 비어 있으면 조용히 넘어간다 — 음원을 아직 안 채운 상태에서도 게임이 정상 동작한다.
+    public static void Play(SfxId id)
+    {
+        SfxLibrary library = SfxLibrary.Instance;
+        if (library == null) return;
+
+        SfxSlot slot = library.Get(id);
+        if (slot.clip == null) return;
+        if (!AudioThrottle.TryConsume(slot.clip)) return; // 같은 프레임에 몰린 요청은 한 번만
+
+        Play(slot.clip, slot.volume);
+    }
+
     public static void Play(AudioClip clip, float volume)
     {
         if (clip == null) return;

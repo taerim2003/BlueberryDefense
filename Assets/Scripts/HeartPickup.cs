@@ -54,6 +54,7 @@ public class HeartPickup : MonoBehaviour
         if (Vector3.Distance(transform.position, targetPos) <= absorbDistance)
         {
             target.Heal(healAmount);
+            SfxPlayer.Play(SfxId.HeartPickup);
 
             if (absorbVfxPrefab != null)
                 ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(absorbVfxPrefab, targetPos, Quaternion.identity), 2f);

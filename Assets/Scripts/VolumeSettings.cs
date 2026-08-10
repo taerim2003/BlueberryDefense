@@ -6,10 +6,11 @@ using UnityEngine;
 // 음량이 걸리는 경로는 셋이다:
 //  · 마스터 → AudioListener.volume  (모든 소리에 확실히 걸린다)
 //  · 배경음 → RunBootstrap이 만든 BGM AudioSource (Register로 등록받는다 — 씬마다 새로 생기므로)
-//  · 효과음 → SfxPlayer.MasterVolume (스킬 발사/캐스트음)
+//  · 효과음 → SfxPlayer.MasterVolume (스킬 캐스트음 + SfxLibrary의 게임 사건음)
+//           → VFX 프리팹에 직접 붙은 AudioSource는 ObjectPool.Spawn이 스폰 시점에 Sfx를 곱한다
 //
-// ⚠️ VFX 프리팹에 직접 붙은 AudioSource(ObjectPool.Sources)는 SfxPlayer를 거치지 않아
-//    "효과음" 슬라이더에 안 걸리고 마스터로만 조절된다. 사운드를 단일 소스로 정리할 때 같이 볼 것.
+// ⚠️ 그 VFX 소스만은 스폰 시점 곱셈이라, 이미 재생 중인 루프 사운드는 슬라이더를 움직여도 안 바뀐다
+//    (다음 스폰부터 반영). 대부분 1~2초 원샷이라 실사용에선 곧 따라온다.
 public static class VolumeSettings
 {
     private const string MasterKey = "option.volume.master";

@@ -743,6 +743,7 @@ public class Enemy : MonoBehaviour
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
         SpawnHitParticles(actualDamage);
+        SfxPlayer.Play(SfxId.EnemyHit); // 광역기로 여러 마리를 동시에 때려도 AudioThrottle이 프레임당 한 번으로 묶는다
 
         // 체인 라이트닝으로 전이된 타격은 연결선(beam)으로 이미 시각화되므로,
         // 하늘에서 세로로 내리치는 낙뢰 VFX를 여기서도 또 띄우면 "이어진다"는 느낌이 묻힘 — 이 경우만 생략.
@@ -776,6 +777,7 @@ public class Enemy : MonoBehaviour
         if (currentHealth <= 0f && !isDead)
         {
             isDead = true;
+            SfxPlayer.Play(SfxId.EnemyDeath);
 
             if (deathVfxPrefab != null)
             {

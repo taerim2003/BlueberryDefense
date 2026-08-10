@@ -425,6 +425,7 @@ public class PlayerSkills : MonoBehaviour
 
         skill.Route = route;
         skill.EvolutionStage = newTier;
+        SfxPlayer.Play(SfxId.Evolution);
 
         // 기본 스탯 도약 + 레벨 표시 리셋(누적 레벨 TotalLevel은 유지 — 다음 진화 게이트 기준).
         // 레벨업 커브를 처음부터 다시 타므로 "새 스킬을 1레벨부터 키운다"는 감각이 된다.

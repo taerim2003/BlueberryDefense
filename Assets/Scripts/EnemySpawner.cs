@@ -203,6 +203,8 @@ public class EnemySpawner : MonoBehaviour
         int room = SpawnTarget - reservedTail - SpawnedThisStage;
         if (room <= 0) return;
 
+        SfxPlayer.Play(SfxId.WaveWarning); // 마커가 뜨는 순간 — 예고 2.5초 동안 정문 스폰이 멈추므로 시선을 끌 곳이다
+
         // 소환 구간은 절대 좌표라 맵 필드 배율만큼 같이 벌려야 한다(넓은 맵에서 화면 왼쪽에만 몰리지 않게).
         // 부대원이 흩어지는 폭(AmbushSquadSpreadX)은 적 크기 기준이라 안 곱한다.
         float fieldScale = Map != null ? Map.fieldScale : 1f;

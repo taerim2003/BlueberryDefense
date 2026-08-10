@@ -81,6 +81,7 @@ public class GameManager : MonoBehaviour
 
         CurrentStage++;
         stageBreakTimer = stageBreakDuration;
+        SfxPlayer.Play(SfxId.StageClear);
         FindAnyObjectByType<PlayerSkills>()?.ResetAllCooldowns();
     }
 
@@ -102,6 +103,7 @@ public class GameManager : MonoBehaviour
 
         IsGameOver = true;
         Debug.Log("Game Over");
+        SfxPlayer.Play(SfxId.GameOver);
         BankRunCurrency();
         Time.timeScale = 0f;
     }
@@ -112,6 +114,7 @@ public class GameManager : MonoBehaviour
 
         IsGameClear = true;
         Debug.Log("Game Clear");
+        SfxPlayer.Play(SfxId.Victory);
         BankRunCurrency();
         // 승천 해금의 근거는 **맵별 기록**이다(MapSelectUI.MaxSelectableAscension = 이 맵 클리어 등급 + 1).
         // 캐릭터·맵 해금 조건도 맵을 특정해 묻기 때문에 같은 기록을 본다.

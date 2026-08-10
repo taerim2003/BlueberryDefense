@@ -202,7 +202,7 @@ public class SkillTreeUI : MonoBehaviour
     private void OnNodeClick(string id)
     {
         if (FogOf(id, SkillTreeSave.UnlockedIds()) == Fog.Hidden) return; // 숨겨진(2링크 이상) 노드는 구매 불가
-        if (SkillTreeSave.TryUpgrade(tree, id)) { PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
+        if (SkillTreeSave.TryUpgrade(tree, id)) { SfxPlayer.Play(SfxId.SkillTreeNode); PlayNodePunch(id, 0.4f); RefreshAll(); RefreshTooltip(); }
     }
 
     // 구매 시 노드 펀치. 펀치는 스케일 채널이라 진행 중 pop-in/호버 트윈을 교체한다.

@@ -60,6 +60,7 @@ public class EssencePickup : MonoBehaviour
         if (Vector3.Distance(transform.position, targetPos) <= absorbDistance)
         {
             MetaRun.Collect(amount);
+            SfxPlayer.Play(SfxId.EssencePickup);
 
             if (absorbVfxPrefab != null)
                 ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(absorbVfxPrefab, targetPos, Quaternion.identity), 2f);

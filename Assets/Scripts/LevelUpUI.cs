@@ -153,6 +153,7 @@ public class LevelUpUI : MonoBehaviour
 
     private void ShowLevelUp()
     {
+        SfxPlayer.Play(SfxId.LevelUp);
         PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
         PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
 
@@ -753,6 +754,7 @@ public class LevelUpUI : MonoBehaviour
         if (!alreadyOpen) ModalPause.Push();
         isOpen = true;
 
+        SfxPlayer.Play(SfxId.TreasureOpen);
         StartCoroutine(TreasureRollRoutine());
     }
 

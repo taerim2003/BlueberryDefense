@@ -167,8 +167,14 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
+    // 클릭음처럼 게임 쪽이 버튼 전체에 붙이고 싶은 반응을 위한 훅.
+    // ⚠️ 이 어셈블리(JuicyUI.Runtime)는 asmdef가 있어 기본 어셈블리(SfxPlayer 등)를 참조할 수 없다 —
+    //    그래서 여기서 부르지 않고 이렇게 알리기만 하고, 듣는 쪽이 SfxPlayer에 있다.
+    public static event System.Action Clicked;
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        Clicked?.Invoke();
         onClick?.Invoke();
     }
 

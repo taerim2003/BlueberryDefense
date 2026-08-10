@@ -55,6 +55,7 @@ public class PlayerHealth : MonoBehaviour
 
         CurrentHealth -= amount;
         OnDamageTaken?.Invoke(amount);
+        SfxPlayer.Play(SfxId.PlayerHit);
         if (CurrentHealth <= 0)
         {
             CurrentHealth = 0;

@@ -59,12 +59,16 @@ public class ObjectPool : MonoBehaviour
             ps.Play(true);
         }
 
-        foreach (AudioSource source in pooled.Sources)
+        for (int i = 0; i < pooled.Sources.Length; i++)
         {
+            AudioSource source = pooled.Sources[i];
             if (source.clip == null) continue;
             // 원본 VFX 팩 클립이 대부분 0dBFS 근처로 마스터링돼 있어 볼륨을 더 올리면 클리핑이 난다.
             // 브릭월 리미터를 걸어서 순간 피크만 눌러주고 게인은 더 높게 잡을 수 있게 한다.
             if (source.GetComponent<SfxLimiter>() == null) source.gameObject.AddComponent<SfxLimiter>();
+            // 프리팹에 직접 붙은 소스라 SfxPlayer를 안 거친다 — 여기서 "효과음" 슬라이더를 직접 곱해 준다.
+            // ⚠️ 스폰 시점에만 곱하므로 이미 재생 중인 루프 사운드는 슬라이더를 움직여도 안 바뀐다(다음 스폰부터 반영).
+            source.volume = pooled.SourceBaseVolumes[i] * VolumeSettings.Sfx;
             if (AudioThrottle.TryConsume(source.clip)) source.Play();
             else source.Stop();
         }
@@ -110,9 +114,16 @@ public class PooledInstance : MonoBehaviour
     public ParticleSystem[] Particles;
     public AudioSource[] Sources;
 
+    // 프리팹이 원래 갖고 있던 볼륨. 스폰마다 여기에 "효과음" 슬라이더를 곱하므로,
+    // 곱한 결과를 source.volume에 덮어쓰고 나면 원본값을 알 길이 없어져 따로 기억해 둔다.
+    public float[] SourceBaseVolumes;
+
     public void CacheEffects()
     {
         Particles = GetComponentsInChildren<ParticleSystem>();
         Sources = GetComponentsInChildren<AudioSource>();
+
+        SourceBaseVolumes = new float[Sources.Length];
+        for (int i = 0; i < Sources.Length; i++) SourceBaseVolumes[i] = Sources[i].volume;
     }
 }
