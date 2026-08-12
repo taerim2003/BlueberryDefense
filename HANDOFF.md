@@ -125,6 +125,24 @@ Dynamic 모드라 글리프는 화면에 나올 때 자동으로 다시 채워�
 - ⚠️ **사용자 아트가 Multiple로 들어온다.** 이번에도 14장이 기본값이었고 그중 **6장이 실제로 조각나 있었다**(`BigHammer5`는 4조각).
   배선 전에 `spriteMode`와 조각 수를 반드시 확인할 것.
 
+**🔴 딱 하나 남았다 — 망치 진화 컨트롤러 2개를 인스펙터에 꽂기**
+
+에셋·코드는 전부 있는데 **씬 배선만 못 했다**(세션 내내 플레이모드였다). `SampleScene`의 `Player` → `PlayerSkills`에서:
+- `bigHammerController` ← `Assets/Animations/Pinapple_BigHammer.overrideController`
+- `shockHammerController` ← `Assets/Animations/Pinapple_ShockHammer.overrideController`
+
+안 꽂아도 **기본 망치는 정상 동작**한다(`ApplyHammerLook`이 null이면 그냥 return). 진화해도 망치 그림이 안 바뀔 뿐이다.
+⚠️ `ApplyHammerLook`은 **base 컨트롤러가 같을 때만** 교체한다 — 딸기가 휘두르기를 진화시켜도 파인애플로 바뀌지 않게 한 가드다. 지우지 말 것.
+
+**🔎 플레이 확인 대기 (세션38 스킬 이펙트 — 값·배선은 검증됨, 남은 건 화면)**
+- 🍍 **파인애플이 위로 떠 보이는지** — 캔버스가 150×60 → **150×96**으로 커졌다. pivot이 중앙이라 몸이 아래쪽에 있으면
+  이론상 **0.84유닛 위로** 이동한다(늘어난 36px ÷ 2 ÷ PPU32 × scale 1.5). 뜨면 각 PNG의 `spritePivot`만 내리면 된다.
+- 🪨 **돌조각이 과한지** — 맞은 적 **한 마리당 4개**가 튄다(`RockDebrisPerHit`). 광역이라 5마리면 20개다.
+  ⚠️ `Effect_BigHammer` 그림에 **파편이 이미 그려져 있어** 겹쳐 보일 수 있다.
+- 🌀 **미니 회오리·산탄 알 크기** — 판정은 불변인데 **그림 크기는 사용자가 그린 캔버스를 따른다**(미니는 기존과 동일하게 맞췄고, 산탄 알은 48px로 커졌다).
+- ⏱ **되감기 표식이 루트별로 다른 그림인지** — 기본/`RewindYellow`(루트1)/`Rewind_R`(루트2). **사용자가 "일걸"이라고 한 대응이라 확인이 필요하다.**
+- ☁️ **뇌운 개수·간격** — 스택마다 1개씩 최대 6개, 가로 간격 0.5유닛으로 겹친다(`StormCloudAura`의 `spacingX`·`stagger`).
+
 <details><summary>세션37에 한 것 — 일정 재논의 · 사운드 시스템 · 아트 선행 명세</summary>
 
 - 📅 **일정 재논의** — 병목은 날짜가 아니라 **아트 손 하나**. 상점 페이지 아트를 외주로 빼서 다낭 여행(8/17~22) 구멍이 거의 해소.
