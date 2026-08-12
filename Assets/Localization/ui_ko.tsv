@@ -1,0 +1,12 @@
+KEY	KO
+ui.options.title	설정
+ui.options.master	전체 음량
+ui.options.bgm	배경음
+ui.options.sfx	효과음
+ui.options.fullscreen	전체화면
+ui.options.resolution	해상도
+ui.options.language	언어
+ui.options.close	닫기
+ui.options.reset	세이브 초기화
+ui.options.reset_confirm	정말? 한 번 더 클릭
+ui.options.reset_done	초기화 완료

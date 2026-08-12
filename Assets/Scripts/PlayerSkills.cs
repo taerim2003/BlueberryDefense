@@ -593,20 +593,8 @@ public class PlayerSkills : MonoBehaviour
 
     // 루트 잠금 조건은 EvolutionRoutes.RoutePrereq가 (스킬, 루트)별로 단독 소유한다(2026-08-06 개편).
 
-    public static string GetActiveSkillName(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.BasicAttack => "화살 쏘기",
-        ActiveSkillId.Whirlwind => "회오리",
-        ActiveSkillId.Orb => "오브",
-        ActiveSkillId.Lightning => "낙뢰",
-        ActiveSkillId.EagleDrop => "독수리 투하",
-        ActiveSkillId.Sniping => "스나이핑",
-        ActiveSkillId.Homing => "호밍 미사일",
-        ActiveSkillId.Shotgun => "산탄 장착",
-        ActiveSkillId.Rewind => "되감기",
-        ActiveSkillId.Swing => "휘두르기",
-        _ => id.ToString(),
-    };
+    public static string GetActiveSkillName(ActiveSkillId id) =>
+        Loc.TOr("skill.name." + id, id.ToString());
 
     // ── 스킬 종류(공격/버프/유틸) ── 대부분 공격, 산탄=버프(타수↑), 되감기=유틸(쿨 되감기).
     public static SkillCategory GetSkillCategory(ActiveSkillId id) => id switch
@@ -616,12 +604,8 @@ public class PlayerSkills : MonoBehaviour
         _ => SkillCategory.Attack,
     };
 
-    public static string GetSkillCategoryLabel(SkillCategory c) => c switch
-    {
-        SkillCategory.Buff => "버프",
-        SkillCategory.Utility => "유틸",
-        _ => "공격",
-    };
+    public static string GetSkillCategoryLabel(SkillCategory c) =>
+        Loc.TOr("skill.cat." + c, c.ToString());
 
     private static string CategoryColorHex(SkillCategory c) => c switch
     {
@@ -691,17 +675,8 @@ public class PlayerSkills : MonoBehaviour
         return lines;
     }
 
-    public static string GetPassiveSkillName(PassiveSkillId id) => id switch
-    {
-        PassiveSkillId.Strength => "힘",
-        PassiveSkillId.Health => "건강",
-        PassiveSkillId.Knowledge => "지식",
-        PassiveSkillId.Assassinate => "암살",
-        PassiveSkillId.Refresh => "리프레쉬",
-        PassiveSkillId.Defense => "방어",
-        PassiveSkillId.Accel => "가속",
-        _ => id.ToString(),
-    };
+    public static string GetPassiveSkillName(PassiveSkillId id) =>
+        Loc.TOr("passive.name." + id, id.ToString());
 
     // 한 티어 = 한 효과. (id, path, tier)별로 실제로 적용되는 수치만 그대로 표기한다.
     // 에디터에서 등록한 텍스트 override가 있으면 그걸 쓰고, 없으면 기존 하드코딩 텍스트로 폴백.
@@ -723,219 +698,14 @@ public class PlayerSkills : MonoBehaviour
     //    "고르면 뭐가 나올까"라는 호기심으로 루트를 고르게 하는 게 목적이다.
     //    (실제 수치는 ApplyPathTierEffect와 각 Fire*에 있다 — 밸런스는 거기서 확인할 것.)
     //    티어1 카드에는 legacy 1·2가 **두 줄로 함께** 뜨므로, 두 문장이 이어 읽히게 쓸 것.
-    public static string DescribePathEffect(ActiveSkillId id, int path, int tier) => (id, path, tier) switch
-    {
-        // BasicAttack
-        (ActiveSkillId.BasicAttack, 0, 1) => "화살이 무엇도 개의치 않고 꿰뚫는다",
-        (ActiveSkillId.BasicAttack, 0, 2) => "촉이 묵직해져 더 깊이 박힌다",
-        (ActiveSkillId.BasicAttack, 0, 3) => "한 줄로 선 것들은 한 줄로 사라진다",
-        (ActiveSkillId.BasicAttack, 1, 1) => "여러 발을 한 발에 담는다",
-        (ActiveSkillId.BasicAttack, 1, 2) => "한 발이 줄을 통째로 꿰고, 급소를 찾으면 화살이 따라붙는다",
-        (ActiveSkillId.BasicAttack, 1, 3) => "따라붙는 화살이 늘고 시위가 쉴 틈이 없다",
-        (ActiveSkillId.BasicAttack, 2, 1) => "시위를 당기면 하늘이 어두워진다",
-        (ActiveSkillId.BasicAttack, 2, 2) => "쏠 때마다 화살이 비처럼 쏟아진다",
-        (ActiveSkillId.BasicAttack, 2, 3) => "그 비가 그칠 줄을 모른다",
-
-        // Whirlwind
-        (ActiveSkillId.Whirlwind, 0, 1) => "회오리가 둘로 늘어난다",
-        (ActiveSkillId.Whirlwind, 0, 2) => "둘이 나란히 돌고, 사라진 자리엔 새끼가 남는다",
-        (ActiveSkillId.Whirlwind, 0, 3) => "남는 새끼가 더 늘고 전부 사나워진다",
-        (ActiveSkillId.Whirlwind, 1, 1) => "바람은 기다려 주지 않는다",
-        (ActiveSkillId.Whirlwind, 1, 2) => "한 번 돌기 시작하면 멈출 이유가 없다",
-        (ActiveSkillId.Whirlwind, 1, 3) => "부르는 즉시 온다",
-        (ActiveSkillId.Whirlwind, 2, 1) => "지나간 자리에서 발이 땅에 붙는다",
-        (ActiveSkillId.Whirlwind, 2, 2) => "모든 것을 갈아버리는 하나의 거대한 소용돌이",
-        (ActiveSkillId.Whirlwind, 2, 3) => "한 번 갈린 것은 다시 서지 못한다",
-
-        // Orb
-        (ActiveSkillId.Orb, 0, 1) => "하늘에 있다고 안전하진 않다",
-        (ActiveSkillId.Orb, 0, 2) => "구슬이 눈에 띄게 무거워진다",
-        (ActiveSkillId.Orb, 0, 3) => "날개 달린 것들이 특히 후회한다",
-        (ActiveSkillId.Orb, 1, 1) => "지나간 자리가 늪이 된다",
-        (ActiveSkillId.Orb, 1, 2) => "더 크게, 더 자주, 더 푸르게",
-        (ActiveSkillId.Orb, 1, 3) => "늪은 깊어지고 손은 빨라진다",
-        (ActiveSkillId.Orb, 2, 1) => "닿은 것은 물러진다",
-        (ActiveSkillId.Orb, 2, 2) => "구슬 하나 대신 작은 것들이 무리 지어 쫓는다",
-        (ActiveSkillId.Orb, 2, 3) => "무리가 더 불어나고 스치는 것마다 물러진다",
-
-        // Lightning
-        (ActiveSkillId.Lightning, 0, 1) => "구름이 좀처럼 걷히지 않는다",
-        (ActiveSkillId.Lightning, 0, 2) => "쌓인 구름이 모든 일격에 실린다",
-        (ActiveSkillId.Lightning, 0, 3) => "쌓일수록 감당이 안 된다",
-        (ActiveSkillId.Lightning, 1, 1) => "폭풍이 짧게 쉰다",
-        (ActiveSkillId.Lightning, 1, 2) => "땅 한가운데 쇠기둥이 박히고 하늘이 그것만 노린다",
-        (ActiveSkillId.Lightning, 1, 3) => "기둥이 더 오래, 더 넓게 하늘을 끌어당긴다",
-        (ActiveSkillId.Lightning, 2, 1) => "폭풍이 오래 머문다",
-        (ActiveSkillId.Lightning, 2, 2) => "회오리가 불면 폭풍도 눌러앉는다",
-        (ActiveSkillId.Lightning, 2, 3) => "머문 폭풍이 모든 일격에 실린다",
-
-        // EagleDrop
-        (ActiveSkillId.EagleDrop, 0, 1) => "한 마리가 더 날아온다",
-        (ActiveSkillId.EagleDrop, 0, 2) => "먹잇감이 적을수록 더 크게 덮친다",
-        (ActiveSkillId.EagleDrop, 0, 3) => "쉬지 않고 쏟아진다",
-        (ActiveSkillId.EagleDrop, 1, 1) => "한 마리가 오래 머문다",
-        (ActiveSkillId.EagleDrop, 1, 2) => "부르면 하늘이 독수리로 뒤덮인다",
-        (ActiveSkillId.EagleDrop, 1, 3) => "뒤덮인 하늘이 좀처럼 걷히지 않는다",
-        (ActiveSkillId.EagleDrop, 2, 1) => "적게, 대신 훨씬 자주",
-        (ActiveSkillId.EagleDrop, 2, 2) => "발톱이 닿은 자리에 바람이 남는다",
-        (ActiveSkillId.EagleDrop, 2, 3) => "남은 바람이 오래 갈아댄다",
-
-        // Sniping (Route1=path0 타겟수, Route2=path1 피해+스플래시, Route3=path2 자동시전)
-        (ActiveSkillId.Sniping, 0, 1) => "조준선이 하나 더 생긴다",
-        (ActiveSkillId.Sniping, 0, 2) => "명단에 이름이 더 적힌다",
-        (ActiveSkillId.Sniping, 0, 3) => "명단이 끝을 모르고 길어진다",
-        (ActiveSkillId.Sniping, 1, 1) => "한 발의 무게가 달라진다",
-        (ActiveSkillId.Sniping, 1, 2) => "총알이 꽂힌 자리로 독수리가 내려앉는다",
-        (ActiveSkillId.Sniping, 1, 3) => "내려앉는 것들이 훨씬 많아진다",
-        (ActiveSkillId.Sniping, 2, 1) => "장전이 빨라진다",
-        (ActiveSkillId.Sniping, 2, 2) => "손을 떼도 총구가 스스로 움직인다",
-        (ActiveSkillId.Sniping, 2, 3) => "눈 깜빡일 새가 없다",
-
-        // Homing (Route1=path0 미사일 수, Route2=path1 폭발, Route3=path2 성장률)
-        (ActiveSkillId.Homing, 0, 1) => "탄창이 두 배로 두꺼워진다",
-        (ActiveSkillId.Homing, 0, 2) => "하늘이 미사일로 덮인다",
-        (ActiveSkillId.Homing, 0, 3) => "세어 볼 생각을 접게 된다",
-        (ActiveSkillId.Homing, 1, 1) => "탄두가 묵직해진다",
-        (ActiveSkillId.Homing, 1, 2) => "닿는 순간 터진다",
-        (ActiveSkillId.Homing, 1, 3) => "터진 자리가 훨씬 넓다",
-        (ActiveSkillId.Homing, 2, 1) => "탄이 가벼워진다",
-        (ActiveSkillId.Homing, 2, 2) => "작아진 만큼 몇 배로 쏟아지고 손도 빨라진다",
-        (ActiveSkillId.Homing, 2, 3) => "세어 볼 엄두가 안 난다",
-
-        // Shotgun (Route1=path0 타수, Route2=path1 집중산탄, Route3=path2 전체산탄+기절)
-        (ActiveSkillId.Shotgun, 0, 1) => "모든 스킬이 한 번 더 나간다",
-        (ActiveSkillId.Shotgun, 0, 2) => "손이 하나 더 붙은 것 같다",
-        (ActiveSkillId.Shotgun, 0, 3) => "무엇을 눌러도 쏟아진다",
-        (ActiveSkillId.Shotgun, 1, 1) => "열기가 오래 남는다",
-        (ActiveSkillId.Shotgun, 1, 2) => "가장 센 하나에 전부 몰아준다",
-        (ActiveSkillId.Shotgun, 1, 3) => "그 하나가 감당이 안 된다",
-        (ActiveSkillId.Shotgun, 2, 1) => "열기가 더 오래 남는다",
-        (ActiveSkillId.Shotgun, 2, 2) => "흩어지던 알이 정면 한 줄기로 몰린다",
-        (ActiveSkillId.Shotgun, 2, 3) => "그 한 줄기가 훨씬 두꺼워진다",
-
-        // Rewind (Route1=path0 되감기 정도, Route2=path1 다음 스킬 피해, Route3=path2 쿨감+글로벌쿨감)
-        (ActiveSkillId.Rewind, 0, 1) => "시간이 조금 물러선다",
-        (ActiveSkillId.Rewind, 0, 2) => "더 멀리 물러선다",
-        (ActiveSkillId.Rewind, 0, 3) => "방금 쓴 것이 없던 일이 된다",
-        (ActiveSkillId.Rewind, 1, 1) => "되감긴 다음 한 방이 더 아프다",
-        (ActiveSkillId.Rewind, 1, 2) => "훨씬 더 아프다",
-        (ActiveSkillId.Rewind, 1, 3) => "그 한 방이 판을 끝낸다",
-        (ActiveSkillId.Rewind, 2, 1) => "되감는 것도 빨라진다",
-        (ActiveSkillId.Rewind, 2, 2) => "더 빨라진다",
-        (ActiveSkillId.Rewind, 2, 3) => "모든 것이 절반의 시간에 돌아온다",
-
-        (ActiveSkillId.Swing, 1, 1) => "팔이 더 크게 돈다",
-        (ActiveSkillId.Swing, 1, 2) => "한 번에 훨씬 넓게 쓸어담는다",
-        (ActiveSkillId.Swing, 1, 3) => "밀쳐진 것들이 한동안 일어나질 못한다",
-        (ActiveSkillId.Swing, 2, 1) => "내려찍은 충격이 땅을 타고 번진다",
-        (ActiveSkillId.Swing, 2, 2) => "그 충격이 저 끝까지 달려나간다",
-        (ActiveSkillId.Swing, 2, 3) => "달려나가는 충격이 훨씬 사나워진다",
-
-        _ => "",
-    };
+    // 문장은 번역 표(`Assets/Localization/Tables/Game`)가 소유한다. 키 = evo.active.desc.{스킬}.{루트}.{티어}.
+    // 정의가 없는 조합은 빈 문자열 — 옛 `_ => ""` 분기와 같다.
+    public static string DescribePathEffect(ActiveSkillId id, int path, int tier) =>
+        Loc.TOr($"evo.active.desc.{id}.{path}.{tier}", "");
 
     // 진화 카드에 붙는 짧은 제목. 설명과 마찬가지로 **기능명이 아니라 별명**이다 — 뭘 하는지는 눌러 봐야 안다.
-    public static string GetPathTierTitle(ActiveSkillId id, int path, int tier) => (id, path, tier) switch
-    {
-        (ActiveSkillId.BasicAttack, 0, 1) => "꿰뚫는 화살",
-        (ActiveSkillId.BasicAttack, 0, 2) => "더 무거운 촉",
-        (ActiveSkillId.BasicAttack, 0, 3) => "일렬로 사라진다",
-        (ActiveSkillId.BasicAttack, 1, 1) => "한 발에 담는다",
-        (ActiveSkillId.BasicAttack, 1, 2) => "줄을 꿰는 한 발",
-        (ActiveSkillId.BasicAttack, 1, 3) => "따라붙는 화살",
-        (ActiveSkillId.BasicAttack, 2, 1) => "어두워지는 하늘",
-        (ActiveSkillId.BasicAttack, 2, 2) => "쏟아지는 화살비",
-        (ActiveSkillId.BasicAttack, 2, 3) => "그치지 않는 비",
-
-        (ActiveSkillId.Whirlwind, 0, 1) => "둘로 늘어난다",
-        (ActiveSkillId.Whirlwind, 0, 2) => "남기고 가는 새끼",
-        (ActiveSkillId.Whirlwind, 0, 3) => "사나워진 무리",
-        (ActiveSkillId.Whirlwind, 1, 1) => "기다리지 않는 바람",
-        (ActiveSkillId.Whirlwind, 1, 2) => "멈출 이유가 없다",
-        (ActiveSkillId.Whirlwind, 1, 3) => "부르면 온다",
-        (ActiveSkillId.Whirlwind, 2, 1) => "발이 땅에 붙는다",
-        (ActiveSkillId.Whirlwind, 2, 2) => "모든 것을 갈아버리는 대회오리",
-        (ActiveSkillId.Whirlwind, 2, 3) => "다시 서지 못한다",
-
-        (ActiveSkillId.Orb, 0, 1) => "하늘도 예외 없다",
-        (ActiveSkillId.Orb, 0, 2) => "무거운 구슬",
-        (ActiveSkillId.Orb, 0, 3) => "날개 달린 후회",
-        (ActiveSkillId.Orb, 1, 1) => "지나간 자리의 늪",
-        (ActiveSkillId.Orb, 1, 2) => "크고 푸른 구슬",
-        (ActiveSkillId.Orb, 1, 3) => "깊어지는 늪",
-        (ActiveSkillId.Orb, 2, 1) => "물러지는 것들",
-        (ActiveSkillId.Orb, 2, 2) => "쫓아가는 작은 것들",
-        (ActiveSkillId.Orb, 2, 3) => "불어난 무리",
-
-        (ActiveSkillId.Lightning, 0, 1) => "걷히지 않는 구름",
-        (ActiveSkillId.Lightning, 0, 2) => "일격마다 실리는 구름",
-        (ActiveSkillId.Lightning, 0, 3) => "쌓일수록 사납게",
-        (ActiveSkillId.Lightning, 1, 1) => "짧은 숨",
-        (ActiveSkillId.Lightning, 1, 2) => "땅에 박은 쇠기둥",
-        (ActiveSkillId.Lightning, 1, 3) => "하늘을 끌어당긴다",
-        (ActiveSkillId.Lightning, 2, 1) => "머무는 폭풍",
-        (ActiveSkillId.Lightning, 2, 2) => "눌러앉은 폭풍",
-        (ActiveSkillId.Lightning, 2, 3) => "일격마다 실리는 폭풍",
-
-        (ActiveSkillId.EagleDrop, 0, 1) => "한 마리 더",
-        (ActiveSkillId.EagleDrop, 0, 2) => "적을수록 크게",
-        (ActiveSkillId.EagleDrop, 0, 3) => "쏟아지는 하늘",
-        (ActiveSkillId.EagleDrop, 1, 1) => "오래 머문다",
-        (ActiveSkillId.EagleDrop, 1, 2) => "하늘을 뒤덮는다",
-        (ActiveSkillId.EagleDrop, 1, 3) => "걷히지 않는 하늘",
-        (ActiveSkillId.EagleDrop, 2, 1) => "적게, 대신 자주",
-        (ActiveSkillId.EagleDrop, 2, 2) => "발톱이 남긴 바람",
-        (ActiveSkillId.EagleDrop, 2, 3) => "오래 가는 바람",
-
-        (ActiveSkillId.Sniping, 0, 1) => "또 하나의 조준선",
-        (ActiveSkillId.Sniping, 0, 2) => "길어지는 명단",
-        (ActiveSkillId.Sniping, 0, 3) => "명단의 끝",
-        (ActiveSkillId.Sniping, 1, 1) => "달라진 무게",
-        (ActiveSkillId.Sniping, 1, 2) => "내려앉는 독수리",
-        (ActiveSkillId.Sniping, 1, 3) => "더 많이 내려앉는다",
-        (ActiveSkillId.Sniping, 2, 1) => "빠른 장전",
-        (ActiveSkillId.Sniping, 2, 2) => "스스로 움직이는 총구",
-        (ActiveSkillId.Sniping, 2, 3) => "깜빡일 새 없이",
-
-        (ActiveSkillId.Homing, 0, 1) => "두꺼운 탄창",
-        (ActiveSkillId.Homing, 0, 2) => "미사일로 덮인 하늘",
-        (ActiveSkillId.Homing, 0, 3) => "셀 수 없다",
-        (ActiveSkillId.Homing, 1, 1) => "묵직한 탄두",
-        (ActiveSkillId.Homing, 1, 2) => "닿으면 터진다",
-        (ActiveSkillId.Homing, 1, 3) => "넓어진 불길",
-        (ActiveSkillId.Homing, 2, 1) => "가벼워진 탄",
-        (ActiveSkillId.Homing, 2, 2) => "몇 배로 쏟아진다",
-        (ActiveSkillId.Homing, 2, 3) => "셀 엄두가 안 난다",
-
-        (ActiveSkillId.Shotgun, 0, 1) => "한 번 더",
-        (ActiveSkillId.Shotgun, 0, 2) => "손이 하나 더",
-        (ActiveSkillId.Shotgun, 0, 3) => "무엇을 눌러도",
-        (ActiveSkillId.Shotgun, 1, 1) => "오래 남는 열기",
-        (ActiveSkillId.Shotgun, 1, 2) => "하나에 전부",
-        (ActiveSkillId.Shotgun, 1, 3) => "감당 못 할 하나",
-        (ActiveSkillId.Shotgun, 2, 1) => "더 오래",
-        (ActiveSkillId.Shotgun, 2, 2) => "정면 한 줄기",
-        (ActiveSkillId.Shotgun, 2, 3) => "두꺼워진 줄기",
-
-        (ActiveSkillId.Rewind, 0, 1) => "물러서는 시간",
-        (ActiveSkillId.Rewind, 0, 2) => "더 멀리",
-        (ActiveSkillId.Rewind, 0, 3) => "없던 일",
-        (ActiveSkillId.Rewind, 1, 1) => "더 아픈 한 방",
-        (ActiveSkillId.Rewind, 1, 2) => "훨씬 더",
-        (ActiveSkillId.Rewind, 1, 3) => "판을 끝내는 한 방",
-        (ActiveSkillId.Rewind, 2, 1) => "빨라지는 되감기",
-        (ActiveSkillId.Rewind, 2, 2) => "더 빨리",
-        (ActiveSkillId.Rewind, 2, 3) => "절반의 시간",
-
-        (ActiveSkillId.Swing, 1, 1) => "크게 도는 팔",
-        (ActiveSkillId.Swing, 1, 2) => "한 아름씩",
-        (ActiveSkillId.Swing, 1, 3) => "일어나질 못한다",
-        (ActiveSkillId.Swing, 2, 1) => "땅을 타는 충격",
-        (ActiveSkillId.Swing, 2, 2) => "끝까지 달린다",
-        (ActiveSkillId.Swing, 2, 3) => "사나운 진동",
-
-        _ => "",
-    };
+    public static string GetPathTierTitle(ActiveSkillId id, int path, int tier) =>
+        Loc.TOr($"evo.active.title.{id}.{path}.{tier}", "");
 
     private void TryUseSkill(EquippedSkill skill)
     {

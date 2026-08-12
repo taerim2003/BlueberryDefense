@@ -1,0 +1,12 @@
+KEY	EN
+ui.options.title	Settings
+ui.options.master	Master Volume
+ui.options.bgm	Music
+ui.options.sfx	Sound Effects
+ui.options.fullscreen	Fullscreen
+ui.options.resolution	Resolution
+ui.options.language	Language
+ui.options.close	Close
+ui.options.reset	Reset Save
+ui.options.reset_confirm	Are you sure? Click again
+ui.options.reset_done	Save reset

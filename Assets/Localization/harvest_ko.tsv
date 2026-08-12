@@ -1,0 +1,387 @@
+﻿KEY	KO
+skill.name.BasicAttack	화살 쏘기
+skill.desc.BasicAttack	가장 가까운 적에게 화살을 쏜다. 레벨업으로 화살 수와 관통이 늘어난다
+evo.active.desc.BasicAttack.0.1	화살이 무엇도 개의치 않고 꿰뚫는다
+evo.active.title.BasicAttack.0.1	꿰뚫는 화살
+evo.active.desc.BasicAttack.0.2	촉이 묵직해져 더 깊이 박힌다
+evo.active.title.BasicAttack.0.2	더 무거운 촉
+evo.active.desc.BasicAttack.0.3	한 줄로 선 것들은 한 줄로 사라진다
+evo.active.title.BasicAttack.0.3	일렬로 사라진다
+evo.active.desc.BasicAttack.1.1	여러 발을 한 발에 담는다
+evo.active.title.BasicAttack.1.1	한 발에 담는다
+evo.active.desc.BasicAttack.1.2	한 발이 줄을 통째로 꿰고, 급소를 찾으면 화살이 따라붙는다
+evo.active.title.BasicAttack.1.2	줄을 꿰는 한 발
+evo.active.desc.BasicAttack.1.3	따라붙는 화살이 늘고 시위가 쉴 틈이 없다
+evo.active.title.BasicAttack.1.3	따라붙는 화살
+evo.active.desc.BasicAttack.2.1	시위를 당기면 하늘이 어두워진다
+evo.active.title.BasicAttack.2.1	어두워지는 하늘
+evo.active.desc.BasicAttack.2.2	쏠 때마다 화살이 비처럼 쏟아진다
+evo.active.title.BasicAttack.2.2	쏟아지는 화살비
+evo.active.desc.BasicAttack.2.3	그 비가 그칠 줄을 모른다
+evo.active.title.BasicAttack.2.3	그치지 않는 비
+evo.name.BasicAttack.0.1	암살 사격
+evo.name.BasicAttack.0.2	처형 사격
+evo.name.BasicAttack.1.1	화살비
+evo.name.BasicAttack.1.2	폭풍 화살비
+skill.name.Whirlwind	회오리
+skill.desc.Whirlwind	적을 자동으로 추적하는 회오리를 소환(지속시간 4초). 닿아있는 동안 지속 피해를 주며, 피해를 주는 동안 이동 속도가 느려짐
+evo.active.desc.Whirlwind.0.1	회오리가 둘로 늘어난다
+evo.active.title.Whirlwind.0.1	둘로 늘어난다
+evo.active.desc.Whirlwind.0.2	둘이 나란히 돌고, 사라진 자리엔 새끼가 남는다
+evo.active.title.Whirlwind.0.2	남기고 가는 새끼
+evo.active.desc.Whirlwind.0.3	남는 새끼가 더 늘고 전부 사나워진다
+evo.active.title.Whirlwind.0.3	사나워진 무리
+evo.active.desc.Whirlwind.1.1	바람은 기다려 주지 않는다
+evo.active.title.Whirlwind.1.1	기다리지 않는 바람
+evo.active.desc.Whirlwind.1.2	한 번 돌기 시작하면 멈출 이유가 없다
+evo.active.title.Whirlwind.1.2	멈출 이유가 없다
+evo.active.desc.Whirlwind.1.3	부르는 즉시 온다
+evo.active.title.Whirlwind.1.3	부르면 온다
+evo.active.desc.Whirlwind.2.1	지나간 자리에서 발이 땅에 붙는다
+evo.active.title.Whirlwind.2.1	발이 땅에 붙는다
+evo.active.desc.Whirlwind.2.2	모든 것을 갈아버리는 하나의 거대한 소용돌이
+evo.active.title.Whirlwind.2.2	모든 것을 갈아버리는 대회오리
+evo.active.desc.Whirlwind.2.3	한 번 갈린 것은 다시 서지 못한다
+evo.active.title.Whirlwind.2.3	다시 서지 못한다
+evo.name.Whirlwind.0.1	회오리 무리
+evo.name.Whirlwind.0.2	폭풍 군단
+evo.name.Whirlwind.1.1	대회오리
+evo.name.Whirlwind.1.2	재앙의 눈
+skill.name.Orb	오브
+skill.desc.Orb	전방으로 관통하며 나아가는 오브를 소환. 닿아있는 모든 적에게 지속 피해를 주고 느려지게 함
+evo.active.desc.Orb.0.1	하늘에 있다고 안전하진 않다
+evo.active.title.Orb.0.1	하늘도 예외 없다
+evo.active.desc.Orb.0.2	구슬이 눈에 띄게 무거워진다
+evo.active.title.Orb.0.2	무거운 구슬
+evo.active.desc.Orb.0.3	날개 달린 것들이 특히 후회한다
+evo.active.title.Orb.0.3	날개 달린 후회
+evo.active.desc.Orb.1.1	지나간 자리가 늪이 된다
+evo.active.title.Orb.1.1	지나간 자리의 늪
+evo.active.desc.Orb.1.2	더 크게, 더 자주, 더 푸르게
+evo.active.title.Orb.1.2	크고 푸른 구슬
+evo.active.desc.Orb.1.3	늪은 깊어지고 손은 빨라진다
+evo.active.title.Orb.1.3	깊어지는 늪
+evo.active.desc.Orb.2.1	닿은 것은 물러진다
+evo.active.title.Orb.2.1	물러지는 것들
+evo.active.desc.Orb.2.2	구슬 하나 대신 작은 것들이 무리 지어 쫓는다
+evo.active.title.Orb.2.2	쫓아가는 작은 것들
+evo.active.desc.Orb.2.3	무리가 더 불어나고 스치는 것마다 물러진다
+evo.active.title.Orb.2.3	불어난 무리
+evo.name.Orb.0.1	대형 오브
+evo.name.Orb.0.2	빙결 오브
+evo.name.Orb.1.1	추적 오브
+evo.name.Orb.1.2	오브 군단
+skill.name.Lightning	낙뢰
+skill.desc.Lightning	6초간 공격 피해를 입는 모든 적들에게 30% 확률로 낙뢰가 떨어져 피해
+evo.active.desc.Lightning.0.1	구름이 좀처럼 걷히지 않는다
+evo.active.title.Lightning.0.1	걷히지 않는 구름
+evo.active.desc.Lightning.0.2	쌓인 구름이 모든 일격에 실린다
+evo.active.title.Lightning.0.2	일격마다 실리는 구름
+evo.active.desc.Lightning.0.3	쌓일수록 감당이 안 된다
+evo.active.title.Lightning.0.3	쌓일수록 사납게
+evo.active.desc.Lightning.1.1	폭풍이 짧게 쉰다
+evo.active.title.Lightning.1.1	짧은 숨
+evo.active.desc.Lightning.1.2	땅 한가운데 쇠기둥이 박히고 하늘이 그것만 노린다
+evo.active.title.Lightning.1.2	땅에 박은 쇠기둥
+evo.active.desc.Lightning.1.3	기둥이 더 오래, 더 넓게 하늘을 끌어당긴다
+evo.active.title.Lightning.1.3	하늘을 끌어당긴다
+evo.active.desc.Lightning.2.1	폭풍이 오래 머문다
+evo.active.title.Lightning.2.1	머무는 폭풍
+evo.active.desc.Lightning.2.2	회오리가 불면 폭풍도 눌러앉는다
+evo.active.title.Lightning.2.2	눌러앉은 폭풍
+evo.active.desc.Lightning.2.3	머문 폭풍이 모든 일격에 실린다
+evo.active.title.Lightning.2.3	일격마다 실리는 폭풍
+evo.name.Lightning.0.1	뇌운 축적
+evo.name.Lightning.0.2	폭풍우
+evo.name.Lightning.1.1	피뢰침
+evo.name.Lightning.1.2	거대 피뢰침
+skill.name.EagleDrop	독수리 투하
+skill.desc.EagleDrop	화면 전체에 독수리를 1초 간격으로 2회 투하해 모든 적에게 피해
+evo.active.desc.EagleDrop.0.1	한 마리가 더 날아온다
+evo.active.title.EagleDrop.0.1	한 마리 더
+evo.active.desc.EagleDrop.0.2	먹잇감이 적을수록 더 크게 덮친다
+evo.active.title.EagleDrop.0.2	적을수록 크게
+evo.active.desc.EagleDrop.0.3	쉬지 않고 쏟아진다
+evo.active.title.EagleDrop.0.3	쏟아지는 하늘
+evo.active.desc.EagleDrop.1.1	한 마리가 오래 머문다
+evo.active.title.EagleDrop.1.1	오래 머문다
+evo.active.desc.EagleDrop.1.2	부르면 하늘이 독수리로 뒤덮인다
+evo.active.title.EagleDrop.1.2	하늘을 뒤덮는다
+evo.active.desc.EagleDrop.1.3	뒤덮인 하늘이 좀처럼 걷히지 않는다
+evo.active.title.EagleDrop.1.3	걷히지 않는 하늘
+evo.active.desc.EagleDrop.2.1	적게, 대신 훨씬 자주
+evo.active.title.EagleDrop.2.1	적게, 대신 자주
+evo.active.desc.EagleDrop.2.2	발톱이 닿은 자리에 바람이 남는다
+evo.active.title.EagleDrop.2.2	발톱이 남긴 바람
+evo.active.desc.EagleDrop.2.3	남은 바람이 오래 갈아댄다
+evo.active.title.EagleDrop.2.3	오래 가는 바람
+evo.name.EagleDrop.0.1	독수리 비
+evo.name.EagleDrop.0.2	하늘을 뒤덮다
+evo.name.EagleDrop.1.1	급강하 폭격
+evo.name.EagleDrop.1.2	회오리 폭격
+skill.name.Sniping	스나이핑
+skill.desc.Sniping	가장 체력이 높은 적을 3회 저격해 큰 피해를 줌
+evo.active.desc.Sniping.0.1	조준선이 하나 더 생긴다
+evo.active.title.Sniping.0.1	또 하나의 조준선
+evo.active.desc.Sniping.0.2	명단에 이름이 더 적힌다
+evo.active.title.Sniping.0.2	길어지는 명단
+evo.active.desc.Sniping.0.3	명단이 끝을 모르고 길어진다
+evo.active.title.Sniping.0.3	명단의 끝
+evo.active.desc.Sniping.1.1	한 발의 무게가 달라진다
+evo.active.title.Sniping.1.1	달라진 무게
+evo.active.desc.Sniping.1.2	총알이 꽂힌 자리로 독수리가 내려앉는다
+evo.active.title.Sniping.1.2	내려앉는 독수리
+evo.active.desc.Sniping.1.3	내려앉는 것들이 훨씬 많아진다
+evo.active.title.Sniping.1.3	더 많이 내려앉는다
+evo.active.desc.Sniping.2.1	장전이 빨라진다
+evo.active.title.Sniping.2.1	빠른 장전
+evo.active.desc.Sniping.2.2	손을 떼도 총구가 스스로 움직인다
+evo.active.title.Sniping.2.2	스스로 움직이는 총구
+evo.active.desc.Sniping.2.3	눈 깜빡일 새가 없다
+evo.active.title.Sniping.2.3	깜빡일 새 없이
+evo.name.Sniping.0.1	폭격 저격
+evo.name.Sniping.0.2	융단 저격
+evo.name.Sniping.1.1	자동 조준
+evo.name.Sniping.1.2	감시탑
+skill.name.Homing	호밍 미사일
+skill.desc.Homing	적을 추적하는 미사일 3개를 발사. 레벨업마다 미사일이 크게 늘고, 사용할수록 강해짐(이번 판 한정)
+evo.active.desc.Homing.0.1	탄창이 두 배로 두꺼워진다
+evo.active.title.Homing.0.1	두꺼운 탄창
+evo.active.desc.Homing.0.2	하늘이 미사일로 덮인다
+evo.active.title.Homing.0.2	미사일로 덮인 하늘
+evo.active.desc.Homing.0.3	세어 볼 생각을 접게 된다
+evo.active.title.Homing.0.3	셀 수 없다
+evo.active.desc.Homing.1.1	탄두가 묵직해진다
+evo.active.title.Homing.1.1	묵직한 탄두
+evo.active.desc.Homing.1.2	닿는 순간 터진다
+evo.active.title.Homing.1.2	닿으면 터진다
+evo.active.desc.Homing.1.3	터진 자리가 훨씬 넓다
+evo.active.title.Homing.1.3	넓어진 불길
+evo.active.desc.Homing.2.1	탄이 가벼워진다
+evo.active.title.Homing.2.1	가벼워진 탄
+evo.active.desc.Homing.2.2	작아진 만큼 몇 배로 쏟아지고 손도 빨라진다
+evo.active.title.Homing.2.2	몇 배로 쏟아진다
+evo.active.desc.Homing.2.3	세어 볼 엄두가 안 난다
+evo.active.title.Homing.2.3	셀 엄두가 안 난다
+evo.name.Homing.0.1	작렬 미사일
+evo.name.Homing.0.2	융단 폭격
+evo.name.Homing.1.1	소형 미사일 다발
+evo.name.Homing.1.2	미사일 폭풍
+skill.name.Shotgun	산탄 장착
+skill.desc.Shotgun	전방으로 산탄을 뿌리고, 5초 동안 모든 스킬의 공격 횟수가 1회 증가
+evo.active.desc.Shotgun.0.1	모든 스킬이 한 번 더 나간다
+evo.active.title.Shotgun.0.1	한 번 더
+evo.active.desc.Shotgun.0.2	손이 하나 더 붙은 것 같다
+evo.active.title.Shotgun.0.2	손이 하나 더
+evo.active.desc.Shotgun.0.3	무엇을 눌러도 쏟아진다
+evo.active.title.Shotgun.0.3	무엇을 눌러도
+evo.active.desc.Shotgun.1.1	열기가 오래 남는다
+evo.active.title.Shotgun.1.1	오래 남는 열기
+evo.active.desc.Shotgun.1.2	가장 센 하나에 전부 몰아준다
+evo.active.title.Shotgun.1.2	하나에 전부
+evo.active.desc.Shotgun.1.3	그 하나가 감당이 안 된다
+evo.active.title.Shotgun.1.3	감당 못 할 하나
+evo.active.desc.Shotgun.2.1	열기가 더 오래 남는다
+evo.active.title.Shotgun.2.1	더 오래
+evo.active.desc.Shotgun.2.2	흩어지던 알이 정면 한 줄기로 몰린다
+evo.active.title.Shotgun.2.2	정면 한 줄기
+evo.active.desc.Shotgun.2.3	그 한 줄기가 훨씬 두꺼워진다
+evo.active.title.Shotgun.2.3	두꺼워진 줄기
+evo.name.Shotgun.0.1	집중 산탄
+evo.name.Shotgun.0.2	일점사 산탄
+evo.name.Shotgun.1.1	관통 산탄
+evo.name.Shotgun.1.2	파열 산탄
+skill.name.Rewind	되감기
+skill.desc.Rewind	다른 모든 스킬의 재사용 대기시간을 1초 앞당김. 레벨업할수록 더 크게 되감음
+evo.active.desc.Rewind.0.1	시간이 조금 물러선다
+evo.active.title.Rewind.0.1	물러서는 시간
+evo.active.desc.Rewind.0.2	더 멀리 물러선다
+evo.active.title.Rewind.0.2	더 멀리
+evo.active.desc.Rewind.0.3	방금 쓴 것이 없던 일이 된다
+evo.active.title.Rewind.0.3	없던 일
+evo.active.desc.Rewind.1.1	되감긴 다음 한 방이 더 아프다
+evo.active.title.Rewind.1.1	더 아픈 한 방
+evo.active.desc.Rewind.1.2	훨씬 더 아프다
+evo.active.title.Rewind.1.2	훨씬 더
+evo.active.desc.Rewind.1.3	그 한 방이 판을 끝낸다
+evo.active.title.Rewind.1.3	판을 끝내는 한 방
+evo.active.desc.Rewind.2.1	되감는 것도 빨라진다
+evo.active.title.Rewind.2.1	빨라지는 되감기
+evo.active.desc.Rewind.2.2	더 빨라진다
+evo.active.title.Rewind.2.2	더 빨리
+evo.active.desc.Rewind.2.3	모든 것이 절반의 시간에 돌아온다
+evo.active.title.Rewind.2.3	절반의 시간
+evo.name.Rewind.0.1	충전 되감기
+evo.name.Rewind.0.2	과부하 되감기
+evo.name.Rewind.1.1	가속 되감기
+evo.name.Rewind.1.2	시간 붕괴
+skill.name.Swing	휘두르기
+skill.desc.Swing	몸 주위를 후려쳐 닿는 적 전체에 피해를 주고 뒤로 밀어낸다
+evo.active.desc.Swing.1.1	팔이 더 크게 돈다
+evo.active.title.Swing.1.1	크게 도는 팔
+evo.active.desc.Swing.1.2	한 번에 훨씬 넓게 쓸어담는다
+evo.active.title.Swing.1.2	한 아름씩
+evo.active.desc.Swing.1.3	밀쳐진 것들이 한동안 일어나질 못한다
+evo.active.title.Swing.1.3	일어나질 못한다
+evo.active.desc.Swing.2.1	내려찍은 충격이 땅을 타고 번진다
+evo.active.title.Swing.2.1	땅을 타는 충격
+evo.active.desc.Swing.2.2	그 충격이 저 끝까지 달려나간다
+evo.active.title.Swing.2.2	끝까지 달린다
+evo.active.desc.Swing.2.3	달려나가는 충격이 훨씬 사나워진다
+evo.active.title.Swing.2.3	사나운 진동
+evo.name.Swing.0.1	쓸어치기
+evo.name.Swing.0.2	박살내기
+evo.name.Swing.1.1	지진파
+evo.name.Swing.1.2	대지 균열
+passive.name.Strength	힘
+evo.passive.desc.Strength.0.1	주먹이 무거워진다
+evo.passive.title.Strength.0.1	무거운 주먹
+evo.passive.desc.Strength.0.2	더 무거워진다
+evo.passive.title.Strength.0.2	더 무거운 주먹
+evo.passive.desc.Strength.0.3	휘두르는 것마다 부서진다
+evo.passive.title.Strength.0.3	휘두르면 부서진다
+evo.passive.desc.Strength.1.1	제대로 들어간 한 방이 더 깊다
+evo.passive.title.Strength.1.1	깊게 들어간다
+evo.passive.desc.Strength.1.2	훨씬 더 깊다
+evo.passive.title.Strength.1.2	더 깊게
+evo.passive.desc.Strength.1.3	제대로 맞으면 남는 게 없다
+evo.passive.title.Strength.1.3	남는 게 없다
+evo.passive.desc.Strength.2.1	가장 먼저 든 것이 손에 익는다
+evo.passive.title.Strength.2.1	첫 손에 익는다
+evo.passive.desc.Strength.2.2	더 익숙해진다
+evo.passive.title.Strength.2.2	더 단단히
+evo.passive.desc.Strength.2.3	첫 손에 든 것이 가장 강하다
+evo.passive.title.Strength.2.3	첫 손이 가장 강하다
+evo.name.Strength.0.1	치명의 힘
+evo.name.Strength.0.2	파괴의 힘
+evo.name.Strength.1.1	완력
+evo.name.Strength.1.2	괴력
+passive.name.Health	건강
+evo.passive.desc.Health.0.1	상처가 알아서 아문다
+evo.passive.title.Health.0.1	알아서 아문다
+evo.passive.desc.Health.0.2	더 빨리 아문다
+evo.passive.title.Health.0.2	빨리 아문다
+evo.passive.desc.Health.0.3	다치는 속도를 앞지른다
+evo.passive.title.Health.0.3	다치는 속도를 앞지른다
+evo.passive.desc.Health.1.1	버틸수록 세진다
+evo.passive.title.Health.1.1	버틸수록 세진다
+evo.passive.desc.Health.1.2	더 세진다
+evo.passive.title.Health.1.2	더 세진다
+evo.passive.desc.Health.1.3	두꺼운 몸이 그대로 힘이 된다
+evo.passive.title.Health.1.3	두꺼운 몸이 힘이다
+evo.passive.desc.Health.2.1	쓰러진 자리에 먹을 게 남는다
+evo.passive.title.Health.2.1	먹을 게 남는다
+evo.passive.desc.Health.2.2	훨씬 자주 남는다
+evo.passive.title.Health.2.2	자주 남는다
+evo.passive.desc.Health.2.3	발밑이 늘 붉다
+evo.passive.title.Health.2.3	발밑이 붉다
+evo.name.Health.0.1	강건함
+evo.name.Health.0.2	불굴
+evo.name.Health.1.1	풍요의 몸
+evo.name.Health.1.2	만찬의 몸
+passive.name.Knowledge	지식
+evo.passive.desc.Knowledge.0.1	보고 배우는 게 빠르다
+evo.passive.title.Knowledge.0.1	빨리 배운다
+evo.passive.desc.Knowledge.0.2	더 빠르다
+evo.passive.title.Knowledge.0.2	더 빨리
+evo.passive.desc.Knowledge.0.3	한 번 보면 안다
+evo.passive.title.Knowledge.0.3	한 번 보면 안다
+evo.passive.desc.Knowledge.1.1	가끔 상자를 짊어진 놈이 섞인다
+evo.passive.title.Knowledge.1.1	상자를 진 놈
+evo.passive.desc.Knowledge.1.2	더 자주 섞인다
+evo.passive.title.Knowledge.1.2	더 자주 섞인다
+evo.passive.desc.Knowledge.1.3	눈에 띄게 자주 섞인다
+evo.passive.title.Knowledge.1.3	눈에 띄게 자주
+evo.passive.desc.Knowledge.2.1	독수리가 날면 뭔가 남는다
+evo.passive.title.Knowledge.2.1	독수리가 남기는 것
+evo.passive.desc.Knowledge.2.2	더 많이 남는다
+evo.passive.title.Knowledge.2.2	더 많이 남는다
+evo.passive.desc.Knowledge.2.3	날 때마다 두둑하다
+evo.passive.title.Knowledge.2.3	날 때마다 두둑하게
+evo.name.Knowledge.0.1	보물 탐지
+evo.name.Knowledge.0.2	보물 감정
+evo.name.Knowledge.1.1	전투 통찰
+evo.name.Knowledge.1.2	전장의 현자
+passive.name.Assassinate	암살
+evo.passive.desc.Assassinate.0.1	급소가 자꾸 눈에 들어온다
+evo.passive.title.Assassinate.0.1	급소가 보인다
+evo.passive.desc.Assassinate.0.2	더 자주 보인다
+evo.passive.title.Assassinate.0.2	더 자주 보인다
+evo.passive.desc.Assassinate.0.3	어디를 봐도 급소다
+evo.passive.title.Assassinate.0.3	어디를 봐도 급소
+evo.passive.desc.Assassinate.1.1	깔끔하게 끝낸 값을 받는다
+evo.passive.title.Assassinate.1.1	깔끔한 값
+evo.passive.desc.Assassinate.1.2	값이 오른다
+evo.passive.title.Assassinate.1.2	오르는 값
+evo.passive.desc.Assassinate.1.3	끝낼수록 배가 부르다
+evo.passive.title.Assassinate.1.3	끝낼수록 배부르다
+evo.passive.desc.Assassinate.2.1	묵직한 것일수록 급소만 노린다
+evo.passive.title.Assassinate.2.1	묵직한 급소
+evo.passive.desc.Assassinate.2.2	그 한 방이 더 깊다
+evo.passive.title.Assassinate.2.2	더 깊게
+evo.passive.desc.Assassinate.2.3	웬만한 건 전부 급소로 들어간다
+evo.passive.title.Assassinate.2.3	전부 급소로
+evo.name.Assassinate.0.1	사냥꾼
+evo.name.Assassinate.0.2	학살자
+evo.name.Assassinate.1.1	필중 암살
+evo.name.Assassinate.1.2	절대 급소
+passive.name.Refresh	리프레쉬
+evo.passive.desc.Refresh.0.1	가끔 방금 쓴 게 다시 준비된다
+evo.passive.title.Refresh.0.1	다시 준비된다
+evo.passive.desc.Refresh.0.2	더 자주 그런다
+evo.passive.title.Refresh.0.2	더 자주
+evo.passive.desc.Refresh.0.3	기다리는 일이 드물어진다
+evo.passive.title.Refresh.0.3	기다릴 일이 없다
+evo.passive.desc.Refresh.1.1	다시 채워질 때마다 숨이 트인다
+evo.passive.title.Refresh.1.1	숨이 트인다
+evo.passive.desc.Refresh.1.2	더 깊게 트인다
+evo.passive.title.Refresh.1.2	더 깊게
+evo.passive.desc.Refresh.1.3	채워질수록 멀쩡해진다
+evo.passive.title.Refresh.1.3	채워질수록 멀쩡해진다
+evo.passive.desc.Refresh.2.1	몸을 데우는 것들이 빨리 돌아온다
+evo.passive.title.Refresh.2.1	빨리 돌아온다
+evo.passive.desc.Refresh.2.2	번개가 치면 전부 앞당겨진다
+evo.passive.title.Refresh.2.2	번개가 앞당긴다
+evo.passive.desc.Refresh.2.3	번개가 더 자주 편을 든다
+evo.passive.title.Refresh.2.3	번개가 편을 든다
+evo.name.Refresh.0.1	재생 순환
+evo.name.Refresh.0.2	생명 순환
+evo.name.Refresh.1.1	가속 순환
+evo.name.Refresh.1.2	무한 순환
+passive.name.Defense	방어
+evo.passive.desc.Defense.1.1	맞으면 몸이 먼저 반응한다
+evo.passive.title.Defense.1.1	몸이 먼저 반응한다
+evo.passive.desc.Defense.1.2	그 반사가 무거워진다
+evo.passive.title.Defense.1.2	무거운 반사
+evo.passive.desc.Defense.1.3	맞는 순간이 곧 반격이다
+evo.passive.title.Defense.1.3	맞는 순간이 반격
+evo.passive.desc.Defense.2.1	몸집이 통째로 불어난다
+evo.passive.title.Defense.2.1	통째로 불어난다
+evo.passive.desc.Defense.2.2	때린 만큼 그대로 돌아간다
+evo.passive.title.Defense.2.2	그대로 돌아간다
+evo.passive.desc.Defense.2.3	건드린 쪽이 먼저 무너진다
+evo.passive.title.Defense.2.3	건드린 쪽이 무너진다
+evo.name.Defense.0.1	반사 방어
+evo.name.Defense.0.2	각인된 반격
+evo.name.Defense.1.1	가시 갑주
+evo.name.Defense.1.2	복수의 갑주
+passive.name.Accel	가속
+evo.passive.desc.Accel.1.1	가끔 방금 쓴 게 다시 준비된다
+evo.passive.title.Accel.1.1	다시 준비된다
+evo.passive.desc.Accel.1.2	더 자주 그런다
+evo.passive.title.Accel.1.2	더 자주
+evo.passive.desc.Accel.1.3	기다리는 일이 드물어진다
+evo.passive.title.Accel.1.3	기다릴 일이 없다
+evo.passive.desc.Accel.2.1	맞을수록 손이 빨라진다
+evo.passive.title.Accel.2.1	맞을수록 빨라진다
+evo.passive.desc.Accel.2.2	더 빨라진다
+evo.passive.title.Accel.2.2	더 빨라진다
+evo.passive.desc.Accel.2.3	맞는 것이 곧 재촉이 된다
+evo.passive.title.Accel.2.3	맞는 것이 재촉
+evo.name.Accel.0.1	재점화
+evo.name.Accel.0.2	무한 점화
+evo.name.Accel.1.1	고통 가속
+evo.name.Accel.1.2	폭주 가속
+skill.cat.Attack	공격
+skill.cat.Buff	버프
+skill.cat.Utility	유틸

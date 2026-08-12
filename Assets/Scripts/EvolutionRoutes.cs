@@ -159,98 +159,11 @@ public static class EvolutionRoutes
 
     // ── 진화 후 이름 ─────────────────────────────────────────────────────────
     // 진화하면 스킬 이름이 바뀌고 레벨 표시가 1로 돌아간다("다른 스킬이 됐다"는 연출).
-    public static string EvolvedName(ActiveSkillId id, int route, int stage) => (id, route, stage) switch
-    {
-        (ActiveSkillId.BasicAttack, 0, 1) => "암살 사격",
-        (ActiveSkillId.BasicAttack, 0, 2) => "처형 사격",
-        (ActiveSkillId.BasicAttack, 1, 1) => "화살비",
-        (ActiveSkillId.BasicAttack, 1, 2) => "폭풍 화살비",
+    // 이름 문자열은 번역 표(`Assets/Localization/Tables/Game`)가 소유한다 — 키는 (스킬, 루트, 티어)에서 파생.
+    // 정의가 없는 조합은 원래 스킬 이름으로 떨어진다(옛 `_ =>` 분기와 같은 동작).
+    public static string EvolvedName(ActiveSkillId id, int route, int stage) =>
+        Loc.TOr($"evo.name.{id}.{route}.{stage}", PlayerSkills.GetActiveSkillName(id));
 
-        (ActiveSkillId.Whirlwind, 0, 1) => "회오리 무리",
-        (ActiveSkillId.Whirlwind, 0, 2) => "폭풍 군단",
-        (ActiveSkillId.Whirlwind, 1, 1) => "대회오리",
-        (ActiveSkillId.Whirlwind, 1, 2) => "재앙의 눈",
-
-        (ActiveSkillId.Orb, 0, 1) => "대형 오브",
-        (ActiveSkillId.Orb, 0, 2) => "빙결 오브",
-        (ActiveSkillId.Orb, 1, 1) => "추적 오브",
-        (ActiveSkillId.Orb, 1, 2) => "오브 군단",
-
-        (ActiveSkillId.Lightning, 0, 1) => "뇌운 축적",
-        (ActiveSkillId.Lightning, 0, 2) => "폭풍우",
-        (ActiveSkillId.Lightning, 1, 1) => "피뢰침",
-        (ActiveSkillId.Lightning, 1, 2) => "거대 피뢰침",
-
-        (ActiveSkillId.EagleDrop, 0, 1) => "독수리 비",
-        (ActiveSkillId.EagleDrop, 0, 2) => "하늘을 뒤덮다",
-        (ActiveSkillId.EagleDrop, 1, 1) => "급강하 폭격",
-        (ActiveSkillId.EagleDrop, 1, 2) => "회오리 폭격",
-
-        (ActiveSkillId.Sniping, 0, 1) => "폭격 저격",
-        (ActiveSkillId.Sniping, 0, 2) => "융단 저격",
-        (ActiveSkillId.Sniping, 1, 1) => "자동 조준",
-        (ActiveSkillId.Sniping, 1, 2) => "감시탑",
-
-        (ActiveSkillId.Homing, 0, 1) => "작렬 미사일",
-        (ActiveSkillId.Homing, 0, 2) => "융단 폭격",
-        (ActiveSkillId.Homing, 1, 1) => "소형 미사일 다발",
-        (ActiveSkillId.Homing, 1, 2) => "미사일 폭풍",
-
-        (ActiveSkillId.Shotgun, 0, 1) => "집중 산탄",
-        (ActiveSkillId.Shotgun, 0, 2) => "일점사 산탄",
-        (ActiveSkillId.Shotgun, 1, 1) => "관통 산탄",
-        (ActiveSkillId.Shotgun, 1, 2) => "파열 산탄",
-
-        (ActiveSkillId.Rewind, 0, 1) => "충전 되감기",
-        (ActiveSkillId.Rewind, 0, 2) => "과부하 되감기",
-        (ActiveSkillId.Rewind, 1, 1) => "가속 되감기",
-        (ActiveSkillId.Rewind, 1, 2) => "시간 붕괴",
-
-        (ActiveSkillId.Swing, 0, 1) => "쓸어치기",
-        (ActiveSkillId.Swing, 0, 2) => "박살내기",
-        (ActiveSkillId.Swing, 1, 1) => "지진파",
-        (ActiveSkillId.Swing, 1, 2) => "대지 균열",
-
-        _ => PlayerSkills.GetActiveSkillName(id),
-    };
-
-    public static string EvolvedName(PassiveSkillId id, int route, int stage) => (id, route, stage) switch
-    {
-        (PassiveSkillId.Strength, 0, 1) => "치명의 힘",
-        (PassiveSkillId.Strength, 0, 2) => "파괴의 힘",
-        (PassiveSkillId.Strength, 1, 1) => "완력",
-        (PassiveSkillId.Strength, 1, 2) => "괴력",
-
-        (PassiveSkillId.Health, 0, 1) => "강건함",
-        (PassiveSkillId.Health, 0, 2) => "불굴",
-        (PassiveSkillId.Health, 1, 1) => "풍요의 몸",
-        (PassiveSkillId.Health, 1, 2) => "만찬의 몸",
-
-        (PassiveSkillId.Knowledge, 0, 1) => "보물 탐지",
-        (PassiveSkillId.Knowledge, 0, 2) => "보물 감정",
-        (PassiveSkillId.Knowledge, 1, 1) => "전투 통찰",
-        (PassiveSkillId.Knowledge, 1, 2) => "전장의 현자",
-
-        (PassiveSkillId.Assassinate, 0, 1) => "사냥꾼",
-        (PassiveSkillId.Assassinate, 0, 2) => "학살자",
-        (PassiveSkillId.Assassinate, 1, 1) => "필중 암살",
-        (PassiveSkillId.Assassinate, 1, 2) => "절대 급소",
-
-        (PassiveSkillId.Refresh, 0, 1) => "재생 순환",
-        (PassiveSkillId.Refresh, 0, 2) => "생명 순환",
-        (PassiveSkillId.Refresh, 1, 1) => "가속 순환",
-        (PassiveSkillId.Refresh, 1, 2) => "무한 순환",
-
-        (PassiveSkillId.Defense, 0, 1) => "반사 방어",
-        (PassiveSkillId.Defense, 0, 2) => "각인된 반격",
-        (PassiveSkillId.Defense, 1, 1) => "가시 갑주",
-        (PassiveSkillId.Defense, 1, 2) => "복수의 갑주",
-
-        (PassiveSkillId.Accel, 0, 1) => "재점화",
-        (PassiveSkillId.Accel, 0, 2) => "무한 점화",
-        (PassiveSkillId.Accel, 1, 1) => "고통 가속",
-        (PassiveSkillId.Accel, 1, 2) => "폭주 가속",
-
-        _ => PlayerSkills.GetPassiveSkillName(id),
-    };
+    public static string EvolvedName(PassiveSkillId id, int route, int stage) =>
+        Loc.TOr($"evo.name.{id}.{route}.{stage}", PlayerSkills.GetPassiveSkillName(id));
 }

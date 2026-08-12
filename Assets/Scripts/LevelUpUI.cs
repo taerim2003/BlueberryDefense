@@ -1096,18 +1096,11 @@ public class LevelUpUI : MonoBehaviour
     public Sprite GetPassiveIcon(EquippedPassive p) =>
         (p.EvolutionStage > 0 && p.Route >= 0 ? GetPassiveEvoIcon(p.Id, p.Route) : null) ?? GetPassiveIcon(p.Id);
 
-    private static string GetActiveSkillDescription(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.Whirlwind => "적을 자동으로 추적하는 회오리를 소환(지속시간 4초). 닿아있는 동안 지속 피해를 주며, 피해를 주는 동안 이동 속도가 느려짐",
-        ActiveSkillId.Orb => "전방으로 관통하며 나아가는 오브를 소환. 닿아있는 모든 적에게 지속 피해를 주고 느려지게 함",
-        ActiveSkillId.Lightning => "6초간 공격 피해를 입는 모든 적들에게 30% 확률로 낙뢰가 떨어져 피해",
-        ActiveSkillId.EagleDrop => "화면 전체에 독수리를 1초 간격으로 2회 투하해 모든 적에게 피해",
-        ActiveSkillId.Sniping => "가장 체력이 높은 적을 3회 저격해 큰 피해를 줌",
-        ActiveSkillId.Homing => "적을 추적하는 미사일 3개를 발사. 레벨업마다 미사일이 크게 늘고, 사용할수록 강해짐(이번 판 한정)",
-        ActiveSkillId.Shotgun => "전방으로 산탄을 뿌리고, 5초 동안 모든 스킬의 공격 횟수가 1회 증가",
-        ActiveSkillId.Rewind => "다른 모든 스킬의 재사용 대기시간을 1초 앞당김. 레벨업할수록 더 크게 되감음",
-        _ => "",
-    };
+    // 캐릭터 선택 화면도 시작 스킬 설명을 그대로 쓴다(설명 문구가 두 군데로 갈리지 않게).
+    // ⚠️ BasicAttack·Swing은 시작 전용이라 레벨업 선택지엔 안 뜨지만 캐릭터 선택 화면이 설명을 보여준다 —
+    //    표에 키가 둘 다 있어야 한다.
+    public static string GetActiveSkillDescription(ActiveSkillId id) =>
+        Loc.TOr("skill.desc." + id, "");
 
     private static string GetPassiveSkillDescription(PassiveSkillId id) => PlayerPassives.DescribePassiveAcquire(id);
 

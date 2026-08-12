@@ -48,6 +48,7 @@ public class OptionsMenu : MonoBehaviour
     private TMP_FontAsset font;
 
     private TMP_Text resolutionLabel;
+    private TMP_Text languageLabel;
     private GameObject saveResetRow;
     private Image saveResetBg;
     private TMP_Text saveResetLabel;
@@ -60,18 +61,35 @@ public class OptionsMenu : MonoBehaviour
     private bool isOpen;
 
     private const float ConfirmWindow = 4f;
-    private const string ResetIdleText = "세이브 초기화";
-    private const string ResetConfirmText = "정말? 한 번 더 클릭";
-    private const string ResetDoneText = "초기화 완료";
 
     private void Awake()
     {
         Instance = this;
         VolumeSettings.EnsureLoaded();
         BuildUI();
+        Loc.LocaleChanged += Rebuild;
     }
 
-    private void OnDestroy() { if (Instance == this) Instance = null; }
+    private void OnDestroy()
+    {
+        Loc.LocaleChanged -= Rebuild;
+        if (Instance == this) Instance = null;
+    }
+
+    // 언어를 바꾸면 이 패널은 **자기 자신이 열려 있는 채로** 글자가 바뀌어야 한다.
+    // 런타임에 코드로 지은 UI라 TMP를 하나씩 찾아 고치는 대신 통째로 다시 짓는다(행이 20개도 안 된다).
+    private void Rebuild()
+    {
+        bool wasOpen = isOpen;
+        showTween?.Kill();
+        if (panel != null) Destroy(panel);
+
+        // 캔버스는 남기고 내용만 다시 — BuildUI가 캔버스부터 만들므로 옛 캔버스도 같이 지운다.
+        for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
+
+        BuildUI();
+        if (wasOpen) { isOpen = false; Open(); }
+    }
 
     public bool IsOpen => isOpen;
 
@@ -146,27 +164,29 @@ public class OptionsMenu : MonoBehaviour
         group = panel.AddComponent<CanvasGroup>();
 
         var boxGo = NewUI("Box", panel.transform);
-        Center(boxGo, new Vector2(980, 720));
+        // 언어 행이 늘면서 720 → 800. 720이면 세이브 초기화 행(-626~-686)이 닫기 버튼(-630~-690)과 겹친다.
+        Center(boxGo, new Vector2(980, 800));
         AddImage(boxGo, BoxColor, true);
         box = (RectTransform)boxGo.transform;
 
         var title = NewUI("Title", boxGo.transform);
         Top(title, new Vector2(0, -28), new Vector2(RowWidth, 60));
-        AddText(title, font, "설정", 46, TextAlignmentOptions.Center, Color.white);
+        AddText(title, font, Loc.T("ui.options.title"), 46, TextAlignmentOptions.Center, Color.white);
 
         float y = -130f;
-        MakeSliderRow(boxGo.transform, ref y, "전체 음량", VolumeSettings.Master, VolumeSettings.SetMaster);
-        MakeSliderRow(boxGo.transform, ref y, "배경음", VolumeSettings.Bgm, VolumeSettings.SetBgm);
-        MakeSliderRow(boxGo.transform, ref y, "효과음", VolumeSettings.Sfx, VolumeSettings.SetSfx);
+        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.master"), VolumeSettings.Master, VolumeSettings.SetMaster);
+        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.bgm"), VolumeSettings.Bgm, VolumeSettings.SetBgm);
+        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.sfx"), VolumeSettings.Sfx, VolumeSettings.SetSfx);
 
         y -= 20f;
-        MakeToggleRow(boxGo.transform, ref y, "전체화면", Screen.fullScreen, SetFullscreen);
+        MakeToggleRow(boxGo.transform, ref y, Loc.T("ui.options.fullscreen"), Screen.fullScreen, SetFullscreen);
         MakeResolutionRow(boxGo.transform, ref y);
+        MakeLanguageRow(boxGo.transform, ref y);
 
         y -= 20f;
         MakeSaveResetRow(boxGo.transform, ref y);
 
-        var close = MakeButton(boxGo.transform, "닫기", ButtonColor, Close);
+        var close = MakeButton(boxGo.transform, Loc.T("ui.options.close"), ButtonColor, Close);
         Bottom(close, new Vector2(0, 30), new Vector2(260, 60));
         JuicyTuning.CenterPivot(close);
 
@@ -233,13 +253,50 @@ public class OptionsMenu : MonoBehaviour
         JuicyTuning.CenterPivot(next);
     }
 
+    // 해상도 행과 같은 ◀▶ 선택기. 드롭다운을 안 쓰는 이유도 같다(프리미티브만으로 조립 가능·항목이 적음).
+    private void MakeLanguageRow(Transform parent, ref float y)
+    {
+        var row = MakeRow(parent, ref y, Loc.T("ui.options.language"));
+
+        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepLanguage(-1));
+        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
+        JuicyTuning.CenterPivot(prev);
+
+        var valueGo = NewUI("LanguageValue", row.transform);
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
+        AddImage(valueGo, TrackColor, false);
+        languageLabel = AddText(valueGo, font, CurrentLanguageName(), 28, TextAlignmentOptions.Center, LabelColor);
+
+        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepLanguage(1));
+        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
+        JuicyTuning.CenterPivot(next);
+    }
+
+    // 언어 이름은 **그 언어로** 보여준다("한국어"/"English") — 못 읽는 언어로 적히면 되돌아올 수가 없다.
+    private static string CurrentLanguageName()
+    {
+        var ls = Loc.Locales;
+        if (ls.Count == 0) return "?";
+        var l = ls[Mathf.Clamp(Loc.CurrentIndex, 0, ls.Count - 1)];
+        return string.IsNullOrEmpty(l.LocaleName) ? l.Identifier.Code : l.LocaleName;
+    }
+
+    private void StepLanguage(int delta)
+    {
+        int count = Loc.Locales.Count;
+        if (count == 0) return;
+        // 순환시킨다 — 언어가 둘뿐이라 끝에서 막히면 왕복이 어색하다(해상도와 다른 점).
+        Loc.SetLocale(((Loc.CurrentIndex + delta) % count + count) % count);
+        // 라벨 갱신은 안 한다 — SetLocale이 LocaleChanged를 쏘고 Rebuild가 패널을 통째로 다시 짓는다.
+    }
+
     private void MakeSaveResetRow(Transform parent, ref float y)
     {
         saveResetRow = NewUI("SaveResetRow", parent);
         Anchored(saveResetRow, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(RowWidth, RowHeight));
         y -= RowStep;
 
-        var btn = MakeButton(saveResetRow.transform, ResetIdleText, DangerColor, OnSaveResetClicked);
+        var btn = MakeButton(saveResetRow.transform, Loc.T("ui.options.reset"), DangerColor, OnSaveResetClicked);
         Anchored(btn, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360, 56));
         saveResetBg = btn.GetComponent<Image>();
         saveResetLabel = btn.GetComponentInChildren<TMP_Text>();
@@ -371,7 +428,7 @@ public class OptionsMenu : MonoBehaviour
         if (confirmUntil <= 0f)
         {
             confirmUntil = Time.unscaledTime + ConfirmWindow;
-            saveResetLabel.text = ResetConfirmText;
+            saveResetLabel.text = Loc.T("ui.options.reset_confirm");
             saveResetBg.color = DangerArmedColor;
             return;
         }
@@ -382,14 +439,14 @@ public class OptionsMenu : MonoBehaviour
         PlayerPrefs.Save();
 
         confirmUntil = 0f;
-        saveResetLabel.text = ResetDoneText;
+        saveResetLabel.text = Loc.T("ui.options.reset_done");
         saveResetBg.color = DangerColor;
     }
 
     private void SetResetIdle()
     {
         confirmUntil = 0f;
-        if (saveResetLabel != null) saveResetLabel.text = ResetIdleText;
+        if (saveResetLabel != null) saveResetLabel.text = Loc.T("ui.options.reset");
         if (saveResetBg != null) saveResetBg.color = DangerColor;
     }
 
