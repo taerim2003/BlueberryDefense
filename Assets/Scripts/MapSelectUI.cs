@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ public class MapSelectUI : MonoBehaviour
     [Header("Shell")]
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
+    [SerializeField] private PanelSplitTransition splitTransition; // 위아래로 갈라지는 화면 전환(우선)
     [SerializeField] private Transform cardContainer;   // HorizontalLayoutGroup — 카드들이 담김
     [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본(container 안). 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
 
@@ -38,7 +40,16 @@ public class MapSelectUI : MonoBehaviour
     // 잠긴 맵 카드의 썸네일 색 — 실루엣만 남긴다(CharacterSelectUI와 같은 규칙).
     private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
 
+    // 맵을 고르면 그 카드의 배경 컷을 한 바퀴 돌린다. 인게임 루프(backgroundFrameSeconds=1.2초)는
+    // 카드 연출로 쓰기엔 늘어져서 여기만 따로 빠르게 센다.
+    [SerializeField] private float cardAnimFrameSeconds = 0.18f;
+
     private readonly List<GameObject> cardFrames = new List<GameObject>();
+    private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>(); // 고른 카드만 원본 크기·색으로 남긴다
+    private readonly List<Image> cardThumbs = new List<Image>();            // 배경 컷을 여기서 돌린다
+    private Coroutine thumbRoutine;
+    private Image animThumb;      // 지금 돌고 있는 썸네일(끊겼을 때 정지 그림으로 되돌리려고)
+    private Sprite animStill;
     private int selectedIndex = -1;
     private bool built;
 
@@ -65,10 +76,14 @@ public class MapSelectUI : MonoBehaviour
     private void Awake()
     {
         if (startButton != null) startButton.onClick.AddListener(Confirm);
-        if (backButton != null) backButton.onClick.AddListener(Close);
+        if (backButton != null) backButton.onClick.AddListener(Back);
         if (changeCharacterButton != null && characterSelect != null)
             changeCharacterButton.onClick.AddListener(characterSelect.Open);
-        if (characterSelect != null) characterSelect.OnSelectionChanged += RefreshCharacter;
+        if (characterSelect != null)
+        {
+            characterSelect.OnSelectionChanged += RefreshCharacter; // 고르는 중엔 표시만 갱신
+            characterSelect.OnConfirmed += OnCharacterConfirmed;    // 확정해야 이 화면이 열린다
+        }
         if (ascPrevButton != null) ascPrevButton.onClick.AddListener(() => ChangeAscension(-1));
         if (ascNextButton != null) ascNextButton.onClick.AddListener(() => ChangeAscension(+1));
         if (cardTemplate != null) cardTemplate.SetActive(false);
@@ -78,7 +93,8 @@ public class MapSelectUI : MonoBehaviour
     public void Open()
     {
         if (!built) BuildCards();
-        if (panelTransition != null) panelTransition.Show();
+        if (splitTransition != null) splitTransition.Show();
+        else if (panelTransition != null) panelTransition.Show();
         else if (panelRoot != null) panelRoot.SetActive(true);
         Select(FirstUnlockedIndex());
         RefreshCharacter();
@@ -99,10 +115,21 @@ public class MapSelectUI : MonoBehaviour
         int max = MaxSelectableAscension;
         ascensionLevel = Mathf.Clamp(ascensionLevel, 1, max);
 
-        if (ascLevelText != null) ascLevelText.text = "승천 " + ascensionLevel;
+        if (ascLevelText != null) ascLevelText.text = DifficultyName(ascensionLevel);
         if (ascDescText != null) ascDescText.text = DescribeAscension(ascensionLevel, max);
         if (ascPrevButton != null) ascPrevButton.interactable = ascensionLevel > 1;
         if (ascNextButton != null) ascNextButton.interactable = ascensionLevel < max;
+    }
+
+    // 난이도 이름. 표에 등급이 셋뿐이라 그대로 쉬움/보통/어려움으로 부른다.
+    // 등급이 늘어나면 이름이 모자라므로 그때는 "어려움 +N"으로 이어 붙인다.
+    private static readonly string[] DifficultyNames = { "쉬움", "보통", "어려움" };
+
+    private static string DifficultyName(int level)
+    {
+        int i = Mathf.Clamp(level, 1, int.MaxValue) - 1;
+        if (i < DifficultyNames.Length) return DifficultyNames[i];
+        return DifficultyNames[DifficultyNames.Length - 1] + " +" + (i - DifficultyNames.Length + 1);
     }
 
     // 등급 효과를 % 증가로 표기. 최고 해금 등급에 있고 위 등급이 더 있으면 해금 안내를 덧붙인다.
@@ -121,7 +148,7 @@ public class MapSelectUI : MonoBehaviour
         }
 
         if (level >= max && max < AscTable.MaxLevel)
-            body += "\n<color=#FFC864>클리어하면 다음 승천이 열립니다</color>";
+            body += "\n<color=#FFC864>클리어하면 다음 난이도가 열립니다</color>";
         return body;
     }
 
@@ -144,8 +171,24 @@ public class MapSelectUI : MonoBehaviour
 
     public void Close()
     {
-        if (panelTransition != null) panelTransition.Hide();
+        if (splitTransition != null) splitTransition.Hide();
+        else if (panelTransition != null) panelTransition.Hide();
         else if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    // 캐릭터 화면에서 "선택"을 누르면 그 다음 단계인 맵 선택으로 넘어온다
+    // (한 화면에 다 담으면 번잡해서 둘로 나눴다).
+    private void OnCharacterConfirmed()
+    {
+        RefreshCharacter();
+        Open();
+    }
+
+    // 맵 화면에서 뒤로 = 한 단계 앞인 캐릭터 선택으로 돌아간다.
+    private void Back()
+    {
+        Close();
+        if (characterSelect != null) characterSelect.Open();
     }
 
     private void BuildCards()
@@ -161,25 +204,29 @@ public class MapSelectUI : MonoBehaviour
 
             bool locked = map != null && !map.IsUnlocked;
 
-            var thumb = card.transform.Find("Thumb")?.GetComponent<Image>();
+            var thumb = FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
             if (thumb != null && map != null)
             {
                 thumb.sprite = map.background;
                 // 잠긴 맵은 실루엣으로만 — 뭐가 있는지는 알되 어떤 곳인지는 모르게.
                 thumb.color = locked ? LockedSilhouette : Color.white;
             }
+            cardThumbs.Add(thumb);
 
-            var nameText = card.transform.Find("Name")?.GetComponent<TMP_Text>();
+            var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
                 nameText.text = locked
                     ? "🔒 " + map.UnlockConditionText()
                     : (string.IsNullOrEmpty(map.displayName) ? map.name : map.displayName);
 
-            var frame = card.transform.Find("Frame")?.gameObject;
+            var frame = FindDeep(card.transform, "Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);
             cardFrames.Add(frame);
 
             int idx = i; // 클로저 캡처
+            var juicy = card.GetComponent<JuicyButton>();
+            cardJuicy.Add(juicy);
+
             var btn = card.GetComponent<Button>();
             if (btn != null)
             {
@@ -187,10 +234,19 @@ public class MapSelectUI : MonoBehaviour
                 btn.onClick.AddListener(() => Select(idx));
 
                 // JuicyButton은 Button.interactable을 보지 않는다 — 끄지 않으면 잠긴 카드도 호버에 반응한다.
-                var juicy = card.GetComponent<JuicyButton>();
                 if (juicy != null) juicy.enabled = !locked;
             }
         }
+    }
+
+    // 카드 속 부품을 깊이와 상관없이 찾는다. Transform.Find는 직속 자식만 보기 때문에,
+    // 씬에서 Thumb을 Bg 아래로 옮기는(마스크를 걸려고) 순간 조용히 null이 되어
+    // 모든 카드가 템플릿에 구워진 그림을 그대로 쓰게 된다.
+    private static Transform FindDeep(Transform root, string name)
+    {
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (t.name == name) return t;
+        return null;
     }
 
     // 처음 열 때 커서를 둘 곳. 잠긴 맵에 커서가 앉으면 "시작"이 눌리는 순간 잠긴 판이 시작된다.
@@ -210,10 +266,53 @@ public class MapSelectUI : MonoBehaviour
         selectedIndex = index;
         for (int i = 0; i < cardFrames.Count; i++)
             if (cardFrames[i] != null) cardFrames[i].SetActive(i == index);
+        for (int i = 0; i < cardJuicy.Count; i++)
+            if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == index);
         if (startButton != null) startButton.interactable = index >= 0;
+
+        PlayThumbAnimation(index);
 
         // 승천 상한은 맵마다 다르다 — 맵을 바꾸면 범위와 화살표 활성 상태를 다시 계산해야 한다.
         RefreshAscension();
+    }
+
+    // 고른 맵의 배경 컷을 한 바퀴 돌리고 정지 그림으로 돌아온다.
+    // backgroundFrames가 비어 있는 맵(해안가)은 조용히 넘어간다.
+    private void PlayThumbAnimation(int index)
+    {
+        if (thumbRoutine != null) { StopCoroutine(thumbRoutine); thumbRoutine = null; }
+        StopThumbAnimation();
+
+        var map = maps != null && index >= 0 && index < maps.Length ? maps[index] : null;
+        if (map == null || map.backgroundFrames == null || map.backgroundFrames.Length < 2) return;
+        if (index >= cardThumbs.Count || cardThumbs[index] == null) return;
+
+        thumbRoutine = StartCoroutine(ThumbRoutine(cardThumbs[index], map));
+    }
+
+    private IEnumerator ThumbRoutine(Image thumb, MapDefinition map)
+    {
+        animThumb = thumb;
+        animStill = map.background;
+
+        float step = Mathf.Max(0.02f, cardAnimFrameSeconds);
+        foreach (var frame in map.backgroundFrames)
+        {
+            if (frame != null) thumb.sprite = frame;
+            // 타이틀 화면은 timeScale이 0일 수 있다 — 실시간으로 센다.
+            yield return new WaitForSecondsRealtime(step);
+        }
+
+        thumbRoutine = null;
+        StopThumbAnimation();
+    }
+
+    private void StopThumbAnimation()
+    {
+        if (animThumb == null) return;
+        if (animStill != null) animThumb.sprite = animStill;
+        animThumb = null;
+        animStill = null;
     }
 
     private void Confirm()

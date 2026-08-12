@@ -17,6 +17,13 @@ MonoBehaviour:
   portrait: {fileID: 21300000, guid: 8285d9484ac6993428695ca42fe6ecaf, type: 3}
   sprite: {fileID: 0}
   animatorController: {fileID: 0}
+  attackFrames:
+  - {fileID: 21300000, guid: 18eb2f357bd04094f9f5505f8e59d2d4, type: 3}
+  - {fileID: 21300000, guid: 8f52c736e20db7a41bc5eb27c3292649, type: 3}
+  - {fileID: 21300000, guid: bfef68c98f75890498448639c8fe0c76, type: 3}
+  attackFrameSeconds: 0.2
+  attackFrameScale: 1
+  attackFrameOffset: {x: 0, y: 0}
   baseHealth: 100
   unlockedFromStart: 1
   requiredEssenceEarned: 0

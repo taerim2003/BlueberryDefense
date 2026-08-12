@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1606884867436602917}
   - component: {fileID: 7403513287936956858}
   - component: {fileID: 5875823335524137323}
+  - component: {fileID: 5796831860273278775}
   m_Layer: 0
   m_Name: Swing_Shockwave
   m_TagString: Untagged
@@ -83,7 +84,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 50
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 7ab23d1d62e991e4791702909a3c986c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 33cce1fdbf36a4e4ea72acf1a001c11b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -131,7 +132,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.90625, y: 0.40625}
+    oldSize: {x: 1.9375, y: 0.75}
     newSize: {x: 1.90625, y: 0.40625}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -153,3 +154,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SwingShockwave
   moveSpeed: 16
   lifetime: 2.5
+--- !u!114 &5796831860273278775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 830679570193835966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c9cbfe07f87cc84e8054f1da849e345, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteFlipbook
+  frames:
+  - {fileID: 21300000, guid: 33cce1fdbf36a4e4ea72acf1a001c11b, type: 3}
+  - {fileID: 21300000, guid: d033aef100c6b934799b7761605e3c84, type: 3}
+  fps: 10
+  loop: 1
+  despawnOnFinish: 0

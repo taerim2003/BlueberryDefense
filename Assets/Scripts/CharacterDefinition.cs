@@ -16,6 +16,20 @@ public class CharacterDefinition : ScriptableObject
     public Sprite sprite;                                // 인게임 플레이어 스프라이트
     public RuntimeAnimatorController animatorController; // 인게임 애니메이터
 
+    // 선택 화면에서 카드를 누르면 이 프레임들을 한 번 훑고 portrait로 돌아온다.
+    // 인게임 공격 클립과 같은 그림을 쓰지만, 카드는 Animator가 아니라 Image라서 배열로 따로 들고 있다.
+    [Header("카드 클릭 시 공격 모션 (비면 재생 안 함)")]
+    public Sprite[] attackFrames;
+    public float attackFrameSeconds = 0.09f;
+
+    // 공격 프레임의 캔버스가 초상화보다 크면(충격파까지 담느라) preserveAspect가 가로에 맞추면서
+    // 몸통이 확 쪼그라든다 — 파인애플이 150x60, 초상화는 38x47이라 세로가 절반 이하로 눌렸다.
+    // 재생하는 동안만 썸네일을 이만큼 키우고 밀어서 **몸통이 초상화와 같은 크기·같은 자리**에 오게 한다.
+    // 오프셋은 썸네일 표시 크기 대비 비율이라 카드 크기가 바뀌어도 따라간다.
+    // 두 캔버스가 같은 캐릭터(딸기)는 1과 0 그대로 두면 된다.
+    public float attackFrameScale = 1f;
+    public Vector2 attackFrameOffset = Vector2.zero;
+
     [Header("기본 스탯")]
     public int baseHealth = 100;
 

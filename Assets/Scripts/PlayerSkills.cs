@@ -140,11 +140,24 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private Sprite evolvedArrowSpriteTier2;
     private const float FlyingArrowSpawnRaise = BalanceConstants.FlyingArrowSpawnRaise; // 비행 적 타격 진화 시 발사점 상승(세로 긴 히트박스와 합쳐 지상/비행 동시 커버)
     [SerializeField] private GameObject whirlwindPrefab;
+    [SerializeField] private GameObject miniWhirlwindPrefab; // 미니 회오리 전용 그림(Effect_MiniTornado). 미배선이면 본체를 축소해 쓴다(도트가 뭉개짐)
+    [SerializeField] private GameObject lightningRodPrefab;  // 피뢰침 기둥(Effect_LightningRod). 미배선이면 임시 프리미티브로 폴백
+    [SerializeField] private GameObject bigThunderVfxPrefab; // 피뢰침이 유도하는 큰 낙뢰(Effect_BigThunder) — 틱마다 기둥 꼭대기에 내리친다
+    // 되감기 표식 — 시전할 때 머리 위에 한 번 떴다 사라진다. 진화 루트별로 그림만 다르다.
+    [SerializeField] private GameObject rewindVfxPrefab;       // 진화 전 기본(Effect_Rewind)
+    [SerializeField] private GameObject rewindRoute1VfxPrefab; // 루트1 = 되감기 정도(Effect_RewindYellow)
+    [SerializeField] private GameObject rewindRoute2VfxPrefab; // 루트2 = 다음 스킬 피해(Effect_Rewind_R)
+    [SerializeField] private GameObject rockDebrisPrefab;      // 휘두르기에 맞은 적한테서 튀는 돌조각(Particle_Rock)
+    // 파인애플 망치는 휘두르기 진화 루트에 따라 그림이 바뀐다(몸 트랙은 그대로, Hammer 자식 트랙만 교체하는 오버라이드).
+    [SerializeField] private RuntimeAnimatorController bigHammerController;   // 힘 연계 = 박살내기
+    [SerializeField] private RuntimeAnimatorController shockHammerController; // 회오리 연계 = 지진파
     [SerializeField] private GameObject bigTornadoPrefab;
     [SerializeField] private GameObject orbPrefab;
     [SerializeField] private GameObject bigOrbPrefab; // 지식 연계 path1 T2부터 등장하는 큰 초록 오브 비주얼
     [SerializeField] private GameObject orbAltarPrefab;
     [SerializeField] private GameObject shotgunPelletPrefab; // 산탄 알(SmallOrb_Skill 재사용 — 방향성 단발 투사체)
+    [SerializeField] private GameObject scatterPelletPrefab;  // 산탄 알 전용 그림(Effect_Scatter 플립북). 미배선이면 shotgunPelletPrefab으로 폴백
+    [SerializeField] private GameObject scatterFireVfxPrefab; // 산탄을 뿜을 때 알 뒤에 남는 화약/불꽃(Effect_ScatterFire). 알 개수만큼 스폰
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
     [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 후속 타격 VFX(Effect_Sniping, 2~5번째 저격)
@@ -436,6 +449,27 @@ public class PlayerSkills : MonoBehaviour
 
     // 티어마다 정확히 하나의 효과만 부여한다. 여기 없는 조합은 PathTier를 직접 읽는 Fire*/TryUseSkill에서
     // 실시간으로 계산하는 기믹(관통 횟수, 분열 소환 수, 슬로우 강화, 낙뢰 재귀/스택 등)이라 영구 스탯 변경이 없다.
+    // 진화한 망치로 갈아끼운다. ApplyPathTierEffect가 static이라 instance를 거친다.
+    // ⚠️ 딸기처럼 다른 캐릭터가 휘두르기를 진화시켰을 때 파인애플 컨트롤러를 씌우면 **캐릭터가 통째로 파인애플이 된다** —
+    //    base 컨트롤러가 같을 때(= 지금 파인애플일 때)만 교체한다.
+    private static void ApplyHammerLook(bool shockRoute)
+    {
+        if (instance == null || instance.animator == null) return;
+
+        RuntimeAnimatorController next = shockRoute ? instance.shockHammerController : instance.bigHammerController;
+        if (next == null) return;
+
+        RuntimeAnimatorController cur = instance.animator.runtimeAnimatorController;
+        AnimatorOverrideController curOverride = cur as AnimatorOverrideController;
+        RuntimeAnimatorController curBase = curOverride != null ? curOverride.runtimeAnimatorController : cur;
+
+        AnimatorOverrideController nextOverride = next as AnimatorOverrideController;
+        RuntimeAnimatorController nextBase = nextOverride != null ? nextOverride.runtimeAnimatorController : next;
+
+        if (curBase != nextBase) return; // 다른 캐릭터 — 건드리지 않는다
+        instance.animator.runtimeAnimatorController = next;
+    }
+
     private static void ApplyPathTierEffect(EquippedSkill skill, int path, int newTier)
     {
         switch (skill.Id, path, newTier)
@@ -541,12 +575,14 @@ public class PlayerSkills : MonoBehaviour
             // 쿨타임 3배로 대가를 치르게 한다("한 방은 크지만 자주 못 쓴다").
             case (ActiveSkillId.Swing, 1, 2):
                 skill.Cooldown *= 3f;
+                ApplyHammerLook(shockRoute: false); // 망치가 커진다
                 break;
 
             // 휘두르기 path2(회오리 연계) 1차 = 맵 끝까지 가는 충격파. 본체 판정 밖의 적까지 닿는
             // 사실상 사거리 무제한 공격이라, 1루트와 마찬가지로 쿨타임으로 대가를 치르게 한다.
             case (ActiveSkillId.Swing, 2, 2):
                 skill.Cooldown *= 1.8f;
+                ApplyHammerLook(shockRoute: true); // 충격파를 내는 망치로
                 break;
 
             // 나머지 휘두르기 진화는 영구 스탯 변경이 없다 — 기절(path1)·충격파(path2) 전부
@@ -1451,14 +1487,11 @@ public class PlayerSkills : MonoBehaviour
     // 광역이라 여럿 맞히면 그만큼 크게 회복된다 — 근접으로 파고드는 위험의 보상.
     private const int SwingLifestealPerHit = 2;
 
-    // ── 범위 표시 ──
-    // 피해 판정이 직사각형이라 표시도 직사각형이다(원으로 그리면 모서리가 어긋난다).
-    // 휘두르기 전용 — 시전하고 피해가 들어갈 때까지 떠 있다가 타격 후 사라진다.
-    private const float SwingRangeAlpha = 0.28f;
-    private const float SwingRangeFadeDuration = 0.25f;
-    private const int SwingRangeSortingOrder = 0;   // 적(100+)보다 뒤에 깔린다
-    private static readonly Color SwingRangeColor = new Color(1f, 0.85f, 0.15f, SwingRangeAlpha);
-    private static Sprite swingRangeSprite;
+    // ── 돌조각 파티클 ──
+    // 노란 범위 사각형을 걷어낸 자리를 대신한다 — "어디까지 맞았는지"를 표시가 아니라 **맞은 적한테서** 보여준다.
+    // 진화 루트와 무관하게 휘두르기에 맞으면 항상 튄다.
+    private const int RockDebrisPerHit = 4;
+    private const float RockDebrisSpeed = 4.5f;
 
     private void FireSwing(float damage, float critChance, EquippedSkill skill)
     {
@@ -1478,8 +1511,6 @@ public class PlayerSkills : MonoBehaviour
         float reach = SwingReach * reachMult * skill.Scale;
         float halfHeight = SwingHalfHeight * reachMult * skill.Scale;
 
-        SpriteRenderer range = SpawnSwingRange(reach, halfHeight);
-
         yield return new WaitForSeconds(SwingImpactDelay); // 내려찍는 순간까지 기다린다
 
         // 타격 이펙트는 별도 VFX가 아니라 **4번째 프레임 그림에 그려져 있다**(사용자 아트).
@@ -1489,42 +1520,6 @@ public class PlayerSkills : MonoBehaviour
         SwingHit(damage, critChance, reach, halfHeight, SwingKnockback, stun, lifesteal);
 
         if (shockwave) SpawnShockwave(damage, critChance, empoweredShock);
-
-        // 피해가 들어간 뒤에야 범위 표시가 사라진다 — "어디까지 맞았는지"를 결과와 함께 보여준다.
-        float t = 0f;
-        while (range != null && t < SwingRangeFadeDuration)
-        {
-            t += Time.deltaTime;
-            Color c = SwingRangeColor;
-            c.a = Mathf.Lerp(SwingRangeAlpha, 0f, t / SwingRangeFadeDuration);
-            range.color = c;
-            yield return null;
-        }
-        if (range != null) Destroy(range.gameObject);
-    }
-
-    // 판정과 **똑같은** 사각형을 깔아 준다: 앞(왼쪽)으로 SwingNearOffset~reach, 위아래 halfHeight.
-    // ⚠️ 플레이어의 localScale이 1.5라 자식으로 붙이면 크기가 곱해진다 — 월드에 독립으로 둔다.
-    private SpriteRenderer SpawnSwingRange(float reach, float halfHeight)
-    {
-        if (swingRangeSprite == null)
-        {
-            // 1×1유닛짜리 흰 사각형 하나면 충분하다(크기는 localScale로 준다) — 별도 아트 파일이 필요 없다.
-            Texture2D tex = Texture2D.whiteTexture;
-            swingRangeSprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
-        }
-
-        GameObject go = new GameObject("SwingRange", typeof(SpriteRenderer));
-        SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
-        sr.sprite = swingRangeSprite;
-        sr.color = SwingRangeColor;
-        sr.sortingOrder = SwingRangeSortingOrder;
-
-        go.transform.position = transform.position
-            + Vector3.left * ((SwingNearOffset + reach) * 0.5f)
-            + Vector3.up * SwingCenterYOffset;
-        go.transform.localScale = new Vector3(reach - SwingNearOffset, halfHeight * 2f, 1f);
-        return sr;
     }
 
     // 내려찍은 자리에서 맵 끝까지 달려나가는 충격파. 본체보다 약하게 때리고 살짝만 밀어낸다.
@@ -1543,7 +1538,7 @@ public class PlayerSkills : MonoBehaviour
     private void SwingHit(float damage, float critChance, float reach, float halfHeight, float knockback, bool stun, int lifestealPerHit)
     {
         float px = transform.position.x;
-        float py = transform.position.y + SwingCenterYOffset; // 범위 표시(SpawnSwingRange)와 같은 중심을 쓴다
+        float py = transform.position.y + SwingCenterYOffset; // 판정 사각형의 세로 중심
 
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
         {
@@ -1557,8 +1552,28 @@ public class PlayerSkills : MonoBehaviour
             e.ApplyKnockback(knockback);
             if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
             if (lifestealPerHit > 0 && health != null) health.AddOverheal(lifestealPerHit);
+            SpawnRockDebris(p);
         }
     }
+
+    // 맞은 적 자리에서 돌조각이 위쪽 반원으로 튄다.
+    private void SpawnRockDebris(Vector3 at)
+    {
+        if (rockDebrisPrefab == null) return;
+
+        for (int i = 0; i < RockDebrisPerHit; i++)
+        {
+            GameObject go = ObjectPool.Instance.Spawn(rockDebrisPrefab, at, Quaternion.identity);
+            RockDebris debris = go.GetComponent<RockDebris>();
+            if (debris == null) continue;
+
+            float deg = Random.Range(25f, 155f); // 위쪽 반원 — 아래로 파고드는 조각이 없게
+            Vector2 dir = new Vector2(Mathf.Cos(deg * Mathf.Deg2Rad), Mathf.Sin(deg * Mathf.Deg2Rad));
+            debris.Launch(dir * Random.Range(RockDebrisSpeed * 0.6f, RockDebrisSpeed), Random.Range(-360f, 360f));
+        }
+    }
+
+    private const float RewindVfxHeight = 1.9f; // 되감기 표식이 뜨는 머리 위 높이(유닛)
 
     // ── 되감기: 다른 스킬의 쿨타임을 앞당긴다 ──
     private void FireRewind(EquippedSkill skill)
@@ -1580,6 +1595,14 @@ public class PlayerSkills : MonoBehaviour
         // Route2(path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
         if (skill.PathTier[1] >= 1)
             nextSkillDamageBonus = skill.PathTier[1] >= 3 ? 1.0f : skill.PathTier[1] >= 2 ? 0.6f : 0.3f;
+
+        // 되감기는 여태 화면에 아무것도 안 나왔다 — 머리 위에 표식을 한 번 띄운다.
+        // 루트는 배타적이라 둘 중 하나만 걸린다(진화 전이면 기본 그림).
+        GameObject rewindVfx = rewindVfxPrefab;
+        if (skill.PathTier[0] >= 1 && rewindRoute1VfxPrefab != null) rewindVfx = rewindRoute1VfxPrefab;
+        else if (skill.PathTier[1] >= 1 && rewindRoute2VfxPrefab != null) rewindVfx = rewindRoute2VfxPrefab;
+        if (rewindVfx != null)
+            ObjectPool.Instance.Spawn(rewindVfx, transform.position + Vector3.up * RewindVfxHeight, Quaternion.identity);
 
         animator.SetTrigger("Attack");
     }
@@ -1675,10 +1698,12 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.ExtraLifetime = extraLifetime;
     }
 
+    private const float ScatterFireBackOffset = 0.35f; // 화약 불꽃을 알보다 얼마나 뒤에 놓을지(유닛)
+
     // 적이 오는 왼쪽으로 부채꼴 산탄. 알이 늘어도 각도는 그대로라 **촘촘해지는 것**이 눈에 보인다.
     private void FireShotgunPellets(float damage, float critChance, EquippedSkill skill)
     {
-        if (shotgunPelletPrefab == null) return;
+        if (shotgunPelletPrefab == null && scatterPelletPrefab == null) return;
 
         int pellets = Mathf.Max(1, ShotgunBasePellets + skill.ExtraProjectiles); // 레벨업 주 성장축
 
@@ -1691,6 +1716,9 @@ public class PlayerSkills : MonoBehaviour
 
         Vector3 origin = transform.position + Vector3.up * 0.2f;
 
+        // 전용 그림이 배선돼 있으면 그쪽. 폴백(shotgunPelletPrefab)은 추적 오브와 공유하는 원본이라 그림이 오브다.
+        GameObject pelletPrefab = scatterPelletPrefab != null ? scatterPelletPrefab : shotgunPelletPrefab;
+
         for (int i = 0; i < pellets; i++)
         {
             float t = pellets > 1 ? i / (float)(pellets - 1) : 0.5f;
@@ -1700,7 +1728,13 @@ public class PlayerSkills : MonoBehaviour
             // 각도가 0이면(전방 집중) 전부 한 점에서 겹쳐 한 발처럼 보인다 — 출발 높이를 위아래로 벌려 "다발"이 보이게 한다.
             Vector3 spawnAt = origin + (spreadDegrees <= 0f ? Vector3.up * Mathf.Lerp(-0.45f, 0.45f, t) : Vector3.zero);
 
-            GameObject obj = Instantiate(shotgunPelletPrefab, spawnAt, Quaternion.identity);
+            // 알 하나당 화약 불꽃을 발사 지점 **뒤쪽**에 하나씩 남긴다 — 그림은 한 발짜리라 알이 늘면 같이 늘어난다.
+            // 불꽃 그림은 위를 향해 그려져 있어 -90도 보정해야 진행 방향으로 뻗는다.
+            if (scatterFireVfxPrefab != null)
+                ObjectPool.Instance.Spawn(scatterFireVfxPrefab, spawnAt - (Vector3)(dir * ScatterFireBackOffset), Quaternion.Euler(0f, 0f, angle - 90f));
+
+            // 알 그림은 왼쪽으로 날아가는 형태(궤적이 뒤로 뻗음)라 부채꼴 각도만큼 같이 돌려야 궤적이 진행 방향과 맞는다.
+            GameObject obj = Instantiate(pelletPrefab, spawnAt, Quaternion.Euler(0f, 0f, angle));
             obj.transform.localScale *= skill.Scale;
             SmallOrb pellet = obj.GetComponent<SmallOrb>();
             if (pellet == null) continue;
@@ -1715,7 +1749,10 @@ public class PlayerSkills : MonoBehaviour
     private Whirlwind SpawnWhirlwind(Vector3 position, float damage, float critChance, float scale, bool applySlow, bool applyVulnerable, int maxHitCount = 0, float slowDuration = 3f, float extraLifetime = 0f, bool isMini = false, float tickIntervalMult = 1f)
     {
         PlayCastSfx(whirlwindCastSfx, whirlwindCastSfxVolume);
-        GameObject obj = Instantiate(whirlwindPrefab, position, Quaternion.identity);
+        // 미니 전용 프리팹은 그림이 작은 만큼(48px vs 64px) localScale이 크고 콜라이더가 그만큼 작다 —
+        // 월드 기준 화면 크기·판정·바닥선 보정이 전부 본체 축소판과 동일하게 나오도록 맞춰 둔 것이다. 한쪽만 고치지 말 것.
+        GameObject prefab = isMini && miniWhirlwindPrefab != null ? miniWhirlwindPrefab : whirlwindPrefab;
+        GameObject obj = Instantiate(prefab, position, Quaternion.identity);
         obj.transform.localScale *= scale;
         Whirlwind whirlwind = obj.GetComponent<Whirlwind>();
         whirlwind.Damage = damage;
@@ -1898,6 +1935,14 @@ public class PlayerSkills : MonoBehaviour
 
     private GameObject SpawnLightningRod(Vector3 center, bool empowered)
     {
+        // 전용 도트가 배선돼 있으면 그쪽. 그림 높이(3.25유닛)가 프리미티브 높이(3.2)와 사실상 같아 scale 1로 쓴다.
+        if (lightningRodPrefab != null)
+        {
+            GameObject go = Instantiate(lightningRodPrefab, center + Vector3.down * 0.4f, Quaternion.identity);
+            if (empowered) go.transform.localScale *= 1.25f;
+            return go;
+        }
+
         if (lightningRodSprite == null)
         {
             Texture2D tex = Texture2D.whiteTexture;
@@ -1940,6 +1985,7 @@ public class PlayerSkills : MonoBehaviour
     private const float LightningRodDamageRatio = 3f;          // 1차: 본체 피해의 3배 = "개큰번개"
     private const float LightningRodEmpoweredRatio = 5f;       // 2차
     private const float LightningRodEmpoweredRadiusMult = 1.3f;
+    private const float BigThunderHalfHeight = 2.81f; // Effect_BigThunder 120px ÷ PPU32 × scale1.5 ÷ 2 — 낙뢰 아래끝을 기둥 꼭대기에 맞추는 데 쓴다
 
     private IEnumerator LightningRodRoutine(float damage, float critChance, bool empowered)
     {
@@ -1951,8 +1997,16 @@ public class PlayerSkills : MonoBehaviour
 
         GameObject rod = SpawnLightningRod(center, empowered);
 
+        // 낙뢰가 기둥 꼭대기에서 위로 뻗도록 아래끝을 촉에 맞춘다(그림 pivot이 중앙이라 반높이만큼 올린다).
+        float rodHeight = LightningRodHeight * (empowered ? 1.25f : 1f);
+        float boltCenterY = center.y - 0.4f + rodHeight * 0.5f + BigThunderHalfHeight;
+
         for (float elapsed = 0f; elapsed < LightningRodDuration; elapsed += LightningRodInterval)
         {
+            // 연출과 판정을 같은 틱에 맞춘다 — 번개가 내리치는 순간 아래 루프가 피해·기절을 준다.
+            if (bigThunderVfxPrefab != null)
+                ObjectPool.Instance.Spawn(bigThunderVfxPrefab, new Vector3(center.x, boltCenterY, 0f), Quaternion.identity);
+
             foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             {
                 if (e == null || !e.IsAlive) continue;

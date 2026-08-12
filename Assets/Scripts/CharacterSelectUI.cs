@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
@@ -11,25 +13,45 @@ public class CharacterSelectUI : MonoBehaviour
 {
     [Header("Data")]
     [SerializeField] private CharacterDefinition[] characters;
+    [SerializeField] private Sprite lockIcon; // 비우면 코드로 구운 자물쇠를 쓴다
 
     [Header("Shell")]
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
+    [SerializeField] private PanelSplitTransition splitTransition; // 위아래로 갈라지는 화면 전환(우선)
     [SerializeField] private Transform cardContainer;   // 카드들이 담기는 컨테이너
     [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본. 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
 
     [Header("Actions")]
     [SerializeField] private Button backButton;
+    [SerializeField] private Button confirmButton; // 이걸 눌러야 다음 단계(맵 선택)로 넘어간다
+
+    [Header("시작 스킬 미리보기 (선택한 캐릭터의 Q)")]
+    [SerializeField] private Sprite[] skillIcons;   // ActiveSkillId 순서로 넣는다
+    [SerializeField] private Image skillIcon;
+    [SerializeField] private TMP_Text skillNameText;
+    [SerializeField] private TMP_Text skillDescText;
 
     // 선택이 바뀌면 발생. MapSelectUI가 구독해 현재 캐릭터 표시를 갱신한다.
     public event Action OnSelectionChanged;
+
+    // "선택" 버튼으로 확정했을 때 발생. 다음 단계(맵 선택)가 이걸 듣고 열린다.
+    public event Action OnConfirmed;
 
     // 잠긴 캐릭터 카드의 초상화 색 — 거의 검은 실루엣만 남긴다.
     private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
 
     private readonly List<GameObject> cardFrames = new List<GameObject>();
+    private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>();  // 고른 카드만 원본 크기·색으로 남긴다
+    private readonly List<Image> cardThumbs = new List<Image>();             // 클릭 시 공격 모션을 여기서 돌린다
     private int selectedIndex;   // 기본 0 = 로스터 첫 캐릭터(= 프리팹 기본값과 동일)
+    private int hoverIndex = -1; // 커서가 올라간 카드(꺽쇠를 미리 보여준다)
     private bool built;
+    private Coroutine attackRoutine;
+    private Image attackThumb;        // 지금 공격 모션이 도는 썸네일(끊겼을 때 되돌리려고 들고 있는다)
+    private Sprite attackPortrait;
+    private Vector2 attackHome;
+    private Vector3 attackHomeScale;
 
     // 현재 선택된 캐릭터. 로스터가 비어 있으면 null(→ RunConfig.Character=null → 프리팹 기본값).
     public CharacterDefinition Selected =>
@@ -40,6 +62,7 @@ public class CharacterSelectUI : MonoBehaviour
     {
         RestoreSelection(); // 카드를 짓기 전에 복원해야 Open() 없이도 Selected가 옳다(MapSelectUI가 바로 읽는다)
         if (backButton != null) backButton.onClick.AddListener(Close);
+        if (confirmButton != null) confirmButton.onClick.AddListener(Confirm);
         if (cardTemplate != null) cardTemplate.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -63,15 +86,24 @@ public class CharacterSelectUI : MonoBehaviour
     public void Open()
     {
         if (!built) BuildCards();
-        if (panelTransition != null) panelTransition.Show();
+        if (splitTransition != null) splitTransition.Show();
+        else if (panelTransition != null) panelTransition.Show();
         else if (panelRoot != null) panelRoot.SetActive(true);
         Highlight(selectedIndex);
     }
 
     public void Close()
     {
-        if (panelTransition != null) panelTransition.Hide();
+        if (splitTransition != null) splitTransition.Hide();
+        else if (panelTransition != null) panelTransition.Hide();
         else if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    // "선택" 버튼: 여기서만 다음 단계로 넘어간다(카드 클릭은 고르기까지만).
+    private void Confirm()
+    {
+        Close();
+        OnConfirmed?.Invoke();
     }
 
     private void BuildCards()
@@ -87,7 +119,7 @@ public class CharacterSelectUI : MonoBehaviour
 
             bool locked = chr != null && !chr.IsUnlocked;
 
-            var thumb = card.transform.Find("Thumb")?.GetComponent<Image>();
+            var thumb = FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
             if (thumb != null)
             {
                 bool hasPortrait = chr != null && chr.portrait != null;
@@ -96,17 +128,23 @@ public class CharacterSelectUI : MonoBehaviour
                 // 잠긴 캐릭터는 실루엣으로만 보여준다 — 뭐가 있는지는 알되 누군지는 모르게.
                 thumb.color = locked ? LockedSilhouette : Color.white;
             }
+            cardThumbs.Add(thumb);
 
-            var nameText = card.transform.Find("Name")?.GetComponent<TMP_Text>();
+            if (locked) AddLockBadge(card);
+
+            var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && chr != null)
                 nameText.text = locked ? "???"
                     : (string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName);
 
-            var frame = card.transform.Find("Frame")?.gameObject;
+            var frame = FindDeep(card.transform, "Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);
             cardFrames.Add(frame);
 
             int idx = i; // 클로저 캡처
+            var juicy = card.GetComponent<JuicyButton>();
+            cardJuicy.Add(juicy);
+
             var btn = card.GetComponent<Button>();
             if (btn != null)
             {
@@ -114,10 +152,92 @@ public class CharacterSelectUI : MonoBehaviour
                 btn.onClick.AddListener(() => Pick(idx));
 
                 // JuicyButton은 Button.interactable을 보지 않는다 — 끄지 않으면 잠긴 카드도 호버에 반응한다.
-                var juicy = card.GetComponent<JuicyButton>();
                 if (juicy != null) juicy.enabled = !locked;
             }
+
+            if (!locked) AddHoverFrame(card, i);
         }
+    }
+
+    // 잠긴 카드 한가운데에 자물쇠를 얹는다. 전용 그림이 있으면 그걸 쓰고, 없으면 코드로 굽는다
+    // (적 발밑 그림자와 같은 방식 — 도트가 나오면 lockIcon에 꽂기만 하면 된다).
+    private void AddLockBadge(GameObject card)
+    {
+        var go = new GameObject("Lock", typeof(RectTransform), typeof(Image));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(card.transform, false);
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = new Vector2(64f, 64f);
+
+        var img = go.GetComponent<Image>();
+        img.sprite = lockIcon != null ? lockIcon : LockSprite();
+        img.raycastTarget = false;
+        rt.SetAsLastSibling(); // 썸네일 위에 오도록
+    }
+
+    // 16x16 자물쇠. 한 장만 구워 모든 잠긴 카드가 공유한다.
+    private static Sprite bakedLock;
+
+    private static Sprite LockSprite()
+    {
+        if (bakedLock != null) return bakedLock;
+
+        string[] art =
+        {
+            "................",
+            "................",
+            ".....######.....",
+            "....##....##....",
+            "....##....##....",
+            "....##....##....",
+            "..############..",
+            "..############..",
+            "..#####..#####..",
+            "..####....####..",
+            "..#####..#####..",
+            "..############..",
+            "..############..",
+            "..############..",
+            "................",
+            "................",
+        };
+
+        var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+        var body = new Color(0.13f, 0.12f, 0.18f, 1f);
+        for (int y = 0; y < 16; y++)
+            for (int x = 0; x < 16; x++)
+                tex.SetPixel(x, 15 - y, art[y][x] == '#' ? body : Color.clear); // 배열은 위에서부터, 텍스처는 아래에서부터
+        tex.Apply();
+
+        bakedLock = Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
+        return bakedLock;
+    }
+
+    // 커서를 올리면 꺽쇠를 미리 보여준다. JuicyButton이 이미 포인터 이벤트를 쓰고 있으므로
+    // 그쪽을 건드리지 않도록 EventTrigger를 따로 얹는다(둘 다 호출된다).
+    private void AddHoverFrame(GameObject card, int index)
+    {
+        var trigger = card.GetComponent<EventTrigger>();
+        if (trigger == null) trigger = card.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => { hoverIndex = index; RefreshFrames(); });
+        trigger.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => { if (hoverIndex == index) hoverIndex = -1; RefreshFrames(); });
+        trigger.triggers.Add(exit);
+    }
+
+    // 카드 속 부품을 깊이와 상관없이 찾는다(MapSelectUI와 같은 이유 — 씬에서 Thumb을
+    // Bg 아래로 옮기면 Transform.Find는 조용히 null을 준다).
+    private static Transform FindDeep(Transform root, string name)
+    {
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (t.name == name) return t;
+        return null;
     }
 
     // 카드 클릭: 선택 확정 → 표시 갱신 알림 → 팝업 닫기.
@@ -129,13 +249,100 @@ public class CharacterSelectUI : MonoBehaviour
         selectedIndex = index;
         if (characters[index] != null) CharacterSave.Save(characters[index].name); // 다음 판에도 이 캐릭터로 시작한다
         Highlight(index);
+        PlayAttack(index);
         OnSelectionChanged?.Invoke();
-        Close();
+        // 여기서 닫지 않는다 — 확정은 "선택" 버튼이 한다.
+    }
+
+    // 고른 카드의 그림이 공격 모션을 한 번 훑고 초상화로 돌아온다.
+    // 카드를 연달아 누르면 앞의 재생을 끊고 그 카드의 초상화를 되돌려 놓는다.
+    private void PlayAttack(int index)
+    {
+        if (attackRoutine != null) { StopCoroutine(attackRoutine); attackRoutine = null; }
+        EndAttackFraming(); // 끊겼든 끝났든 썸네일을 원래 그림·크기·자리로
+
+        var chr = characters != null && index >= 0 && index < characters.Length ? characters[index] : null;
+        if (chr == null || chr.attackFrames == null || chr.attackFrames.Length == 0) return;
+        if (index >= cardThumbs.Count || cardThumbs[index] == null) return;
+
+        attackRoutine = StartCoroutine(AttackRoutine(cardThumbs[index], chr));
+    }
+
+    private IEnumerator AttackRoutine(Image thumb, CharacterDefinition chr)
+    {
+        BeginAttackFraming(thumb, chr);
+
+        float step = Mathf.Max(0.02f, chr.attackFrameSeconds);
+        foreach (var frame in chr.attackFrames)
+        {
+            if (frame != null) thumb.sprite = frame;
+            // 이 화면은 timeScale이 0일 수 있다(모달 위에서 열린다) — 실시간으로 센다.
+            yield return new WaitForSecondsRealtime(step);
+        }
+
+        attackRoutine = null;
+        EndAttackFraming();
+    }
+
+    // 공격 캔버스가 초상화보다 크면 몸통이 작아 보인다 — 재생하는 동안만 키우고 민다.
+    private void BeginAttackFraming(Image thumb, CharacterDefinition chr)
+    {
+        attackThumb = thumb;
+        attackPortrait = chr.portrait;
+        var rt = thumb.rectTransform;
+        attackHome = rt.anchoredPosition;
+        attackHomeScale = rt.localScale;
+
+        if (Mathf.Approximately(chr.attackFrameScale, 1f) && chr.attackFrameOffset == Vector2.zero) return;
+        Rect r = rt.rect;
+        rt.localScale = attackHomeScale * chr.attackFrameScale;
+        rt.anchoredPosition = attackHome
+            + new Vector2(chr.attackFrameOffset.x * r.width, chr.attackFrameOffset.y * r.height);
+    }
+
+    private void EndAttackFraming()
+    {
+        if (attackThumb == null) return;
+        var rt = attackThumb.rectTransform;
+        if (attackPortrait != null) attackThumb.sprite = attackPortrait;
+        rt.anchoredPosition = attackHome;
+        rt.localScale = attackHomeScale;
+        attackThumb = null;
+        attackPortrait = null;
     }
 
     private void Highlight(int index)
     {
+        RefreshFrames();
+        RefreshSkillPreview(index);
+    }
+
+    // 꺽쇠는 커서가 올라간 카드에만 뜬다(고른 카드는 아래 스킬 정보가 알려준다).
+    // 고른 카드는 대신 JuicyButton이 원본 크기·색으로 남겨 준다.
+    private void RefreshFrames()
+    {
         for (int i = 0; i < cardFrames.Count; i++)
-            if (cardFrames[i] != null) cardFrames[i].SetActive(i == index);
+            if (cardFrames[i] != null) cardFrames[i].SetActive(i == hoverIndex);
+        for (int i = 0; i < cardJuicy.Count; i++)
+            if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == selectedIndex);
+    }
+
+    // 고른 캐릭터가 어떤 스킬로 시작하는지 아이콘·이름·설명으로 보여준다.
+    // 이름과 설명은 인게임과 같은 출처를 쓴다(문구가 두 벌로 갈리지 않게).
+    private void RefreshSkillPreview(int index)
+    {
+        var chr = characters != null && index >= 0 && index < characters.Length ? characters[index] : null;
+        if (chr == null) return;
+
+        ActiveSkillId id = chr.startingSkill;
+
+        if (skillIcon != null)
+        {
+            Sprite sp = skillIcons != null && (int)id < skillIcons.Length ? skillIcons[(int)id] : null;
+            skillIcon.sprite = sp;
+            skillIcon.enabled = sp != null; // 아이콘이 없으면 흰 사각형 대신 숨긴다
+        }
+        if (skillNameText != null) skillNameText.text = PlayerSkills.GetActiveSkillName(id);
+        if (skillDescText != null) skillDescText.text = LevelUpUI.GetActiveSkillDescription(id);
     }
 }

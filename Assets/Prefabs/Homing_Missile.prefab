@@ -193,7 +193,7 @@ MonoBehaviour:
   moveSpeed: 9
   turnDegPerSec: 360
   lifetime: 2.5
-  explodeVfxPrefab: {fileID: 4748681987041982144, guid: 3e01d91f8713f0642b74a8180d67b988, type: 3}
-  explodeVfxScale: 0.6
+  explodeVfxPrefab: {fileID: 4445664314901236262, guid: d25df58ec7ab40e4d9b55e295d8663a9, type: 3}
+  explodeVfxScale: 2
   hitVfxPrefab: {fileID: 4748681987041982144, guid: 52d6661fa75ab2d44b85fd7cbc945860, type: 3}
   hitVfxScale: 0.5
