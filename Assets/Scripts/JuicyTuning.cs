@@ -11,28 +11,36 @@ using UnityEngine;
 // 외부 패키지(JuicyUI)는 건드리지 않기로 했으므로 리플렉션으로 주입한다.
 public static class JuicyTuning
 {
-    public const float HoverScale = 1.15f;
-    public const float SquashX = 1.3f;
-    public const float SquashDuration = 0.05f;
-    public const float HoverDuration = 0.08f;
-    public const float PressScale = 0.88f;
-    public const float PressDuration = 0.04f;
+    // 🔴 값의 기준은 **캐릭터 선택 화면의 버튼**이다(세션41, 사용자 지정).
+    //    예전엔 여기 값이 인게임 세트(1.15/1.3/0.88 + 흔들림)라 화면마다 손맛이 갈렸다.
+    public const float HoverScale = 1.06f;
+    public const float SquashX = 1f;
+    public const float SquashDuration = 0.02f;
+    public const float HoverDuration = 0.09f;
+    public const float HoverReturnDuration = 0.1f;
+    public const float PressScale = 0.95f;
+    public const float PressDuration = 0.03f;
 
-    // 호버할 때 살짝 기울었다가 돌아오는 각도. JuicyButton은 visualRoot가 있어야 회전을 켠다
-    // (자식을 돌려야 히트박스가 안 틀어진다는 이유) — 우리는 래퍼를 새로 끼우는 대신
-    // visualRoot에 **버튼 자신의 RectTransform**을 넣어 켠다. 기울기가 squash 동안만이고
-    // 곧바로 원각도로 돌아와서, 히트박스가 기운 채로 머무르지 않는다.
+    // 비호버·비선택은 작고 어둡게(세션38). 선택 화면이 쓰는 값 그대로.
+    public const float IdleScale = 0.92f;
+    public const float DimDuration = 0.15f;
+
+    // 호버할 때 살짝 기울었다가 돌아오는 각도. **선택 화면은 이걸 안 쓴다** — 흔들림을 끈다.
+    // (JuicyButton은 visualRoot가 있어야 회전을 켠다. 값은 남겨두되 shakeOnHover=false로 잠근다.)
     public const float ShakeStrength = 7f;
+    public const bool ShakeOnHover = false;
 
     // 패널 열고 닫힘(UITransition.duration). 딤이 반투명한 전체화면 패널은 페이드만 쓴다.
     public const float PanelDuration = 0.13f;      // 타이틀 전체화면 패널(페이드)
     public const float ModalDuration = 0.2f;       // 안쪽 창이 팝하는 인게임 모달
 
     private static readonly string[] FieldNames =
-        { "hoverScale", "squashX", "squashDuration", "hoverDuration", "pressScale", "pressDuration" };
+        { "hoverScale", "squashX", "squashDuration", "hoverDuration", "hoverReturnDuration",
+          "pressScale", "pressDuration", "idleScale", "dimDuration" };
 
     private static readonly float[] Values =
-        { HoverScale, SquashX, SquashDuration, HoverDuration, PressScale, PressDuration };
+        { HoverScale, SquashX, SquashDuration, HoverDuration, HoverReturnDuration,
+          PressScale, PressDuration, IdleScale, DimDuration };
 
     public static void Apply(JuicyButton button)
     {
@@ -44,10 +52,12 @@ public static class JuicyTuning
             if (f != null) f.SetValue(button, Values[i]);
         }
 
-        // 회전(비틀기)은 visualRoot가 있어야 켜진다 — 자기 자신을 넣어 구조 변경 없이 활성화.
+        // visualRoot는 자기 자신 — 선택 화면 버튼들이 그렇게 돼 있다.
+        // ⚠️ `PointerInsideBaseRect`가 RestScale(idle 크기)로 판정하는 것과 짝이다(세션38). 지우지 말 것.
         Set(type, button, "visualRoot", button.GetComponent<RectTransform>());
-        Set(type, button, "shakeOnHover", true);
+        Set(type, button, "shakeOnHover", ShakeOnHover);
         Set(type, button, "shakeStrength", ShakeStrength);
+        Set(type, button, "idleDim", true);
     }
 
     private static void Set(System.Type type, JuicyButton button, string field, object value)

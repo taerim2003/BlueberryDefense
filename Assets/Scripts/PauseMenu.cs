@@ -19,6 +19,11 @@ public class PauseMenu : MonoBehaviour
         go.AddComponent<PauseMenu>();
     }
 
+    // 판·버튼 바탕은 UISkin이 스프라이트째로 덮어쓴다(캐릭터/맵 선택 화면과 같은 옷).
+    // 아래 색은 스킨 에셋이 없을 때의 폴백 + 스프라이트에 곱해질 색을 겸한다.
+    private static readonly Color SkinColor = new Color(0.420f, 0.482f, 0.910f, 1f);
+    private static readonly Color DangerColor = new Color(0.55f, 0.20f, 0.28f, 1f);
+
     private GameObject panel;
     private CanvasGroup panelGroup;
     private RectTransform boxRect;
@@ -28,7 +33,25 @@ public class PauseMenu : MonoBehaviour
     private TMP_FontAsset font;
     private bool paused;
 
-    private void Awake() => BuildUI();
+    // 셸(제목·버튼·힌트)은 Awake에 한 번만 짓는데, 언어는 이 창 위에 뜬 설정 패널에서 바뀐다.
+    // 그래서 그 글자들만 잡아두고 LocaleChanged에 다시 채운다(열 내용은 열 때마다 새로 짓는다).
+    private TMP_Text titleText, settingsText, giveUpText, hintText;
+
+    private void Awake()
+    {
+        BuildUI();
+        Loc.LocaleChanged += ApplyShellText;
+    }
+
+    private void OnDestroy() => Loc.LocaleChanged -= ApplyShellText;
+
+    private void ApplyShellText()
+    {
+        if (titleText != null) titleText.text = Loc.T("ui.pause.title");
+        if (settingsText != null) settingsText.text = Loc.T("ui.options.title");
+        if (giveUpText != null) giveUpText.text = Loc.T("ui.pause.giveUp");
+        if (hintText != null) hintText.text = Loc.T("ui.pause.hint");
+    }
 
     private void Update()
     {
@@ -100,7 +123,7 @@ public class PauseMenu : MonoBehaviour
         var passives = Object.FindAnyObjectByType<PlayerPassives>();
         var levelUp = LevelUpUI.Instance;
 
-        BuildEntry(leftColumn, null, "<b>[ 액티브 스킬 ]</b>", null);
+        BuildEntry(leftColumn, null, "<b>[ " + Loc.T("ui.pause.activeHeader") + " ]</b>", null);
         if (skills != null)
             foreach (var s in skills.EquippedSkills)
                 BuildEntry(leftColumn,
@@ -108,7 +131,7 @@ public class PauseMenu : MonoBehaviour
                     PlayerSkills.GetActiveSkillBadge(s.Id) + TitleLine(s.DisplayName, s.Level),
                     BuildActiveDetail(s));
 
-        BuildEntry(rightColumn, null, "<b>[ 패시브 ]</b>", null);
+        BuildEntry(rightColumn, null, "<b>[ " + Loc.T("ui.pause.passiveHeader") + " ]</b>", null);
         if (passives != null)
             foreach (var pv in passives.EquippedPassives)
                 BuildEntry(rightColumn,
@@ -223,23 +246,24 @@ public class PauseMenu : MonoBehaviour
 
         panel = NewUI("Panel", canvasGo.transform);
         Stretch(panel);
-        AddImage(panel, new Color(0f, 0f, 0f, 0.8f), true);
+        UISkin.Dim(AddImage(panel, new Color(0.031f, 0.020f, 0.051f, 0.8f), true), 0.8f);
         panelGroup = panel.AddComponent<CanvasGroup>();
 
         var box = NewUI("Box", panel.transform);
         Center(box, new Vector2(1760, 940));
-        AddImage(box, new Color(0.06f, 0.06f, 0.1f, 0.98f), true);
+        UISkin.Panel(AddImage(box, SkinColor, true));
         boxRect = (RectTransform)box.transform;
 
         var title = NewUI("Title", box.transform);
-        Top(title, new Vector2(0, -22), new Vector2(1680, 64));
-        AddText(title, font, "일시정지", 46, TextAlignmentOptions.Center, Color.white);
+        // 판 스프라이트의 테두리(위 55·아래 45·좌우 50px) 안쪽으로 넣는다 — 안 그러면 글자가 테두리를 탄다.
+        Top(title, new Vector2(0, -40), new Vector2(1680, 64));
+        titleText = AddText(title, font, Loc.T("ui.pause.title"), 46, TextAlignmentOptions.Center, Color.white);
 
         // 2열 컨테이너 — 제목과 힌트 사이 영역을 채움
         var columns = NewUI("Columns", box.transform);
         var colRt = columns.GetComponent<RectTransform>();
         colRt.anchorMin = Vector2.zero; colRt.anchorMax = Vector2.one;
-        colRt.offsetMin = new Vector2(44, 130); colRt.offsetMax = new Vector2(-44, -104);
+        colRt.offsetMin = new Vector2(66, 164); colRt.offsetMax = new Vector2(-66, -120);
         var hg = columns.AddComponent<HorizontalLayoutGroup>();
         hg.spacing = 48;
         hg.childAlignment = TextAnchor.UpperLeft;
@@ -250,31 +274,36 @@ public class PauseMenu : MonoBehaviour
         rightColumn = MakeColumn(columns.transform);
 
         var settings = NewUI("SettingsButton", box.transform);
-        Bottom(settings, new Vector2(-190, 66), new Vector2(340, 56));
+        Bottom(settings, new Vector2(-190, 100), new Vector2(340, 56));
         var settingsBtn = settings.AddComponent<Button>();
-        settingsBtn.targetGraphic = AddImage(settings, new Color(0.24f, 0.24f, 0.32f, 1f), true);
+        var settingsBg = AddImage(settings, SkinColor, true);
+        UISkin.BarTinted(settingsBg, SkinColor);
+        settingsBtn.targetGraphic = settingsBg;
         settingsBtn.onClick.AddListener(OpenSettings);
         JuicyTuning.Attach(settings);
         JuicyTuning.CenterPivot(settings);
         var settingsLabel = NewUI("Label", settings.transform);
         Stretch(settingsLabel);
-        AddText(settingsLabel, font, "설정", 26, TextAlignmentOptions.Center, new Color(0.92f, 0.92f, 0.95f));
+        settingsText = AddText(settingsLabel, font, Loc.T("ui.options.title"), 26, TextAlignmentOptions.Center, new Color(0.92f, 0.92f, 0.95f));
 
         var giveUp = NewUI("GiveUpButton", box.transform);
-        Bottom(giveUp, new Vector2(190, 66), new Vector2(340, 56));
+        Bottom(giveUp, new Vector2(190, 100), new Vector2(340, 56));
         var giveUpBtn = giveUp.AddComponent<Button>();
-        giveUpBtn.targetGraphic = AddImage(giveUp, new Color(0.34f, 0.11f, 0.15f, 1f), true);
+        var giveUpBg = AddImage(giveUp, DangerColor, true);
+        UISkin.BarTinted(giveUpBg, DangerColor); // 색은 위험 빨강 그대로, 모양만 스킨
+        giveUpBtn.targetGraphic = giveUpBg;
         giveUpBtn.onClick.AddListener(GiveUpToTitle);
         JuicyTuning.Attach(giveUp);
         JuicyTuning.CenterPivot(giveUp);
         var giveUpLabel = NewUI("Label", giveUp.transform);
         Stretch(giveUpLabel);
-        AddText(giveUpLabel, font, "타이틀로 돌아가기", 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));
+        giveUpText = AddText(giveUpLabel, font, Loc.T("ui.pause.giveUp"), 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));
 
         var hint = NewUI("Hint", box.transform);
-        Bottom(hint, new Vector2(0, 18), new Vector2(1680, 40));
-        AddText(hint, font, "ESC — 계속하기", 22, TextAlignmentOptions.Center, new Color(0.7f, 0.8f, 1f));
+        Bottom(hint, new Vector2(0, 52), new Vector2(1680, 40));
+        hintText = AddText(hint, font, Loc.T("ui.pause.hint"), 22, TextAlignmentOptions.Center, new Color(0.7f, 0.8f, 1f));
 
+        UISkin.Refit(panel); // 크기가 다 정해진 뒤에 9-slice 테두리를 다시 재단
         panel.SetActive(false);
     }
 
@@ -301,6 +330,7 @@ public class PauseMenu : MonoBehaviour
         var go = NewUI("Line", parent);
         var t = AddText(go, font, txt, size, TextAlignmentOptions.TopLeft, c);
         t.enableWordWrapping = true;
+        UISkin.Text(t, true); // 여러 줄 설명은 선택 화면과 같은 본문 폰트로
         return t;
     }
 
@@ -321,6 +351,7 @@ public class PauseMenu : MonoBehaviour
         var t = go.AddComponent<TextMeshProUGUI>();
         if (font != null) t.font = font;
         t.text = txt; t.fontSize = size; t.alignment = align; t.color = c; t.raycastTarget = false;
+        UISkin.Text(t, false); // 폰트·아웃라인 머티리얼을 선택 화면과 같게 (fontSize를 정한 뒤라야 크기별 머티리얼이 갈린다)
         return t;
     }
     private static void Stretch(GameObject go)

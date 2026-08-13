@@ -9,9 +9,11 @@ public class SaveResetButton : MonoBehaviour
 {
     private const float ConfirmWindow = 4f;
 
-    private const string IdleText = "세이브 초기화";
-    private const string ConfirmText = "정말? 한 번 더 클릭";
-    private const string DoneText = "초기화 완료";
+    // ⚠️ const였다가 프로퍼티가 됐다 — 언어가 바뀌면 값도 바뀌어야 해서 컴파일 시점에 고정할 수 없다.
+    // 키는 설정 패널의 세이브 초기화 행과 **같은 것**을 쓴다 — 같은 기능이라 문구가 갈리면 안 된다.
+    private static string IdleText => Loc.T("ui.options.reset");
+    private static string ConfirmText => Loc.T("ui.options.reset_confirm");
+    private static string DoneText => Loc.T("ui.options.reset_done");
 
     private static readonly Color IdleColor = new Color(0.22f, 0.16f, 0.18f, 0.9f);
     private static readonly Color ConfirmColor = new Color(0.62f, 0.16f, 0.18f, 0.95f);
@@ -49,6 +51,7 @@ public class SaveResetButton : MonoBehaviour
 
         background = go.GetComponent<Image>();
         background.color = IdleColor;
+        UISkin.BarTinted(background, IdleColor); // 색은 그대로, 모양만 선택 화면과 같은 스킨
 
         var textGo = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         textGo.transform.SetParent(go.transform, false);
@@ -64,6 +67,7 @@ public class SaveResetButton : MonoBehaviour
         label.color = new Color(0.92f, 0.88f, 0.88f);
         label.raycastTarget = false;
         label.text = IdleText;
+        UISkin.Text(label, false);
 
         go.GetComponent<Button>().onClick.AddListener(OnClick);
     }

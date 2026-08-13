@@ -20,10 +20,13 @@ public class EvolutionTreeUI : MonoBehaviour
         public TMP_Text description;
     }
 
-    private static readonly Color OwnedFrameColor = new Color(0.75f, 1f, 0.75f, 1f);
-    private static readonly Color GoldFrameColor = new Color(1f, 0.82f, 0.2f, 1f); // 최종 티어 달성 시
-    private static readonly Color LockedFrameColor = new Color(0.35f, 0.35f, 0.35f, 1f);
-    private static readonly Color LockedTextColor = new Color(0.65f, 0.65f, 0.65f, 1f);
+    // 노드 바탕은 이제 스킨 스프라이트(UI_LongRect_Unclean)라 아래 색이 거기 곱해진다.
+    // 흰색을 쓰면 판이 하얗게 떠서 나머지 UI와 어긋난다 — 기본은 스킨 색이다.
+    private static readonly Color BaseFrameColor = new Color(0.420f, 0.482f, 0.910f, 1f);
+    private static readonly Color OwnedFrameColor = new Color(0.55f, 0.85f, 0.62f, 1f);
+    private static readonly Color GoldFrameColor = new Color(1f, 0.878f, 0.302f, 1f); // 최종 티어 달성 시
+    private static readonly Color LockedFrameColor = new Color(0.22f, 0.22f, 0.30f, 1f);
+    private static readonly Color LockedTextColor = new Color(0.72f, 0.72f, 0.78f, 1f);
     private static readonly Color ActiveArrowColor = new Color(1f, 0.9f, 0.4f, 1f);
     private static readonly Color InactiveArrowColor = new Color(0.4f, 0.4f, 0.4f, 1f);
 
@@ -103,15 +106,15 @@ public class EvolutionTreeUI : MonoBehaviour
         int chosenRoute = isPassiveMode ? currentPassive.Route : currentSkill.Route;
         bool canEvolve = isPassiveMode ? passives.CanEvolve(currentPassive) : skills.CanEvolve(currentSkill);
 
-        skillNameText.text = name + " 진화 — Lv." + level;
+        skillNameText.text = Loc.F("ui.evotree.header", name, level);
 
         if (subInfoText != null)
         {
             subInfoText.text = stage >= EvolutionRoutes.MaxStage
-                ? "모든 진화 완료"
+                ? Loc.T("ui.evotree.allDone")
                 : stage == 0
-                    ? "루트를 하나 고르세요 — 고른 뒤에는 바꿀 수 없습니다"
-                    : "1차에서 고른 루트를 이어갑니다";
+                    ? Loc.T("ui.evotree.pickRoute")
+                    : Loc.T("ui.evotree.continueRoute");
         }
 
         SetIcon(skillIcon, CurrentIcon());
@@ -151,22 +154,22 @@ public class EvolutionTreeUI : MonoBehaviour
 
                 SetIcon(node.icon, RouteIcon(route) ?? GetIcon(pathIconSprites, route));
                 node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
-                                         : (locked ? LockedFrameColor : Color.white);
+                                         : (locked ? LockedFrameColor : BaseFrameColor);
                 node.icon.color = locked ? new Color(0.55f, 0.55f, 0.55f, 1f) : Color.white;
 
                 if (node.title != null)
                 {
                     node.title.text = RouteTitle(route, tier);
-                    node.title.color = locked ? LockedTextColor : Color.black;
+                    node.title.color = locked ? LockedTextColor : Color.white;
                 }
 
                 string effect = RouteEffect(route, tier);
                 // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
-                node.description.text = routeAbandoned ? "[포기한 루트] " + effect
-                                      : !routeUnlocked ? $"[잠김 — '{prereqName}' 필요] " + effect
-                                      : locked ? "[잠김] " + effect
+                node.description.text = routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
+                                      : !routeUnlocked ? Loc.F("ui.evotree.lockedPrereq", prereqName) + " " + effect
+                                      : locked ? Loc.T("ui.evotree.locked") + " " + effect
                                       : effect;
-                node.description.color = locked ? LockedTextColor : Color.black;
+                node.description.color = locked ? LockedTextColor : Color.white;
                 node.button.interactable = available;
 
                 AnimateNode((RectTransform)node.button.transform, route * 2 + tierIdx, available, alreadyOpen);
@@ -207,7 +210,7 @@ public class EvolutionTreeUI : MonoBehaviour
             if (!string.IsNullOrEmpty(text)) parts.Add(text);
         }
         if (tier == 1)
-            parts.Add($"<color=#FF8A3C>피해량 {Mathf.RoundToInt((EvolutionRoutes.EvolveDamageMult - 1f) * 100f)}% 증가 · 레벨 1부터 다시 성장</color>");
+            parts.Add("<color=#FF8A3C>" + Loc.F("ui.evotree.tier1Bonus", Mathf.RoundToInt((EvolutionRoutes.EvolveDamageMult - 1f) * 100f)) + "</color>");
 
         return string.Join("\n", parts);
     }

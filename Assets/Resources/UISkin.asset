@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9b638f5f95cbae428fca8f1fbd0d988, type: 3}
+  m_Name: UISkin
+  m_EditorClassIdentifier: Assembly-CSharp::UISkin
+  panel: {fileID: 21300000, guid: d891aeac7f74e94448613b55fde27b0e, type: 3}
+  bar: {fileID: 21300000, guid: 4bcd8c7fa5a2a2f4e895f4a5681a1dc5, type: 3}
+  box: {fileID: 21300000, guid: a1719d0e672140f4887efeb47632edbd, type: 3}
+  skin: {r: 0.41960785, g: 0.48235294, b: 0.9098039, a: 1}
+  dim: {r: 0.03137255, g: 0.019607844, b: 0.050980393, a: 0.8}
+  highlight: {r: 1, g: 0.8784314, b: 0.3019608, a: 1}
+  pixelFont: {fileID: 11400000, guid: 38c26e4dba2e2e54c840776b115c00df, type: 2}
+  bodyFont: {fileID: 11400000, guid: 74b9e7b7fb8b0934bb6f05fe49832756, type: 2}
+  pixelBig: {fileID: 2100000, guid: 72eab35a1bdb0ec40987e7bceb70ded7, type: 2}
+  pixelSmall: {fileID: 2100000, guid: 23b7dc487168ee94db46c8c010e0c881, type: 2}
+  bodyBig: {fileID: 2100000, guid: 4046983aed09bee4e9f9da696c349ca0, type: 2}
+  bodySmall: {fileID: 2100000, guid: a3c7efee23f048f4fa76413f3894c078, type: 2}

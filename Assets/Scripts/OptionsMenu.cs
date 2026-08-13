@@ -25,16 +25,18 @@ public class OptionsMenu : MonoBehaviour
         go.AddComponent<OptionsMenu>();
     }
 
-    // ── 색·치수 (아트 교체 시 여기만) ──
-    private static readonly Color BoxColor = new Color(0.06f, 0.06f, 0.1f, 0.98f);
-    private static readonly Color DimColor = new Color(0f, 0f, 0f, 0.8f);
-    private static readonly Color LabelColor = new Color(0.92f, 0.92f, 0.92f);
-    private static readonly Color TrackColor = new Color(0.18f, 0.18f, 0.24f, 1f);
-    private static readonly Color FillColor = new Color(0.45f, 0.62f, 0.95f, 1f);
-    private static readonly Color HandleColor = new Color(0.85f, 0.9f, 1f, 1f);
-    private static readonly Color ButtonColor = new Color(0.24f, 0.24f, 0.32f, 1f);
-    private static readonly Color DangerColor = new Color(0.34f, 0.11f, 0.15f, 1f);
-    private static readonly Color DangerArmedColor = new Color(0.62f, 0.16f, 0.18f, 1f);
+    // ── 색·치수 ──
+    // 판·버튼 바탕은 UISkin이 스프라이트째로 덮어쓴다(캐릭터/맵 선택 화면과 같은 옷).
+    // 아래 색은 스킨 에셋이 없을 때의 폴백 + 스프라이트에 곱해질 색을 겸한다.
+    private static readonly Color BoxColor = new Color(0.420f, 0.482f, 0.910f, 1f);
+    private static readonly Color DimColor = new Color(0.031f, 0.020f, 0.051f, 0.8f);
+    private static readonly Color LabelColor = Color.white;
+    private static readonly Color TrackColor = new Color(0.06f, 0.05f, 0.10f, 0.9f);
+    private static readonly Color FillColor = new Color(1f, 0.878f, 0.302f, 1f);   // 선택 화면의 강조 노랑
+    private static readonly Color HandleColor = Color.white;
+    private static readonly Color ButtonColor = new Color(0.420f, 0.482f, 0.910f, 1f);
+    private static readonly Color DangerColor = new Color(0.55f, 0.20f, 0.28f, 1f);
+    private static readonly Color DangerArmedColor = new Color(0.85f, 0.28f, 0.32f, 1f);
 
     private const float RowWidth = 900f;
     private const float RowHeight = 60f;
@@ -160,17 +162,18 @@ public class OptionsMenu : MonoBehaviour
 
         panel = NewUI("Panel", canvasGo.transform);
         Stretch(panel);
-        AddImage(panel, DimColor, true);
+        UISkin.Dim(AddImage(panel, DimColor, true), DimColor.a);
         group = panel.AddComponent<CanvasGroup>();
 
         var boxGo = NewUI("Box", panel.transform);
         // 언어 행이 늘면서 720 → 800. 720이면 세이브 초기화 행(-626~-686)이 닫기 버튼(-630~-690)과 겹친다.
-        Center(boxGo, new Vector2(980, 800));
-        AddImage(boxGo, BoxColor, true);
+        // 850: 판 스프라이트의 아래 테두리·그림자(45px)를 닫기 버튼이 피하려면 그만큼 아래가 더 필요하다.
+        Center(boxGo, new Vector2(980, 850));
+        UISkin.Panel(AddImage(boxGo, BoxColor, true));
         box = (RectTransform)boxGo.transform;
 
         var title = NewUI("Title", boxGo.transform);
-        Top(title, new Vector2(0, -28), new Vector2(RowWidth, 60));
+        Top(title, new Vector2(0, -40), new Vector2(RowWidth, 60)); // 판 위 테두리(55px) 안쪽으로
         AddText(title, font, Loc.T("ui.options.title"), 46, TextAlignmentOptions.Center, Color.white);
 
         float y = -130f;
@@ -187,9 +190,11 @@ public class OptionsMenu : MonoBehaviour
         MakeSaveResetRow(boxGo.transform, ref y);
 
         var close = MakeButton(boxGo.transform, Loc.T("ui.options.close"), ButtonColor, Close);
-        Bottom(close, new Vector2(0, 30), new Vector2(260, 60));
+        // 30이면 판 스프라이트의 아래 테두리·그림자에 걸려 버튼이 창 밖으로 튀어나와 보인다.
+        Bottom(close, new Vector2(0, 52), new Vector2(260, 60));
         JuicyTuning.CenterPivot(close);
 
+        UISkin.Refit(panel); // 크기가 다 정해진 뒤에 9-slice 테두리를 다시 재단
         panel.SetActive(false);
     }
 
@@ -225,7 +230,7 @@ public class OptionsMenu : MonoBehaviour
 
     private void MakeResolutionRow(Transform parent, ref float y)
     {
-        var row = MakeRow(parent, ref y, "해상도");
+        var row = MakeRow(parent, ref y, Loc.T("ui.options.resolution"));
 
         // 드롭다운(TMP_Dropdown) 대신 좌우 화살표 선택기 — 프리미티브만으로 조립할 수 있고 항목이 적다.
         resolutions = Screen.resolutions
@@ -238,17 +243,17 @@ public class OptionsMenu : MonoBehaviour
         resolutionIndex = System.Array.FindIndex(resolutions, r => r.x == Screen.width && r.y == Screen.height);
         if (resolutionIndex < 0) resolutionIndex = resolutions.Length - 1;
 
-        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepResolution(-1));
+        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepResolution(-1), true);
         Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
         JuicyTuning.CenterPivot(prev);
 
         var valueGo = NewUI("ResolutionValue", row.transform);
         Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
-        AddImage(valueGo, TrackColor, false);
+        UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
         resolutionLabel = AddText(valueGo, font, "", 28, TextAlignmentOptions.Center, LabelColor);
         RefreshResolutionLabel();
 
-        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepResolution(1));
+        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepResolution(1), true);
         Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
         JuicyTuning.CenterPivot(next);
     }
@@ -258,16 +263,16 @@ public class OptionsMenu : MonoBehaviour
     {
         var row = MakeRow(parent, ref y, Loc.T("ui.options.language"));
 
-        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepLanguage(-1));
+        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepLanguage(-1), true);
         Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
         JuicyTuning.CenterPivot(prev);
 
         var valueGo = NewUI("LanguageValue", row.transform);
         Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
-        AddImage(valueGo, TrackColor, false);
+        UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
         languageLabel = AddText(valueGo, font, CurrentLanguageName(), 28, TextAlignmentOptions.Center, LabelColor);
 
-        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepLanguage(1));
+        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepLanguage(1), true);
         Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
         JuicyTuning.CenterPivot(next);
     }
@@ -372,6 +377,7 @@ public class OptionsMenu : MonoBehaviour
         var background = NewUI("Background", go.transform);
         StretchWithAnchors(background, Vector2.zero, Vector2.one);
         var bgImg = AddImage(background, TrackColor, true);
+        UISkin.BoxTinted(bgImg, TrackColor); // 정사각 토글이라 가로 바가 아니라 사각 스프라이트
 
         var check = NewUI("Checkmark", background.transform);
         StretchWithAnchors(check, Vector2.zero, Vector2.one);
@@ -387,16 +393,18 @@ public class OptionsMenu : MonoBehaviour
         return toggle;
     }
 
-    private GameObject MakeButton(Transform parent, string text, Color color, UnityEngine.Events.UnityAction onClick)
+    private GameObject MakeButton(Transform parent, string text, Color color, UnityEngine.Events.UnityAction onClick, bool bodyFont = false)
     {
         var go = NewUI("Button_" + text, parent);
         var btn = go.AddComponent<Button>();
-        btn.targetGraphic = AddImage(go, color, true);
+        var bg = AddImage(go, color, true);
+        UISkin.BarTinted(bg, color); // 색은 호출측 것(위험 버튼은 빨강), 모양만 스킨
+        btn.targetGraphic = bg;
         btn.onClick.AddListener(onClick);
 
         var label = NewUI("Label", go.transform);
         Stretch(label);
-        AddText(label, font, text, 28, TextAlignmentOptions.Center, LabelColor);
+        AddText(label, font, text, 28, TextAlignmentOptions.Center, LabelColor, bodyFont);
 
         JuicyTuning.Attach(go); // 호버 스쿼시 + 클릭 눌림 (손맛 값은 JuicyTuning이 단일 소스)
         return go;
@@ -477,7 +485,9 @@ public class OptionsMenu : MonoBehaviour
     }
 
     // Image가 이미 붙은 오브젝트면 텍스트를 자식으로 깐다(한 오브젝트에 Graphic 둘은 불가).
-    private static TMP_Text AddText(GameObject go, TMP_FontAsset font, string txt, int size, TextAlignmentOptions align, Color c)
+    // body=true면 본문 폰트(Pretendard). ⚠️ ◀▶ 같은 기호는 픽셀 폰트에 글리프가 없어 □로 나온다 —
+    // 맵 선택 화면의 승천 화살표가 본문 폰트를 쓰는 것도 같은 이유다.
+    private static TMP_Text AddText(GameObject go, TMP_FontAsset font, string txt, int size, TextAlignmentOptions align, Color c, bool body = false)
     {
         var host = go.GetComponent<Graphic>() != null ? NewUI("Text", go.transform) : go;
         if (host != go) Stretch(host);
@@ -485,6 +495,7 @@ public class OptionsMenu : MonoBehaviour
         var t = host.AddComponent<TextMeshProUGUI>();
         if (font != null) t.font = font;
         t.text = txt; t.fontSize = size; t.alignment = align; t.color = c; t.raycastTarget = false;
+        UISkin.Text(t, body); // 폰트·아웃라인 머티리얼을 선택 화면과 같게 (fontSize를 정한 뒤라야 크기별 머티리얼이 갈린다)
         return t;
     }
 

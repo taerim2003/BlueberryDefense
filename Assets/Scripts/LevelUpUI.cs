@@ -67,12 +67,17 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Button treasureDismissButton;   // 패널 전체를 덮는 투명 버튼(클릭=닫기)
     [SerializeField] private Sprite treasureIconFrame;       // HUD 스킬 슬롯과 같은 틀(IconFrame) — 딤 위에서 아이콘이 묻히지 않게
     [SerializeField] private float treasureIconSize = 130f;
+    // 갈림길(보물 상자 vs 진화)의 **왼쪽 카드**에 크게 까는 상자 그림. 비어 있으면 그냥 안 그린다.
+    [SerializeField] private Sprite treasureChoiceSprite;
 
-    private const string EvolutionHeader = "진화!";
-    private const string EvolutionFallbackHeader = "진화할 스킬이 없다 — 대신 레벨업";
-    private const string TreasureChoiceHeader = "보물 상자 — 무엇을 받을까?";
+    // ⚠️ const였다가 프로퍼티가 됐다 — 언어가 바뀌면 값도 바뀌어야 해서 컴파일 시점에 고정할 수 없다.
+    private static string EvolutionHeader => Loc.T("ui.levelup.evoHeader");
+    private static string EvolutionFallbackHeader => Loc.T("ui.levelup.evoFallbackHeader");
+    private static string TreasureChoiceHeader => Loc.T("ui.levelup.treasureHeader");
     private const int EvolutionFallbackLevels = 3; // 진화 대상이 없을 때 주는 대체 레벨업 수
-    private string headerDefaultText;
+    // 🔴 씬의 글자를 Awake에 잡아두던 자리다. 그러면 언어를 바꿔도 **처음 언어가 그대로 남는다**
+    //    (씬 TMP는 LocalizedTmp가 갱신해도 이 사본은 안 따라온다) — 그래서 표에서 그때그때 읽는다.
+    private static string HeaderDefaultText => Loc.T("ui.levelup.header");
     private Color headerDefaultColor;
 
     private static readonly Color NewTagColor = new Color(1f, 0.85f, 0.2f, 1f);
@@ -110,11 +115,7 @@ public class LevelUpUI : MonoBehaviour
         Instance = this;
         panel.SetActive(false);
 
-        if (headerText != null)
-        {
-            headerDefaultText = headerText.text;
-            headerDefaultColor = headerText.color;
-        }
+        if (headerText != null) headerDefaultColor = headerText.color;
         SetTreasureDecor(false);
         if (treasurePanel != null) treasurePanel.SetActive(false);
 
@@ -177,7 +178,7 @@ public class LevelUpUI : MonoBehaviour
     private void ResetHeader()
     {
         if (headerText == null) return;
-        headerText.text = headerDefaultText;
+        headerText.text = HeaderDefaultText;
         headerText.color = headerDefaultColor;
     }
 
@@ -247,9 +248,17 @@ public class LevelUpUI : MonoBehaviour
     // 보물상자 갈림길("보물 상자 vs 진화")은 선택지가 **2개뿐**이라, 가로로 긴 카드 3장 자리에
     // 두 장만 뜨면 화면이 휑하다. 이 화면에서만 카드를 세로로 세워 둘을 나란히 놓는다.
     // ⚠️ 일반 레벨업(3택)은 씬에 저작된 가로 배치를 **그대로 쓴다** — 그래서 원본을 캐시해 두고 되돌린다.
-    private const float ChoiceCardWidth = 340f;
-    private const float ChoiceCardHeight = 540f;
-    private const float ChoiceCardGap = 30f;
+    // 창이 1060×840으로 커진 뒤 340폭 카드는 설명이 한 글자씩 넘겨 감겼다("…진화시킨 / 다").
+    // 창 안쪽(테두리 50px 제외 ±480)을 두 장이 거의 채우도록 넓힌다.
+    private const float ChoiceCardWidth = 430f;
+    private const float ChoiceCardHeight = 500f;
+    private const float ChoiceCardGap = 40f;
+    private const float ChoiceCardY = -40f;    // 제목 아래로 내려 위아래 여백을 맞춘다
+    private const float ChoiceTextWidth = 380f;
+    // 왼쪽(보물 상자) 카드의 아래쪽은 오른쪽 카드의 조합 미리보기와 마주 본다 —
+    // 비워 두면 두 장의 무게가 안 맞아 보여서 상자 그림을 같은 자리에 깐다.
+    private const float ChoiceIconSize = 220f;
+    private const float ChoiceIconY = -115f;
 
     private readonly Dictionary<RectTransform, (Vector2 pos, Vector2 size)> savedRects
         = new Dictionary<RectTransform, (Vector2, Vector2)>();
@@ -279,19 +288,56 @@ public class LevelUpUI : MonoBehaviour
             {
                 Restore(card); Restore(frame); Restore(icon);
                 Restore(titles[i]); Restore(levels[i]); Restore(descs[i]);
+                RestoreSprite(card);
+                if (frame != null) frame.gameObject.SetActive(true);
                 continue;
             }
 
             // 갈림길은 늘 2택이라 두 장을 화면 가운데 기준 좌우로 놓는다(i=0 → 왼쪽, i=1 → 오른쪽).
-            Place(card, new Vector2((i - 0.5f) * (ChoiceCardWidth + ChoiceCardGap), 0f),
+            Place(card, new Vector2((i - 0.5f) * (ChoiceCardWidth + ChoiceCardGap), ChoiceCardY),
                         new Vector2(ChoiceCardWidth, ChoiceCardHeight));
-            Place(frame, new Vector2(0f, 175f), new Vector2(120f, 120f));
-            Place(icon, new Vector2(0f, 175f), new Vector2(108f, 108f));
-            Place(titles[i], new Vector2(0f, 82f), new Vector2(300f, 44f), TextAlignmentOptions.Center);
-            Place(levels[i], new Vector2(0f, 40f), new Vector2(300f, 34f), TextAlignmentOptions.Center);
-            // 설명 박스를 위로 당겨(하단 -90) 카드 바닥에 미리보기 3줄분 공간을 남긴다.
-            Place(descs[i], new Vector2(0f, -35f), new Vector2(300f, 110f), TextAlignmentOptions.Top);
+
+            // 🔴 세로로 세운 카드에 가로 바 스프라이트를 그대로 두면 9-slice가 위아래 테두리를 늘려
+            //    카드 아래쪽이 한 겹 더 깔린 것처럼 층져 보인다. 세로 칸은 사각 스프라이트가 맞다.
+            SwapToTallSprite(card);
+
+            // 🔴 갈림길의 두 선택지(보물 상자·진화)는 아이콘이 없다 — 틀만 켜 두면
+            //    카드 머리에 **빈 회색 액자**가 남는다. 여기서만 끈다
+            //    (3택 레벨업은 아이콘 없는 스킬을 일부러 빈 틀로 남기는 게 의도라 건드리지 않는다).
+            if (frame != null) frame.gameObject.SetActive(false);
+
+            // 아이콘은 액자 없이 크게 — 보물 상자 카드만 그림이 있고(Option.Icon), 진화 카드는
+            // 여기에 조합 미리보기가 들어와 좌우가 같은 무게로 보인다.
+            Place(icon, new Vector2(0f, ChoiceIconY), new Vector2(ChoiceIconSize, ChoiceIconSize));
+
+            Place(titles[i], new Vector2(0f, 175f), new Vector2(ChoiceTextWidth, 48f), TextAlignmentOptions.Center);
+            Place(levels[i], new Vector2(0f, 130f), new Vector2(ChoiceTextWidth, 36f), TextAlignmentOptions.Center);
+            // 설명은 위쪽에 붙이고, 카드 바닥은 조합 미리보기(최대 4줄)·상자 그림 몫으로 비워 둔다.
+            Place(descs[i], new Vector2(0f, 40f), new Vector2(ChoiceTextWidth, 140f), TextAlignmentOptions.Top);
         }
+    }
+
+    // 카드 바탕을 세로용(정사각계) 스프라이트로 갈고, 3택으로 돌아갈 때 원본을 되돌린다.
+    private readonly Dictionary<Image, Sprite> savedSprites = new Dictionary<Image, Sprite>();
+
+    private void SwapToTallSprite(RectTransform card)
+    {
+        if (card == null) return;
+        var img = card.GetComponent<Image>();
+        var skin = UISkin.Instance;
+        if (img == null || skin == null || skin.box == null) return;
+        if (!savedSprites.ContainsKey(img)) savedSprites[img] = img.sprite;
+        img.sprite = skin.box;
+        UISkin.FitSlice(img);
+    }
+
+    private void RestoreSprite(RectTransform card)
+    {
+        if (card == null) return;
+        var img = card.GetComponent<Image>();
+        if (img == null || !savedSprites.TryGetValue(img, out Sprite s)) return;
+        img.sprite = s;
+        UISkin.FitSlice(img);
     }
 
     private void Place(RectTransform rt, Vector2 pos, Vector2 size)
@@ -331,7 +377,7 @@ public class LevelUpUI : MonoBehaviour
     private const float ComboPlusWidth = 16f;     // 짝 사이 "+" 자리
     private const float ComboEntryGap = 14f;      // 짝과 짝 사이(가로)
     private const float ComboLineGap = 8f;        // 줄과 줄 사이(세로)
-    private const float ComboRowMaxWidth = 300f;  // 한 줄 최대 폭(세로 카드 340 안)
+    private const float ComboRowMaxWidth = ChoiceTextWidth; // 한 줄 최대 폭 — 세로 카드의 글자 폭에 맞춘다
     private const int ComboMaxPerLine = 2;        // 한 줄에 최대 두 짝 — 스킬 하나의 루트가 둘뿐이라 이걸로 딱 맞는다
     private const int ComboMaxLines = 4;          // 이보다 많아지면 그때 전체를 줄인다
     private const float ComboRowYOffset = 14f;    // 카드 바닥에서 띄우는 거리
@@ -443,8 +489,9 @@ public class LevelUpUI : MonoBehaviour
         plus.alignment = TextAlignmentOptions.Center;
         plus.fontSize = 26f * scale;
         plus.raycastTarget = false;
-        plus.color = EvolveTagColor; // 흰색은 밝은 카드 배경에 묻힌다 — 진화 강조와 같은 주황
+        plus.color = EvolveTagColor; // 진화 강조와 같은 주황
         plus.fontStyle = FontStyles.Bold;
+        UISkin.Text(plus, false);    // 카드 위 글자라 나머지와 같은 아웃라인을 입힌다
     }
 
     private static RectTransform NewComboChild(RectTransform parent, string name, Vector2 center)
@@ -462,7 +509,7 @@ public class LevelUpUI : MonoBehaviour
         if (rerollButton == null) return;
         bool show = rerollable && rerollsRemaining > 0;
         rerollButton.gameObject.SetActive(show);
-        if (show && rerollLabel != null) rerollLabel.text = $"다시 뽑기 ({rerollsRemaining})";
+        if (show && rerollLabel != null) rerollLabel.text = Loc.F("ui.levelup.reroll", rerollsRemaining);
     }
 
     private static void SetRow(TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
@@ -475,12 +522,12 @@ public class LevelUpUI : MonoBehaviour
         {
             if (option.IsNew)
             {
-                level.text = "신규!";
+                level.text = Loc.T("ui.levelup.tagNew");
                 level.color = NewTagColor;
             }
             else if (option.IsEvolution)
             {
-                level.text = "진화! " + option.LevelText;
+                level.text = Loc.T("ui.levelup.tagEvolve") + " " + option.LevelText;
                 level.color = EvolveTagColor;
             }
             else if (!string.IsNullOrEmpty(option.LevelText))
@@ -553,7 +600,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = "레벨: " + (captured.Level + 1),
+                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
@@ -568,7 +615,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = "레벨: " + (captured.Level + 1),
+                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
@@ -590,8 +637,8 @@ public class LevelUpUI : MonoBehaviour
     // 레벨업할 스킬이 부족할 때 자리를 메우는 대체 보상: 이번 판 정수 +10
     private static Option EssenceOption() => new Option
     {
-        Title = "정수 획득",
-        Description = "정수 +" + EssenceReward,
+        Title = Loc.T("ui.levelup.essenceTitle"),
+        Description = Loc.F("ui.levelup.essenceDesc", EssenceReward),
         Apply = () => MetaRun.Collect(EssenceReward),
         IsEssence = true,
     };
@@ -631,15 +678,16 @@ public class LevelUpUI : MonoBehaviour
         {
             new Option
             {
-                Title = "보물 상자",
-                Description = "가지고 있는 스킬이 무작위로 강화된다 (운이 좋으면 여러 번)",
+                Title = Loc.T("ui.treasure.boxTitle"),
+                Description = Loc.T("ui.treasure.boxDesc"),
+                Icon = treasureChoiceSprite, // 없으면 SetIcon이 알아서 숨긴다
             },
             new Option
             {
-                Title = "진화",
-                LevelText = evolvable + "개 가능",
+                Title = Loc.T("ui.treasure.evoTitle"),
+                LevelText = Loc.F("ui.treasure.evoCount", evolvable),
                 IsEvolution = true,
-                Description = "스킬 하나를 골라 진화시킨다",
+                Description = Loc.T("ui.treasure.evoDesc"),
                 ComboPreview = BuildComboPreview(skills, passives),
             },
         };
@@ -878,7 +926,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = "레벨: " + (captured.Level + 1),
+                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
                 Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
@@ -893,7 +941,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = "레벨: " + (captured.Level + 1),
+                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
                 Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
@@ -943,7 +991,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = (captured.EvolutionStage + 1) + "차 진화",
+                LevelText = Loc.F("ui.levelup.evoStage", captured.EvolutionStage + 1),
                 IsEvolution = true,
                 Description = DescribeEvolutionChoice(skills, captured),
                 Icon = GetActiveIcon(captured), // 2차 진화 대상이면 1차 때 고른 루트의 그림이 뜬다
@@ -958,7 +1006,7 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = (captured.EvolutionStage + 1) + "차 진화",
+                LevelText = Loc.F("ui.levelup.evoStage", captured.EvolutionStage + 1),
                 IsEvolution = true,
                 Description = DescribeEvolutionChoice(passives, captured),
                 Icon = GetPassiveIcon(captured),
@@ -993,8 +1041,8 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = $"레벨: {captured.Level} → {target}",
-                Description = $"{target - captured.Level}레벨 즉시 상승",
+                LevelText = Loc.F("ui.levelup.levelRange", captured.Level, target),
+                Description = Loc.F("ui.levelup.instantLevels", target - captured.Level),
                 Icon = GetActiveIcon(captured),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) skills.UpgradeSkillLevel(captured.Id); },
                 SkillId = captured.Id,
@@ -1009,8 +1057,8 @@ public class LevelUpUI : MonoBehaviour
             candidates.Add(new Option
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = $"레벨: {captured.Level} → {target}",
-                Description = $"{target - captured.Level}레벨 즉시 상승",
+                LevelText = Loc.F("ui.levelup.levelRange", captured.Level, target),
+                Description = Loc.F("ui.levelup.instantLevels", target - captured.Level),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => { for (int i = 0; i < EvolutionFallbackLevels; i++) passives.UpgradePassiveLevel(captured.Id); },
                 PassiveId = captured.Id,
@@ -1029,7 +1077,7 @@ public class LevelUpUI : MonoBehaviour
             .Where(r => skills.IsRouteUnlocked(s.Id, r))
             .Select(r => EvolutionRoutes.EvolvedName(s.Id, r, 1))
             .ToArray();
-        return "루트 선택: " + string.Join(" / ", names);
+        return Loc.F("ui.levelup.routeChoice", string.Join(" / ", names));
     }
 
     private static string DescribeEvolutionChoice(PlayerPassives passives, EquippedPassive p)
@@ -1039,7 +1087,7 @@ public class LevelUpUI : MonoBehaviour
             .Where(r => passives.IsRouteUnlocked(p.Id, r))
             .Select(r => EvolutionRoutes.EvolvedName(p.Id, r, 1))
             .ToArray();
-        return "루트 선택: " + string.Join(" / ", names);
+        return Loc.F("ui.levelup.routeChoice", string.Join(" / ", names));
     }
 
     // 진화 카드를 고른 뒤: 진화면 트리 창으로, 대체 보상이면 곧바로 적용.
