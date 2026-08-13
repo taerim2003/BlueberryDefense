@@ -150,7 +150,7 @@ public class HUDController : MonoBehaviour
         if (MetaRun.RunCurrency == lastSeenCurrency) return;
         bool grew = lastSeenCurrency >= 0;
         lastSeenCurrency = MetaRun.RunCurrency;
-        essenceText.text = MetaRun.RunCurrency + " 정수";
+        essenceText.text = Loc.F("ui.essence", MetaRun.RunCurrency);
         if (grew) PunchIcon(essenceText.rectTransform);
     }
 

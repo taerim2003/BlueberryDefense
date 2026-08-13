@@ -134,8 +134,7 @@ public class CharacterSelectUI : MonoBehaviour
 
             var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && chr != null)
-                nameText.text = locked ? "???"
-                    : (string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName);
+                nameText.text = locked ? "???" : chr.Name;
 
             var frame = FindDeep(card.transform, "Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);

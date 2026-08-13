@@ -255,7 +255,7 @@ public class SkillTreeUI : MonoBehaviour
     private void RefreshAll()
     {
         int ess = SkillTreeSave.AvailableEssence(tree);
-        if (essenceText != null) { essenceText.text = ess + " 정수"; if (prevEssence >= 0 && ess != prevEssence) PunchCurrency(essenceText); }
+        if (essenceText != null) { essenceText.text = Loc.F("ui.essence", ess); if (prevEssence >= 0 && ess != prevEssence) PunchCurrency(essenceText); }
         prevEssence = ess;
         RefreshNodes();
         RefreshLines();
@@ -297,8 +297,8 @@ public class SkillTreeUI : MonoBehaviour
             {
                 // 이름은 인접 노드부터 공개. 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기.
                 v.label.text = (isUnlocked && lv >= 1 && max > 1)
-                    ? v.node.displayName + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
-                    : v.node.displayName;
+                    ? v.node.Name + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
+                    : v.node.Name;
             }
 
             if (v.ring != null)
@@ -357,19 +357,19 @@ public class SkillTreeUI : MonoBehaviour
         if (!isUnlocked)
         {
             // 해금 노드 바로 옆(힌트) 노드는 이름·효과·비용을 모두 공개한다 — 살지 말지 미리 판단 가능하게
-            if (tooltipName != null) tooltipName.text = n.displayName;
-            if (tooltipDesc != null) tooltipDesc.text = n.description;
+            if (tooltipName != null) tooltipName.text = n.Name;
+            if (tooltipDesc != null) tooltipDesc.text = n.Desc;
             if (tooltipCost != null)
             {
                 int cost = SkillTreeSave.NextLevelCost(tree, n);
                 bool can = SkillTreeSave.CanUpgrade(tree, hoveredId);
-                tooltipCost.text = cost + " 정수" + (can ? "  ▸ 클릭하여 해금" : "");
+                tooltipCost.text = Loc.F("ui.tree.cost", cost) + (can ? Loc.T("ui.tree.clickUnlock") : "");
             }
         }
         else
         {
-            if (tooltipName != null) tooltipName.text = n.displayName;
-            if (tooltipDesc != null) tooltipDesc.text = n.description;
+            if (tooltipName != null) tooltipName.text = n.Name;
+            if (tooltipDesc != null) tooltipDesc.text = n.Desc;
             if (tooltipCost != null)
             {
                 int lv = SkillTreeSave.LevelOf(hoveredId);
@@ -378,9 +378,9 @@ public class SkillTreeUI : MonoBehaviour
                 int nextCost = SkillTreeSave.NextLevelCost(tree, n);
 
                 if (lv >= max)
-                    tooltipCost.text = max > 1 ? "Lv " + lv + "/" + max + " (최대)" : "해금됨";
+                    tooltipCost.text = max > 1 ? "Lv " + lv + "/" + max + " " + Loc.T("ui.tree.maxed") : Loc.T("ui.tree.unlocked");
                 else
-                    tooltipCost.text = "Lv " + lv + "/" + max + "  · 다음 " + nextCost + " 정수" + (canUp ? "  ▸ 클릭" : "");
+                    tooltipCost.text = "Lv " + lv + "/" + max + Loc.F("ui.tree.next", nextCost) + (canUp ? Loc.T("ui.tree.click") : "");
             }
         }
 

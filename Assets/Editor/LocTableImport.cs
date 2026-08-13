@@ -21,6 +21,30 @@ public static class LocTableImport
     [MenuItem("Window/Blueberry Defense/번역 - 수확본을 ko 테이블에 적재")]
     public static void ImportHarvestMenu() { Debug.Log(Import(LocHarvest.OutPath, "ko")); }
 
+    // TSV 파일이 늘 때마다 메뉴를 하나씩 늘리면 en 쪽을 빠뜨린다(실제로 en 적재 메뉴가 없었다).
+    // 파일 이름의 접미사(_ko / _en)가 곧 로케일이라, 폴더를 훑어 전부 밀어넣는다.
+    public const string TsvFolder = "Assets/Localization";
+
+    [MenuItem("Window/Blueberry Defense/번역 - 모든 TSV를 표에 적재")]
+    public static void ImportAllMenu() { Debug.Log(ImportAll()); }
+
+    public static string ImportAll()
+    {
+        var sb = new StringBuilder();
+        var files = new List<string>(Directory.GetFiles(TsvFolder, "*.tsv"));
+        files.Sort();
+        foreach (string path in files)
+        {
+            string stem = Path.GetFileNameWithoutExtension(path);
+            int us = stem.LastIndexOf('_');
+            if (us < 0) { sb.AppendLine("건너뜀(로케일 접미사 없음): " + stem); continue; }
+            string code = stem.Substring(us + 1);
+            sb.AppendLine(stem + " → " + Import(path.Replace('\\', '/'), code).TrimEnd());
+        }
+        sb.AppendLine(Report());
+        return sb.ToString();
+    }
+
     public static string Import(string tsvPath, string localeCode)
     {
         var log = new StringBuilder();

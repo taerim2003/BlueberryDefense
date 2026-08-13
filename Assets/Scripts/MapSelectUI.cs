@@ -123,13 +123,13 @@ public class MapSelectUI : MonoBehaviour
 
     // 난이도 이름. 표에 등급이 셋뿐이라 그대로 쉬움/보통/어려움으로 부른다.
     // 등급이 늘어나면 이름이 모자라므로 그때는 "어려움 +N"으로 이어 붙인다.
-    private static readonly string[] DifficultyNames = { "쉬움", "보통", "어려움" };
+    private const int DifficultyNameCount = 3;
 
     private static string DifficultyName(int level)
     {
         int i = Mathf.Clamp(level, 1, int.MaxValue) - 1;
-        if (i < DifficultyNames.Length) return DifficultyNames[i];
-        return DifficultyNames[DifficultyNames.Length - 1] + " +" + (i - DifficultyNames.Length + 1);
+        if (i < DifficultyNameCount) return Loc.T("ui.difficulty." + i);
+        return Loc.F("ui.difficulty.plus", Loc.T("ui.difficulty." + (DifficultyNameCount - 1)), i - DifficultyNameCount + 1);
     }
 
     // 등급 효과를 % 증가로 표기. 최고 해금 등급에 있고 위 등급이 더 있으면 해금 안내를 덧붙인다.
@@ -138,17 +138,17 @@ public class MapSelectUI : MonoBehaviour
         string body;
         if (level <= 1)
         {
-            body = "기본 난이도";
+            body = Loc.T("ui.ascension.base");
         }
         else
         {
             AscensionTier t = AscTable.Get(level);
-            body = $"적 체력 +{Pct(t.hpMult)}   이동속도 +{Pct(t.speedMult)}   피해 +{Pct(t.damageMult)}"
-                 + $"\n<color=#8FE38A>정수 획득 +{Pct(t.essenceMult)}</color>";
+            body = Loc.F("ui.ascension.stats", Pct(t.hpMult), Pct(t.speedMult), Pct(t.damageMult))
+                 + "\n<color=#8FE38A>" + Loc.F("ui.ascension.essence", Pct(t.essenceMult)) + "</color>";
         }
 
         if (level >= max && max < AscTable.MaxLevel)
-            body += "\n<color=#FFC864>클리어하면 다음 난이도가 열립니다</color>";
+            body += "\n<color=#FFC864>" + Loc.T("ui.ascension.nextUnlock") + "</color>";
         return body;
     }
 
@@ -159,8 +159,7 @@ public class MapSelectUI : MonoBehaviour
     {
         var chr = characterSelect != null ? characterSelect.Selected : null;
         if (characterNameText != null)
-            characterNameText.text = chr == null ? "" :
-                (string.IsNullOrEmpty(chr.displayName) ? chr.name : chr.displayName);
+            characterNameText.text = chr == null ? "" : chr.Name;
         if (characterPortrait != null)
         {
             bool hasPortrait = chr != null && chr.portrait != null;
@@ -217,7 +216,7 @@ public class MapSelectUI : MonoBehaviour
             if (nameText != null && map != null)
                 nameText.text = locked
                     ? "🔒 " + map.UnlockConditionText()
-                    : (string.IsNullOrEmpty(map.displayName) ? map.name : map.displayName);
+                    : map.Name;
 
             var frame = FindDeep(card.transform, "Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);

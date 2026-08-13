@@ -43,14 +43,14 @@ public class DamageMeterUI : MonoBehaviour
             titleText.text = isClear ? "GAME CLEAR" : "GAME OVER";
             titleText.color = isClear ? GameClearColor : GameOverColor;
         }
-        if (earnedText != null) earnedText.text = $"획득 정수: {MetaRun.RunCurrency}";
+        if (earnedText != null) earnedText.text = Loc.F("ui.result.earned", MetaRun.RunCurrency);
         if (bodyText == null) return;
 
         var breakdown = DamageMeter.GetBreakdown();
         float total = DamageMeter.TotalDamage;
 
         StringBuilder sb = new StringBuilder();
-        sb.AppendLine($"총 피해량: {total:N0}");
+        sb.AppendLine(Loc.F("ui.result.total", total.ToString("N0")));
         sb.AppendLine();
 
         foreach (var (name, damage) in breakdown)

@@ -37,7 +37,7 @@ public static class DamageMeter
             .Select(kv => (PlayerSkills.GetActiveSkillName(kv.Key), kv.Value))
             .ToList();
 
-        if (otherDamage > 0f) result.Add(("기타", otherDamage));
+        if (otherDamage > 0f) result.Add((Loc.T("ui.result.other"), otherDamage));
         return result;
     }
 }

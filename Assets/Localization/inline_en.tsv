@@ -1,0 +1,132 @@
+KEY	EN
+passive.lvl.Strength	Damage +{0}%
+passive.lvl.Health	Max health +{0}
+passive.lvl.Knowledge	Experience gain +{0}%
+passive.lvl.Assassinate	Critical chance +{0}%p
+passive.lvl.Refresh	Cooldown reset chance +{0}%p
+passive.lvl.Defense	Damage taken -{0}%p
+passive.lvl.Accel	All skill cooldowns -{0}%p
+passive.acq.Strength	Damage +{0}%
+passive.acq.Health	Max health +{0}
+passive.acq.Knowledge	Experience gain +{0}%
+passive.acq.Assassinate	All damage has a {0}% chance to deal triple
+passive.acq.Refresh	{0}% chance to reset cooldowns on skill use
+passive.acq.Defense	Damage taken -{0}%
+passive.acq.Accel	All skill cooldowns -{0}%
+passive.cur.Strength.dmg	Total damage +{0}%
+passive.cur.Strength.qfallback	Q skill
+passive.cur.Strength.q	Q ({0}) damage +{1}%
+passive.cur.Health.max	Max health {0}
+passive.cur.Health.regen	Restore {1} health every {0}s
+passive.cur.Health.dmgPerHp	Damage +{0}% per 1 max health
+passive.cur.Health.heartDrop	Health pickup drop rate x{0}
+passive.cur.Knowledge.xp	Experience gain +{0}%
+passive.cur.Knowledge.treasure	Blueberries have a {0}% chance to appear as treasure chests
+passive.cur.Knowledge.eagleXp	+{0} experience per Eagle Drop cast
+passive.cur.Assassinate.chance	Critical chance {0}%
+passive.cur.Assassinate.mult	Critical damage x{0}
+passive.cur.Assassinate.slowCrit	Skills with {0}s or longer cooldown always crit
+passive.cur.Assassinate.killXp	Experience x{0} on critical kills
+passive.cur.Refresh.reset	{0}% chance to reset cooldowns on skill use
+passive.cur.Refresh.heal	Restore {0} health on every reset
+passive.cur.Refresh.buffCd	Buff skill (Buckshot / Lightning) cooldowns -{0}%
+passive.cur.Refresh.lightningCd	{0}% chance on lightning strike to cut all cooldowns by 0.5s
+passive.cur.Defense.reduce	Damage taken -{0}%
+passive.cur.Defense.autoSwing	Auto-cast Swing when hit ({0}% damage)
+passive.cur.Defense.retaliate	Reflect {0}% of damage taken to all enemies
+passive.cur.Accel.cd	All skill cooldowns -{0}%
+passive.cur.Accel.cutOnHit	All cooldowns -{0}s when hit
+step.Damage.mul	Damage +{0}%
+step.Damage.add	Damage +{0}
+step.Cooldown.mul	Cooldown -{0}%
+step.Cooldown.add	Cooldown -{0}s
+step.ProjectileSpeed	Projectile speed +{0}%
+step.Pierce	Pierce +{0}
+step.ProjectileCount	Projectiles +{0}
+step.ProcChance	Proc chance +{0}%p
+step.Duration	Duration +{0}s
+step.Scale	Size +{0}%
+step.RewindAmount	Rewind time +{0}s
+step.TickRate	Hit interval {0}% faster
+step.MaxTargets.orb	Pierce targets +{0}
+step.MaxTargets	Simultaneous targets +{0}
+ui.badge.active	ACTIVE
+ui.badge.passive	PASSIVE
+skill.gain.dmg	Damage {0}%  ({1}→{2})
+skill.gain.cd	Cooldown {0}%  ({1}→{2}s)
+skill.gain.projSpeed	Projectile speed +{0}%
+skill.gain.pierce	Pierce +{0}
+skill.gain.projCount	Shots +{0}
+skill.gain.targets.orb	Pierce targets +{0}
+skill.gain.targets	Simultaneous targets +{0}
+skill.gain.tickRate	Hit interval -{0}%
+skill.gain.procChance	Proc chance +{0}%p
+skill.gain.duration	Duration +{0}s
+skill.gain.scale	Size +{0}%
+skill.gain.rewind	Rewind time {0}s
+skill.gain.growth	Growth stacks {0} (stronger the more you use it)
+ui.levelup.evoHeader	Evolve!
+ui.levelup.evoFallbackHeader	Nothing to evolve — level up instead
+ui.levelup.treasureHeader	Treasure Chest — what will you take?
+ui.levelup.reroll	Reroll ({0})
+ui.levelup.tagNew	NEW!
+ui.levelup.tagEvolve	EVOLVE!
+ui.levelup.level	Level: {0}
+ui.levelup.essenceTitle	Gain Essence
+ui.levelup.essenceDesc	Essence +{0}
+ui.levelup.evoStage	Evolution {0}
+ui.levelup.levelRange	Level: {0} → {1}
+ui.levelup.instantLevels	+{0} levels instantly
+ui.levelup.routeChoice	Choose a path: {0}
+ui.treasure.boxTitle	Treasure Chest
+ui.treasure.boxDesc	A skill you own is upgraded at random (several times, if you are lucky)
+ui.treasure.evoTitle	Evolve
+ui.treasure.evoCount	{0} available
+ui.treasure.evoDesc	Pick one skill to evolve
+ui.evotree.header	{0} Evolution — Lv.{1}
+ui.evotree.allDone	Fully evolved
+ui.evotree.pickRoute	Choose one path — you cannot change it later
+ui.evotree.continueRoute	Continuing the path you chose at tier 1
+ui.evotree.abandoned	[PATH NOT TAKEN]
+ui.evotree.lockedPrereq	[LOCKED — needs '{0}']
+ui.evotree.locked	[LOCKED]
+ui.evotree.tier1Bonus	Damage +{0}% · grows again from level 1
+ui.essence	{0} Essence
+ui.tree.cost	{0} Essence
+ui.tree.clickUnlock	  ▸ click to unlock
+ui.tree.maxed	(MAX)
+ui.tree.unlocked	Unlocked
+ui.tree.next	  · next {0} Essence
+ui.tree.click	  ▸ click
+ui.difficulty.0	Easy
+ui.difficulty.1	Normal
+ui.difficulty.2	Hard
+ui.difficulty.plus	{0} +{1}
+ui.ascension.base	Base difficulty
+ui.ascension.stats	Enemy health +{0}   Move speed +{1}   Damage +{2}
+ui.ascension.essence	Essence gain +{0}
+ui.ascension.nextUnlock	Clear this to unlock the next difficulty
+ui.pause.title	Paused
+ui.pause.giveUp	Return to Title
+ui.pause.hint	ESC — Resume
+ui.pause.activeHeader	ACTIVE SKILLS
+ui.pause.passiveHeader	PASSIVES
+ui.result.other	Other
+ui.result.earned	Essence earned: {0}
+ui.result.total	Total damage: {0}
+unlock.essence	Essence {0} / {1}
+unlock.clearMap	Clear {0} at Ascension {1}
+ui.levelup.header	Level Up!
+ui.title.play	Play
+ui.title.upgrade	Upgrades
+ui.title.collection	Collection
+ui.title.quit	Quit
+ui.tree.title	Skill Tree
+ui.charselect.title	Select Character
+ui.mapselect.changeChar	Change Character
+ui.common.close	Close
+ui.common.back	Back
+ui.common.select	Select
+ui.result.toTitle	To Title
+ui.treasure.header	Treasure!
+ui.treasure.continue	Click to continue

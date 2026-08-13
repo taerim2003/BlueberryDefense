@@ -54,10 +54,12 @@ public class MapDefinition : ScriptableObject
     public string UnlockConditionText()
     {
         if (unlockedFromStart || requiredClearMap == null) return "";
-        string mapName = string.IsNullOrEmpty(requiredClearMap.displayName)
-            ? requiredClearMap.name : requiredClearMap.displayName;
-        return $"{mapName} 승천{requiredClearAscension} 클리어";
+        return Loc.F("unlock.clearMap", requiredClearMap.Name, requiredClearAscension);
     }
+
+    // 표시 문구는 표에서 읽는다. 키는 **에셋 이름**에서 파생 — displayName은 표시용이라 바뀔 수 있다(MapClearSave와 같은 이유).
+    public string Name => Loc.TOr("map.name." + name, string.IsNullOrEmpty(displayName) ? name : displayName);
+    public string Desc => Loc.TOr("map.desc." + name, description);
 
     [Header("스테이지 구성")]
     public StageTable stageTable;

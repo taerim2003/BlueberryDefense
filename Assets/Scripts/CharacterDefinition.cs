@@ -12,6 +12,10 @@ public class CharacterDefinition : ScriptableObject
     [TextArea] public string description; // 카드 설명 (선택)
     public Sprite portrait;               // 선택 화면 초상화 (선택)
 
+    // 표시 문구는 표에서 읽는다. 키는 **에셋 이름**에서 파생 — MapDefinition과 같은 규칙.
+    public string Name => Loc.TOr("char.name." + name, string.IsNullOrEmpty(displayName) ? name : displayName);
+    public string Desc => Loc.TOr("char.desc." + name, description);
+
     [Header("외형 (null이면 프리팹 기본 유지)")]
     public Sprite sprite;                                // 인게임 플레이어 스프라이트
     public RuntimeAnimatorController animatorController; // 인게임 애니메이터
@@ -61,13 +65,11 @@ public class CharacterDefinition : ScriptableObject
         {
             int have = Mathf.Min(SkillTreeSave.EssenceEarned, requiredEssenceEarned);
             bool ok = SkillTreeSave.EssenceEarned >= requiredEssenceEarned;
-            lines.Add((ok ? "✔ " : "• ") + $"정수 {have} / {requiredEssenceEarned}");
+            lines.Add((ok ? "✔ " : "• ") + Loc.F("unlock.essence", have, requiredEssenceEarned));
         }
         if (requiredClearMap != null)
         {
-            string mapName = string.IsNullOrEmpty(requiredClearMap.displayName)
-                ? requiredClearMap.name : requiredClearMap.displayName;
-            lines.Add((ClearConditionMet ? "✔ " : "• ") + $"{mapName} 승천{requiredClearAscension} 클리어");
+            lines.Add((ClearConditionMet ? "✔ " : "• ") + Loc.F("unlock.clearMap", requiredClearMap.Name, requiredClearAscension));
         }
         return lines.ToArray();
     }

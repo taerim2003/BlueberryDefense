@@ -1,0 +1,75 @@
+﻿KEY	KO
+tree.name.atk_1	공격력 I
+tree.desc.atk_1	모든 피해가 5% 증가
+tree.name.atk_2	공격력 II
+tree.desc.atk_2	모든 피해가 8% 증가
+tree.name.hp_1	체력 I
+tree.desc.hp_1	최대 체력이 10 증가
+tree.name.hp_2	체력 II
+tree.desc.hp_2	최대 체력이 15 증가
+tree.name.New_Reroll	리롤 해금
+tree.desc.New_Reroll	레벨 업 선택지를 게임당 1회 리롤할 수 있는 기능 해금
+tree.name.reroll_2	리롤 I
+tree.desc.reroll_2	게임당 리롤 +1
+tree.name.crit_1	치명 I
+tree.desc.crit_1	치명타 확률 3% 증가
+tree.name.crit_2	치명 II
+tree.desc.crit_2	치명타 확률 5% 증가
+tree.name.exp_1	경험 I
+tree.desc.exp_1	경험치 획득량 +5%
+tree.name.exp_2	경험 II
+tree.desc.exp_2	경험치 획득량 +8%
+tree.name.gold_1	부유 I
+tree.desc.gold_1	정수 획득량 증가 +10%
+tree.name.gold_2	부유 II
+tree.desc.gold_2	정수 획득량 15%
+tree.name.arrow_StartLev	화살 숙련
+tree.desc.arrow_StartLev	(딸기 선택 시) 화살 3레벨로 시작
+tree.name.orb_BasicFly	오브 비행 타격 가능
+tree.desc.orb_BasicFly	기본 오브도 비행 적을 타격할 수 있게 됨
+tree.name.fly_1	비행 I
+tree.desc.fly_1	비행 적 추가 피해 +5%
+tree.name.eagle_fly	독수리 비행 추가 피해
+tree.desc.eagle_fly	독수리 투하의 비행 적 추가 피해 +30%
+tree.name.fly_2	비행 II
+tree.desc.fly_2	비행 적 추가 피해 +10%
+tree.name.cool_1	쿨다운 I
+tree.desc.cool_1	모든 스킬 쿨타임 -3%
+tree.name.cool_2	쿨다운 II
+tree.desc.cool_2	모든 스킬 쿨타임 -5%
+tree.name.tornado_CoolDownBonus	신속한 회오리
+tree.desc.tornado_CoolDownBonus	회오리는 모든 쿨타임 감소 효과를 1.5배로 받음
+tree.name.thunder_Cooldown	낙뢰 쿨타임 감소
+tree.desc.thunder_Cooldown	낙뢰가 칠 때마다 낙뢰 쿨타임 -0.01초
+tree.name.atk_3	공격력 III
+tree.desc.atk_3	모든 피해가 10% 증가
+tree.name.gold_3	부유 III
+tree.desc.gold_3	정수 획득량 25%
+tree.name.Root_Skilltree	스킬트리 해금!
+tree.desc.Root_Skilltree	스킬트리를 해금합니다!
+tree.name.New_Orb	오브 해금
+tree.desc.New_Orb	<오브> 스킬이 등장할 수 있습니다.
+tree.name.New_Lightning	번개 해금
+tree.desc.New_Lightning	<번개> 스킬이 등장할 수 있습니다.
+tree.name.New_Homing	호밍 해금
+tree.desc.New_Homing	<호밍 미사일> 스킬이 등장할 수 있습니다.
+tree.name.New_Shotgun	샷건 해금
+tree.desc.New_Shotgun	<샷건> 스킬이 등장할 수 있습니다.
+tree.name.New_Rewind	되감기 해금
+tree.desc.New_Rewind	<되감기> 스킬이 등장할 수 있습니다.
+tree.name.Rewind_Slow	블루베리 둔화
+tree.desc.Rewind_Slow	되감기 사용 시 블루베리의 시간을 천천히 감아\n모든 블루베리에게 둔화를 부여합니다.
+tree.name.Shotgun_CloseBonus	근거리 조준
+tree.desc.Shotgun_CloseBonus	샷건 버프를 받은 공격이 가까이 있는 적에게\n+2회 더 타격합니다.
+tree.name.Homing_MissileNum	더 많은 폭격
+tree.desc.Homing_MissileNum	호밍 미사일을 10회 사용할 때마다\n날리는 미사일 수가 1개씩 증가합니다.
+tree.name.Sniping_TwoTarget	한 발에 두 놈
+tree.desc.Sniping_TwoTarget	스나이핑이 한 놈을 추가로 타겟팅합니다.
+tree.name.swing_StartLev	휘두르기 숙련
+tree.desc.swing_StartLev	(파인애플 선택 시) 휘두르기 3레벨로 시작
+char.name.Char_Pineapple	파인애플
+char.name.Char_Slot3	???
+char.name.Char_Strawberry	딸기
+map.name.Map_BlueberryField	블루베리 밭
+map.name.Map_Wide15	해안가
+map.name.Map_Wide20	광활한 밭

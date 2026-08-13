@@ -265,13 +265,13 @@ public class PlayerPassives : MonoBehaviour
         float v = PerLevelBonus(id);
         return id switch
         {
-            PassiveSkillId.Strength => $"피해량 {Pct(v)}% 증가",
-            PassiveSkillId.Health => $"최대 체력 {v:0} 증가",
-            PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(v)}% 증가",
-            PassiveSkillId.Assassinate => $"치명타 확률 {Pct(v)}%p 증가",
-            PassiveSkillId.Refresh => $"재사용 초기화 확률 {Pct(v)}%p 증가",
-            PassiveSkillId.Defense => $"받는 피해 {Pct(v)}%p 감소",
-            PassiveSkillId.Accel => $"모든 스킬 쿨타임 {Pct(v)}%p 감소",
+            PassiveSkillId.Strength => Loc.F("passive.lvl.Strength", Pct(v)),
+            PassiveSkillId.Health => Loc.F("passive.lvl.Health", v.ToString("0")),
+            PassiveSkillId.Knowledge => Loc.F("passive.lvl.Knowledge", Pct(v)),
+            PassiveSkillId.Assassinate => Loc.F("passive.lvl.Assassinate", Pct(v)),
+            PassiveSkillId.Refresh => Loc.F("passive.lvl.Refresh", Pct(v)),
+            PassiveSkillId.Defense => Loc.F("passive.lvl.Defense", Pct(v)),
+            PassiveSkillId.Accel => Loc.F("passive.lvl.Accel", Pct(v)),
             _ => "",
         };
     }
@@ -282,13 +282,13 @@ public class PlayerPassives : MonoBehaviour
         float b = BaseValue(id);
         return id switch
         {
-            PassiveSkillId.Strength => $"피해량 {Pct(b)}% 증가",
-            PassiveSkillId.Health => $"최대 체력 {b:0} 증가",
-            PassiveSkillId.Knowledge => $"경험치 획득량 {Pct(b)}% 증가",
-            PassiveSkillId.Assassinate => $"모든 피해가 {Pct(b)}% 확률로 3배 피해",
-            PassiveSkillId.Refresh => $"스킬 사용 시 {Pct(b)}% 확률로 쿨타임 초기화",
-            PassiveSkillId.Defense => $"받는 피해 {Pct(b)}% 감소",
-            PassiveSkillId.Accel => $"모든 스킬 쿨타임 {Pct(b)}% 감소",
+            PassiveSkillId.Strength => Loc.F("passive.acq.Strength", Pct(b)),
+            PassiveSkillId.Health => Loc.F("passive.acq.Health", b.ToString("0")),
+            PassiveSkillId.Knowledge => Loc.F("passive.acq.Knowledge", Pct(b)),
+            PassiveSkillId.Assassinate => Loc.F("passive.acq.Assassinate", Pct(b)),
+            PassiveSkillId.Refresh => Loc.F("passive.acq.Refresh", Pct(b)),
+            PassiveSkillId.Defense => Loc.F("passive.acq.Defense", Pct(b)),
+            PassiveSkillId.Accel => Loc.F("passive.acq.Accel", Pct(b)),
             _ => "",
         };
     }
@@ -303,52 +303,52 @@ public class PlayerPassives : MonoBehaviour
         switch (p.Id)
         {
             case PassiveSkillId.Strength:
-                if (skills != null) lines.Add($"전체 피해량 +{Pct(skills.PassiveDamageMultiplier - 1f)}%");
+                if (skills != null) lines.Add(Loc.F("passive.cur.Strength.dmg", Pct(skills.PassiveDamageMultiplier - 1f)));
                 if (FirstSlotDamageMultiplierBonus > 0f)
                 {
                     // 대상이 캐릭터·획득 순서마다 달라서 이름을 박아 두면 틀린다 — 지금 Q에 있는 스킬을 그때그때 읽는다.
-                    string qSkill = skills != null && skills.EquippedSkills.Count > 0 ? skills.EquippedSkills[0].DisplayName : "Q 스킬";
-                    lines.Add($"Q({qSkill}) 피해량 +{Pct(FirstSlotDamageMultiplierBonus)}%");
+                    string qSkill = skills != null && skills.EquippedSkills.Count > 0 ? skills.EquippedSkills[0].DisplayName : Loc.T("passive.cur.Strength.qfallback");
+                    lines.Add(Loc.F("passive.cur.Strength.q", qSkill, Pct(FirstSlotDamageMultiplierBonus)));
                 }
                 break;
 
             case PassiveSkillId.Health:
-                if (health != null) lines.Add($"최대 체력 {health.MaxHealth}");
-                if (regenInterval > 0f && regenAmount > 0f) lines.Add($"{regenInterval:0.#}초마다 체력 {regenAmount:0.#} 재생");
-                if (HealthDamagePerHp > 0f) lines.Add($"최대 체력 1당 피해량 +{Pct(HealthDamagePerHp)}%");
-                if (HeartDropMultiplier > 1f) lines.Add($"체력 회복 드랍률 x{HeartDropMultiplier:0.#}");
+                if (health != null) lines.Add(Loc.F("passive.cur.Health.max", health.MaxHealth));
+                if (regenInterval > 0f && regenAmount > 0f) lines.Add(Loc.F("passive.cur.Health.regen", regenInterval.ToString("0.#"), regenAmount.ToString("0.#")));
+                if (HealthDamagePerHp > 0f) lines.Add(Loc.F("passive.cur.Health.dmgPerHp", Pct(HealthDamagePerHp)));
+                if (HeartDropMultiplier > 1f) lines.Add(Loc.F("passive.cur.Health.heartDrop", HeartDropMultiplier.ToString("0.#")));
                 break;
 
             case PassiveSkillId.Knowledge:
-                if (PlayerExperience.Instance != null) lines.Add($"경험치 획득량 +{Pct(PlayerExperience.Instance.XpMultiplier - 1f)}%");
-                if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add($"블루베리가 {Pct(EnemySpawner.ExtraTreasureChance)}% 확률로 보물상자로 등장");
-                if (EagleDropCastXpBonus > 0) lines.Add($"독수리 투하 시전마다 경험치 +{EagleDropCastXpBonus}");
+                if (PlayerExperience.Instance != null) lines.Add(Loc.F("passive.cur.Knowledge.xp", Pct(PlayerExperience.Instance.XpMultiplier - 1f)));
+                if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add(Loc.F("passive.cur.Knowledge.treasure", Pct(EnemySpawner.ExtraTreasureChance)));
+                if (EagleDropCastXpBonus > 0) lines.Add(Loc.F("passive.cur.Knowledge.eagleXp", EagleDropCastXpBonus));
                 break;
 
             case PassiveSkillId.Assassinate:
-                lines.Add($"치명타 확률 {Pct(AssassinateCritChance)}%");
-                lines.Add($"치명타 피해 배율 x{AssassinateCritMultiplier:0.##}");
-                if (AssassinateSlowSkillCritCooldown > 0f) lines.Add($"재사용 {AssassinateSlowSkillCritCooldown:0.#}초 이상 스킬은 항상 치명타");
-                if (AssassinateKillXpMultiplier > 1f) lines.Add($"치명타 처치 시 경험치 x{AssassinateKillXpMultiplier:0.##}");
+                lines.Add(Loc.F("passive.cur.Assassinate.chance", Pct(AssassinateCritChance)));
+                lines.Add(Loc.F("passive.cur.Assassinate.mult", AssassinateCritMultiplier.ToString("0.##")));
+                if (AssassinateSlowSkillCritCooldown > 0f) lines.Add(Loc.F("passive.cur.Assassinate.slowCrit", AssassinateSlowSkillCritCooldown.ToString("0.#")));
+                if (AssassinateKillXpMultiplier > 1f) lines.Add(Loc.F("passive.cur.Assassinate.killXp", AssassinateKillXpMultiplier.ToString("0.##")));
                 break;
 
             case PassiveSkillId.Refresh:
-                lines.Add($"스킬 사용 시 {Pct(RefreshChance)}% 확률로 쿨타임 초기화");
-                if (RefreshHealOnResetAmount > 0f) lines.Add($"초기화될 때마다 체력 {RefreshHealOnResetAmount:0.#} 회복");
-                if (BuffSkillCooldownMult < 1f) lines.Add($"버프류 스킬(산탄·낙뢰) 쿨타임 -{Pct(1f - BuffSkillCooldownMult)}%");
-                if (RefreshLightningCooldownProcChance > 0f) lines.Add($"낙뢰 발동 시 {Pct(RefreshLightningCooldownProcChance)}% 확률로 전체 쿨타임 -0.5초");
+                lines.Add(Loc.F("passive.cur.Refresh.reset", Pct(RefreshChance)));
+                if (RefreshHealOnResetAmount > 0f) lines.Add(Loc.F("passive.cur.Refresh.heal", RefreshHealOnResetAmount.ToString("0.#")));
+                if (BuffSkillCooldownMult < 1f) lines.Add(Loc.F("passive.cur.Refresh.buffCd", Pct(1f - BuffSkillCooldownMult)));
+                if (RefreshLightningCooldownProcChance > 0f) lines.Add(Loc.F("passive.cur.Refresh.lightningCd", Pct(RefreshLightningCooldownProcChance)));
                 break;
 
             case PassiveSkillId.Defense:
-                lines.Add($"받는 피해 -{Pct(DamageReduction)}%");
-                if (health != null && DefenseAutoSwingDamageMult > 0f) lines.Add($"피격 시 휘두르기 자동 발동 (피해 {Pct(DefenseAutoSwingDamageMult)}%)");
-                if (HealthRetaliationMultiplier > 0f) lines.Add($"피격 시 받은 피해의 {Pct(HealthRetaliationMultiplier)}%를 전체 적에게");
+                lines.Add(Loc.F("passive.cur.Defense.reduce", Pct(DamageReduction)));
+                if (health != null && DefenseAutoSwingDamageMult > 0f) lines.Add(Loc.F("passive.cur.Defense.autoSwing", Pct(DefenseAutoSwingDamageMult)));
+                if (HealthRetaliationMultiplier > 0f) lines.Add(Loc.F("passive.cur.Defense.retaliate", Pct(HealthRetaliationMultiplier)));
                 break;
 
             case PassiveSkillId.Accel:
-                lines.Add($"모든 스킬 쿨타임 -{Pct(AccelCooldownReduction)}%");
-                if (RefreshChance > 0f) lines.Add($"스킬 사용 시 {Pct(RefreshChance)}% 확률로 쿨타임 초기화");
-                if (AccelCooldownCutOnHit > 0f) lines.Add($"피격 시 전체 쿨타임 -{AccelCooldownCutOnHit:0.#}초");
+                lines.Add(Loc.F("passive.cur.Accel.cd", Pct(AccelCooldownReduction)));
+                if (RefreshChance > 0f) lines.Add(Loc.F("passive.cur.Refresh.reset", Pct(RefreshChance)));
+                if (AccelCooldownCutOnHit > 0f) lines.Add(Loc.F("passive.cur.Accel.cutOnHit", AccelCooldownCutOnHit.ToString("0.#")));
                 break;
         }
         return lines;

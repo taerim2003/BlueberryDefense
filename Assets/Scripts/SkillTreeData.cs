@@ -40,6 +40,11 @@ public class SkillNode
     public Vector2 editorPos = new Vector2(200, 200);
 
     public float TotalAt(int level) => perLevel * level;
+
+    // 표시 문구는 표에서 읽는다. 키는 노드 id에서 파생 — 노드를 추가하면 키도 저절로 는다.
+    // 표에 없으면 에셋에 적힌 값이 그대로 나오므로, 번역이 덜 채워져도 화면이 비지 않는다.
+    public string Name => Loc.TOr("tree.name." + id, displayName);
+    public string Desc => Loc.TOr("tree.desc." + id, description);
 }
 
 [CreateAssetMenu(fileName = "SkillTreeData", menuName = "Blueberry Defense/Skill Tree Data")]

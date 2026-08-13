@@ -372,25 +372,25 @@ public class PlayerSkills : MonoBehaviour
         {
             case SkillStat.Damage:
                 return s.op == StatOp.Multiply
-                    ? $"피해량 {Mathf.RoundToInt((s.amount - 1f) * 100f)}% 증가"
-                    : $"피해량 {s.amount:0.##} 증가";
+                    ? Loc.F("step.Damage.mul", Mathf.RoundToInt((s.amount - 1f) * 100f))
+                    : Loc.F("step.Damage.add", s.amount.ToString("0.##"));
             case SkillStat.Cooldown:
                 return s.op == StatOp.Multiply
-                    ? $"재사용 대기시간 {Mathf.RoundToInt((1f - s.amount) * 100f)}% 감소"
-                    : $"재사용 대기시간 {-s.amount:0.##}초 감소";
-            case SkillStat.ProjectileSpeed: return $"투사체 속도 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
-            case SkillStat.Pierce: return $"관통 {Mathf.RoundToInt(s.amount)}회 추가";
-            case SkillStat.ProjectileCount: return $"투사체 +{Mathf.RoundToInt(s.amount)}";
-            case SkillStat.ProcChance: return $"발동 확률 {Mathf.RoundToInt(s.amount * 100f)}%p 증가";
-            case SkillStat.Duration: return $"지속시간 {s.amount:0.##}초 증가";
-            case SkillStat.Scale: return $"크기 {Mathf.RoundToInt(s.amount * 100f)}% 증가";
-            case SkillStat.RewindAmount: return $"되감기 시간 {s.amount:0.##}초 증가";
-            case SkillStat.TickRate: return $"타격 주기 {Mathf.RoundToInt((1f - s.amount) * 100f)}% 빨라짐";
+                    ? Loc.F("step.Cooldown.mul", Mathf.RoundToInt((1f - s.amount) * 100f))
+                    : Loc.F("step.Cooldown.add", (-s.amount).ToString("0.##"));
+            case SkillStat.ProjectileSpeed: return Loc.F("step.ProjectileSpeed", Mathf.RoundToInt(s.amount * 100f));
+            case SkillStat.Pierce: return Loc.F("step.Pierce", Mathf.RoundToInt(s.amount));
+            case SkillStat.ProjectileCount: return Loc.F("step.ProjectileCount", Mathf.RoundToInt(s.amount));
+            case SkillStat.ProcChance: return Loc.F("step.ProcChance", Mathf.RoundToInt(s.amount * 100f));
+            case SkillStat.Duration: return Loc.F("step.Duration", s.amount.ToString("0.##"));
+            case SkillStat.Scale: return Loc.F("step.Scale", Mathf.RoundToInt(s.amount * 100f));
+            case SkillStat.RewindAmount: return Loc.F("step.RewindAmount", s.amount.ToString("0.##"));
+            case SkillStat.TickRate: return Loc.F("step.TickRate", Mathf.RoundToInt((1f - s.amount) * 100f));
             // 오브만 "동시"가 아니라 사라지기 전까지 붙잡는 **총** 적 수(소모성 예산). 스나이핑은 동시 저격 대상 그대로.
             case SkillStat.MaxTargets:
                 return id == ActiveSkillId.Orb
-                    ? $"관통 대상 +{Mathf.RoundToInt(s.amount)}"
-                    : $"동시 대상 +{Mathf.RoundToInt(s.amount)}";
+                    ? Loc.F("step.MaxTargets.orb", Mathf.RoundToInt(s.amount))
+                    : Loc.F("step.MaxTargets", Mathf.RoundToInt(s.amount));
             default: return "";
         }
     }
@@ -615,8 +615,9 @@ public class PlayerSkills : MonoBehaviour
     };
 
     // 레벨업 선택지처럼 액티브/패시브가 섞여 나오는 곳에서 쓰는 종류 배지.
-    public static string ActiveTypeBadge => "<size=68%><color=#FFD86B>[액티브]</color></size>";
-    public static string PassiveTypeBadge => "<size=68%><color=#9BE86B>[패시브]</color></size>";
+    // ⚠️ 리치텍스트 마크업은 코드에 남기고 **낱말만** 표에 둔다 — 번역자가 태그를 깨뜨릴 자리를 만들지 않는다.
+    public static string ActiveTypeBadge => "<size=68%><color=#FFD86B>[" + Loc.T("ui.badge.active") + "]</color></size>";
+    public static string PassiveTypeBadge => "<size=68%><color=#9BE86B>[" + Loc.T("ui.badge.passive") + "]</color></size>";
 
     // 레벨업 선택지 제목: 배지를 이름 뒤에 붙인다 — "회오리 [액티브] [공격]" / "힘 [패시브]"
     public static string GetActiveSkillTitleWithTags(ActiveSkillId id) =>
@@ -649,28 +650,28 @@ public class PlayerSkills : MonoBehaviour
         if (baseDmg > 0f)
         {
             int dmgPct = Mathf.RoundToInt((s.Damage / baseDmg - 1f) * 100f);
-            if (dmgPct != 0) lines.Add($"피해 {(dmgPct > 0 ? "+" : "")}{dmgPct}%  ({baseDmg:0.#}→{s.Damage:0.#})");
+            if (dmgPct != 0) lines.Add(Loc.F("skill.gain.dmg", (dmgPct > 0 ? "+" : "") + dmgPct, baseDmg.ToString("0.#"), s.Damage.ToString("0.#")));
         }
 
         float baseCd = GetDefaultCooldown(s.Id);
         if (baseCd > 0f)
         {
             int cdPct = Mathf.RoundToInt((1f - s.Cooldown / baseCd) * 100f);
-            if (cdPct != 0) lines.Add($"재사용 대기시간 {(cdPct > 0 ? "-" : "+")}{Mathf.Abs(cdPct)}%  ({baseCd:0.#}→{s.Cooldown:0.#}초)");
+            if (cdPct != 0) lines.Add(Loc.F("skill.gain.cd", (cdPct > 0 ? "-" : "+") + Mathf.Abs(cdPct), baseCd.ToString("0.#"), s.Cooldown.ToString("0.#")));
         }
 
         if (s.ProjectileSpeedMultiplier > 1.0001f)
-            lines.Add($"투사체 속도 +{Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)}%");
-        if (s.ExtraPierce > 0) lines.Add($"관통 +{s.ExtraPierce}회");
-        if (s.ExtraProjectiles > 0) lines.Add($"발사 수 +{s.ExtraProjectiles}");
-        if (s.ExtraTargets > 0) lines.Add(s.Id == ActiveSkillId.Orb ? $"관통 대상 +{s.ExtraTargets}" : $"동시 대상 +{s.ExtraTargets}");
-        if (s.TickIntervalMult < 0.9999f) lines.Add($"타격 주기 -{Mathf.RoundToInt((1f - s.TickIntervalMult) * 100f)}%");
-        if (s.ProcChanceBonus > 0f) lines.Add($"발동 확률 +{Mathf.RoundToInt(s.ProcChanceBonus * 100f)}%p");
-        if (s.ExtraWhirlwindDuration > 0f) lines.Add($"지속시간 +{s.ExtraWhirlwindDuration:0.#}초");
-        if (s.Scale > 1.0001f) lines.Add($"크기 +{Mathf.RoundToInt((s.Scale - 1f) * 100f)}%");
-        if (s.Id == ActiveSkillId.Rewind) lines.Add($"되감기 시간 {s.RewindAmount:0.#}초");
+            lines.Add(Loc.F("skill.gain.projSpeed", Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)));
+        if (s.ExtraPierce > 0) lines.Add(Loc.F("skill.gain.pierce", s.ExtraPierce));
+        if (s.ExtraProjectiles > 0) lines.Add(Loc.F("skill.gain.projCount", s.ExtraProjectiles));
+        if (s.ExtraTargets > 0) lines.Add(s.Id == ActiveSkillId.Orb ? Loc.F("skill.gain.targets.orb", s.ExtraTargets) : Loc.F("skill.gain.targets", s.ExtraTargets));
+        if (s.TickIntervalMult < 0.9999f) lines.Add(Loc.F("skill.gain.tickRate", Mathf.RoundToInt((1f - s.TickIntervalMult) * 100f)));
+        if (s.ProcChanceBonus > 0f) lines.Add(Loc.F("skill.gain.procChance", Mathf.RoundToInt(s.ProcChanceBonus * 100f)));
+        if (s.ExtraWhirlwindDuration > 0f) lines.Add(Loc.F("skill.gain.duration", s.ExtraWhirlwindDuration.ToString("0.#")));
+        if (s.Scale > 1.0001f) lines.Add(Loc.F("skill.gain.scale", Mathf.RoundToInt((s.Scale - 1f) * 100f)));
+        if (s.Id == ActiveSkillId.Rewind) lines.Add(Loc.F("skill.gain.rewind", s.RewindAmount.ToString("0.#")));
         if (s.Id == ActiveSkillId.Homing && s.GrowthStacks > 0)
-            lines.Add($"성장 스택 {s.GrowthStacks} (사용할수록 강해짐)");
+            lines.Add(Loc.F("skill.gain.growth", s.GrowthStacks));
 
         return lines;
     }

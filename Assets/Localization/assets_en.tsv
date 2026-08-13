@@ -1,0 +1,75 @@
+KEY	EN
+tree.name.atk_1	Attack I
+tree.desc.atk_1	All damage increased by 5%
+tree.name.atk_2	Attack II
+tree.desc.atk_2	All damage increased by 8%
+tree.name.hp_1	Health I
+tree.desc.hp_1	Max health increased by 10
+tree.name.hp_2	Health II
+tree.desc.hp_2	Max health increased by 15
+tree.name.New_Reroll	Unlock Reroll
+tree.desc.New_Reroll	Unlocks the ability to reroll level-up choices once per run
+tree.name.reroll_2	Reroll I
+tree.desc.reroll_2	+1 reroll per run
+tree.name.crit_1	Crit I
+tree.desc.crit_1	Critical chance increased by 3%
+tree.name.crit_2	Crit II
+tree.desc.crit_2	Critical chance increased by 5%
+tree.name.exp_1	Experience I
+tree.desc.exp_1	Experience gain +5%
+tree.name.exp_2	Experience II
+tree.desc.exp_2	Experience gain +8%
+tree.name.gold_1	Wealth I
+tree.desc.gold_1	Essence gain +10%
+tree.name.gold_2	Wealth II
+tree.desc.gold_2	Essence gain 15%
+tree.name.arrow_StartLev	Arrow Mastery
+tree.desc.arrow_StartLev	(With Strawberry) Start Arrow Shot at level 3
+tree.name.orb_BasicFly	Orb Hits Flyers
+tree.desc.orb_BasicFly	The basic orb can now hit flying enemies
+tree.name.fly_1	Anti-Air I
+tree.desc.fly_1	Bonus damage to flying enemies +5%
+tree.name.eagle_fly	Eagle Anti-Air
+tree.desc.eagle_fly	Eagle Drop's bonus damage to flying enemies +30%
+tree.name.fly_2	Anti-Air II
+tree.desc.fly_2	Bonus damage to flying enemies +10%
+tree.name.cool_1	Cooldown I
+tree.desc.cool_1	All skill cooldowns -3%
+tree.name.cool_2	Cooldown II
+tree.desc.cool_2	All skill cooldowns -5%
+tree.name.tornado_CoolDownBonus	Swift Whirlwind
+tree.desc.tornado_CoolDownBonus	Whirlwind receives 1.5x the effect of all cooldown reduction
+tree.name.thunder_Cooldown	Lightning Cooldown
+tree.desc.thunder_Cooldown	Every lightning strike cuts Lightning's cooldown by 0.01s
+tree.name.atk_3	Attack III
+tree.desc.atk_3	All damage increased by 10%
+tree.name.gold_3	Wealth III
+tree.desc.gold_3	Essence gain 25%
+tree.name.Root_Skilltree	Skill Tree Unlocked!
+tree.desc.Root_Skilltree	Unlocks the skill tree!
+tree.name.New_Orb	Unlock Orb
+tree.desc.New_Orb	<Orb> can now appear as a skill choice.
+tree.name.New_Lightning	Unlock Lightning
+tree.desc.New_Lightning	<Lightning> can now appear as a skill choice.
+tree.name.New_Homing	Unlock Homing
+tree.desc.New_Homing	<Homing Missile> can now appear as a skill choice.
+tree.name.New_Shotgun	Unlock Buckshot
+tree.desc.New_Shotgun	<Buckshot Load> can now appear as a skill choice.
+tree.name.New_Rewind	Unlock Rewind
+tree.desc.New_Rewind	<Rewind> can now appear as a skill choice.
+tree.name.Rewind_Slow	Blueberry Slow
+tree.desc.Rewind_Slow	Rewind winds back the blueberries' time as well,\nslowing every blueberry on the field.
+tree.name.Shotgun_CloseBonus	Close Aim
+tree.desc.Shotgun_CloseBonus	Buckshot-buffed attacks hit nearby enemies\n2 extra times.
+tree.name.Homing_MissileNum	More Bombardment
+tree.desc.Homing_MissileNum	Every 10 uses of Homing Missile\nadds one more missile per volley.
+tree.name.Sniping_TwoTarget	Two With One Shot
+tree.desc.Sniping_TwoTarget	Sniping targets one additional enemy.
+tree.name.swing_StartLev	Swing Mastery
+tree.desc.swing_StartLev	(With Pineapple) Start Swing at level 3
+char.name.Char_Pineapple	Pineapple
+char.name.Char_Slot3	???
+char.name.Char_Strawberry	Strawberry
+map.name.Map_BlueberryField	Blueberry Field
+map.name.Map_Wide15	Seaside
+map.name.Map_Wide20	Vast Field

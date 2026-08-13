@@ -45,11 +45,12 @@
 
 ---
 
-## 현재 상태 (2026-08-13, 세션 39)
+## 현재 상태 (2026-08-13, 세션 40)
 
-**빌드**: 컴파일 통과. **번역 시스템 골격 완성** — Unity Localization 도입 + 진화/스킬 텍스트 402건을 표로 옮김.
+**빌드**: 컴파일 통과. **번역 시스템 완성** — 문자열 외부화가 끝나 표가 **ko 602 / en 602**로 둘 다 찼다.
+`Assets/Scripts/`에 남은 한글은 **44건뿐이고 전부 에디터 전용**(`[Header]`·`[Tooltip]`·`[ContextMenu]`·GameObject 이름)이다.
 
-### 🌐 번역 시스템 (칸반 「번역 시스템」 = `진행 중`)
+### 🌐 번역 시스템 (칸반 「번역 시스템」 — **영어 초벌까지 완료, 검수만 남음**)
 
 **조회는 `Assets/Scripts/Loc.cs` 한 곳만 지난다.** 게임 코드는 Unity Localization API를 직접 부르지 않는다.
 `Loc.T(키)` · `Loc.F(키, 인자…)`(보간) · `Loc.TOr(키, 폴백)`.
@@ -66,11 +67,38 @@
 - ⚠️ 설정 패널의 언어 행은 `Loc.SetLocale` → `Loc.LocaleChanged` → **패널 통째로 재생성**이다.
   런타임에 코드로 지은 UI라 TMP를 하나씩 고치는 것보다 다시 짓는 쪽이 싸다.
 
-**남은 것**: INLINE 문자열 116건 · 씬 TMP 28건 · `MainSkillTree.asset` 노드 68건 · `Char_*`/`Map_*` 5건 · **영어 번역 385건**.
-용어집 초벌은 검수 대기 — 자세한 건 칸반 카드 본문.
+**세션40에 외부화가 끝났다 — 표는 ko 602 / en 602로 둘 다 꽉 찼다.**
 
-🔴 **영어는 한국어보다 길다.** 진화·레벨업 카드는 폭이 고정이라 넘칠 수 있다.
-영어를 다 채운 뒤 **en으로 한 판 돌려 넘치는 카드를 볼 것.**
+- **TSV가 원본, 표는 거기서 밀어넣는다.** `Assets/Localization/*_ko.tsv`·`*_en.tsv` 4쌍
+  (`harvest`=코드 스위치 테이블 · `assets`=스킬트리 노드·캐릭터·맵 · `inline`=UI/전투 문구 · `ui`=설정 패널).
+  적재는 **`Window > Blueberry Defense > 번역 - 모든 TSV를 표에 적재`** 하나로 끝난다
+  (파일명 접미사 `_ko`/`_en`이 곧 로케일이다 — TSV를 추가해도 메뉴를 안 늘려도 된다).
+  수확은 `- 하드코딩 테이블 수확`(코드) + `- 에셋 표시문구 수확`(SO). **에셋 쪽은 `_Backup` 트리를 일부러 건너뛴다.**
+- 🔴 **씬 배선과 UI 문구 5파일이 이 커밋에 없다.** 세션40 당시 **UI 스킨 세션이 병렬로 돌고 있어**
+  `Title.unity`·`SampleScene.unity`와 `LevelUpUI`·`PauseMenu`·`OptionsMenu`·`SaveResetButton`·`EvolutionTreeUI`가
+  두 작업이 섞인 상태였다 → **스킨 세션 커밋에 같이 실려 들어간다.** 그 커밋이 없으면 씬의 `LocalizedTmp` 15개가 유실되니
+  `git log -- Assets/Scenes/Title.unity`로 들어갔는지 한 번 확인할 것.
+- 🆕 **`Assets/Scripts/LocalizedTmp.cs`** — 씬·프리팹에 박힌 TMP를 키에 묶는다(Title 12 · SampleScene 3).
+  ⚠️ **런타임에 코드가 값을 덮어쓰는 TMP에는 붙이지 말 것** — 언어가 바뀌면 계산된 값("1250 정수")을 정적 문구로 되돌린다.
+  그래서 카드 템플릿·정수 표시·승천 설명 같은 **플레이스홀더 13개는 일부러 안 붙였다**(코드가 `Loc.F`로 짓는다).
+- 🔴 **표시 문구를 SO에서 직접 읽지 말 것.** `SkillNode.Name/Desc` · `CharacterDefinition.Name/Desc` ·
+  `MapDefinition.Name/Desc`가 `Loc.TOr(키, 에셋값)` 창구다. `displayName`을 직접 읽으면 번역을 우회한다.
+- 🔴 **`const string`으로 UI 문구를 두지 말 것.** 언어가 바뀌면 값도 바뀌어야 해서 컴파일 시점에 못 고정한다
+  (`LevelUpUI`·`SaveResetButton`의 const 6개를 프로퍼티로 바꿨다).
+  같은 이유로 `LevelUpUI`가 **씬 TMP의 글자를 `Awake`에 잡아두던 것(`headerDefaultText`)을 없앴다** — 되돌리면 첫 언어가 굳는다.
+- ⚠️ **`PauseMenu`는 셸(제목·버튼·힌트)을 `Awake`에 한 번만 짓는다.** 언어는 그 위에 뜬 설정 패널에서 바뀌므로
+  `Loc.LocaleChanged += ApplyShellText`로 그 4개만 다시 채운다. `OptionsMenu`(패널 통째 재생성)와 다른 방식인 게 의도다.
+
+**남은 것**: **용어집 검수 4건**(아래) · **en으로 한 판 돌려 보기**.
+
+🟡 **영어 초벌의 검수 대기 4건** — 다르게 정하면 표만 고치면 된다(코드는 안 건드림).
+`건강 → Vitality`(Health는 체력 수치와 겹쳐 피함) · `가속 → Haste` ·
+`풍요의 몸/만찬의 몸 → Bountiful Harvest / Endless Feast`(효과가 하트 5배라 *몸*보다 *수확*으로 읽었다) ·
+`하늘을 뒤덮다 → Sky Eclipse`(유일한 동사구였는데 **명사로 통일**했다) · `자동 조준/감시탑 → Auto-Aim / Watchtower`(기믹 미정이라 직역).
+
+✅ **카드 폭 넘침 위험은 낮다** — 이름·제목 263건을 전각2/반각1로 재니 **en 최대 25 < ko 최대 29**, 평균 11.3 → 13.7.
+넓어진 상위는 `뇌운 축적 → Thundercloud Buildup`(+11) · `괴력 → Titan Strength`(+10) · `절대 급소 → Absolute Weak Point`(+10).
+**여러 줄로 감기는 설명문은 이 계산으로 안 잡힌다** — 거기만 en으로 한 판 볼 것.
 
 🔴 **`Assets/Sound/`(164MB)는 여전히 미커밋이다** — LFS가 없어 그냥 넣으면 히스토리에 영구히 박힌다. 사용자 결정 대기 중.
 

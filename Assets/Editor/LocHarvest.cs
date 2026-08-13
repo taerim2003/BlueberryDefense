@@ -106,4 +106,76 @@ public static class LocHarvest
         foreach (var kv in byPrefix) log.AppendLine("  " + kv.Key.PadRight(22) + kv.Value);
         return log.ToString();
     }
+
+    // ── 에셋에 적힌 표시 문구 수확 ──────────────────────────────────────────────
+    // 위 Run()은 **코드의 스위치 테이블**을 뽑는다. 문구가 에셋에 적힌 것(스킬트리 노드·캐릭터·맵)은
+    // 여기서 뽑는다. 키는 노드 id / **에셋 파일 이름**에서 파생 — 에셋이 늘면 키도 저절로 는다.
+    // ⚠️ 조회 쪽(SkillNode.Name/Desc·CharacterDefinition.Name/Desc·MapDefinition.Name/Desc)이
+    //    Loc.TOr 폴백이라, 표에 없어도 에셋의 값이 그대로 나온다. 여기 빠져도 화면이 비지는 않는다.
+    public const string AssetOutPath = "Assets/Localization/assets_ko.tsv";
+
+    [MenuItem("Window/Blueberry Defense/번역 - 에셋 표시문구 수확")]
+    public static void RunAssetsMenu() { Debug.Log(RunAssets()); }
+
+    public static string RunAssets()
+    {
+        var rows = new List<KeyValuePair<string, string>>();
+        var seen = new HashSet<string>();
+        var log = new StringBuilder();
+
+        void Add(string key, string ko)
+        {
+            if (string.IsNullOrWhiteSpace(ko)) return;
+            if (!seen.Add(key)) { log.AppendLine("DUP KEY: " + key); return; }
+            rows.Add(new KeyValuePair<string, string>(key, ko));
+        }
+
+        int trees = 0, nodes = 0, chars = 0, maps = 0;
+
+        foreach (string guid in AssetDatabase.FindAssets("t:SkillTreeData"))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            // 백업본(MainSkillTree_Backup)까지 긁으면 죽은 노드 키가 표에 섞인다 — 현행 에셋만.
+            if (path.Contains("_Backup")) { log.AppendLine("skip " + path); continue; }
+            var tree = AssetDatabase.LoadAssetAtPath<SkillTreeData>(path);
+            if (tree == null || tree.nodes == null) continue;
+            trees++;
+            foreach (var n in tree.nodes)
+            {
+                if (n == null || string.IsNullOrEmpty(n.id)) continue;
+                nodes++;
+                Add("tree.name." + n.id, n.displayName);
+                Add("tree.desc." + n.id, n.description);
+            }
+        }
+
+        foreach (string guid in AssetDatabase.FindAssets("t:CharacterDefinition"))
+        {
+            var c = AssetDatabase.LoadAssetAtPath<CharacterDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            if (c == null) continue;
+            chars++;
+            Add("char.name." + c.name, c.displayName);
+            Add("char.desc." + c.name, c.description);
+        }
+
+        foreach (string guid in AssetDatabase.FindAssets("t:MapDefinition"))
+        {
+            var m = AssetDatabase.LoadAssetAtPath<MapDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            if (m == null) continue;
+            maps++;
+            Add("map.name." + m.name, m.displayName);
+            Add("map.desc." + m.name, m.description);
+        }
+
+        var outLines = new List<string> { "KEY\tKO" };
+        foreach (var kv in rows) outLines.Add(kv.Key + "\t" + kv.Value.Replace("\t", " ").Replace("\n", "\\n"));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(AssetOutPath));
+        File.WriteAllLines(AssetOutPath, outLines, new UTF8Encoding(true));
+        AssetDatabase.Refresh();
+
+        log.AppendLine($"에셋 수확 {rows.Count}건 -> {AssetOutPath}");
+        log.AppendLine($"  트리 {trees}개 / 노드 {nodes}개 · 캐릭터 {chars} · 맵 {maps}");
+        return log.ToString();
+    }
 }
