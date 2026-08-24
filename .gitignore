@@ -111,3 +111,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# 음원 팩 164MB — 608개 중 실제로 쓰는 건 14개뿐이라 팩 전체를 히스토리에 넣지 않는다.
+# LFS가 없어서 한 번 들어가면 history 재작성 없이 못 뺀다.
+# → 고른 클립만 Assets/Audio/로 복사해 커밋할 것 (SfxLibrary 재배선 필요).
+/Assets/Sound/
+/Assets/Sound.meta

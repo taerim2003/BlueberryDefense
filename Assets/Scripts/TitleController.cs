@@ -11,14 +11,15 @@ public class TitleController : MonoBehaviour
     [SerializeField] private Button quitButton;
     [SerializeField] private SkillTreeUI skillTree;
     [SerializeField] private MapSelectUI mapSelect;
+    [SerializeField] private CharacterSelectUI characterSelect;
 
     private void Start()
     {
         if (playButton != null) playButton.onClick.AddListener(Play);
         if (upgradeButton != null) upgradeButton.onClick.AddListener(OpenUpgrade);
+        if (collectionButton != null) collectionButton.onClick.AddListener(OpenCollection);
         if (settingsButton != null) settingsButton.onClick.AddListener(OpenSettings);
         if (quitButton != null) quitButton.onClick.AddListener(Quit);
-        // 컬렉션은 아직 자리만
     }
 
     // OptionsMenu는 씬에 없고 런타임에 자기를 만든다(PauseMenu와 같은 방식) — 클릭 시점에 찾는다.
@@ -27,10 +28,17 @@ public class TitleController : MonoBehaviour
         if (OptionsMenu.Instance != null) OptionsMenu.Instance.Open();
     }
 
+    // CollectionUI도 같은 방식(런타임 자체 생성)이라 클릭 시점에 찾는다.
+    private void OpenCollection()
+    {
+        if (CollectionUI.Instance != null) CollectionUI.Instance.Open();
+    }
+
     private void Play()
     {
-        // 바로 씬 로드하지 않고 맵 선택 패널을 연다. 실제 로드는 MapSelectUI가 "시작" 버튼으로 처리.
-        if (mapSelect != null) mapSelect.Open();
+        // 캐릭터 → 맵 순으로 두 단계다. 캐릭터를 고르면 MapSelectUI가 이어받아 맵 화면을 연다.
+        if (characterSelect != null) characterSelect.Open();
+        else if (mapSelect != null) mapSelect.Open(); // 캐릭터 화면이 없으면 곧장 맵으로
     }
 
     private void OpenUpgrade()

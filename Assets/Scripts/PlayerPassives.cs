@@ -210,6 +210,7 @@ public class PlayerPassives : MonoBehaviour
 
         equippedPassives.Add(new EquippedPassive { Id = id });
         ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
+        CollectionSave.DiscoverPassive(id);   // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
     }
 
     // 만렙(MaxSkillLevel)에 닿으면 레벨업 후보에서 빠진다 — 진화해야 Lv.1로 리셋되어 다시 큰다(액티브와 동일).
@@ -396,6 +397,7 @@ public class PlayerPassives : MonoBehaviour
 
         passive.Route = route;
         passive.EvolutionStage = newTier;
+        CollectionSave.DiscoverPassiveEvo(id, route, newTier); // 컬렉션(도감) 발견 기록
 
         // 패시브의 "기본 스탯 도약" = 레벨업 1회분을 한 번 더 얹는 것(스킬의 피해 ×1.5에 해당).
         ApplyPassiveLevelEffect(passive);

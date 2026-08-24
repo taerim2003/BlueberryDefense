@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5274134df458a01498759c242d9ca515, type: 3}
+  m_Name: SfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SfxLibrary
+  enemyHit:
+    clip: {fileID: 8300000, guid: 5c9672447e6a5b64a8a9f9415ef865f5, type: 3}
+    volume: 0.6
+  enemyDeath:
+    clip: {fileID: 8300000, guid: 7c4614d668ff24e49a269f33c2b531ca, type: 3}
+    volume: 0.8
+  playerHit:
+    clip: {fileID: 8300000, guid: f2e253532f0c40a4a84f37526a6e91d4, type: 3}
+    volume: 1
+  levelUp:
+    clip: {fileID: 8300000, guid: 4c26139577585e241a2e8a8f68b1febc, type: 3}
+    volume: 1
+  evolution:
+    clip: {fileID: 8300000, guid: f873730bebc932940abe074275a70cc6, type: 3}
+    volume: 1
+  skillTreeNode:
+    clip: {fileID: 8300000, guid: 12f7d61a77e24a44d910c8802a0a414f, type: 3}
+    volume: 0.8
+  essencePickup:
+    clip: {fileID: 8300000, guid: 327367ff44927cd4db5d58ee8269ff32, type: 3}
+    volume: 0.5
+  heartPickup:
+    clip: {fileID: 8300000, guid: dba0a493c4687fb479bf3e00aa5b4b6e, type: 3}
+    volume: 0.8
+  treasureOpen:
+    clip: {fileID: 8300000, guid: fa2bdf4994fab3f4b92e2bb1fb359813, type: 3}
+    volume: 1
+  waveWarning:
+    clip: {fileID: 8300000, guid: 366cb86883c275b47aee3d4e7167e341, type: 3}
+    volume: 1
+  stageClear:
+    clip: {fileID: 8300000, guid: 939006f70d83d9c41bca19d1e0a6a042, type: 3}
+    volume: 1
+  victory:
+    clip: {fileID: 8300000, guid: a7f5360e663341f4bb0535298d701ff1, type: 3}
+    volume: 1
+  gameOver:
+    clip: {fileID: 8300000, guid: ce59a08f25e254546be243300973daad, type: 3}
+    volume: 1
+  buttonClick:
+    clip: {fileID: 8300000, guid: 156084a20ba928641bbdcfd6b1121fdd, type: 3}
+    volume: 0.7

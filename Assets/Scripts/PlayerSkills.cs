@@ -290,6 +290,7 @@ public class PlayerSkills : MonoBehaviour
             Cooldown = GetDefaultCooldown(id),
             Damage = GetDefaultDamage(id),
         });
+        CollectionSave.DiscoverActive(id); // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
     }
 
     public void UpgradeSkillDamage(ActiveSkillId id, float amount)
@@ -438,6 +439,7 @@ public class PlayerSkills : MonoBehaviour
 
         skill.Route = route;
         skill.EvolutionStage = newTier;
+        CollectionSave.DiscoverActiveEvo(id, route, newTier); // 컬렉션(도감) 발견 기록
         SfxPlayer.Play(SfxId.Evolution);
 
         // 기본 스탯 도약 + 레벨 표시 리셋(누적 레벨 TotalLevel은 유지 — 다음 진화 게이트 기준).

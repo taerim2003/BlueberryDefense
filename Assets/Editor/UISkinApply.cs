@@ -233,10 +233,13 @@ public static class UISkinApply
         bool isNew = skin == null;
         if (isNew) skin = ScriptableObject.CreateInstance<UISkin>();
 
-        // 런타임 코드 UI(설정·일시정지·갈림길 세로 카드)가 쓰는 3종.
+        // 런타임 코드 UI(설정·일시정지·갈림길 세로 카드·컬렉션)가 쓰는 5종.
         skin.panel = Load(SpritePath(SPillow));  // 설정 980x850 · 일시정지 1760x940
         skin.bar = Load(SpritePath(SBar));
         skin.box = Load(SpritePath(SSquare));
+        // 컬렉션 화면은 판을 원본 크기 위로 늘리지 않는 게 규칙이라, 넓은 칸/아이콘 칸용 그림이 따로 필요하다.
+        skin.barWide = Load(SpritePath(SBarWide));
+        skin.iconBox = Load(SpritePath(SIconBox));
         skin.skin = Skin;
         skin.highlight = Highlight;
         skin.dim = new Color(DimRgb.r, DimRgb.g, DimRgb.b, 0.8f);
@@ -255,6 +258,7 @@ public static class UISkinApply
         var back = AssetDatabase.LoadAssetAtPath<UISkin>(path);
         return (isNew ? "생성" : "갱신") + " " + path
             + " | panel=" + N(back.panel) + " bar=" + N(back.bar) + " box=" + N(back.box)
+            + " barWide=" + N(back.barWide) + " iconBox=" + N(back.iconBox)
             + " | pixel=" + N(back.pixelFont) + "/" + N(back.pixelBig) + "," + N(back.pixelSmall)
             + " body=" + N(back.bodyFont) + "/" + N(back.bodyBig) + "," + N(back.bodySmall);
     }

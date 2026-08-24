@@ -130,3 +130,12 @@ ui.common.select	Select
 ui.result.toTitle	To Title
 ui.treasure.header	Treasure!
 ui.treasure.continue	Click to continue
+ui.collection.title	Collection
+ui.collection.progress	Found {0} / {1}
+ui.collection.active	Active
+ui.collection.passive	Passive
+ui.collection.unknown	???
+ui.collection.hint	You have not met this skill yet
+ui.collection.route	Route {0}
+ui.collection.prereq	Synergy {0}
+ui.collection.notFound	This evolution is still unseen

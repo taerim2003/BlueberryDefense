@@ -130,3 +130,12 @@ ui.common.select	선택
 ui.result.toTitle	타이틀로
 ui.treasure.header	보물 획득!
 ui.treasure.continue	클릭하여 계속
+ui.collection.title	컬렉션
+ui.collection.progress	발견 {0} / {1}
+ui.collection.active	액티브
+ui.collection.passive	패시브
+ui.collection.unknown	???
+ui.collection.hint	아직 만나지 못한 스킬입니다
+ui.collection.route	루트 {0}
+ui.collection.prereq	연계 {0}
+ui.collection.notFound	아직 이 진화를 본 적이 없다

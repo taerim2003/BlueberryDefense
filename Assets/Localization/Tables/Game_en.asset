@@ -2445,6 +2445,42 @@ MonoBehaviour:
     m_Localized: Click to continue
     m_Metadata:
       m_Items: []
+  - m_Id: 4204751530696704
+    m_Localized: Collection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834048
+    m_Localized: Found {0} / {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834049
+    m_Localized: Active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834050
+    m_Localized: Passive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834051
+    m_Localized: ???
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834052
+    m_Localized: You have not met this skill yet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834053
+    m_Localized: Route {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834054
+    m_Localized: Synergy {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834055
+    m_Localized: This evolution is still unseen
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

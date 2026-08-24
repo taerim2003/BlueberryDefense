@@ -2423,6 +2423,42 @@ MonoBehaviour:
     m_Key: ui.treasure.continue
     m_Metadata:
       m_Items: []
+  - m_Id: 4204751530696704
+    m_Key: ui.collection.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834048
+    m_Key: ui.collection.progress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834049
+    m_Key: ui.collection.active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834050
+    m_Key: ui.collection.passive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834051
+    m_Key: ui.collection.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834052
+    m_Key: ui.collection.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834053
+    m_Key: ui.collection.route
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834054
+    m_Key: ui.collection.prereq
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4204751576834055
+    m_Key: ui.collection.notFound
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

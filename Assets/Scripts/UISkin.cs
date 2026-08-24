@@ -12,9 +12,11 @@ using TMPro;
 public class UISkin : ScriptableObject
 {
     [Header("바탕 스프라이트")]
-    public Sprite panel;   // 큰 판
-    public Sprite bar;     // 가로 바·버튼
-    public Sprite box;     // 정사각 박스
+    public Sprite panel;    // 큰 판
+    public Sprite bar;      // 가로 바·버튼
+    public Sprite box;      // 정사각 박스
+    public Sprite barWide;  // 아주 넓은 바 — bar를 원본보다 늘리지 않고 쓰기 위한 한 단계 위
+    public Sprite iconBox;  // 아이콘 한 칸
 
     [Header("색")]
     public Color skin = new Color(0.420f, 0.482f, 0.910f, 1f);      // #6B7BE8
@@ -49,6 +51,8 @@ public class UISkin : ScriptableObject
     public static void Panel(Image img) => Apply(img, s => s.panel);
     public static void Bar(Image img) => Apply(img, s => s.bar);
     public static void Box(Image img) => Apply(img, s => s.box);
+    public static void BarWide(Image img) => Apply(img, s => s.barWide);
+    public static void IconBox(Image img) => Apply(img, s => s.iconBox);
 
     private static void Apply(Image img, System.Func<UISkin, Sprite> pick)
     {

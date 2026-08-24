@@ -22,7 +22,7 @@ MonoBehaviour:
     - Locale
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9ed99ab03e72fd2408e1dbc703db0c40
-    m_Address: Korean
+    m_Address: "\uD55C\uAD6D\uC5B4"
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale
