@@ -37,7 +37,9 @@ public static class UISkinApply
     const string OSquare  = "정사각형_투명";              // 속 빈 테두리 — 선택 하이라이트
     const string OPillow  = "베개같이생긴네모_투명";
 
-    static string SpritePath(string name) => "Assets/Sprites/" + name + ".png";
+    // UI 그림은 2026-08-24에 Assets/Sprites/UI/ 로 모았다(29장 = 위 틀 22 + UI_* 5 + IconFrame/IconMask).
+    // 스킬 아이콘(Icon_*)과 이펙트(Effect_*)는 루트에 그대로다 — 그쪽 경로는 SkillIconLibraryBake/EvolutionIconWiring가 따로 갖는다.
+    static string SpritePath(string name) => "Assets/Sprites/UI/" + name + ".png";
 
     const string PixelFont  = "Assets/Fonts/pixelroborobo SDF.asset";
     const string BodyFont   = "Assets/Fonts/Pretendard-Bold SDF.asset";
