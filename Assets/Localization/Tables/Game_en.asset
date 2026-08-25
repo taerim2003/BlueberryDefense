@@ -2197,7 +2197,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873221
-    m_Localized: Reroll ({0})
+    m_Localized: Reroll
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873222
@@ -2483,6 +2483,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 4532112721649664
     m_Localized: Arrow rain +{0} wave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4598347408809984
+    m_Localized: '{0} left'
     m_Metadata:
       m_Items: []
   references:

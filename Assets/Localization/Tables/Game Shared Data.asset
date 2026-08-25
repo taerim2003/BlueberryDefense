@@ -2463,6 +2463,10 @@ MonoBehaviour:
     m_Key: step.ProjectileCount.arrowrain
     m_Metadata:
       m_Items: []
+  - m_Id: 4598347408809984
+    m_Key: ui.levelup.rerollLeft
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

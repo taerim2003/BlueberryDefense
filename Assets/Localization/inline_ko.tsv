@@ -69,7 +69,8 @@ skill.gain.growth	성장 스택 {0} (사용할수록 강해짐)
 ui.levelup.evoHeader	진화!
 ui.levelup.evoFallbackHeader	진화할 스킬이 없다 — 대신 레벨업
 ui.levelup.treasureHeader	보물 상자 — 무엇을 받을까?
-ui.levelup.reroll	다시 뽑기 ({0})
+ui.levelup.reroll	다시 뽑기
+ui.levelup.rerollLeft	{0}회 남음
 ui.levelup.tagNew	신규!
 ui.levelup.tagEvolve	진화!
 ui.levelup.level	레벨: {0}

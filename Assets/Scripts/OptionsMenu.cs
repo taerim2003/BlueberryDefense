@@ -28,8 +28,9 @@ public class OptionsMenu : MonoBehaviour
     // ── 색·치수 ──
     // 판·버튼 바탕은 UISkin이 스프라이트째로 덮어쓴다(캐릭터/맵 선택 화면과 같은 옷).
     // 아래 색은 스킨 에셋이 없을 때의 폴백 + 스프라이트에 곱해질 색을 겸한다.
-    private static readonly Color BoxColor = new Color(0.420f, 0.482f, 0.910f, 1f);
-    private static readonly Color DimColor = new Color(0.031f, 0.020f, 0.051f, 0.8f);
+    // 큰 판을 없앴으니 딤이 배경을 가리는 유일한 수단이다. 0.8로는 배경이 비쳐 글자가 묻혔다 —
+    // 스킬트리 화면과 같은 0.96(뒤가 안 보여도 되는 화면의 값)으로 올린다.
+    private static readonly Color DimColor = new Color(0.031f, 0.020f, 0.051f, 0.96f);
     private static readonly Color LabelColor = Color.white;
     private static readonly Color TrackColor = new Color(0.06f, 0.05f, 0.10f, 0.9f);
     private static readonly Color FillColor = new Color(1f, 0.878f, 0.302f, 1f);   // 선택 화면의 강조 노랑
@@ -38,11 +39,29 @@ public class OptionsMenu : MonoBehaviour
     private static readonly Color DangerColor = new Color(0.55f, 0.20f, 0.28f, 1f);
     private static readonly Color DangerArmedColor = new Color(0.85f, 0.28f, 0.32f, 1f);
 
-    private const float RowWidth = 900f;
-    private const float RowHeight = 60f;
-    private const float RowStep = 76f;      // 행 간격
-    private const float LabelWidth = 300f;  // 행 안에서 라벨이 차지하는 폭
-    private const float SliderWidth = 440f;
+    // ── 그룹 상자 ──────────────────────────────────────────────
+    // 라벨마다 판을 씌우는 대신 **여러 행을 상자 하나에 묶는다**(소리 3행 / 화면·언어 3행).
+    // 개큰네모 721x289를 **원본 크기 그대로** 쓴다 — 테두리(좌25·아래88·우23·위34)라 안쪽이 673x167이고,
+    // 거기에 행 51 + 간격 4로 3행이 정확히 들어간다(마지막 행 하단 -195 > 안쪽 하단 -201).
+    private const float GroupW = 721f;
+    private const float GroupH = 289f;
+    private const float GroupFirstY = -34f;  // 상자 상단 기준 첫 행 y (= 안쪽 상단)
+    private const float GroupRowStep = 55f;
+
+    private const float RowWidth = 620f;     // 상자 안쪽(673)보다 조금 작게
+    private const float RowHeight = 51f;
+    private const float RowStep = GroupRowStep;
+    private const float LabelWidth = 170f;   // **위젯이 시작하는 x** (라벨 글자 자리 뒤)
+
+    // 볼륨 바는 게이지 3겹 그림을 **원본 크기 그대로** 쓴다(CLAUDE.md §5-1). 그래서 행이 그만큼 두꺼워진다.
+    // ⚠️ 세 장의 원본 크기가 서로 다르다(바탕 387x101 · 채움 356x57 · 테두리 370x76).
+    //    Battle 씬의 체력바가 **테두리(370x76)를 기준 칸**으로 잡고 바탕을 거기 맞춰 쓰므로 같은 방식을 따른다.
+    // 상자 안쪽 행 높이(51)에 맞춰 원본(370x76)을 0.68배로 줄인다 — Simple+PA라 비율·그림자가 그대로다.
+    private const float GaugeW = 250f;
+    private const float GaugeH = 51f;
+    private const float GaugeFillW = 241f;  // 356 x (250/370)
+    private const float GaugeFillH = 38f;   // 57 x (51/76)
+    private const float GaugeStep = GroupRowStep;
 
     private GameObject panel;
     private CanvasGroup group;
@@ -166,32 +185,36 @@ public class OptionsMenu : MonoBehaviour
         group = panel.AddComponent<CanvasGroup>();
 
         var boxGo = NewUI("Box", panel.transform);
-        // 언어 행이 늘면서 720 → 800. 720이면 세이브 초기화 행(-626~-686)이 닫기 버튼(-630~-690)과 겹친다.
-        // 850: 판 스프라이트의 아래 테두리·그림자(45px)를 닫기 버튼이 피하려면 그만큼 아래가 더 필요하다.
-        Center(boxGo, new Vector2(980, 850));
-        UISkin.Panel(AddImage(boxGo, BoxColor, true));
+        // 🔴 큰 판을 깔지 않는다. 세트에 980x850짜리 그림이 없어서 373x195를 2.6x4.4배로 늘려 쓰고 있었고,
+        //    9-slice는 테두리를 원본 픽셀로 그리므로 **아래 그림자만 통째로 두꺼워졌다**(CLAUDE.md §5-1).
+        //    결과창(DamageMeterPanel)과 같은 방식으로 딤 위에 요소만 올린다 — Box는 배치용 빈 칸으로만 남는다.
+        // 판이 없으니 이건 배치 기준 칸일 뿐이다 — 화면 전체를 좌표계로 쓴다(요소는 절대 y로 놓는다).
+        Center(boxGo, new Vector2(1920, 1080));
         box = (RectTransform)boxGo.transform;
 
         var title = NewUI("Title", boxGo.transform);
-        Top(title, new Vector2(0, -40), new Vector2(RowWidth, 60)); // 판 위 테두리(55px) 안쪽으로
+        Anchored(title, new Vector2(0.5f, 0.5f), new Vector2(0f, 430f), new Vector2(RowWidth, 60));
         AddText(title, font, Loc.T("ui.options.title"), 46, TextAlignmentOptions.Center, Color.white);
 
-        float y = -130f;
-        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.master"), VolumeSettings.Master, VolumeSettings.SetMaster);
-        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.bgm"), VolumeSettings.Bgm, VolumeSettings.SetBgm);
-        MakeSliderRow(boxGo.transform, ref y, Loc.T("ui.options.sfx"), VolumeSettings.Sfx, VolumeSettings.SetSfx);
+        // 소리 3행을 상자 하나에 묶는다.
+        var soundBox = MakeGroupBox(boxGo.transform, "SoundBox", 200f);
+        float sy = GroupFirstY;
+        MakeSliderRow(soundBox.transform, ref sy, Loc.T("ui.options.master"), VolumeSettings.Master, VolumeSettings.SetMaster);
+        MakeSliderRow(soundBox.transform, ref sy, Loc.T("ui.options.bgm"), VolumeSettings.Bgm, VolumeSettings.SetBgm);
+        MakeSliderRow(soundBox.transform, ref sy, Loc.T("ui.options.sfx"), VolumeSettings.Sfx, VolumeSettings.SetSfx);
 
-        y -= 20f;
-        MakeToggleRow(boxGo.transform, ref y, Loc.T("ui.options.fullscreen"), Screen.fullScreen, SetFullscreen);
-        MakeResolutionRow(boxGo.transform, ref y);
-        MakeLanguageRow(boxGo.transform, ref y);
+        // 화면·언어 3행. 해상도가 전체화면보다 위다(사용자 지시).
+        var screenBox = MakeGroupBox(boxGo.transform, "ScreenBox", -130f);
+        float py = GroupFirstY;
+        MakeResolutionRow(screenBox.transform, ref py);
+        MakeToggleRow(screenBox.transform, ref py, Loc.T("ui.options.fullscreen"), Screen.fullScreen, SetFullscreen);
+        MakeLanguageRow(screenBox.transform, ref py);
 
-        y -= 20f;
-        MakeSaveResetRow(boxGo.transform, ref y);
+        MakeSaveResetRow(boxGo.transform, -350f); // 상자 밖
 
         var close = MakeButton(boxGo.transform, Loc.T("ui.options.close"), ButtonColor, Close);
-        // 30이면 판 스프라이트의 아래 테두리·그림자에 걸려 버튼이 창 밖으로 튀어나와 보인다.
-        Bottom(close, new Vector2(0, 52), new Vector2(260, 60));
+        // 칸 비율을 그림(가로길쭉이 3.50)에 맞춘다 — Simple+PA에서 비율이 어긋나면 남는 쪽이 빈다.
+        Anchored(close, new Vector2(0.5f, 0.5f), new Vector2(0f, -455f), new Vector2(260, 74));
         JuicyTuning.CenterPivot(close);
 
         UISkin.Refit(panel); // 크기가 다 정해진 뒤에 9-slice 테두리를 다시 재단
@@ -202,14 +225,14 @@ public class OptionsMenu : MonoBehaviour
 
     private void MakeSliderRow(Transform parent, ref float y, string label, float value, System.Action<float> onChanged)
     {
-        var row = MakeRow(parent, ref y, label);
+        var row = MakeRow(parent, ref y, label, RowHeight, GaugeStep);
 
         var valueGo = NewUI("Value", row.transform);
-        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + SliderWidth + 20f, 0f), new Vector2(120, 44));
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + GaugeW + 20f, 0f), new Vector2(120, 44));
         var valueText = AddText(valueGo, font, Percent(value), 26, TextAlignmentOptions.MidlineLeft, LabelColor);
 
         var sliderGo = NewUI("Slider", row.transform);
-        Anchored(sliderGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(SliderWidth, 36));
+        Anchored(sliderGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(GaugeW, GaugeH));
         var slider = BuildSlider(sliderGo, value);
         slider.onValueChanged.AddListener(v =>
         {
@@ -223,7 +246,7 @@ public class OptionsMenu : MonoBehaviour
         var row = MakeRow(parent, ref y, label);
 
         var toggleGo = NewUI("Toggle", row.transform);
-        Anchored(toggleGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(52, 52));
+        Anchored(toggleGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(40, 40));
         var toggle = BuildToggle(toggleGo, value);
         toggle.onValueChanged.AddListener(v => onChanged(v));
     }
@@ -244,17 +267,18 @@ public class OptionsMenu : MonoBehaviour
         if (resolutionIndex < 0) resolutionIndex = resolutions.Length - 1;
 
         var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepResolution(-1), true);
-        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
+        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(44, 41));
         JuicyTuning.CenterPivot(prev);
 
         var valueGo = NewUI("ResolutionValue", row.transform);
-        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 54f, 0f), new Vector2(175, 50));
         UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
-        resolutionLabel = AddText(valueGo, font, "", 28, TextAlignmentOptions.Center, LabelColor);
+        // "1920 x 1080"은 11자라 28pt면 175폭 칸에서 두 줄로 감긴다.
+        resolutionLabel = AddText(valueGo, font, "", 19, TextAlignmentOptions.Center, LabelColor);
         RefreshResolutionLabel();
 
         var next = MakeButton(row.transform, "▶", ButtonColor, () => StepResolution(1), true);
-        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
+        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 249f, 0f), new Vector2(44, 41));
         JuicyTuning.CenterPivot(next);
     }
 
@@ -264,16 +288,16 @@ public class OptionsMenu : MonoBehaviour
         var row = MakeRow(parent, ref y, Loc.T("ui.options.language"));
 
         var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepLanguage(-1), true);
-        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(56, 52));
+        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(44, 41));
         JuicyTuning.CenterPivot(prev);
 
         var valueGo = NewUI("LanguageValue", row.transform);
-        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 64f, 0f), new Vector2(300, 52));
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 54f, 0f), new Vector2(175, 50));
         UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
         languageLabel = AddText(valueGo, font, CurrentLanguageName(), 28, TextAlignmentOptions.Center, LabelColor);
 
         var next = MakeButton(row.transform, "▶", ButtonColor, () => StepLanguage(1), true);
-        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 372f, 0f), new Vector2(56, 52));
+        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 249f, 0f), new Vector2(44, 41));
         JuicyTuning.CenterPivot(next);
     }
 
@@ -295,28 +319,40 @@ public class OptionsMenu : MonoBehaviour
         // 라벨 갱신은 안 한다 — SetLocale이 LocaleChanged를 쏘고 Rebuild가 패널을 통째로 다시 짓는다.
     }
 
-    private void MakeSaveResetRow(Transform parent, ref float y)
+    private void MakeSaveResetRow(Transform parent, float centerY)
     {
         saveResetRow = NewUI("SaveResetRow", parent);
-        Anchored(saveResetRow, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(RowWidth, RowHeight));
-        y -= RowStep;
+        Anchored(saveResetRow, new Vector2(0.5f, 0.5f), new Vector2(0f, centerY), new Vector2(RowWidth, 103f));
 
         var btn = MakeButton(saveResetRow.transform, Loc.T("ui.options.reset"), DangerColor, OnSaveResetClicked);
-        Anchored(btn, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360, 56));
+        Anchored(btn, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360, 103));
         saveResetBg = btn.GetComponent<Image>();
         saveResetLabel = btn.GetComponentInChildren<TMP_Text>();
     }
 
+    // 여러 행을 묶는 상자. 개큰네모(721x289)를 **원본 크기 그대로** 쓴다.
+    private GameObject MakeGroupBox(Transform parent, string name, float centerY)
+    {
+        var go = NewUI(name, parent);
+        Anchored(go, new Vector2(0.5f, 0.5f), new Vector2(0f, centerY), new Vector2(GroupW, GroupH));
+        UISkin.BigBox(AddImage(go, ButtonColor, true)); // 스킨이 없으면 버튼 색 폴백
+        return go;
+    }
+
     // 라벨 자리를 가진 한 행. y를 다음 행 위치로 진행시킨다.
     private GameObject MakeRow(Transform parent, ref float y, string label)
+        => MakeRow(parent, ref y, label, RowHeight, RowStep);
+
+    private GameObject MakeRow(Transform parent, ref float y, string label, float height, float step)
     {
         var row = NewUI("Row_" + label, parent);
-        Anchored(row, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(RowWidth, RowHeight));
-        y -= RowStep;
+        Anchored(row, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(RowWidth, height));
+        y -= step;
 
+        // 배경은 그룹 상자가 맡으므로 라벨은 글자만 둔다(라벨마다 판을 씌우면 상자와 겹쳐 어수선해진다).
         var labelGo = NewUI("Label", row.transform);
-        Anchored(labelGo, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(LabelWidth, 44));
-        AddText(labelGo, font, label, 30, TextAlignmentOptions.MidlineLeft, LabelColor);
+        Anchored(labelGo, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(LabelWidth - 20f, height));
+        AddText(labelGo, font, label, 26, TextAlignmentOptions.MidlineLeft, LabelColor);
         return row;
     }
 
@@ -326,30 +362,44 @@ public class OptionsMenu : MonoBehaviour
     {
         var slider = go.AddComponent<Slider>();
 
+        // ── 게이지 3겹 (CLAUDE.md §5-1) ──
+        // 바탕(체력바_색칠)과 테두리(체력바_투명)는 **원본 크기 그대로** 겹치고, 그 사이에서 채움만 좌우로 찬다.
+        // 스킨 에셋이 없으면 예전 단색 막대로 폴백한다.
+        Sprite trackSp = UISkin.GaugeTrackSprite;
+        Sprite fillSp  = UISkin.GaugeFillSprite;
+        Sprite outerSp = UISkin.Instance != null ? UISkin.Instance.gaugeOuter : null;
+
         var background = NewUI("Background", go.transform);
-        StretchWithAnchors(background, new Vector2(0f, 0.28f), new Vector2(1f, 0.72f));
-        AddImage(background, TrackColor, true);
+        Center(background, new Vector2(GaugeW, GaugeH));
+        // 🔴 `_색칠` 그림은 속이 흰색이라 **색을 곱해** 쓴다. white를 주면 그냥 흰 판이 된다.
+        var bgImg = AddImage(background, TrackColor, true);
+        // 바탕만 원본(387x101)이 기준 칸(370x76)보다 커서 Battle 씬 체력바와 같이 Sliced로 맞춘다.
+        if (trackSp != null) { bgImg.sprite = trackSp; UISkin.FitSlice(bgImg); }
 
         var fillArea = NewUI("Fill Area", go.transform);
-        StretchWithAnchors(fillArea, new Vector2(0f, 0.28f), new Vector2(1f, 0.72f));
-        var fillAreaRt = (RectTransform)fillArea.transform;
-        fillAreaRt.offsetMin = Vector2.zero;
-        fillAreaRt.offsetMax = new Vector2(-20f, 0f);
+        Center(fillArea, new Vector2(GaugeFillW, GaugeFillH));
 
         var fill = NewUI("Fill", fillArea.transform);
         var fillRt = (RectTransform)fill.transform;
-        fillRt.anchorMin = new Vector2(0f, 0f);
-        fillRt.anchorMax = new Vector2(0f, 1f);
+        // Slider는 fillRect의 anchor를 0..value로 움직인다 — 부모(Fill Area) 안에서 좌→우로 찬다.
+        fillRt.anchorMin = Vector2.zero;
+        fillRt.anchorMax = Vector2.one;
         fillRt.offsetMin = Vector2.zero;
         fillRt.offsetMax = Vector2.zero;
-        fillRt.sizeDelta = new Vector2(20f, 0f);
-        AddImage(fill, FillColor, true);
+        var fillImg = AddImage(fill, FillColor, true); // 채움도 곱해 쓰는 그림 — 선택 화면의 강조 노랑
+        if (fillSp != null) { fillImg.sprite = fillSp; fillImg.type = Image.Type.Simple; }
+
+        // 테두리는 채움 **위에** 덮는다(마지막에 만든 자식이 맨 위) — 그래야 채움이 테두리를 넘지 않는다.
+        if (outerSp != null)
+        {
+            var outerGo = NewUI("Outer", go.transform);
+            Center(outerGo, new Vector2(GaugeW, GaugeH));
+            var oImg = AddImage(outerGo, Color.white, false); // 클릭은 아래 슬라이더가 받아야 한다
+            oImg.sprite = outerSp; oImg.type = Image.Type.Simple; oImg.preserveAspect = true;
+        }
 
         var handleArea = NewUI("Handle Slide Area", go.transform);
-        StretchWithAnchors(handleArea, Vector2.zero, Vector2.one);
-        var handleAreaRt = (RectTransform)handleArea.transform;
-        handleAreaRt.offsetMin = new Vector2(10f, 0f);
-        handleAreaRt.offsetMax = new Vector2(-10f, 0f);
+        Center(handleArea, new Vector2(GaugeFillW, GaugeH));
 
         var handle = NewUI("Handle", handleArea.transform);
         var handleRt = (RectTransform)handle.transform;
@@ -357,7 +407,7 @@ public class OptionsMenu : MonoBehaviour
         handleRt.anchorMax = new Vector2(0f, 1f);
         handleRt.offsetMin = Vector2.zero;
         handleRt.offsetMax = Vector2.zero;
-        handleRt.sizeDelta = new Vector2(32f, 0f);
+        handleRt.sizeDelta = new Vector2(26f, -34f); // 게이지 위라 얇고 짧게
         var handleImg = AddImage(handle, HandleColor, true);
 
         slider.fillRect = fillRt;
@@ -376,8 +426,9 @@ public class OptionsMenu : MonoBehaviour
 
         var background = NewUI("Background", go.transform);
         StretchWithAnchors(background, Vector2.zero, Vector2.one);
-        var bgImg = AddImage(background, TrackColor, true);
-        UISkin.BoxTinted(bgImg, TrackColor); // 정사각 토글이라 가로 바가 아니라 사각 스프라이트
+        // 토글 칸은 버튼 색으로 칠한다 — TrackColor(거의 검정)면 어두운 딤 위에서 통째로 묻힌다.
+        var bgImg = AddImage(background, ButtonColor, true);
+        UISkin.BoxTinted(bgImg, ButtonColor); // 정사각 토글이라 가로 바가 아니라 사각 스프라이트
 
         var check = NewUI("Checkmark", background.transform);
         StretchWithAnchors(check, Vector2.zero, Vector2.one);

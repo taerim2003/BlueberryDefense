@@ -14,12 +14,35 @@ public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     private float _baseY;
     private float _phase;
     private bool _hovering;
+    private bool _homeReady;   // 제자리를 잡았나 (레이아웃 그룹 아래면 Awake 시점엔 아직 아니다)
 
     private void Awake()
     {
         _rect = (RectTransform)transform;
-        _baseY = _rect.anchoredPosition.y;
         _phase = Random.value * Mathf.PI * 2f; // 전부 같은 박자로 흔들리면 기계적으로 보인다
+        CaptureHome();
+    }
+
+    // 🔴 부모가 LayoutGroup이면 **Awake 시점엔 아직 배치 전**이라 anchoredPosition이 엉뚱하다
+    //    (타이틀 메뉴 버튼 5개가 VerticalLayoutGroup 아래다). 레이아웃이 한 번 돈 뒤에 제자리를 잡는다.
+    //    레이아웃 그룹이 없으면 지금 값이 곧 제자리이므로 그대로 쓴다.
+    private void OnEnable()
+    {
+        if (!_homeReady) CaptureHome();
+    }
+
+    private void CaptureHome()
+    {
+        if (_rect == null) _rect = (RectTransform)transform;
+        bool underLayout = _rect.parent != null
+                        && _rect.parent.GetComponent<UnityEngine.UI.LayoutGroup>() != null;
+        if (underLayout)
+        {
+            // 레이아웃이 정한 뒤에 읽는다. 그 전까지는 흔들지 않는다(_homeReady=false).
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(_rect.parent as RectTransform);
+        }
+        _baseY = _rect.anchoredPosition.y;
+        _homeReady = true;
     }
 
     // 제자리를 바깥에서 알려준다. Awake가 읽은 값은 믿을 수 없다 —
@@ -40,6 +63,8 @@ public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     private void Update()
     {
+        if (!_homeReady) return; // 제자리를 모르는 채 흔들면 그 자리가 제자리로 굳는다
+
         // unscaledTime — 이 화면은 timeScale이 0인 상태에서도 열려 있을 수 있다.
         float target = _hovering
             ? _baseY

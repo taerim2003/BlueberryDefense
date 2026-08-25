@@ -35,6 +35,9 @@ public static class UISkinApply
     const string SGauge   = "경치바_색칠";                // 967x81 (11.94) 경험치 바
     const string SHealth  = "체력바_색칠";                // 387x101 (3.83) 체력 바
     const string SSolidFill = "UI_SolidFill";             // 게이지 채움용 단색 1장 (Multiple이라 LoadSub로 집는다)
+    // 게이지 3겹 — 2026-08-25에 사용자가 그려 넣은 세트. 바탕(_색칠) → 채움(_내용물) → 테두리(_투명) 순으로 겹친다.
+    const string SHealthFill  = "체력바_내용물";
+    const string SHealthOuter = "체력바_투명";
     const string OSquare  = "정사각형_투명";              // 속 빈 테두리 — 선택 하이라이트
     const string OPillow  = "베개같이생긴네모_투명";
 
@@ -90,17 +93,19 @@ public static class UISkinApply
         S("Canvas/SkillTreeRoot/UnlockPoster/Panel", SAngular),  // 230x280 (0.82)
 
         // ── 캐릭터 선택 ──
-        S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Bg",     SSquare),  // 145x149
+        S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Bg",     SSquare),  // 240x246
         S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Border", OSquare),  // 그림이 테두리를 넘지 않게 덮는 겹
         // 🔴 호버 표시는 **카드 뒤에 까는 노란 판**이다. _투명 그림은 순수 검정이라 색을 곱해도
         //    노랗게 물들지 않는다(옛 UI_CornerBracket은 흰 부분이 있어 물들었다).
         Back("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", SSquare, Highlight),
-        S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/NameBox", SBar),    // 128x37
+        S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/NameBox", SBar),    // 200x54
         S("Canvas/CharacterSelectRoot/BackButton",      SBar),      // 185x54
         S("Canvas/CharacterSelectRoot/CharacterHeader", SBar),      // 300x87
         S("Canvas/CharacterSelectRoot/SkillIconBox",    SIconBox),  // 130x134
         S("Canvas/CharacterSelectRoot/SelectButton",    SBar),      // 267x78
-        S("Canvas/CharacterSelectRoot/SkillBox",        SPillow),   // 460x308 (1.49)
+        // 460x308 (1.49)에 베개(373x195)를 쓰면 가로 1.23·세로 1.58배 **확대**라 테두리가 뭉갠다.
+        // 개큰네모(721x289)면 가로는 축소·세로만 1.07배라 확대량이 거의 없다 — 비율은 조금 멀어져도 이쪽이 낫다.
+        S("Canvas/CharacterSelectRoot/SkillBox",        SBigBox),   // 460x308 (1.49)
 
         // ── 맵 선택 ──
         S("Canvas/MapSelectRoot/MainPanel",                             SPillow),  // 1590x1010 (1.57)
@@ -143,6 +148,24 @@ public static class UISkinApply
         D("Canvas/TreasurePanel", 0.82f),
     };
 
+    // localScale로 키운 UI는 픽셀이 통째로 늘어나 테두리가 뭉갠다(FitSlice가 최종 크기를 못 본다).
+    // 여백은 sizeDelta로 내고 스케일은 1로 돌린다. 위 RectFix가 크기를 잡은 **뒤에** 돌아야 한다.
+    static readonly string[] ScaleResetPaths =
+    {
+        "Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Border",
+    };
+
+    static void ResetScale(GameObject go, StringBuilder sb)
+    {
+        if (go == null) return;
+        var rt = (RectTransform)go.transform;
+        if (Mathf.Abs(rt.localScale.x - 1f) < 0.001f && Mathf.Abs(rt.localScale.y - 1f) < 0.001f) return;
+        Undo.RecordObject(rt, "UI Skin");
+        sb.AppendLine("  스케일 " + go.name + " " + rt.localScale.x.ToString("0.00") + "," + rt.localScale.y.ToString("0.00") + " → 1,1");
+        rt.localScale = Vector3.one;
+        EditorUtility.SetDirty(rt);
+    }
+
     // 선택 하이라이트의 네 모서리 꺾쇠(UI_CornerBracket) — 새 세트엔 대응 그림이 없다.
     // 속 빈 테두리(_투명) 한 겹이 그 역할을 하므로 **끄기만** 한다(지우지 않아 되돌릴 수 있다).
     static readonly string[] CornerBracketParents =
@@ -172,8 +195,36 @@ public static class UISkinApply
     // 새 그림엔 투명 여백이 8%쯤 있어서(정사각형_색칠은 372 중 29px) 여유를 더 준다.
     static readonly RectFix[] TitleRectFixes =
     {
-        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", 70, 70),
+        // ── 캐릭터 카드: 145x149는 너무 작아 초상화가 109x113로 쪼그라들어 있었다
+        //    (플레이스루 지적 "호버 하이라이트가 지나치게 두껍고 이미지가 너무 작음").
+        //    CardContainer(880폭)에 HorizontalLayoutGroup spacing=56이라 3장이면 240폭까지 들어간다
+        //    (240*3 + 56*2 = 832 ≤ 880). 정사각형_색칠 원본이 372x372라 240x246은 여전히 **축소**다.
+        //    Bg 안쪽 = 가로 240-37-33=170 · 세로 246-20-66=160 → 그 칸을 초상화가 그대로 쓴다.
+        //    🔴 Bg·Thumb·Border·Frame은 **stretch 앵커**(0,0)-(1,1)라 sizeDelta가 크기가 아니라
+        //       **카드 대비 여백**이다. Bg·Border는 0,0이라 카드만 키우면 저절로 따라온다 — 표에 올리지 않는다.
+        //    카드가 커진 만큼 세로 자리를 만들어야 한다. CharacterHeader 하단 356 ~ SkillIconBox 상단 97 =
+        //    259px뿐인데 카드(246) + 이름표(4+54)가 304px이라 그대로 두면 위아래가 겹친다.
+        //    카드 블록을 헤더 바로 아래(상단 350)에 놓고 아래 셋을 그만큼 내린다.
+        //    이름표(NameBox)는 카드 **아래로 걸쳐 나오는** 띠라(앵커 하단·pivot 위) 카드 높이에 그 60px이 더 붙는다.
+        //    카드 블록의 실제 바닥 = 카드하단 - 4 - 60. 그 아래 셋을 차례로 밀어 1px도 안 겹치게 맞췄다.
+        new RectFix("Canvas/CharacterSelectRoot/CardContainer",  880, 250,  0,  227),
+        new RectFix("Canvas/CharacterSelectRoot/SkillIconBox",   130, 134,  0,  -40),
+        new RectFix("Canvas/CharacterSelectRoot/SkillBox",       460, 308,  0, -265),
+        new RectFix("Canvas/CharacterSelectRoot/SelectButton",   267,  78,  0, -470),
+        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate",        240, 246),
+        // 초상화는 Bg 테두리 안쪽(170x160)에 딱 맞춘다: 여백 = 170-240, 160-246. 중심은 안쪽 중심(2, 23).
+        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Bg/Thumb", -70, -86, 2, 23),
+        // NameBox는 앵커가 카드 하단(0.5,0)·pivot 위쪽이라 카드가 커져도 저절로 하단에 붙는다 — 크기만 키운다.
+        // 가로길쭉이는 아래 그림자 띠가 두꺼워(ppu 보정 후 22px) 54면 글자가 들어갈 안쪽이 21px뿐이다 — 60으로.
+        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/NameBox", 200,  60),
+        // 호버 판은 카드 뒤에 깔린다. 여백 49 → rect 289, 그림의 투명 여백 8%를 빼면 보이는 판이 266이라
+        // 카드 밖으로 13px만 나오는 얇은 테두리가 된다. 옛 70(=rect 215, 밖으로 26px)이 "두껍다"는 지적을 받았다.
+        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", 49, 49),
         new RectFix("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Frame", 74, 70),
+        // 이 Border는 카드보다 살짝 커야 테두리처럼 보이는데, 그 여백을 **localScale 1.04/1.06으로** 내고 있었다.
+        // 스케일은 픽셀을 통째로 늘려 9-slice 재단을 무력화한다 — 같은 여백을 sizeDelta로 낸다(340x228 → 354x242).
+        // (회의록 "모든 UI 패널·버튼의 스케일 변경 금지". UI 전체를 훑어 localScale != 1인 건 이 하나뿐이었다.)
+        new RectFix("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Border", 14, 14),
 
         // 메인 메뉴 5칸: 440x90 → 340x112. 폭은 "가로로 지나치게 길다"를, 높이는 "위아래 여백 부족"을 푼다.
         // 세로 간격 130(틈 18). 위로는 TitleImage 아래끝 174에서 18px, 아래로는 화면 바닥까지 64px 남는다.
@@ -200,21 +251,31 @@ public static class UISkinApply
         new RectFix("Canvas/EvolutionPanel/Window/SkillNameText", 800,  55,    0,  305),
         new RectFix("Canvas/EvolutionPanel/Window/SubInfoText",   900,  40,    0,  258),
 
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T1", 620, 290, -330,   45),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T2", 620, 290,  330,   45),
+        // 2026-08-25: 개큰네모를 620x290으로 **줄여 Sliced**로 쓰던 것을 원본 721x289 + Simple로 되돌렸다
+        // (CLAUDE.md §5-1). x는 ±410 — 721폭 두 장 사이에 화살표(80)가 들어갈 99px을 남긴 값이다.
+        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T1", 721, 289, -410,   45),
+        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T2", 721, 289,  410,   45),
         new RectFix("Canvas/EvolutionPanel/Window/Arrow_P0_0", 80,  60,    0,   45),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T1", 620, 290, -330, -285),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T2", 620, 290,  330, -285),
+        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T1", 721, 289, -410, -285),
+        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T2", 721, 289,  410, -285),
         new RectFix("Canvas/EvolutionPanel/Window/Arrow_P1_0", 80,  60,    0, -285),
     };
 
     // 노드 안쪽(아이콘·제목·설명)은 4칸 모두 같은 배치라 접두사로 한 번에 잡는다.
-    // 설명은 4~5줄까지 나온다 — 폭이 좁으면 마지막 글자만 다음 줄로 넘어가 칸 밖으로 흘렀다.
+    //
+    // 🔴 옛 배치(Icon@92 · Title@32 · Desc 150@-60)는 **위아래로 테두리를 뚫고 있었다.**
+    //    노드 620x290에 개큰네모(721x289, 테두리 좌25·아래88·우23·위34)라 안쪽은 y[-57, +111] = 168px뿐인데,
+    //    아이콘이 위로 21px · 설명이 아래로 78px 넘어갔다(플레이스루 지적 "아이콘이 패널 밖으로 나간다").
+    //    아래 테두리 88px이 높이의 30%를 먹는 게 원인이라 세로로 셋을 쌓으면 어떻게 해도 안 들어간다.
+    //
+    // → 아이콘을 제목 **옆**으로 올려 한 줄을 아꼈다. 그래서 설명이 108px(4줄)을 쓴다.
+    //    진화 설명 144건을 전수로 재보니 평균 35.6자 · 최장 81자 = 570px/22pt 기준 **최대 4줄**이라 4줄이면 족하다.
+    //    (노드 4칸의 위치·크기와 2루트x2티어 구조는 그대로 둔다 — 여기서 고치는 건 칸 **안쪽**뿐이다.)
     static readonly RectFix[] EvoNodeChildFixes =
     {
-        new RectFix("Icon",         80,  80, 0,  92),
-        new RectFix("Title",       560,  36, 0,  32),
-        new RectFix("Description", 570, 150, 0, -60),
+        new RectFix("Icon",         56,  56, -250,  83),
+        new RectFix("Title",       460,  36,   40,  83),
+        new RectFix("Description", 570, 108,    0,  -3),
     };
 
     static readonly string[] EvoUsedNodes =
@@ -254,6 +315,11 @@ public static class UISkinApply
         // 컬렉션 화면은 판을 원본 크기 위로 늘리지 않는 게 규칙이라, 넓은 칸/아이콘 칸용 그림이 따로 필요하다.
         skin.barWide = Load(SpritePath(SBarWide));
         skin.iconBox = Load(SpritePath(SIconBox));
+        skin.bigBox  = Load(SpritePath(SBigBox));   // 여러 행을 묶는 그룹 상자(설정 화면)
+        // 볼륨 슬라이더처럼 "차오르는 바"가 쓴다. 셋 다 Multiple이라 LoadSub로 집는다.
+        skin.gaugeTrack = Load(SpritePath(SHealth)) ?? LoadSub(SpritePath(SHealth));
+        skin.gaugeFill  = LoadSub(SpritePath(SHealthFill));
+        skin.gaugeOuter = LoadSub(SpritePath(SHealthOuter));
         skin.skin = Skin;
         skin.highlight = Highlight;
         skin.dim = new Color(DimRgb.r, DimRgb.g, DimRgb.b, 0.8f);
@@ -297,16 +363,19 @@ public static class UISkinApply
             if (!scene.isLoaded) continue;
 
             Target[] table = scene.name == "Title" ? TitleTargets
-                           : scene.name == "SampleScene" ? GameTargets : null;
+                           : scene.name == "Battle" ? GameTargets : null;
             if (table == null) { sb.AppendLine("[" + scene.name + "] 표가 없어 건너뜀"); continue; }
 
             sb.AppendLine("[" + scene.name + "]");
 
             // 크기 보정이 먼저다 — FitSlice가 최종 크기를 봐야 테두리 배율이 맞는다.
             if (scene.name == "Title")
+            {
                 foreach (var f in TitleRectFixes) ApplyRect(FindByPath(scene, f.path), f, sb);
+                foreach (var p in ScaleResetPaths) ResetScale(FindByPath(scene, p), sb);
+            }
 
-            if (scene.name == "SampleScene")
+            if (scene.name == "Battle")
             {
                 foreach (var f in GameRectFixes) ApplyRect(FindByPath(scene, f.path), f, sb);
                 foreach (var n in EvoUsedNodes)
@@ -326,7 +395,7 @@ public static class UISkinApply
                 if (SkinOne(go, t, sb)) graphics++;
             }
 
-            if (scene.name == "SampleScene")
+            if (scene.name == "Battle")
             {
                 foreach (var go in FindByPrefix(scene, EvoNodePrefix))
                     if (SkinOne(go, S(go.name, SBigBox), sb)) graphics++;  // 620x290 (2.14)

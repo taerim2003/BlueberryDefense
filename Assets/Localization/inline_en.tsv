@@ -69,7 +69,8 @@ skill.gain.growth	Growth stacks {0} (stronger the more you use it)
 ui.levelup.evoHeader	Evolve!
 ui.levelup.evoFallbackHeader	Nothing to evolve — level up instead
 ui.levelup.treasureHeader	Treasure Chest — what will you take?
-ui.levelup.reroll	Reroll ({0})
+ui.levelup.reroll	Reroll
+ui.levelup.rerollLeft	{0} left
 ui.levelup.tagNew	NEW!
 ui.levelup.tagEvolve	EVOLVE!
 ui.levelup.level	Level: {0}

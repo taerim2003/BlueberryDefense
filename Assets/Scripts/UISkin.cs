@@ -17,6 +17,12 @@ public class UISkin : ScriptableObject
     public Sprite box;      // 정사각 박스
     public Sprite barWide;  // 아주 넓은 바 — bar를 원본보다 늘리지 않고 쓰기 위한 한 단계 위
     public Sprite iconBox;  // 아이콘 한 칸
+    public Sprite bigBox;   // 개큰네모 721x289 — 여러 행을 묶는 그룹 상자
+
+    [Header("게이지 3겹 (바탕 → 채움 → 테두리 순으로 겹친다)")]
+    public Sprite gaugeTrack;  // 체력바_색칠  387x101
+    public Sprite gaugeFill;   // 체력바_내용물
+    public Sprite gaugeOuter;  // 체력바_투명 — 채움 위에 덮어 테두리를 살린다
 
     [Header("색")]
     public Color skin = new Color(0.420f, 0.482f, 0.910f, 1f);      // #6B7BE8
@@ -53,6 +59,25 @@ public class UISkin : ScriptableObject
     public static void Box(Image img) => Apply(img, s => s.box);
     public static void BarWide(Image img) => Apply(img, s => s.barWide);
     public static void IconBox(Image img) => Apply(img, s => s.iconBox);
+    public static void BigBox(Image img) => Apply(img, s => s.bigBox);
+
+    // 🔴 CLAUDE.md §5-1 — 판은 **원본 크기 그대로 Simple**로 쓴다.
+    //    위의 Apply/FitSlice 경로는 Sliced로 늘려 쓰던 시절 것이라 테두리·아래 그림자가 칸 크기에 따라
+    //    두꺼워진다. 새로 만드는 UI는 이쪽을 쓸 것. 칸 크기는 그림이 정한다(SetNativeSize).
+    public static void Native(Image img, Sprite sp)
+    {
+        if (img == null || sp == null) return;
+        img.sprite = sp;
+        img.type = Image.Type.Simple;
+        img.preserveAspect = true;
+        img.pixelsPerUnitMultiplier = 1f;
+        img.SetNativeSize();
+    }
+
+    public static void GaugeTrack(Image img) { var s = Instance; if (s != null) Native(img, s.gaugeTrack); }
+    public static void GaugeOuter(Image img) { var s = Instance; if (s != null) Native(img, s.gaugeOuter); }
+    public static Sprite GaugeFillSprite => Instance != null ? Instance.gaugeFill : null;
+    public static Sprite GaugeTrackSprite => Instance != null ? Instance.gaugeTrack : null;
 
     private static void Apply(Image img, System.Func<UISkin, Sprite> pick)
     {
@@ -62,7 +87,18 @@ public class UISkin : ScriptableObject
         if (sprite == null) return;
         img.sprite = sprite;
         img.color = s.skin;
-        FitSlice(img);
+        Fit(img);
+    }
+
+    // 🔴 CLAUDE.md §5-1 — 판은 Simple + Preserve Aspect로 쓴다.
+    // 늘이거나 줄여도 그림 **전체가 균일하게** 스케일되므로 아래 그림자 두께가 원본 비율로 남는다.
+    // (Sliced는 테두리를 원본 픽셀 크기로 그려서, 칸이 작아질수록 그림자만 상대적으로 두꺼워진다.)
+    // 칸의 가로세로 비가 그림과 다르면 PA가 남는 쪽을 비우므로, 칸 비율을 그림에 맞춰 두는 게 좋다.
+    private static void Fit(Image img)
+    {
+        img.type = Image.Type.Simple;
+        img.preserveAspect = true;
+        img.pixelsPerUnitMultiplier = 1f;
     }
 
     // 색을 따로 주고 싶을 때(위험 버튼처럼) — 스프라이트만 스킨을 쓰고 색은 호출측 것을 지킨다.
@@ -74,7 +110,7 @@ public class UISkin : ScriptableObject
         if (img == null || sprite == null) return;
         img.sprite = sprite;
         img.color = tint;
-        FitSlice(img);
+        Fit(img);
     }
 
     public static void Dim(Image img, float alpha)

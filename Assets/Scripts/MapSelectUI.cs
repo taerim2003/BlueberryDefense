@@ -71,7 +71,9 @@ public class MapSelectUI : MonoBehaviour
         }
     }
 
-    private const string GameSceneName = "SampleScene";
+    // 2026-08-25에 씬 이름이 SampleScene → Battle로 바뀌었다. 이 문자열이 곧 배선이다 —
+    // 안 맞으면 "시작!"이 없는 씬을 로드해 게임이 아예 안 열린다(빌드 세팅은 Battle 하나뿐).
+    private const string GameSceneName = "Battle";
 
     private void Awake()
     {
