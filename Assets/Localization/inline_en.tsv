@@ -124,7 +124,9 @@ ui.title.upgrade	Upgrades
 ui.title.collection	Collection
 ui.title.quit	Quit
 ui.tree.title	Skill Tree
-ui.charselect.title	Select Character
+ui.charselect.title	Character
+ui.mapselect.title	Map
+ui.mapselect.locked	Locked
 ui.mapselect.changeChar	Change Character
 ui.common.close	Close
 ui.common.back	Back

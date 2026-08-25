@@ -18,6 +18,7 @@ public class UISkin : ScriptableObject
     public Sprite barWide;  // 아주 넓은 바 — bar를 원본보다 늘리지 않고 쓰기 위한 한 단계 위
     public Sprite iconBox;  // 아이콘 한 칸
     public Sprite bigBox;   // 개큰네모 721x289 — 여러 행을 묶는 그룹 상자
+    public Sprite round;    // 동그라미_색칠 145x135 — 좌우 화살표처럼 작고 둥근 버튼
 
     [Header("게이지 3겹 (바탕 → 채움 → 테두리 순으로 겹친다)")]
     public Sprite gaugeTrack;  // 체력바_색칠  387x101
@@ -104,6 +105,13 @@ public class UISkin : ScriptableObject
     // 색을 따로 주고 싶을 때(위험 버튼처럼) — 스프라이트만 스킨을 쓰고 색은 호출측 것을 지킨다.
     public static void BarTinted(Image img, Color tint) => Tinted(img, Instance != null ? Instance.bar : null, tint);
     public static void BoxTinted(Image img, Color tint) => Tinted(img, Instance != null ? Instance.box : null, tint);
+    public static void RoundTinted(Image img, Color tint) => Tinted(img, Instance != null ? Instance.round : null, tint);
+
+    // 선택 표시용 강조색(#FFE04D). 카드 뒤에 까는 노란 테를 켤 때 쓴다 — 에셋이 없어도 같은 노랑으로 폴백한다.
+    public static Color Highlight => Instance != null ? Instance.highlight : new Color(1f, 0.878f, 0.302f, 1f);
+
+    // Highlight의 짝 — 꺼진 상태. 오브젝트를 껐다 켜는 대신 알파만 0으로 두면 레이아웃이 안 흔들린다.
+    public static readonly Color Transparent = new Color(1f, 1f, 1f, 0f);
 
     private static void Tinted(Image img, Sprite sprite, Color tint)
     {

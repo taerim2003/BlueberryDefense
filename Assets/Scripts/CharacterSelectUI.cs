@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
@@ -41,11 +40,11 @@ public class CharacterSelectUI : MonoBehaviour
     // 잠긴 캐릭터 카드의 초상화 색 — 거의 검은 실루엣만 남긴다.
     private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
 
-    private readonly List<GameObject> cardFrames = new List<GameObject>();
+    // 고른 카드 뒤에 깔리는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
+    private readonly List<Image> cardGlows = new List<Image>();
     private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>();  // 고른 카드만 원본 크기·색으로 남긴다
     private readonly List<Image> cardThumbs = new List<Image>();             // 클릭 시 공격 모션을 여기서 돌린다
     private int selectedIndex;   // 기본 0 = 로스터 첫 캐릭터(= 프리팹 기본값과 동일)
-    private int hoverIndex = -1; // 커서가 올라간 카드(꺽쇠를 미리 보여준다)
     private bool built;
     private Coroutine attackRoutine;
     private Image attackThumb;        // 지금 공격 모션이 도는 썸네일(끊겼을 때 되돌리려고 들고 있는다)
@@ -136,9 +135,10 @@ public class CharacterSelectUI : MonoBehaviour
             if (nameText != null && chr != null)
                 nameText.text = locked ? "???" : chr.Name;
 
-            var frame = FindDeep(card.transform, "Frame")?.gameObject;
-            if (frame != null) frame.SetActive(false);
-            cardFrames.Add(frame);
+            // 🔴 맵 선택 화면과 같은 사정 — `Frame` 자식이 사라져 하이라이트가 죽어 있었다.
+            //    테두리 그림(..._투명)은 순수 검정이라 물들일 수 없어서, `SelectGlow`가 그 선화를
+            //    마스크로 쓰고 그 안의 `Fill`을 노랗게 켠다(맵 선택 화면과 같은 구조).
+            cardGlows.Add(FindDeep(card.transform, "Fill")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();
@@ -154,24 +154,7 @@ public class CharacterSelectUI : MonoBehaviour
                 if (juicy != null) juicy.enabled = !locked;
             }
 
-            if (!locked) AddHoverFrame(card, i);
         }
-    }
-
-    // 커서를 올리면 꺽쇠를 미리 보여준다. JuicyButton이 이미 포인터 이벤트를 쓰고 있으므로
-    // 그쪽을 건드리지 않도록 EventTrigger를 따로 얹는다(둘 다 호출된다).
-    private void AddHoverFrame(GameObject card, int index)
-    {
-        var trigger = card.GetComponent<EventTrigger>();
-        if (trigger == null) trigger = card.AddComponent<EventTrigger>();
-
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => { hoverIndex = index; RefreshFrames(); });
-        trigger.triggers.Add(enter);
-
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => { if (hoverIndex == index) hoverIndex = -1; RefreshFrames(); });
-        trigger.triggers.Add(exit);
     }
 
     // 카드 속 부품을 깊이와 상관없이 찾는다(MapSelectUI와 같은 이유 — 씬에서 Thumb을
@@ -260,12 +243,12 @@ public class CharacterSelectUI : MonoBehaviour
         RefreshSkillPreview(index);
     }
 
-    // 꺽쇠는 커서가 올라간 카드에만 뜬다(고른 카드는 아래 스킬 정보가 알려준다).
-    // 고른 카드는 대신 JuicyButton이 원본 크기·색으로 남겨 준다.
+    // 고른 카드는 뒤에 깔린 노란 테를 켜서 표시한다(맵 선택 화면과 같은 방식).
+    // 크기·색 강조는 JuicyButton이 따로 맡는다.
     private void RefreshFrames()
     {
-        for (int i = 0; i < cardFrames.Count; i++)
-            if (cardFrames[i] != null) cardFrames[i].SetActive(i == hoverIndex);
+        for (int i = 0; i < cardGlows.Count; i++)
+            if (cardGlows[i] != null) cardGlows[i].color = i == selectedIndex ? UISkin.Highlight : UISkin.Transparent;
         for (int i = 0; i < cardJuicy.Count; i++)
             if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == selectedIndex);
     }

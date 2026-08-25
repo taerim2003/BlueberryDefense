@@ -934,9 +934,9 @@ public class Enemy : MonoBehaviour
 
     // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는 세로로 쌓인다.
     // 가로는 매번 조금씩 흔든다 — x를 0으로 완전 정렬했더니 숫자가 자로 잰 듯 일직선으로 올라와 부자연스러웠다.
-    // ⚠️ StackStep(0.62)보다 훨씬 작게 유지할 것. 이보다 커지면 9/9/9 세로 묶음이 흩어져 한 공격으로 안 읽힌다.
+    // ⚠️ StackStep(0.52)보다 훨씬 작게 유지할 것. 이보다 커지면 9/9/9 세로 묶음이 흩어져 한 공격으로 안 읽힌다.
     private const float DamageNumberBaseHeight = 0.85f;
-    private const float DamageNumberStackStep = 0.62f;
+    private const float DamageNumberStackStep = 0.52f;   // 0.62에서 좁힘(사용자 요청)
     private const float DamageNumberJitterX = 0.3f;
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)

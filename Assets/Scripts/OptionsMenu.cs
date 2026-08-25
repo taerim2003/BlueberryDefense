@@ -34,7 +34,6 @@ public class OptionsMenu : MonoBehaviour
     private static readonly Color LabelColor = Color.white;
     private static readonly Color TrackColor = new Color(0.06f, 0.05f, 0.10f, 0.9f);
     private static readonly Color FillColor = new Color(1f, 0.878f, 0.302f, 1f);   // 선택 화면의 강조 노랑
-    private static readonly Color HandleColor = Color.white;
     private static readonly Color ButtonColor = new Color(0.420f, 0.482f, 0.910f, 1f);
     private static readonly Color DangerColor = new Color(0.55f, 0.20f, 0.28f, 1f);
     private static readonly Color DangerArmedColor = new Color(0.85f, 0.28f, 0.32f, 1f);
@@ -62,6 +61,19 @@ public class OptionsMenu : MonoBehaviour
     private const float GaugeFillW = 241f;  // 356 x (250/370)
     private const float GaugeFillH = 38f;   // 57 x (51/76)
     private const float GaugeStep = GroupRowStep;
+
+    // ◀▶ 선택기(해상도·언어). 화살표는 동그라미_색칠(145x135)이 전용 그림이라 그 비율(1.074)에 칸을 맞춘다.
+    // 크기는 맵 선택 화면의 승천 화살표(54x56)와 같은 급으로 — 화면이 달라도 같은 손잡이는 같은 크기여야 한다.
+    private const float ArrowW = 54f;
+    private const float ArrowH = 50f;
+    // 판을 원본의 0.37배로 줄여 쓰므로 **글자도 같은 비율로** 줄인다.
+    // 맵 선택 화면 승천 화살표가 원본 145x135에 36pt이니, 여기선 36 x (54/145) ≈ 13.4pt.
+    // (판만 줄이고 28pt를 그대로 뒀더니 삼각형이 동그라미 테두리를 넘어 삐져나왔다.)
+    private const float ArrowGlyphPt = 36f * ArrowW / 145f;
+    private const float PickerValueW = 175f;
+    private const float PickerGap = 10f;
+    private const float PickerValueX = LabelWidth + ArrowW + PickerGap;
+    private const float PickerNextX = PickerValueX + PickerValueW + PickerGap;
 
     private GameObject panel;
     private CanvasGroup group;
@@ -266,20 +278,36 @@ public class OptionsMenu : MonoBehaviour
         resolutionIndex = System.Array.FindIndex(resolutions, r => r.x == Screen.width && r.y == Screen.height);
         if (resolutionIndex < 0) resolutionIndex = resolutions.Length - 1;
 
-        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepResolution(-1), true);
-        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(44, 41));
-        JuicyTuning.CenterPivot(prev);
+        MakeArrow(row.transform, "◀", LabelWidth, () => StepResolution(-1));
 
         var valueGo = NewUI("ResolutionValue", row.transform);
-        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 54f, 0f), new Vector2(175, 50));
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(PickerValueX, 0f), new Vector2(PickerValueW, 50));
         UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
         // "1920 x 1080"은 11자라 28pt면 175폭 칸에서 두 줄로 감긴다.
         resolutionLabel = AddText(valueGo, font, "", 19, TextAlignmentOptions.Center, LabelColor);
         RefreshResolutionLabel();
 
-        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepResolution(1), true);
-        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 249f, 0f), new Vector2(44, 41));
-        JuicyTuning.CenterPivot(next);
+        MakeArrow(row.transform, "▶", PickerNextX, () => StepResolution(1));
+    }
+
+    // ◀▶ 화살표 버튼. 해상도·언어 두 행이 같은 모양을 써야 해서 한 곳에서만 만든다.
+    // 🔴 예전엔 가로길쭉이(361x103, 비율 3.5)를 44x41 칸에 넣고 있었다. Simple+PA라 판이
+    //    44x12짜리 띠로 눌려, 삼각형 양옆에 혹처럼 붙은 채로 그려졌다.
+    //    좌우 화살표의 전용 그림은 동그라미_색칠이다(CLAUDE.md §5-1 표 · 맵 선택 화면 승천 화살표와 같은 것).
+    private GameObject MakeArrow(Transform parent, string glyph, float x, UnityEngine.Events.UnityAction onClick)
+    {
+        var go = MakeButton(parent, glyph, ButtonColor, onClick, true);
+        UISkin.RoundTinted(go.GetComponent<Image>(), ButtonColor);
+        Anchored(go, new Vector2(0f, 0.5f), new Vector2(x, 0f), new Vector2(ArrowW, ArrowH));
+        JuicyTuning.CenterPivot(go);
+
+        var glyphText = go.GetComponentInChildren<TMP_Text>();
+        if (glyphText != null)
+        {
+            glyphText.fontSize = ArrowGlyphPt;
+            UISkin.Text(glyphText, true); // 크기를 바꿨으니 크기별 머티리얼을 다시 고른다
+        }
+        return go;
     }
 
     // 해상도 행과 같은 ◀▶ 선택기. 드롭다운을 안 쓰는 이유도 같다(프리미티브만으로 조립 가능·항목이 적음).
@@ -287,18 +315,14 @@ public class OptionsMenu : MonoBehaviour
     {
         var row = MakeRow(parent, ref y, Loc.T("ui.options.language"));
 
-        var prev = MakeButton(row.transform, "◀", ButtonColor, () => StepLanguage(-1), true);
-        Anchored(prev, new Vector2(0f, 0.5f), new Vector2(LabelWidth, 0f), new Vector2(44, 41));
-        JuicyTuning.CenterPivot(prev);
+        MakeArrow(row.transform, "◀", LabelWidth, () => StepLanguage(-1));
 
         var valueGo = NewUI("LanguageValue", row.transform);
-        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 54f, 0f), new Vector2(175, 50));
+        Anchored(valueGo, new Vector2(0f, 0.5f), new Vector2(PickerValueX, 0f), new Vector2(PickerValueW, 50));
         UISkin.BarTinted(AddImage(valueGo, TrackColor, false), TrackColor);
         languageLabel = AddText(valueGo, font, CurrentLanguageName(), 28, TextAlignmentOptions.Center, LabelColor);
 
-        var next = MakeButton(row.transform, "▶", ButtonColor, () => StepLanguage(1), true);
-        Anchored(next, new Vector2(0f, 0.5f), new Vector2(LabelWidth + 249f, 0f), new Vector2(44, 41));
-        JuicyTuning.CenterPivot(next);
+        MakeArrow(row.transform, "▶", PickerNextX, () => StepLanguage(1));
     }
 
     // 언어 이름은 **그 언어로** 보여준다("한국어"/"English") — 못 읽는 언어로 적히면 되돌아올 수가 없다.
@@ -398,21 +422,14 @@ public class OptionsMenu : MonoBehaviour
             oImg.sprite = outerSp; oImg.type = Image.Type.Simple; oImg.preserveAspect = true;
         }
 
-        var handleArea = NewUI("Handle Slide Area", go.transform);
-        Center(handleArea, new Vector2(GaugeFillW, GaugeH));
-
-        var handle = NewUI("Handle", handleArea.transform);
-        var handleRt = (RectTransform)handle.transform;
-        handleRt.anchorMin = new Vector2(0f, 0f);
-        handleRt.anchorMax = new Vector2(0f, 1f);
-        handleRt.offsetMin = Vector2.zero;
-        handleRt.offsetMax = Vector2.zero;
-        handleRt.sizeDelta = new Vector2(26f, -34f); // 게이지 위라 얇고 짧게
-        var handleImg = AddImage(handle, HandleColor, true);
-
+        // 🔴 손잡이를 두지 않는다. 게이지 3겹 세트에 손잡이 그림이 없어서 **맨 흰 사각형**이 그려졌고,
+        //    그게 게이지 오른쪽 끝을 13px 뚫고 나가 테두리의 둥근 끝을 잘라먹었다.
+        //    없는 그림을 만들어 늘려 쓰지 않는다(CLAUDE.md §5-1) — 값은 채움이 그대로 보여준다.
+        //    드래그·클릭은 손잡이가 없으면 Slider가 Fill Area를 클릭 영역으로 대신 쓴다.
         slider.fillRect = fillRt;
-        slider.handleRect = handleRt;
-        slider.targetGraphic = handleImg;
+        slider.handleRect = null;
+        slider.transition = Selectable.Transition.None; // 틴트할 targetGraphic이 없다
+        slider.targetGraphic = null;
         slider.direction = Slider.Direction.LeftToRight;
         slider.minValue = 0f;
         slider.maxValue = 1f;

@@ -6,8 +6,11 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(RectTransform))]
 public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private float amplitude = 4f;  // 위아래로 흔들리는 폭(px)
-    [SerializeField] private float period = 2.6f;   // 한 번 오르내리는 데 걸리는 시간(초)
+    // 2026-08-25에 폭·속도를 각각 20% 낮췄다(사용자 요청). 폭 4→3.2 / 주기 2.6→3.25(=속도 0.8배).
+    // ⚠️ 이건 **새로 붙이는 인스턴스의 기본값일 뿐**이다. 씬에 이미 있는 것들은 각자 직렬화된 값을
+    //    들고 있으므로 여기만 고치면 안 바뀐다 — 씬 값도 같이 옮겨야 한다.
+    [SerializeField] private float amplitude = 3.2f;  // 위아래로 흔들리는 폭(px)
+    [SerializeField] private float period = 3.25f;    // 한 번 오르내리는 데 걸리는 시간(초)
     [SerializeField] private float follow = 10f;    // 목표 위치를 따라가는 속도(클수록 즉각적)
 
     private RectTransform _rect;
@@ -23,12 +26,11 @@ public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         CaptureHome();
     }
 
-    // 🔴 부모가 LayoutGroup이면 **Awake 시점엔 아직 배치 전**이라 anchoredPosition이 엉뚱하다
-    //    (타이틀 메뉴 버튼 5개가 VerticalLayoutGroup 아래다). 레이아웃이 한 번 돈 뒤에 제자리를 잡는다.
-    //    레이아웃 그룹이 없으면 지금 값이 곧 제자리이므로 그대로 쓴다.
+    // 부모가 LayoutGroup이면 Awake 시점엔 아직 배치 전이라 제자리를 모른다(_homeReady=false).
+    // 그 경우만 코루틴으로 미뤄 잡는다. 레이아웃 그룹이 없으면 Awake의 값이 곧 제자리다.
     private void OnEnable()
     {
-        if (!_homeReady) CaptureHome();
+        if (!_homeReady) StartCoroutine(CaptureHomeAfterLayout());
     }
 
     private void CaptureHome()
@@ -38,9 +40,25 @@ public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
                         && _rect.parent.GetComponent<UnityEngine.UI.LayoutGroup>() != null;
         if (underLayout)
         {
-            // 레이아웃이 정한 뒤에 읽는다. 그 전까지는 흔들지 않는다(_homeReady=false).
-            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(_rect.parent as RectTransform);
+            // 🔴 여기서 ForceRebuildLayoutImmediate로 당겨 읽으면 안 된다.
+            //    Awake·OnEnable은 캔버스가 첫 레이아웃을 돌기 전이라 그 자리에서 강제로 돌려도
+            //    anchoredPosition이 0으로 나온다. 그 0이 제자리로 굳어 **타이틀 메뉴 버튼 5개 중
+            //    4개가 y=0 한자리에 겹쳐** 로고 위로 올라갔다(2026-08-25에 실제로 그랬다).
+            //    레이아웃이 진짜로 한 번 돈 뒤에 잡는다 — 그때까지 _homeReady=false라 흔들지 않는다.
+            _homeReady = false;
+            return;
         }
+        _baseY = _rect.anchoredPosition.y;
+        _homeReady = true;
+    }
+
+    // 캔버스 레이아웃은 LateUpdate 뒤(willRenderCanvases)에 돈다 — 코루틴이 재개되는 시점보다 늦다.
+    // 그래서 한 프레임이 아니라 **두 프레임**을 보낸 뒤에 읽는다(그 사이엔 안 흔들리므로 티가 안 난다).
+    private System.Collections.IEnumerator CaptureHomeAfterLayout()
+    {
+        yield return null;
+        yield return null;
+        if (_homeReady) yield break; // 그 사이 SetHomeY로 정답을 받았으면 그쪽이 이긴다
         _baseY = _rect.anchoredPosition.y;
         _homeReady = true;
     }
@@ -53,12 +71,14 @@ public class UIFloat : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         if (_rect == null) _rect = (RectTransform)transform;
         _baseY = y;
+        _homeReady = true;
     }
 
     private void OnDisable()
     {
         _hovering = false;
-        if (_rect != null) SetY(_baseY);
+        // 제자리를 아직 모르면 되돌리지 않는다 — _baseY(=0)로 스냅하면 그게 곧 사고다.
+        if (_homeReady && _rect != null) SetY(_baseY);
     }
 
     private void Update()

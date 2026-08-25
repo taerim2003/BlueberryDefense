@@ -44,7 +44,8 @@ public class MapSelectUI : MonoBehaviour
     // 카드 연출로 쓰기엔 늘어져서 여기만 따로 빠르게 센다.
     [SerializeField] private float cardAnimFrameSeconds = 0.18f;
 
-    private readonly List<GameObject> cardFrames = new List<GameObject>();
+    // 고른 카드 뒤에 깔리는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
+    private readonly List<Image> cardGlows = new List<Image>();
     private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>(); // 고른 카드만 원본 크기·색으로 남긴다
     private readonly List<Image> cardThumbs = new List<Image>();            // 배경 컷을 여기서 돌린다
     private Coroutine thumbRoutine;
@@ -114,6 +115,16 @@ public class MapSelectUI : MonoBehaviour
 
     private void RefreshAscension()
     {
+        // 잠긴 맵을 고르면 난이도 대신 **해금 조건**을 그 자리에 띄운다(사용자 요청).
+        if (!SelectedIsUnlocked && maps != null && selectedIndex >= 0 && selectedIndex < maps.Length && maps[selectedIndex] != null)
+        {
+            if (ascLevelText != null) ascLevelText.text = Loc.T("ui.mapselect.locked");
+            if (ascDescText != null) ascDescText.text = "<color=#FFC864>" + maps[selectedIndex].UnlockConditionText() + "</color>";
+            if (ascPrevButton != null) ascPrevButton.interactable = false;
+            if (ascNextButton != null) ascNextButton.interactable = false;
+            return;
+        }
+
         int max = MaxSelectableAscension;
         ascensionLevel = Mathf.Clamp(ascensionLevel, 1, max);
 
@@ -219,11 +230,14 @@ public class MapSelectUI : MonoBehaviour
             var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
                 // 자물쇠는 이제 카드 위 배지가 그린다(LockBadge). 여기 이모지를 두면 폰트에 글리프가 없어 두부(□)로 나온다.
-                nameText.text = locked ? map.UnlockConditionText() : map.Name;
+                // 해금 조건은 카드에 적지 않는다 — 카드를 **누르면** 난이도 설명 자리에 뜬다(RefreshAscension).
+                nameText.text = locked ? Loc.T("ui.mapselect.locked") : map.Name;
 
-            var frame = FindDeep(card.transform, "Frame")?.gameObject;
-            if (frame != null) frame.SetActive(false);
-            cardFrames.Add(frame);
+            // 🔴 예전엔 `Frame`이라는 자식을 껐다 켰는데 지금 카드엔 그런 자식이 없어 하이라이트가 죽어 있었다.
+            //    ⚠️ 대신 테두리 그림(..._투명)을 노랗게 물들이는 것도 안 된다 — 그 그림은 **전부 순수 검정**이라
+            //       곱셈 틴트가 통째로 안 먹힌다(불투명 12107px 평균밝기 0.000, 실측).
+            //    그래서 `SelectGlow`가 그 선화를 **마스크**로 쓰고, 그 안의 `Fill`을 노랗게 켠다.
+            cardGlows.Add(FindDeep(card.transform, "Fill")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();
@@ -232,11 +246,9 @@ public class MapSelectUI : MonoBehaviour
             var btn = card.GetComponent<Button>();
             if (btn != null)
             {
-                btn.interactable = !locked; // 잠긴 맵은 눌러도 선택되지 않는다
+                // 잠긴 맵도 **누를 수는 있다** — 눌러야 해금 조건을 볼 수 있기 때문이다.
+                // 판이 시작되는 것은 startButton.interactable과 Confirm()이 따로 막는다.
                 btn.onClick.AddListener(() => Select(idx));
-
-                // JuicyButton은 Button.interactable을 보지 않는다 — 끄지 않으면 잠긴 카드도 호버에 반응한다.
-                if (juicy != null) juicy.enabled = !locked;
             }
         }
     }
@@ -260,17 +272,19 @@ public class MapSelectUI : MonoBehaviour
         return -1;
     }
 
+    // 지금 고른 맵이 해금돼 있나. 잠긴 맵도 고를 수는 있으므로(조건을 보여주려고) 시작 가능 여부는 따로 묻는다.
+    private bool SelectedIsUnlocked =>
+        maps != null && selectedIndex >= 0 && selectedIndex < maps.Length
+        && maps[selectedIndex] != null && maps[selectedIndex].IsUnlocked;
+
     private void Select(int index)
     {
-        // 잠긴 맵은 선택 자체를 막는다(버튼도 비활성이지만 코드 경로가 하나 더 있다 — Open의 초기 선택).
-        if (maps != null && index >= 0 && index < maps.Length && maps[index] != null && !maps[index].IsUnlocked) return;
-
         selectedIndex = index;
-        for (int i = 0; i < cardFrames.Count; i++)
-            if (cardFrames[i] != null) cardFrames[i].SetActive(i == index);
+        for (int i = 0; i < cardGlows.Count; i++)
+            if (cardGlows[i] != null) cardGlows[i].color = i == index ? UISkin.Highlight : UISkin.Transparent;
         for (int i = 0; i < cardJuicy.Count; i++)
             if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == index);
-        if (startButton != null) startButton.interactable = index >= 0;
+        if (startButton != null) startButton.interactable = index >= 0 && SelectedIsUnlocked;
 
         PlayThumbAnimation(index);
 

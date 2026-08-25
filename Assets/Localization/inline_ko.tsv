@@ -124,7 +124,9 @@ ui.title.upgrade	업그레이드
 ui.title.collection	컬렉션
 ui.title.quit	종료
 ui.tree.title	스킬 트리
-ui.charselect.title	캐릭터 선택
+ui.charselect.title	캐릭터
+ui.mapselect.title	맵
+ui.mapselect.locked	잠금
 ui.mapselect.changeChar	캐릭터 변경
 ui.common.close	닫기
 ui.common.back	뒤로

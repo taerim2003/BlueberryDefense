@@ -2414,7 +2414,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873275
-    m_Localized: Select Character
+    m_Localized: Character
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873276
@@ -2487,6 +2487,14 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 4598347408809984
     m_Localized: '{0} left'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4675683734986752
+    m_Localized: Map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4677687156875264
+    m_Localized: Locked
     m_Metadata:
       m_Items: []
   references:

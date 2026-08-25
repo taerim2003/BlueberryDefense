@@ -2467,6 +2467,14 @@ MonoBehaviour:
     m_Key: ui.levelup.rerollLeft
     m_Metadata:
       m_Items: []
+  - m_Id: 4675683734986752
+    m_Key: ui.mapselect.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4677687156875264
+    m_Key: ui.mapselect.locked
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

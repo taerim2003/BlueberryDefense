@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SfxLibrary
   enemyHit:
     clip: {fileID: 8300000, guid: 5c9672447e6a5b64a8a9f9415ef865f5, type: 3}
-    volume: 0.6
+    volume: 0.3
   enemyDeath:
     clip: {fileID: 8300000, guid: 7c4614d668ff24e49a269f33c2b531ca, type: 3}
     volume: 0.8
@@ -54,3 +54,6 @@ MonoBehaviour:
   buttonClick:
     clip: {fileID: 8300000, guid: 156084a20ba928641bbdcfd6b1121fdd, type: 3}
     volume: 0.7
+  buttonHover:
+    clip: {fileID: 0}
+    volume: 0
