@@ -110,6 +110,7 @@ public class HUDController : MonoBehaviour
         UpdateHealthPanelWidth();
         UpdateHealthFill();
         UpdateOverhealFill();
+        UpdateDangerVignette();
 
         if (PlayerExperience.Instance != null)
         {
@@ -225,6 +226,23 @@ public class HUDController : MonoBehaviour
 
         if (isDamage && healthPanel != null)
             healthPanel.DOShakeAnchorPos(0.3f, 8f, 15, 90, false, true);
+    }
+
+    // 체력 위험 시 화면 가장자리 붉은 점멸. 오버힐은 빼고 **순수 최대 체력** 대비로 판정한다 —
+    // 위 UpdateHealthFill의 비율은 바 길이용(HealthBarScale = MaxHealth + Overheal)이라 여기 쓰면 기준이 흔들린다.
+    private DangerVignette dangerVignette;
+
+    private void UpdateDangerVignette()
+    {
+        if (dangerVignette == null)
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) return;
+            dangerVignette = DangerVignette.Create(canvas.rootCanvas != null ? canvas.rootCanvas : canvas);
+        }
+
+        float ratio = playerHealth.MaxHealth > 0 ? (float)playerHealth.CurrentHealth / playerHealth.MaxHealth : 1f;
+        dangerVignette.SetDanger(playerHealth.CurrentHealth > 0 && ratio <= DangerVignette.DangerRatio);
     }
 
     private void UpdateOverhealFill()

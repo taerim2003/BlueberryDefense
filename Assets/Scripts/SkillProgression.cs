@@ -77,10 +77,10 @@ public class SkillProgression : ScriptableObject
     public static float DefaultBaseDamage(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => 16f,
-        ActiveSkillId.Whirlwind => 7f,
+        ActiveSkillId.Whirlwind => 6f, // 8/24 플레이스루: 소폭 과함 → 7에서 -1
         ActiveSkillId.Orb => 7f,
         ActiveSkillId.Lightning => 0f, // 실제 피해는 LightningStorm.ProcDamage
-        ActiveSkillId.EagleDrop => 11f,
+        ActiveSkillId.EagleDrop => 13f, // 8/24 플레이스루: 기본 데미지가 낮다 → 11에서 +2
         ActiveSkillId.Sniping => 18f,
         ActiveSkillId.Homing => 8f,
         ActiveSkillId.Shotgun => 12f,

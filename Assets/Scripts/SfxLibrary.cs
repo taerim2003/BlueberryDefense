@@ -18,6 +18,7 @@ public enum SfxId
     EssencePickup,   // 정수 획득
     HeartPickup,     // 하트 획득
     ButtonClick,     // UI 버튼 클릭 (전 화면 공용)
+    ButtonHover,     // UI 버튼 호버 (전 화면 공용)
     Evolution,       // 진화 확정
     TreasureOpen,    // 보물상자 열림
     WaveWarning,     // 중간 소환 예고
@@ -81,6 +82,8 @@ public class SfxLibrary : ScriptableObject
     [Header("UI")]
     [Tooltip("버튼 19개가 전부 이 하나를 쓴다")]
     public SfxSlot buttonClick;
+    [Tooltip("커서를 올릴 때. 클릭음보다 훨씬 작고 짧아야 한다 — 화면을 훑기만 해도 연달아 난다")]
+    public SfxSlot buttonHover;
 
     public SfxSlot Get(SfxId id) => id switch
     {
@@ -91,6 +94,7 @@ public class SfxLibrary : ScriptableObject
         SfxId.EssencePickup => essencePickup,
         SfxId.HeartPickup => heartPickup,
         SfxId.ButtonClick => buttonClick,
+        SfxId.ButtonHover => buttonHover,
         SfxId.Evolution => evolution,
         SfxId.TreasureOpen => treasureOpen,
         SfxId.WaveWarning => waveWarning,

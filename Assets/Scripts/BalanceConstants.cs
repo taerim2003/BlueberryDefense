@@ -19,9 +19,12 @@ public static class BalanceConstants
 
     // ── 레벨업 성장축의 "시작값" ──
     // 레벨업이 눈에 보이려면 시작이 낮아야 한다(2→5마리가 5→8마리보다 훨씬 크게 느껴짐).
-    public const int OrbBaseTargets = 4;      // 오브가 사라지기 전까지 붙잡을 수 있는 총 적 수(소모성 예산, 4→7)
+    // 오브가 사라지기 전까지 붙잡을 수 있는 총 적 수(소모성 예산). 이게 곧 체감상 "오브 관통력"이다 —
+    // 예산을 다 쓰면 오브가 그 자리에서 사라져 무리를 끝까지 뚫지 못한다.
+    // 8/24 플레이스루: 기본 오브 관통력이 낮다 → 4에서 6으로(레벨업 만렙 도달치도 7→9로 같이 오른다).
+    public const int OrbBaseTargets = 6;
     public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
-    public const int EagleBaseDrops = 2;      // 독수리 투하 횟수(시작값 하향 3→2)
+    public const int EagleBaseDrops = 3;      // 독수리 투하 횟수. 3→2로 내렸다가 8/24 플레이스루 후 다시 3
     public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
     public const float FlyingArrowSpawnRaise = 0.65f; // 비행 타격 진화 시 발사점 상승

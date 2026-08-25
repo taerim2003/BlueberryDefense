@@ -779,12 +779,18 @@ public class Enemy : MonoBehaviour
             isDead = true;
             SfxPlayer.Play(SfxId.EnemyDeath);
 
+            // 과잉 피해 처치 — 남은 체력을 최대 체력만큼 더 넘겨서 죽인 경우 = "한 방에 터뜨렸다".
+            // 이 시점의 currentHealth는 이미 음수라 그 절댓값이 곧 초과 피해다.
+            bool overkill = maxHealth > 0f && -currentHealth >= maxHealth * OverkillThresholdRatio;
+
             if (deathVfxPrefab != null)
             {
                 GameObject deathVfx = ObjectPool.Instance.Spawn(deathVfxPrefab, transform.position, Quaternion.identity);
-                deathVfx.transform.localScale = Vector3.one * 0.2f;
+                deathVfx.transform.localScale = Vector3.one * (overkill ? OverkillVfxScale : 0.2f);
                 ObjectPool.Instance.Despawn(deathVfx, 2f);
             }
+
+            if (overkill) SpawnOverkillBurst();
 
             // 암살 연계 path1: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
             int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
@@ -926,18 +932,42 @@ public class Enemy : MonoBehaviour
         return anyCrit;
     }
 
-    // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는
-    // 가로 정렬(x 오프셋 0)로 세로로만 쌓는다(9/9/9). 뜬 자리에 월드 고정되어 위로만 올라간다.
+    // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는 세로로 쌓인다.
+    // 가로는 매번 조금씩 흔든다 — x를 0으로 완전 정렬했더니 숫자가 자로 잰 듯 일직선으로 올라와 부자연스러웠다.
+    // ⚠️ StackStep(0.62)보다 훨씬 작게 유지할 것. 이보다 커지면 9/9/9 세로 묶음이 흩어져 한 공격으로 안 읽힌다.
     private const float DamageNumberBaseHeight = 0.85f;
     private const float DamageNumberStackStep = 0.62f;
+    private const float DamageNumberJitterX = 0.3f;
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
         if (damageNumberPrefab == null) return;
 
         GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
-        Vector3 offset = new Vector3(0f, DamageNumberBaseHeight + DamageNumberStackStep * hitIndex, 0f);
+        Vector3 offset = new Vector3(Random.Range(-DamageNumberJitterX, DamageNumberJitterX),
+                                     DamageNumberBaseHeight + DamageNumberStackStep * hitIndex, 0f);
         obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset);
+    }
+
+    // 과잉 피해 처치 연출. 새 에셋 없이 **이미 있는 재료**(죽음 VFX + 타격 파편)를 키우고 사방으로 터뜨린다 —
+    // 평소 타격 파편은 위로 튀지만(SpawnHitParticles) 이건 360도로, 더 많이, 더 빠르게 나간다.
+    private const float OverkillThresholdRatio = 1f;  // 초과 피해가 최대 체력의 이 배 이상이면 과잉 처치
+    private const float OverkillVfxScale = 0.5f;      // 평소 죽음 VFX는 0.2
+    private const int OverkillBurstCount = 18;
+
+    private void SpawnOverkillBurst()
+    {
+        if (hitParticlePrefab == null || hitParticleSprites == null || hitParticleSprites.Length == 0) return;
+
+        for (int i = 0; i < OverkillBurstCount; i++)
+        {
+            GameObject p = ObjectPool.Instance.Spawn(hitParticlePrefab, transform.position, Quaternion.identity);
+            Sprite sprite = hitParticleSprites[Random.Range(0, hitParticleSprites.Length)];
+            // 고르게 퍼지도록 각도를 등분하고 그 안에서만 흔든다(완전 랜덤이면 한쪽에 뭉친다).
+            float angle = (i + Random.Range(0f, 1f)) / OverkillBurstCount * Mathf.PI * 2f;
+            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            p.GetComponent<HitParticle>().Init(sprite, dir * Random.Range(7f, 14f));
+        }
     }
 
     private void SpawnHitParticles(float damage)

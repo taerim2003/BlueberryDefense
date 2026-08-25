@@ -188,7 +188,7 @@ MonoBehaviour:
     - line: '|   androidMaxAspectRatio: 2.4'
     - line: '|   androidMinAspectRatio: 1'
     - line: '|   applicationIdentifier:'
-    - line: '|     Standalone: com.DefaultCompany.2D-URP'
+    - line: '|     Standalone: com.taerimgames.blueberrydefense'
     - line: '|   buildNumber:'
     - line: '|     Standalone: 0'
     - line: '|     VisionOS: 0'

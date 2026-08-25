@@ -37,9 +37,12 @@ public static class SfxPlayer
     {
         JuicyButton.Clicked -= PlayButtonClick; // 도메인 리로드를 끈 설정에서 중복 구독되지 않게
         JuicyButton.Clicked += PlayButtonClick;
+        JuicyButton.Hovered -= PlayButtonHover;
+        JuicyButton.Hovered += PlayButtonHover;
     }
 
     private static void PlayButtonClick() => Play(SfxId.ButtonClick);
+    private static void PlayButtonHover() => Play(SfxId.ButtonHover);
 
     // 게임 사건용 재생. 클립은 SfxLibrary 에셋이 쥐고 있어서 호출부는 무슨 소리인지만 말하면 된다.
     // 라이브러리가 없거나 슬롯이 비어 있으면 조용히 넘어간다 — 음원을 아직 안 채운 상태에서도 게임이 정상 동작한다.

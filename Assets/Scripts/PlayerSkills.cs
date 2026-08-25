@@ -74,6 +74,7 @@ public class PlayerSkills : MonoBehaviour
     public static float MiniWhirlwindDamageBonus = 0f;
 
     private const float MiniWhirlwindScale = 0.4f; // 미니 회오리 크기 배율(바닥선 보정 계산에도 쓰임)
+    private const float MiniWhirlwindGroundBlend = 0.5f; // 바닥선 보정을 얼마나 먹일지. 1=큰 회오리와 바닥선 일치(너무 낮았다) / 0=보정 없음
 
     // 기본공격 공격당 타격횟수(멀티히트). 총 데미지는 유지한 채 N회로 쪼개 각각 크리를 개별 판정 → 메이플식 데미지 숫자. Enemy.TakeSkillHit가 읽음.
     public static int BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
@@ -364,10 +365,13 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel) => DescribeStep(StepFor(skill.Id, nextLevel), skill.Id);
+    // 화살비 진화 여부를 같이 넘긴다 — 같은 "추가 투사체" 스텝이 그 진화에선 웨이브 수로 읽히기 때문에
+    // 문구도 같이 바뀌어야 한다(안 바꾸면 카드는 "투사체 +1"이라 적고 실제로는 비가 길어져 거짓말이 된다).
+    public static string DescribeUpgradeEffect(EquippedSkill skill, int nextLevel) =>
+        DescribeStep(StepFor(skill.Id, nextLevel), skill.Id, ArrowRainReplacesShot(skill));
 
     // 미리보기 텍스트를 스텝 데이터에서 생성 → 미리보기·실제 적용이 항상 일치. (Apply와 같은 StepFor 참조)
-    private static string DescribeStep(LevelUpStep s, ActiveSkillId id)
+    private static string DescribeStep(LevelUpStep s, ActiveSkillId id, bool arrowRain)
     {
         switch (s.stat)
         {
@@ -381,7 +385,11 @@ public class PlayerSkills : MonoBehaviour
                     : Loc.F("step.Cooldown.add", (-s.amount).ToString("0.##"));
             case SkillStat.ProjectileSpeed: return Loc.F("step.ProjectileSpeed", Mathf.RoundToInt(s.amount * 100f));
             case SkillStat.Pierce: return Loc.F("step.Pierce", Mathf.RoundToInt(s.amount));
-            case SkillStat.ProjectileCount: return Loc.F("step.ProjectileCount", Mathf.RoundToInt(s.amount));
+            // 화살비 진화는 정면 화살이 없어 발수로 쓸 데가 없다 — 이 스텝이 "비가 오는 시간"으로 읽힌다.
+            case SkillStat.ProjectileCount:
+                return arrowRain
+                    ? Loc.F("step.ProjectileCount.arrowrain", Mathf.RoundToInt(s.amount))
+                    : Loc.F("step.ProjectileCount", Mathf.RoundToInt(s.amount));
             case SkillStat.ProcChance: return Loc.F("step.ProcChance", Mathf.RoundToInt(s.amount * 100f));
             case SkillStat.Duration: return Loc.F("step.Duration", s.amount.ToString("0.##"));
             case SkillStat.Scale: return Loc.F("step.Scale", Mathf.RoundToInt(s.amount * 100f));
@@ -884,14 +892,20 @@ public class PlayerSkills : MonoBehaviour
         // (방패 블루베리는 그래도 막는다 — Projectile이 BlocksProjectiles에서 끊는다. 2026-08-06 명세 그대로).
         if (skill.PathTier[1] >= 2) pierce = int.MaxValue;
 
-        // 첫 발은 즉시(입력 반응성), 추가 발사는 시간차를 두고 연사한다.
-        SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0f, allowBonusShot);
-        if (BasicAttackBurstCount(skill) > 0)
-            StartCoroutine(BasicAttackBurst(skill, damage, critChance, pierce, allowBonusShot));
-
-        // R1(독수리 연계, path2) = 시전할 때마다 **화면 전체에 비스듬한 화살비**가 2회 내린다.
-        if (skill.PathTier[2] >= 2)
-            StartCoroutine(ArrowRainRoutine(skill, damage, critChance, waves: skill.PathTier[2] >= 3 ? 3 : 2));
+        // R1(독수리 연계, path2) T2+ = 기본공격이 **통째로 화살비로 바뀐다.** 정면 화살은 나가지 않는다.
+        // 예전엔 정면 화살과 비가 같이 쏟아져 "중복 출력"으로 보였다(8/24 플레이스루).
+        // ⚠️ 그 대가로 관통 강화(path0 T1 +3 / T3 +10)와 ExtraPierce가 이 진화에선 죽은 스탯이 된다 — 사용자 결정.
+        if (ArrowRainReplacesShot(skill))
+        {
+            StartCoroutine(ArrowRainRoutine(skill, damage, critChance, ArrowRainWaveCount(skill)));
+        }
+        else
+        {
+            // 첫 발은 즉시(입력 반응성), 추가 발사는 시간차를 두고 연사한다.
+            SpawnBasicAttackProjectile(skill, damage, critChance, pierce, 0f, allowBonusShot);
+            if (BasicAttackBurstCount(skill) > 0)
+                StartCoroutine(BasicAttackBurst(skill, damage, critChance, pierce, allowBonusShot));
+        }
 
         animator.SetTrigger("Attack");
         return true;
@@ -904,6 +918,23 @@ public class PlayerSkills : MonoBehaviour
     private const float ArrowRainWaveInterval = 0.35f;
     private const int ArrowRainArrowsPerWave = 10;
     private const float ArrowRainDamageRatio = 0.5f;   // 발수가 많아 발당 피해는 낮춘다
+
+    // 떨어지면서 빨라진다 — 하늘에서 막 놓인 듯 느리게 시작해 바닥에 꽂힐 즈음 가장 빠르다.
+    // 등속으로 내리면 화살이 "떠내려오는" 것처럼 보여 무게가 없었다(8/24 플레이스루: 낙하 속도감 필요).
+    private const float ArrowRainStartSpeed = 0.55f;    // 시작 속도 배율
+    private const float ArrowRainAcceleration = 3.2f;   // 초당 배율 증가 — 낙하 약 0.64초 동안 5.5 → 26유닛/초
+
+    // 레벨업 "추가 투사체"는 화살비에선 **비가 오는 시간**으로 읽는다(정면 화살이 없어 발수로 쓸 데가 없다).
+    // Prog_BasicAttack이 만렙까지 추가 투사체를 3회(레벨 2·6·10) 주므로 2웨이브 → 최대 5(T3면 6)웨이브가 된다.
+    private const int ArrowRainBaseWaves = 2;
+    private const int ArrowRainMaxWaves = 6;
+
+    // T2부터 기본공격이 화살비로 교체된다. 이 조건이 곧 "정면 화살이 안 나간다"는 뜻이라 한 곳에 모아 둔다.
+    private static bool ArrowRainReplacesShot(EquippedSkill skill) => skill.PathTier[2] >= 2;
+
+    private static int ArrowRainWaveCount(EquippedSkill skill) =>
+        Mathf.Min(ArrowRainBaseWaves + (skill.PathTier[2] >= 3 ? 1 : 0) + skill.ExtraProjectiles,
+                  ArrowRainMaxWaves);
 
     private IEnumerator ArrowRainRoutine(EquippedSkill skill, float damage, float critChance, int waves)
     {
@@ -933,7 +964,8 @@ public class PlayerSkills : MonoBehaviour
                 if (p == null) continue;
                 p.Damage = rainDamage;
                 p.CritChance = critChance;
-                p.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
+                p.SpeedMultiplier = skill.ProjectileSpeedMultiplier * ArrowRainStartSpeed;
+                p.Acceleration = skill.ProjectileSpeedMultiplier * ArrowRainAcceleration;
                 p.PierceRemaining = 0;   // 명세: 화살비의 각 화살은 관통 없음
                 p.CanHitFlying = true;   // 위에서 떨어지므로 비행 적을 자연히 지나간다
             }
@@ -942,12 +974,10 @@ public class PlayerSkills : MonoBehaviour
     }
 
     // R0(암살 연계)은 **한 발**로 모은다 — 큰 화살 하나가 줄을 통째로 뚫는 게 정체성이라 연사가 있으면 안 된다.
-    // R1(독수리 연계)은 화살비가 따로 쏟아지므로 추가 연사를 **절반으로** 깎는다.
+    // (R1(독수리 연계)은 아예 이 함수를 안 탄다 — FireBasicAttack이 화살비로 갈아타 정면 화살을 안 쏜다.)
     // ⚠️ 영구 스탯을 깎지 않고 매 캐스트 실시간으로 계산한다 — 진화 후 레벨업으로 발수를 더 얻어도 그대로 유지된다.
     private static int BasicAttackBurstCount(EquippedSkill skill) =>
-        skill.PathTier[1] >= 2 ? 0
-        : skill.PathTier[2] >= 2 ? skill.ExtraProjectiles / 2
-        : skill.ExtraProjectiles;
+        skill.PathTier[1] >= 2 ? 0 : skill.ExtraProjectiles;
 
     // 추가 발사체를 "두두두둑" 쏟아낸다 — 발사마다 간격을 두고, 세로로 위·아래 번갈아 조금씩 어긋나게.
     // 예전엔 전부 같은 프레임에 0.4씩 위로 쌓아 올려 한 덩어리로 보였다(여러 발 맞는 게 안 보임).
@@ -1290,6 +1320,7 @@ public class PlayerSkills : MonoBehaviour
         // 파티클을 겹쳐 봤지만 도트 그림을 가려서 뺐다 — 연출을 더하려면 그림 쪽을 먼저 볼 것.
         // 1루트 1차부터 흡혈이 붙는다 — 범위·피해만 늘던 루트에 "버티는" 성격을 준다.
         int lifesteal = skill.PathTier[1] >= 2 ? SwingLifestealPerHit : 0;
+        ScreenShake.Shake(ScreenShake.SwingStrength, ScreenShake.SwingDuration); // 내려찍는 그 순간에 맞춰 흔든다
         SwingHit(damage, critChance, reach, halfHeight, SwingKnockback, stun, lifesteal);
 
         if (shockwave) SpawnShockwave(damage, critChance, empoweredShock);
@@ -1539,10 +1570,12 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.TickIntervalMult = tickIntervalMult; // 레벨업 보조축: 피해 주기
 
         // 미니는 크기가 작아 기본 groundY(피벗=중심)에 놓으면 지면 위로 떠 보인다 — 바닥선을 큰 회오리와 맞춘다.
+        // 🔴 다만 바닥선을 정확히 맞추면 이번엔 땅에 파묻힌 것처럼 낮게 보인다(8/24 플레이스루 "스폰 포인트가 지나치게 낮음").
+        //    보정을 절반만 먹여 큰 회오리 바닥선과 원래 높이(중심=0)의 중간에 놓는다. 이 값이 높이 손잡이다.
         if (isMini)
         {
             SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
-            if (sr != null) whirlwind.GroundY = -sr.bounds.extents.y * (1f / MiniWhirlwindScale - 1f);
+            if (sr != null) whirlwind.GroundY = -sr.bounds.extents.y * (1f / MiniWhirlwindScale - 1f) * MiniWhirlwindGroundBlend;
         }
 
         return whirlwind;

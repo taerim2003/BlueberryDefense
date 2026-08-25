@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using DG.Tweening;
 
 public class GameManager : MonoBehaviour
@@ -136,6 +135,6 @@ public class GameManager : MonoBehaviour
     public void ReturnToTitle()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Title");
+        SceneFade.LoadScene("Title");
     }
 }

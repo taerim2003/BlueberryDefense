@@ -1,8 +1,15 @@
 fileFormatVersion: 2
 guid: d67f03353b0af11458c48b58c4fb6643
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308259
+  packageName: Pixel Craft VFX - URP
+  packageVersion: 1.0.03
+  assetPath: Assets/Vefects/Pixel Craft VFX URP/Audio/WAV/Fer/SFX_Vefects_Leaf_01.wav
+  uploadId: 771746
 AudioImporter:
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 8
   defaultSettings:
     serializedVersion: 2
     loadType: 0
@@ -11,7 +18,7 @@ AudioImporter:
     compressionFormat: 1
     quality: 1
     conversionMode: 0
-    preloadAudioData: 0
+    preloadAudioData: 1
   platformSettingOverrides: {}
   forceToMono: 0
   normalize: 1
@@ -21,10 +28,3 @@ AudioImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 308259
-  packageName: Pixel Craft VFX - URP
-  packageVersion: 1.0.03
-  assetPath: Assets/Vefects/Pixel Craft VFX URP/Audio/WAV/Fer/SFX_Vefects_Leaf_01.wav
-  uploadId: 771746

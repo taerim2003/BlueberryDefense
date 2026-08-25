@@ -34,6 +34,7 @@ public static class UISkinApply
     const string SRound   = "동그라미_색칠";              // 145x135 (1.07) 작고 둥근 버튼
     const string SGauge   = "경치바_색칠";                // 967x81 (11.94) 경험치 바
     const string SHealth  = "체력바_색칠";                // 387x101 (3.83) 체력 바
+    const string SSolidFill = "UI_SolidFill";             // 게이지 채움용 단색 1장 (Multiple이라 LoadSub로 집는다)
     const string OSquare  = "정사각형_투명";              // 속 빈 테두리 — 선택 하이라이트
     const string OPillow  = "베개같이생긴네모_투명";
 
@@ -74,11 +75,14 @@ public static class UISkinApply
     // ── 무엇을 무엇으로 (경로는 씬 루트부터) ──
     static readonly Target[] TitleTargets =
     {
-        S("Canvas/Btn_플레이",     SBarWide),   // 440x90 (4.89)
-        S("Canvas/Btn_업그레이드", SBarWide),
-        S("Canvas/Btn_컬렉션",     SBarWide),
-        S("Canvas/Btn_설정",       SBarWide),
-        S("Canvas/Btn_종료",       SBarWide),
+        // 🔴 그림은 비율이 아니라 **속이 얼마나 남나**로 고른다. 칸 높이 90에서는 어떤 그림도 42pt 라벨을 못 담는다
+        //    (제일 얇은 경치바조차 속 36). 가로길쭉길쭉이는 속이 14px이라 글자가 테두리를 28px 침범하고 있었다
+        //    = 8/24 플레이스루의 "텍스트 위아래 여백 부족". 아래 TitleRectFixes가 칸을 340x112로 잡아 속 281x54를 만든다.
+        S("Canvas/Btn_플레이",     SBar),       // 361x103, 테두리 세로 58 → 340x112 칸에서 속 281x54
+        S("Canvas/Btn_업그레이드", SBar),
+        S("Canvas/Btn_컬렉션",     SBar),
+        S("Canvas/Btn_설정",       SBar),
+        S("Canvas/Btn_종료",       SBar),
 
         DFull("Canvas/SkillTreeRoot"),
         S("Canvas/SkillTreeRoot/CloseButton",        SBarShort), // 120x56 (2.14)
@@ -170,6 +174,14 @@ public static class UISkinApply
     {
         new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", 70, 70),
         new RectFix("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Frame", 74, 70),
+
+        // 메인 메뉴 5칸: 440x90 → 340x112. 폭은 "가로로 지나치게 길다"를, 높이는 "위아래 여백 부족"을 푼다.
+        // 세로 간격 130(틈 18). 위로는 TitleImage 아래끝 174에서 18px, 아래로는 화면 바닥까지 64px 남는다.
+        new RectFix("Canvas/Btn_플레이",     340, 112, 0,  100),
+        new RectFix("Canvas/Btn_업그레이드", 340, 112, 0,  -30),
+        new RectFix("Canvas/Btn_컬렉션",     340, 112, 0, -160),
+        new RectFix("Canvas/Btn_설정",       340, 112, 0, -290),
+        new RectFix("Canvas/Btn_종료",       340, 112, 0, -420),
     };
 
     static readonly RectFix[] GameRectFixes =
@@ -511,12 +523,15 @@ public static class UISkinApply
                 rt.offsetMax = new Vector2(-b.z, -b.w);
                 EditorUtility.SetDirty(rt);
 
-                // 채움 막대는 그냥 단색 사각형이다 — 스프라이트가 없어도 Unity가 흰 사각형을 그린다.
-                // (UI_SolidFill_0을 떼어내 UI_* 참조를 없애기 위한 것. 색은 Image.color가 그대로 정한다.)
-                if (fill.sprite != null && fill.sprite.name.StartsWith("UI_"))
+                // 🔴 채움 막대에서 스프라이트를 떼면 fillAmount가 통째로 무시된다 — 바가 항상 가득 차 보인다.
+                // Image.OnPopulateMesh가 activeSprite == null이면 Type.Filled 분기에 가기 전에
+                // Graphic의 기본 사각형을 그려버리기 때문. (8/24 플레이스루의 "체력·경험치 바가 안 움직임"이 이것)
+                // 그래서 단색 1장을 반드시 물려 둔다. 색은 Image.color가 그대로 정한다.
+                Sprite solid = LoadSub(SpritePath(SSolidFill));
+                if (solid != null && fill.sprite != solid)
                 {
                     Undo.RecordObject(fill, "UI Skin");
-                    fill.sprite = null;
+                    fill.sprite = solid;
                     EditorUtility.SetDirty(fill);
                 }
             }
@@ -590,6 +605,14 @@ public static class UISkinApply
 
     // ── 잡동사니 ──
     static Sprite Load(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+
+    // Multiple로 임포트된 PNG는 메인 에셋이 Texture2D라 위 Load가 null을 준다 — 서브 스프라이트를 직접 집는다.
+    static Sprite LoadSub(string path)
+    {
+        foreach (var o in AssetDatabase.LoadAllAssetsAtPath(path))
+            if (o is Sprite s) return s;
+        return null;
+    }
 
     static Color Hex(string hex)
     {

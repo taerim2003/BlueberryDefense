@@ -43,6 +43,7 @@ step.Cooldown.add	Cooldown -{0}s
 step.ProjectileSpeed	Projectile speed +{0}%
 step.Pierce	Pierce +{0}
 step.ProjectileCount	Projectiles +{0}
+step.ProjectileCount.arrowrain	Arrow rain +{0} wave
 step.ProcChance	Proc chance +{0}%p
 step.Duration	Duration +{0}s
 step.Scale	Size +{0}%

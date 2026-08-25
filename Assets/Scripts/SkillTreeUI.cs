@@ -247,7 +247,15 @@ public class SkillTreeUI : MonoBehaviour
         if (n == null) return Fog.Hidden;
         if (n.prereqIds.Count == 0) return Fog.Hinted; // 루트는 항상 시작점으로 보인다
         foreach (string pre in n.prereqIds)
+        {
             if (unlocked.Contains(pre)) return Fog.Hinted; // 해금 노드와 인접
+            // 🔴 루트의 자식은 루트를 사기 **전에도** 보여준다.
+            //    이 예외가 없으면 세이브 초기화 직후(해금 0개) 34개 중 루트 1개만, 그것도 미보유라 어둡게 뜬다
+            //    — 화면이 통째로 비어 보이고, 정수 0이라 그 하나도 못 산다(8/24 플레이스루 "초기화 후 스킬트리 고장").
+            //    신규 플레이어의 첫 화면이 정확히 이 상태다. 후반 안개 규칙은 이 예외의 영향을 받지 않는다.
+            SkillNode p = tree.Find(pre);
+            if (p != null && p.prereqIds.Count == 0) return Fog.Hinted;
+        }
         return Fog.Hidden;
     }
 

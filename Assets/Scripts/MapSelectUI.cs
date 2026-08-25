@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 // 타이틀 씬의 맵 선택 패널. Play 버튼이 열고, 맵 카드로 선택한 뒤 "시작"으로 확정한다.
@@ -19,6 +18,7 @@ public class MapSelectUI : MonoBehaviour
     [SerializeField] private PanelSplitTransition splitTransition; // 위아래로 갈라지는 화면 전환(우선)
     [SerializeField] private Transform cardContainer;   // HorizontalLayoutGroup — 카드들이 담김
     [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본(container 안). 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
+    [SerializeField] private Sprite lockIcon;            // 비우면 코드로 구운 자물쇠를 쓴다(캐릭터 선택과 같은 것)
 
     [Header("Actions")]
     [SerializeField] private Button startButton;
@@ -212,11 +212,12 @@ public class MapSelectUI : MonoBehaviour
             }
             cardThumbs.Add(thumb);
 
+            if (locked) LockBadge.Add(card, lockIcon);
+
             var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
-                nameText.text = locked
-                    ? "🔒 " + map.UnlockConditionText()
-                    : map.Name;
+                // 자물쇠는 이제 카드 위 배지가 그린다(LockBadge). 여기 이모지를 두면 폰트에 글리프가 없어 두부(□)로 나온다.
+                nameText.text = locked ? map.UnlockConditionText() : map.Name;
 
             var frame = FindDeep(card.transform, "Frame")?.gameObject;
             if (frame != null) frame.SetActive(false);
@@ -321,6 +322,6 @@ public class MapSelectUI : MonoBehaviour
         RunConfig.Map = maps[selectedIndex];
         RunConfig.Character = characterSelect != null ? characterSelect.Selected : null;
         RunConfig.AscensionLevel = Mathf.Clamp(ascensionLevel, 1, MaxSelectableAscension);
-        SceneManager.LoadScene(GameSceneName);
+        SceneFade.LoadScene(GameSceneName); // 뚝 끊기지 않게 검은 화면을 거쳐 넘어간다
     }
 }

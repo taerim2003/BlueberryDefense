@@ -12,6 +12,8 @@ public class Projectile : MonoBehaviour
     public bool ApplyGemVulnerable { get; set; }
     public float CritChance { get; set; } // 타격 기준: 명중할 때마다 개별적으로 치명타를 굴린다
     public float SpeedMultiplier { get; set; } = 1f;
+    // 초당 SpeedMultiplier 증가량. 0이면 등속(기본값) — 화살비처럼 "떨어지면서 빨라지는" 투사체만 켠다.
+    public float Acceleration { get; set; } = 0f;
     public int PierceRemaining { get; set; }
     public bool CanHitFlying { get; set; } // 기본 path T1: 비행 적 타격 가능
     public System.Action<Enemy, bool> OnHitBonus { get; set; } // (적, 이번 타격의 치명타 여부)
@@ -27,9 +29,27 @@ public class Projectile : MonoBehaviour
     // (Projectile은 캐스트 한 번에 여러 발 생성될 수 있어, 발사체 쪽에 소리를 두면 재생 시점이 GameObject
     // 생성/컴포넌트 초기화 타이밍에 얽혀 불안정해진다).
 
+    // 화면에서 충분히 벗어나면 스스로 사라진다. 이게 없으면 소멸 경로가 **명중뿐**이라
+    // 빗나간 화살이 한 판 내내 씬에 쌓인다(화살비는 화면을 덮는 방식이라 대부분 빗나간다).
+    // ⚠️ 여백을 좁히지 말 것 — 화살비는 화면 **위 최대 2유닛 바깥**에서 생성되고(PlayerSkills.ArrowRainRoutine)
+    //    적은 화면 밖 x=-9에서 걸어 나온다. 여백이 그보다 좁으면 살아 있어야 할 화살이 태어나자마자 지워진다.
+    private const float OffscreenMargin = 3f;
+
     private void Update()
     {
+        if (Acceleration != 0f) SpeedMultiplier += Acceleration * Time.deltaTime;
         transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
+        if (IsFarOffscreen(transform.position)) Consume();
+    }
+
+    private static bool IsFarOffscreen(Vector3 position)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return false; // 카메라를 못 찾으면 지우지 않는다(멀쩡한 화살을 날리는 것보다 낫다)
+
+        Vector3 d = position - cam.transform.position;
+        return Mathf.Abs(d.y) > cam.orthographicSize + OffscreenMargin
+            || Mathf.Abs(d.x) > cam.orthographicSize * cam.aspect + OffscreenMargin;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

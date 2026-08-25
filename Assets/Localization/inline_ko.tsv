@@ -43,6 +43,7 @@ step.Cooldown.add	재사용 대기시간 {0}초 감소
 step.ProjectileSpeed	투사체 속도 {0}% 증가
 step.Pierce	관통 {0}회 추가
 step.ProjectileCount	투사체 +{0}
+step.ProjectileCount.arrowrain	화살비 +{0}차례
 step.ProcChance	발동 확률 {0}%p 증가
 step.Duration	지속시간 {0}초 증가
 step.Scale	크기 {0}% 증가

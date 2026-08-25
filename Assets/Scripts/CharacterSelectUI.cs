@@ -130,7 +130,7 @@ public class CharacterSelectUI : MonoBehaviour
             }
             cardThumbs.Add(thumb);
 
-            if (locked) AddLockBadge(card);
+            if (locked) LockBadge.Add(card, lockIcon);
 
             var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && chr != null)
@@ -156,62 +156,6 @@ public class CharacterSelectUI : MonoBehaviour
 
             if (!locked) AddHoverFrame(card, i);
         }
-    }
-
-    // 잠긴 카드 한가운데에 자물쇠를 얹는다. 전용 그림이 있으면 그걸 쓰고, 없으면 코드로 굽는다
-    // (적 발밑 그림자와 같은 방식 — 도트가 나오면 lockIcon에 꽂기만 하면 된다).
-    private void AddLockBadge(GameObject card)
-    {
-        var go = new GameObject("Lock", typeof(RectTransform), typeof(Image));
-        var rt = (RectTransform)go.transform;
-        rt.SetParent(card.transform, false);
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
-        rt.sizeDelta = new Vector2(64f, 64f);
-
-        var img = go.GetComponent<Image>();
-        img.sprite = lockIcon != null ? lockIcon : LockSprite();
-        img.raycastTarget = false;
-        rt.SetAsLastSibling(); // 썸네일 위에 오도록
-    }
-
-    // 16x16 자물쇠. 한 장만 구워 모든 잠긴 카드가 공유한다.
-    private static Sprite bakedLock;
-
-    private static Sprite LockSprite()
-    {
-        if (bakedLock != null) return bakedLock;
-
-        string[] art =
-        {
-            "................",
-            "................",
-            ".....######.....",
-            "....##....##....",
-            "....##....##....",
-            "....##....##....",
-            "..############..",
-            "..############..",
-            "..#####..#####..",
-            "..####....####..",
-            "..#####..#####..",
-            "..############..",
-            "..############..",
-            "..############..",
-            "................",
-            "................",
-        };
-
-        var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
-        var body = new Color(0.13f, 0.12f, 0.18f, 1f);
-        for (int y = 0; y < 16; y++)
-            for (int x = 0; x < 16; x++)
-                tex.SetPixel(x, 15 - y, art[y][x] == '#' ? body : Color.clear); // 배열은 위에서부터, 텍스처는 아래에서부터
-        tex.Apply();
-
-        bakedLock = Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16f);
-        return bakedLock;
     }
 
     // 커서를 올리면 꺽쇠를 미리 보여준다. JuicyButton이 이미 포인터 이벤트를 쓰고 있으므로

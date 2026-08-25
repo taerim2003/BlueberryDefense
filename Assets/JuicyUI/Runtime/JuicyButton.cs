@@ -169,6 +169,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (_isHovering) return; // 회전이 밀어낸 뒤 다시 들어온 것 — 연출을 재시작하지 않는다
 
         _isHovering = true;
+        Hovered?.Invoke();
         TweenDim(0f); // 커서가 올라간 동안은 원본 색·크기 — 하이라이트된 것처럼 보여야 한다
         _scaleTween?.Kill();
 
@@ -258,6 +259,9 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     // ⚠️ 이 어셈블리(JuicyUI.Runtime)는 asmdef가 있어 기본 어셈블리(SfxPlayer 등)를 참조할 수 없다 —
     //    그래서 여기서 부르지 않고 이렇게 알리기만 하고, 듣는 쪽이 SfxPlayer에 있다.
     public static event System.Action Clicked;
+
+    // 호버음도 같은 이유로 여기서 알리기만 한다. 연출을 실제로 시작하는 자리(재진입은 위에서 걸러진 뒤)에서 한 번만 운다.
+    public static event System.Action Hovered;
 
     public void OnPointerClick(PointerEventData eventData)
     {

@@ -2459,6 +2459,10 @@ MonoBehaviour:
     m_Key: ui.collection.notFound
     m_Metadata:
       m_Items: []
+  - m_Id: 4532112721649664
+    m_Key: step.ProjectileCount.arrowrain
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
