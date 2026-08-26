@@ -596,8 +596,11 @@ public static class UISkinApply
                 // Image.OnPopulateMesh가 activeSprite == null이면 Type.Filled 분기에 가기 전에
                 // Graphic의 기본 사각형을 그려버리기 때문. (8/24 플레이스루의 "체력·경험치 바가 안 움직임"이 이것)
                 // 그래서 단색 1장을 반드시 물려 둔다. 색은 Image.color가 그대로 정한다.
+                // ⚠️ 이미 그림이 물려 있으면 건드리지 않는다 — 태리미가 채움 막대에 `체력바_내용물`·`경치바_내용물`을
+                //    직접 물려 놨고, 여기서 단색으로 갈아치우면 그 아트가 조용히 사라진다.
+                //    단색은 어디까지나 "비어 있으면 fillAmount가 무시되는 것"을 막는 최후 수단이다.
                 Sprite solid = LoadSub(SpritePath(SSolidFill));
-                if (solid != null && fill.sprite != solid)
+                if (solid != null && fill.sprite == null)
                 {
                     Undo.RecordObject(fill, "UI Skin");
                     fill.sprite = solid;

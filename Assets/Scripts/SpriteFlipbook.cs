@@ -23,6 +23,20 @@ public class SpriteFlipbook : MonoBehaviour
         if (frames != null && frames.Length > 0) sr.sprite = frames[0];
     }
 
+    // 런타임에 프레임을 갈아끼우고 처음부터 재생한다.
+    // 프리팹에 미리 박아둘 수 없는 경우(진화한 화살처럼 진화 티어에 따라 그림이 갈리는 것)에 쓴다.
+    // ⚠️ loop=true로 부르면 `despawnOnFinish`는 영영 안 걸린다 — 풀이 아닌 Instantiate 오브젝트엔 그쪽이 맞다.
+    public void Play(Sprite[] newFrames, float newFps, bool newLoop)
+    {
+        frames = newFrames;
+        fps = newFps;
+        loop = newLoop;
+        timer = 0f;
+        finished = false;
+        if (sr == null) sr = GetComponent<SpriteRenderer>(); // AddComponent 직후엔 Awake가 아직 안 돌았을 수 있다
+        if (frames != null && frames.Length > 0) sr.sprite = frames[0];
+    }
+
     private void Update()
     {
         if (frames == null || frames.Length == 0) return;

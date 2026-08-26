@@ -137,8 +137,16 @@ public class PlayerSkills : MonoBehaviour
     // 화살 R0(암살 연계, path1) = 관통 무한 **큰 화살 한 발**. 그 한 발만 전용 그림으로 갈아끼운다
     // (뒤따르는 추적 화살은 명세상 "기본 화살"이라 원본 그대로 둔다).
     // 1차(T2)=암살 사격 / 2차(T3)=처형 사격으로 그림이 한 번 더 바뀐다.
-    [SerializeField] private Sprite evolvedArrowSprite;
-    [SerializeField] private Sprite evolvedArrowSpriteTier2;
+    // 진화한 화살 그림(1차 = 암살 사격).
+    // 🔴 `Effect_ArrowR1`·`Effect_ArrowR2`는 **둘 다 1차 진화 화살이고, 한 애니메이션의 1·2프레임**이다.
+    //    티어가 아니다 — 태리미의 작화 도구가 R1로 저장하면 다음 프레임을 R2로 자동 명명한다.
+    //    파일을 자르는 것도 아니다(각 파일이 통짜 64x32 한 장). 한 장만 꽂으면 정지 그림이 된다.
+    //    ⚠️ `Icon_*R1/R2`는 **루트**라 같은 접미사가 여기선 다른 뜻이다. 새 그림을 받으면 한 번 물을 것.
+    [SerializeField] private Sprite[] evolvedArrowFrames;
+    // 2차 진화(처형 사격) 전용 그림이 생기면 여기 꽂는다. **비어 있으면 위 프레임을 그대로 쓴다**
+    // (2026-08-26 현재 2차 전용 그림은 없다 — 2차가 1차 그림을 재사용한다).
+    [SerializeField] private Sprite[] evolvedArrowFramesTier2;
+    [SerializeField] private float evolvedArrowFps = 12f;
     private const float FlyingArrowSpawnRaise = BalanceConstants.FlyingArrowSpawnRaise; // 비행 적 타격 진화 시 발사점 상승(세로 긴 히트박스와 합쳐 지상/비행 동시 커버)
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject miniWhirlwindPrefab; // 미니 회오리 전용 그림(Effect_MiniTornado). 미배선이면 본체를 축소해 쓴다(도트가 뭉개짐)
@@ -1027,29 +1035,64 @@ public class PlayerSkills : MonoBehaviour
     // 2차 그림이 안 배선돼 있으면 1차 그림으로, 그것도 없으면 아무것도 안 한다(원본 화살로 그대로 날아간다).
     private void ApplyEvolvedArrowSprite(GameObject projectileObj, bool tier2)
     {
-        Sprite sprite = tier2 && evolvedArrowSpriteTier2 != null ? evolvedArrowSpriteTier2 : evolvedArrowSprite;
-        if (sprite == null) return;
+        Sprite[] frames = tier2 && evolvedArrowFramesTier2 != null && evolvedArrowFramesTier2.Length > 0
+            ? evolvedArrowFramesTier2
+            : evolvedArrowFrames;
+        if (frames == null || frames.Length == 0) return;
+
         SpriteRenderer sr = projectileObj.GetComponentInChildren<SpriteRenderer>();
-        if (sr != null) sr.sprite = sprite;
+        if (sr == null) return;
+        sr.sprite = frames[0];
+        if (frames.Length < 2) return; // 한 장뿐이면 굳이 플립북을 안 붙인다
+
+        // 화살은 명중하거나 화면 밖으로 나가서 사라지므로 **루프**로 돌린다
+        // (비루프면 SpriteFlipbook이 다 재생한 뒤 풀에 반납하려 드는데, 이건 Instantiate로 만든 오브젝트다).
+        SpriteFlipbook fb = sr.GetComponent<SpriteFlipbook>();
+        if (fb == null) fb = sr.gameObject.AddComponent<SpriteFlipbook>();
+        fb.Play(frames, evolvedArrowFps, true);
     }
 
-    // R0의 따라붙는 기본 화살 — 맞은 그 적을 향해 조준해 쏘고, **관통은 없다**(그 대상만 때리고 사라진다).
-    // 진짜 유도가 아니라 발사 시점 조준이다. 적이 느려서 대부분 꽂히고, 코드는 Projectile 그대로 쓴다.
+    // R0의 따라붙는 기본 화살 — **관통은 없다**(그 대상만 때리고 사라진다).
+    // 2026-08-26 사용자 요청으로 셋이 바뀌었다: ① 딸기가 아니라 **암살 화살 뒤쪽**에서 나오고
+    // ② **포물선**을 그리며 날아가고 ③ 일반 화살의 **절반 크기**다.
     private const float ChasingArrowDamageRatio = 0.5f;
+    private const float ChasingArrowScale = 0.5f;          // 일반 화살의 절반
+    private const float ChasingArrowBackOffset = 2.2f;     // 암살 화살은 왼쪽으로 나가므로 뒤 = +x
+    private const float ChasingArrowRiseOffset = 0.7f;     // 살짝 위에서 튀어나온다
+    // ⚠️ 위로 붕 뜨는 로브가 아니다 — **호밍 미사일처럼 가로로 부드럽게 휘어 들어가는** 궤적이다(사용자 지시).
+    //    그래서 처음엔 목표를 정조준하지 않고 **수평으로** 내보내고, Steer가 매 프레임 조금씩 끌어당긴다.
+    //    생성 지점이 명중 지점보다 조금 위(ChasingArrowRiseOffset)라 그 낙차만큼 완만한 곡선이 생긴다.
+    //    회전 속도가 곧 곡률이다: 낮출수록 크게 휘고, 높이면 거의 직선이 된다.
+    private const float ChasingArrowTurnDegPerSec = 200f;
 
     private void SpawnChasingArrow(EquippedSkill skill, Enemy target, float damage, float critChance)
     {
-        if (basicAttackProjectilePrefab == null || target == null || !target.IsAlive) return;
+        if (basicAttackProjectilePrefab == null) return;
 
-        Vector3 origin = transform.position + Vector3.left * 0.6f + Vector3.down * 0.25f;
+        // 🔴 치명타는 **대개 그 적을 죽인다** — 암살 사격은 한 발이 무거운 데다 치명타 배율(기본 3배)까지 얹힌다.
+        //    그리고 Enemy.TakeDamage는 같은 호출 안에서 동기적으로 isDead를 세우므로,
+        //    Projectile이 OnHitBonus를 부를 때는 이미 `target.IsAlive == false`다.
+        //    예전엔 여기서 그대로 return해서 **치명타가 떠도 추격 화살이 한 번도 안 보였다.**
+        //    → 대상이 죽었으면 그 자리에서 가장 가까운 산 적으로 갈아탄다(2026-08-25 사용자 결정).
+        Vector3 hitPos = target != null ? target.transform.position : transform.position;
+        if (target == null || !target.IsAlive)
+            target = Projectile.NearestLivingEnemy(hitPos, canHitFlying: true);
+        if (target == null) return; // 화면에 산 적이 하나도 없을 때만 안 쏜다
+
+        // 딸기가 아니라 **암살 화살이 꽂힌 자리의 뒤쪽**에서 튀어나온다(암살 화살은 왼쪽으로 나가므로 뒤 = +x).
+        Vector3 origin = hitPos + Vector3.right * ChasingArrowBackOffset + Vector3.up * ChasingArrowRiseOffset;
         Vector2 toTarget = (Vector2)target.transform.position - (Vector2)origin;
         if (toTarget.sqrMagnitude < 0.0001f) return;
 
-        // Projectile은 자기 로컬 left로 날아간다 → left가 목표를 향하도록 회전시킨다.
-        float angle = Mathf.Atan2(toTarget.y, toTarget.x) * Mathf.Rad2Deg + 180f;
+        // 처음엔 목표를 정조준하지 않고 **수평으로** 내보낸다. 세로 차이는 Steer가 부드럽게 메운다.
+        Vector2 aim = toTarget.normalized;
+        Vector2 launch = new Vector2(aim.x >= 0f ? 1f : -1f, 0f);
+
+        // Projectile은 자기 로컬 left로 날아간다 → left가 발사 방향을 향하도록 회전시킨다.
+        float angle = Mathf.Atan2(launch.y, launch.x) * Mathf.Rad2Deg + 180f;
 
         GameObject obj = Instantiate(basicAttackProjectilePrefab, origin, Quaternion.Euler(0f, 0f, angle));
-        obj.transform.localScale *= skill.Scale;
+        obj.transform.localScale *= skill.Scale * ChasingArrowScale;
         Projectile p = obj.GetComponent<Projectile>();
         if (p == null) return;
         p.Damage = damage * ChasingArrowDamageRatio;
@@ -1057,6 +1100,11 @@ public class PlayerSkills : MonoBehaviour
         p.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
         p.PierceRemaining = 0;
         p.CanHitFlying = target.RequiresAntiAir; // 비행 적을 노리고 쏜 화살이면 그 적은 맞힐 수 있어야 한다
+
+        // 날아가는 동안에도 대상이 죽으면 다른 적으로 갈아탄다(호밍 미사일과 같은 장치).
+        p.Homing = true;
+        p.HomingTarget = target;
+        p.TurnDegPerSec = ChasingArrowTurnDegPerSec;
     }
 
     // source: 데미지 집계에 어느 스킬로 잡힐지. 화살 R1은 화살, 스나이핑 R0은 스나이핑으로 잡혀야 한다.
@@ -1099,19 +1147,22 @@ public class PlayerSkills : MonoBehaviour
         animator.SetTrigger("Attack");
         int shots = SnipingBaseShots + skill.ExtraProjectiles; // 레벨업 보조축: 대상당 연사 수
         foreach (Enemy target in chosen)
-            StartCoroutine(SnipeTarget(target, damage, critChance, eagleSplash, eagleRatio, eagleTargets, shots, skill.Scale));
+            StartCoroutine(SnipeTarget(target, damage, critChance, eagleSplash, eagleRatio, eagleTargets, shots, skill.Scale, skill.EvolutionStage > 0));
         return true;
     }
 
-    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool eagleSplash, float eagleRatio, int eagleTargets, int shots, float scale)
+    private IEnumerator SnipeTarget(Enemy target, float damage, float critChance, bool eagleSplash, float eagleRatio, int eagleTargets, int shots, float scale, bool evolved)
     {
+        // 🔴 한 캐스트의 저격은 **전부 같은 그림**을 쓴다. 예전엔 첫 발만 Effect_SplashSniping이었는데,
+        //    두 세트는 "기본 vs 화려한 버전"이 아니라 **색 계열이 아예 다르다**(실측: Sniping 계열 hue 42°=주황 /
+        //    SplashSniping 계열 hue 214°=하늘·회색). 그래서 미진화 스나이핑에 진화 색이 한 발씩 섞여 나왔다.
+        GameObject sparkPrefab = evolved && snipingSplashPrefab != null ? snipingSplashPrefab : snipingEffectPrefab;
+
         for (int i = 0; i < shots; i++)
         {
             if (target == null) yield break;
             Vector3 pos = target.transform.position;
 
-            // 첫 타격은 화려한 스플래시-룩(Effect_SplashSniping), 나머지 저격은 기본 스파크(Effect_Sniping).
-            GameObject sparkPrefab = i == 0 ? snipingSplashPrefab : snipingEffectPrefab;
             if (sparkPrefab != null)
                 ObjectPool.Instance.Spawn(sparkPrefab, pos, Quaternion.identity);
 

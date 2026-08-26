@@ -12,6 +12,8 @@ public class DamageMeterUI : MonoBehaviour
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private TMP_Text earnedText;       // 이번 판 획득 정수
     [SerializeField] private Button returnToTitleButton; // 타이틀로 복귀
+    [SerializeField] private Button retryButton;         // 같은 캐릭터·맵·승천으로 다시하기
+    [SerializeField] private Button upgradeButton;       // 타이틀로 가면서 스킬트리를 바로 연다
 
     private static readonly Color GameOverColor = new Color(1f, 0.3f, 0.3f);
     private static readonly Color GameClearColor = new Color(1f, 0.85f, 0.3f);
@@ -23,6 +25,10 @@ public class DamageMeterUI : MonoBehaviour
         if (panelRoot != null) panelRoot.SetActive(false);
         if (returnToTitleButton != null)
             returnToTitleButton.onClick.AddListener(() => GameManager.Instance?.ReturnToTitle());
+        if (retryButton != null)
+            retryButton.onClick.AddListener(() => GameManager.Instance?.Retry());
+        if (upgradeButton != null)
+            upgradeButton.onClick.AddListener(() => GameManager.Instance?.ReturnToTitleAndOpenSkillTree());
     }
 
     private void Update()

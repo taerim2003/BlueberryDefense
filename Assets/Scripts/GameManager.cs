@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using DG.Tweening;
 
 public class GameManager : MonoBehaviour
@@ -136,5 +137,22 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneFade.LoadScene("Title");
+    }
+
+    // 게임오버/클리어 패널의 "다시하기" — 같은 캐릭터·맵·승천으로 판을 다시 연다.
+    // RunConfig는 static이라 씬을 다시 로드해도 그대로 남고, 판 상태(정수·진화·스킬)는
+    // GameManager.Awake의 RunState.ResetAll과 MetaRunApplier.Awake의 MetaRun.Reset이 초기화한다.
+    public void Retry()
+    {
+        Time.timeScale = 1f;
+        SceneFade.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    // 게임오버/클리어 패널의 "업그레이드" — 스킬트리는 타이틀 씬에만 있으므로
+    // 타이틀로 돌아가면서 "열린 채로 시작하라"는 표시를 남긴다(TitleController가 읽고 지운다).
+    public void ReturnToTitleAndOpenSkillTree()
+    {
+        TitleController.OpenSkillTreeOnStart = true;
+        ReturnToTitle();
     }
 }

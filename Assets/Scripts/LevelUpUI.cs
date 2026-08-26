@@ -85,7 +85,10 @@ public class LevelUpUI : MonoBehaviour
     private static readonly Color LevelTagColor = new Color(0.75f, 0.85f, 1f, 1f);
     private static readonly Color EvolveTagColor = new Color(1f, 0.55f, 0.1f, 1f); // 진화 가능 강조(주황)
 
-    private Outline[] optionOutlines;
+    // 진화 선택지 강조 — 카드 **바깥쪽**에 노란 테를 두른다. 켜고 끄는 대상은 이 루트 오브젝트다.
+    private GameObject[] optionGlows;
+    // 속 빈 선화(`가로길쭉이_투명` 같은 `_투명` 계열). 마스크로만 쓰므로 그림 색은 상관없다.
+    [SerializeField] private Sprite evolveGlowSprite;
 
     private const int EssenceReward = 10; // 레벨업할 게 없을 때 대체로 지급하는 정수량
 
@@ -127,21 +130,66 @@ public class LevelUpUI : MonoBehaviour
         // 보물 패널은 어디를 눌러도 넘어간다. 아이콘이 다 뜨기 전엔 interactable=false라 안 먹는다.
         if (treasureDismissButton != null) treasureDismissButton.onClick.AddListener(() => treasureDismissed = true);
 
-        // 진화 가능 레벨업 강조용 셀 아웃라인(기본 꺼짐)
-        optionOutlines = new[] { MakeOutline(optionButtonA), MakeOutline(optionButtonB), MakeOutline(optionButtonC) };
+        // 진화 가능 레벨업 강조용 노란 테(기본 꺼짐)
+        optionGlows = new[] { MakeEvolveGlow(optionButtonA), MakeEvolveGlow(optionButtonB), MakeEvolveGlow(optionButtonC) };
 
         optionButtons = new[] { optionButtonA, optionButtonB, optionButtonC };
     }
 
-    private static Outline MakeOutline(Button btn)
+    // 카드 테두리 바깥으로 노란 테가 나오는 양(사방).
+    private const float EvolveGlowOutset = 9f;
+    private const string EvolveGlowName = "EvolveGlow";
+
+    // 🔴 uGUI `Outline`을 쓰지 않는다. 그건 **스프라이트 메쉬를 4방향으로 복제해 effectColor를 곱하는** 방식이라,
+    //    판 그림처럼 테두리가 검고 속이 흰 그림에 걸면 **바깥에 테가 생기는 게 아니라 원래의 검은 테두리가 물든다**
+    //    (HUD 스킬 아이콘도 같은 이유로 이미 `CreateShotgunFrame`으로 갈아탔다).
+    //    → 대신 속 빈 선화(`_투명`)를 **마스크**로 쓰고 그 안을 노란 단색으로 채운다(맵·캐릭터 카드의 `SelectGlow`와 같은 장치).
+    //      카드보다 사방 EvolveGlowOutset만큼 크게 잡아서 선이 카드 **바깥쪽**에 그려지게 한다.
+    //    ⚠️ 카드는 `Dialog/Layout`(VerticalLayoutGroup) 소속이라 형제로 뒤에 깔 수가 없다(형제가 곧 레이아웃 항목이 된다).
+    //      그래서 자식으로 두되, 마스크가 **선 굵기만** 남기므로 카드 그림을 덮지 않는다.
+    private GameObject MakeEvolveGlow(Button btn)
     {
         if (btn == null) return null;
-        Outline o = btn.GetComponent<Outline>();
-        if (o == null) o = btn.gameObject.AddComponent<Outline>();
-        o.effectColor = EvolveTagColor;
-        o.effectDistance = new Vector2(5f, 5f);
-        o.enabled = false;
-        return o;
+
+        Transform existing = btn.transform.Find(EvolveGlowName);
+        if (existing != null) DestroyImmediate(existing.gameObject);
+
+        // 예전 방식(카드 위 Outline 효과)이 씬에 남아 있으면 제거 — 남겨두면 검은 테두리가 계속 물든다.
+        Outline legacy = btn.GetComponent<Outline>();
+        if (legacy != null) Destroy(legacy);
+
+        var go = new GameObject(EvolveGlowName, typeof(RectTransform), typeof(Image), typeof(Mask));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(btn.transform, false);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = new Vector2(-EvolveGlowOutset, -EvolveGlowOutset);
+        rt.offsetMax = new Vector2(EvolveGlowOutset, EvolveGlowOutset);
+
+        var maskImg = go.GetComponent<Image>();
+        maskImg.sprite = evolveGlowSprite;
+        maskImg.type = Image.Type.Simple;
+        maskImg.raycastTarget = false;
+        go.GetComponent<Mask>().showMaskGraphic = false; // 선화 자체(검정)는 안 그리고 모양만 쓴다
+
+        var fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+        var frt = (RectTransform)fillGo.transform;
+        frt.SetParent(rt, false);
+        frt.anchorMin = Vector2.zero;
+        frt.anchorMax = Vector2.one;
+        frt.offsetMin = frt.offsetMax = Vector2.zero;
+        var fill = fillGo.GetComponent<Image>();
+        fill.color = EvolveTagColor;
+        fill.raycastTarget = false;
+
+        // 🔴 맨 앞 형제로 보낸다 — 자식은 부모보다 **뒤에** 그려지므로, 그냥 두면 마지막 형제가 되어
+        //    카드의 제목·레벨표시(`LevelTag`) 위를 테가 덮는다("진화! 1개 가능"이 잘려 보였다).
+        rt.SetAsFirstSibling();
+
+        go.SetActive(false);
+        // 선화가 없으면 마스크가 통째로 통과해 **노란 판**이 된다 — 그림이 없으면 아예 만들지 않는다.
+        if (evolveGlowSprite == null) { Destroy(go); return null; }
+        return go;
     }
 
     // 판 시작 시 MetaRunApplier가 호출 — 스킬트리 리롤 노드 해금 수만큼 리롤 부여
@@ -242,87 +290,46 @@ public class LevelUpUI : MonoBehaviour
             button.gameObject.SetActive(option != null);
             button.interactable = true; // 보물 에스컬레이션에서 껐던 상호작용 복구
         }
-        if (optionOutlines != null && optionOutlines[index] != null)
-            optionOutlines[index].enabled = option != null && option.IsEvolution;
+        if (optionGlows != null && optionGlows[index] != null)
+            optionGlows[index].SetActive(option != null && option.IsEvolution);
         if (option != null) SetRow(title, level, desc, icon, option);
         SetComboPreview(desc, option?.ComboPreview);
     }
 
     // ── 갈림길 전용 레이아웃 ──────────────────────────────────────────────
-    // 참고 화면: Ball x Pit의 "융합 / 분열" 선택창 — 한쪽에 큰 그림, 반대쪽에 가로 패널 두 장을 세로로 쌓는다.
-    // 우리는 그림을 **보물상자 블루베리**로 바꾸고 **왼쪽**에 둔다(일반 보물 획득 창도 같은 상자 그림을
-    // 쓰므로 두 화면이 한 벌로 보인다). 패널 2장은 오른쪽 열.
-    // ⚠️ 일반 레벨업(3택)은 씬에 저작된 가로 배치를 **그대로 쓴다** — 그래서 원본을 캐시해 두고 되돌린다.
-    private const float ChoiceCardWidth = 480f;
-    private const float ChoiceCardHeight = 145f;  // 가로길쭉길쭉이 원본이 561x145 — 세로를 원본 그대로 쓴다
-    private const float ChoiceCardGap = 40f;
-    private const float ChoiceCardX = 210f;       // 오른쪽 열 중심
-    // 패널 안쪽은 가로 433 · 세로 69뿐이다(테두리 좌30·우17·위26·아래50) — 제목 + 부제 두 줄이 상한.
-    private const float ChoiceTextWidth = 380f;
-    private const float ChoiceTextX = -10f;       // 폭 380의 중심 = 패널 왼쪽 안쪽(-200)에서 시작하도록
-    // 왼쪽 큰 그림 — 카드가 아니라 Dialog 직속이라 카드 루프에 얹을 자리가 없다. 런타임에 만든다.
-    private const float ChoiceArtSize = 360f;
-    private const float ChoiceArtX = -250f;
-    private const float ChoiceArtY = -20f;
+    // 🔴 2026-08-25: 카드의 좌표·크기를 여기서 쓰던 것을 **전부 걷어냈다.**
+    //    카드 3장은 씬에서 `Dialog/Layout`(VerticalLayoutGroup) 아래로 들어갔다 — 레이아웃이 위치를 소유하므로
+    //    여기서 anchoredPosition을 써 봐야 다음 리빌드에 덮인다. 실제로 **크기만 480x145로 줄고 위치는 레이아웃이 잡아**
+    //    카드가 반쪽이 되고 왼쪽 큰 그림(360x360)이 두 번째 카드를 통째로 덮고 있었다.
+    //    → 갈림길도 **3택과 같은 세로 배치를 그대로 쓴다.** 여기서 다루는 건 두 가지뿐이다:
+    //      ① 아이콘 액자(Frame)를 끈다 — 갈림길 두 선택지엔 아이콘이 없어 빈 회색 액자만 남는다
+    //      ② 보물상자 그림을 **카드 아래 빈 자리**에 둔다(3택으로 돌아가면 끈다)
+    private const float ChoiceArtSize = 200f;
+    private const float ChoiceArtY = -285f;   // Dialog(1060x840) 안, 카드 2장 아래의 빈 구간
     // 되돌아가기(X) — Dialog(1060x840) 좌상단 안쪽. 테두리(좌37·위20)를 피해 앉힌다.
     private const float ChoiceBackSize = 64f;
     private const float ChoiceBackX = -450f;
     private const float ChoiceBackY = 355f;
 
-    private readonly Dictionary<RectTransform, (Vector2 pos, Vector2 size)> savedRects
-        = new Dictionary<RectTransform, (Vector2, Vector2)>();
-    private readonly Dictionary<TMP_Text, TextAlignmentOptions> savedAligns
-        = new Dictionary<TMP_Text, TextAlignmentOptions>();
     private bool verticalLayout;
 
     private void SetChoiceLayout(bool vertical)
     {
-        if (vertical == verticalLayout) return; // 매 모달마다 좌표를 다시 쓰지 않게
+        if (vertical == verticalLayout) return; // 매 모달마다 같은 값을 다시 쓰지 않게
         verticalLayout = vertical;
         SetChoiceArt(vertical);
 
-        Button[] buttons = { optionButtonA, optionButtonB, optionButtonC };
-        TMP_Text[] titles = { titleA, titleB, titleC };
-        TMP_Text[] levels = { levelA, levelB, levelC };
-        TMP_Text[] descs = { descA, descB, descC };
-        Image[] icons = { iconA, iconB, iconC };
-
-        for (int i = 0; i < buttons.Length; i++)
+        foreach (Button b in new[] { optionButtonA, optionButtonB, optionButtonC })
         {
-            if (buttons[i] == null) continue;
-            RectTransform card = (RectTransform)buttons[i].transform;
-            RectTransform frame = card.Find("Frame") as RectTransform;
-            RectTransform icon = icons[i] != null ? icons[i].rectTransform : null;
-
-            if (!vertical)
-            {
-                Restore(card); Restore(frame); Restore(icon);
-                Restore(titles[i]); Restore(levels[i]); Restore(descs[i]);
-                if (frame != null) frame.gameObject.SetActive(true);
-                continue;
-            }
-
-            // 갈림길은 늘 2택이다. 오른쪽 열에 가로 패널 두 장을 세로로 쌓는다(i=0 위 · i=1 아래).
-            Place(card, new Vector2(ChoiceCardX, (0.5f - i) * (ChoiceCardHeight + ChoiceCardGap)),
-                        new Vector2(ChoiceCardWidth, ChoiceCardHeight));
-
-            // 🔴 갈림길의 두 선택지는 아이콘 액자를 쓰지 않는다 — 켜 두면 빈 회색 액자가 남는다
-            //    (3택 레벨업은 아이콘 없는 스킬을 일부러 빈 틀로 남기는 게 의도라 건드리지 않는다).
-            //    상자 그림은 **왼쪽 큰 그림**이 대표하므로 패널 안에 다시 넣지 않는다.
-            if (frame != null) frame.gameObject.SetActive(false);
-
-            // 제목 + 부제 한 줄, 둘 다 왼쪽 정렬. 부제 자리는 보물=설명 / 진화=개수로 갈리는데
-            // ShowTreasureChoice가 **한쪽만** 채워 보내므로 같은 자리에 놓아도 겹치지 않는다.
-            // 안쪽 세로는 -22.5 ~ +46.5 딱 69px이다. 제목 36 + 부제 26을 그 안에 앉힌다
-            // (26f/-10f는 계산해서 맞춘 값 — 여기서 1~2px만 내려도 부제가 아래 테두리를 파고든다).
-            Place(titles[i], new Vector2(ChoiceTextX,  26f), new Vector2(ChoiceTextWidth, 36f), TextAlignmentOptions.Left);
-            Place(levels[i], new Vector2(ChoiceTextX, -9.5f), new Vector2(ChoiceTextWidth, 26f), TextAlignmentOptions.Left);
-            Place(descs[i],  new Vector2(ChoiceTextX, -9.5f), new Vector2(ChoiceTextWidth, 26f), TextAlignmentOptions.Left);
+            if (b == null) continue;
+            Transform frame = b.transform.Find("Frame");
+            // 3택 레벨업은 아이콘 없는 스킬을 일부러 빈 틀로 남기는 게 의도라 켜 둔다.
+            if (frame != null) frame.gameObject.SetActive(!vertical);
         }
     }
 
-    // 갈림길 왼쪽의 큰 보물상자 그림. 카드가 아니라 Dialog 직속이라 카드 루프에 얹을 자리가 없어
-    // 여기서 한 번 만들고 이후엔 껐다 켜기만 한다(3택으로 돌아가면 끈다).
+    // 갈림길의 보물상자 그림. 카드는 Layout(VerticalLayoutGroup) 소속이라 그 아래 두면 레이아웃 항목이 돼 버린다 —
+    // **Dialog 직속**으로 만들어 카드 아래 빈 자리에 앉힌다. 한 번 만들고 이후엔 껐다 켜기만 한다.
     private RectTransform choiceArt;
 
     private void SetChoiceArt(bool on)
@@ -334,14 +341,16 @@ public class LevelUpUI : MonoBehaviour
         }
         if (choiceArt == null)
         {
-            Transform parent = optionButtonA != null ? optionButtonA.transform.parent : null;
+            // optionButtonA.parent = Layout → 그 부모인 Dialog가 붙일 자리다.
+            Transform layout = optionButtonA != null ? optionButtonA.transform.parent : null;
+            Transform parent = layout != null ? layout.parent : null;
             if (parent == null) return;
             var go = new GameObject("ChoiceArtwork", typeof(RectTransform), typeof(Image));
             choiceArt = (RectTransform)go.transform;
             choiceArt.SetParent(parent, false);
             choiceArt.anchorMin = choiceArt.anchorMax = new Vector2(0.5f, 0.5f);
             choiceArt.pivot = new Vector2(0.5f, 0.5f);
-            choiceArt.anchoredPosition = new Vector2(ChoiceArtX, ChoiceArtY);
+            choiceArt.anchoredPosition = new Vector2(0f, ChoiceArtY);
             choiceArt.sizeDelta = new Vector2(ChoiceArtSize, ChoiceArtSize);
             var img = go.GetComponent<Image>();
             img.raycastTarget = false;   // 뒤에 깔린 카드 클릭을 막지 않는다
@@ -413,36 +422,6 @@ public class LevelUpUI : MonoBehaviour
         ShowTreasureChoice();
     }
 
-    private void Place(RectTransform rt, Vector2 pos, Vector2 size)
-    {
-        if (rt == null) return;
-        if (!savedRects.ContainsKey(rt)) savedRects[rt] = (rt.anchoredPosition, rt.sizeDelta);
-        rt.anchoredPosition = pos;
-        rt.sizeDelta = size;
-    }
-
-    private void Place(TMP_Text t, Vector2 pos, Vector2 size, TextAlignmentOptions align)
-    {
-        if (t == null) return;
-        if (!savedAligns.ContainsKey(t)) savedAligns[t] = t.alignment;
-        Place(t.rectTransform, pos, size);
-        t.alignment = align;
-    }
-
-    private void Restore(RectTransform rt)
-    {
-        if (rt == null || !savedRects.TryGetValue(rt, out (Vector2 pos, Vector2 size) s)) return;
-        rt.anchoredPosition = s.pos;
-        rt.sizeDelta = s.size;
-    }
-
-    private void Restore(TMP_Text t)
-    {
-        if (t == null) return;
-        Restore(t.rectTransform);
-        if (savedAligns.TryGetValue(t, out TextAlignmentOptions a)) t.alignment = a;
-    }
-
     // ── 진화 카드 조합 미리보기 ──────────────────────────────────────────────
     // 세로 카드의 **바닥에 박아 둔다**(설명 길이와 무관하게 늘 같은 자리 = 눈이 찾기 쉽다).
     private const string ComboRowName = "ComboPreview";
@@ -450,7 +429,8 @@ public class LevelUpUI : MonoBehaviour
     private const float ComboPlusWidth = 16f;     // 짝 사이 "+" 자리
     private const float ComboEntryGap = 14f;      // 짝과 짝 사이(가로)
     private const float ComboLineGap = 8f;        // 줄과 줄 사이(세로)
-    private const float ComboRowMaxWidth = ChoiceTextWidth; // 한 줄 최대 폭 — 세로 카드의 글자 폭에 맞춘다
+    // 한 줄 최대 폭 — 카드(길쭉큰네모 900x210, 안쪽 849)의 설명 글자 폭(Label 704)에 맞춘다.
+    private const float ComboRowMaxWidth = 680f;
     private const int ComboMaxPerLine = 2;        // 한 줄에 최대 두 짝 — 스킬 하나의 루트가 둘뿐이라 이걸로 딱 맞는다
     private const int ComboMaxLines = 4;          // 이보다 많아지면 그때 전체를 줄인다
     private const float ComboRowYOffset = 14f;    // 카드 바닥에서 띄우는 거리

@@ -18,6 +18,13 @@ public class Projectile : MonoBehaviour
     public bool CanHitFlying { get; set; } // 기본 path T1: 비행 적 타격 가능
     public System.Action<Enemy, bool> OnHitBonus { get; set; } // (적, 이번 타격의 치명타 여부)
 
+    // ── 유도(암살 사격의 추격 화살 전용) ────────────────────────────────────
+    // 기본 화살·화살비는 끄고 쓴다(직선). 켜면 매 프레임 기수를 목표 쪽으로 조금씩 돌리고,
+    // 목표가 죽으면 가장 가까운 산 적으로 갈아탄다 — HomingMissile과 같은 장치다.
+    public bool Homing { get; set; }
+    public Enemy HomingTarget { get; set; }
+    public float TurnDegPerSec { get; set; } = 540f;
+
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
     // 소멸이 확정됐는지. `Destroy(gameObject)`는 프레임 끝에 실행되므로, 같은 물리 스텝에서 이미 잡힌
@@ -37,9 +44,43 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
+        if (Homing) Steer();
         if (Acceleration != 0f) SpeedMultiplier += Acceleration * Time.deltaTime;
         transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
         if (IsFarOffscreen(transform.position)) Consume();
+    }
+
+    private void Steer()
+    {
+        // ⚠️ null만 보면 안 된다 — 풀링된 적은 죽어도 참조가 살아 있어서 시체를 영영 쫓는다(HomingMissile과 같은 이유).
+        if (HomingTarget == null || !HomingTarget.IsAlive)
+            HomingTarget = NearestLivingEnemy(transform.position, CanHitFlying, hitEnemies);
+        if (HomingTarget == null) return;
+
+        Vector2 desired = (Vector2)HomingTarget.transform.position - (Vector2)transform.position;
+        if (desired.sqrMagnitude < 0.0001f) return;
+
+        // 이 컴포넌트는 **로컬 left**로 날아간다 → left가 목표를 향하도록 기수를 돌린다(+180).
+        float want = Mathf.Atan2(desired.y, desired.x) * Mathf.Rad2Deg + 180f;
+        transform.rotation = Quaternion.Euler(0f, 0f,
+            Mathf.MoveTowardsAngle(transform.eulerAngles.z, want, TurnDegPerSec * Time.deltaTime));
+    }
+
+    // 가장 가까운 산 적. 못 맞히는 비행 적과 이미 때린 적은 후보에서 뺀다
+    // (관통이 0인 추격 화살이 이미 때린 적을 다시 쫓으면 그 자리를 맴돌기만 한다).
+    public static Enemy NearestLivingEnemy(Vector3 from, bool canHitFlying, HashSet<Enemy> exclude = null)
+    {
+        Enemy best = null;
+        float bestSqr = float.MaxValue;
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (e == null || !e.IsAlive) continue;
+            if (e.RequiresAntiAir && !canHitFlying) continue;
+            if (exclude != null && exclude.Contains(e)) continue;
+            float d = ((Vector2)e.transform.position - (Vector2)from).sqrMagnitude;
+            if (d < bestSqr) { bestSqr = d; best = e; }
+        }
+        return best;
     }
 
     private static bool IsFarOffscreen(Vector3 position)

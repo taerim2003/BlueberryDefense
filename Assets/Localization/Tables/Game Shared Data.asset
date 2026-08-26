@@ -2475,6 +2475,14 @@ MonoBehaviour:
     m_Key: ui.mapselect.locked
     m_Metadata:
       m_Items: []
+  - m_Id: 4693959512891392
+    m_Key: ui.result.retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4693959529668608
+    m_Key: ui.result.upgrade
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

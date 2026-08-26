@@ -13,6 +13,10 @@ public class TitleController : MonoBehaviour
     [SerializeField] private MapSelectUI mapSelect;
     [SerializeField] private CharacterSelectUI characterSelect;
 
+    // 게임오버 화면의 "업그레이드"가 세워두는 표시. 타이틀이 뜨면 스킬트리를 바로 연다.
+    // static이라 씬 전환을 넘어가고, 한 번 쓰면 여기서 지운다(다음에 타이틀로 와도 안 열리게).
+    public static bool OpenSkillTreeOnStart;
+
     private void Start()
     {
         if (playButton != null) playButton.onClick.AddListener(Play);
@@ -20,6 +24,12 @@ public class TitleController : MonoBehaviour
         if (collectionButton != null) collectionButton.onClick.AddListener(OpenCollection);
         if (settingsButton != null) settingsButton.onClick.AddListener(OpenSettings);
         if (quitButton != null) quitButton.onClick.AddListener(Quit);
+
+        if (OpenSkillTreeOnStart)
+        {
+            OpenSkillTreeOnStart = false;
+            OpenUpgrade();
+        }
     }
 
     // OptionsMenu는 씬에 없고 런타임에 자기를 만든다(PauseMenu와 같은 방식) — 클릭 시점에 찾는다.

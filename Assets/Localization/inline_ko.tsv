@@ -132,6 +132,8 @@ ui.common.close	닫기
 ui.common.back	뒤로
 ui.common.select	선택
 ui.result.toTitle	타이틀로
+ui.result.retry	다시하기
+ui.result.upgrade	업그레이드
 ui.treasure.header	보물 획득!
 ui.treasure.continue	클릭하여 계속
 ui.collection.title	컬렉션

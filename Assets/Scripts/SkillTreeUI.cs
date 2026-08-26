@@ -400,11 +400,22 @@ public class SkillTreeUI : MonoBehaviour
     {
         if (nodeRt == null || tooltipRect == null || panelRect == null) return;
         Vector2 screen = RectTransformUtility.WorldToScreenPoint(null, nodeRt.position);
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, screen, null, out Vector2 local))
-        {
-            float zoom = content != null ? content.localScale.y : 1f;
-            tooltipRect.anchoredPosition = local + new Vector2(0f, 34f * zoom + 14f);
-        }
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, screen, null, out Vector2 local)) return;
+
+        float zoom = content != null ? content.localScale.y : 1f;
+        Vector2 pos = local + new Vector2(0f, 34f * zoom + 14f);
+
+        // 판이 원본 크기(721x289)로 커져서 화면 위쪽 노드에선 그대로 두면 창 밖으로 나간다.
+        // pivot이 (0.5, 0)이라 y는 "아래 변", x는 "가운데"다 — 그 기준으로 패널 안에 가둔다.
+        Rect panel = panelRect.rect;
+        float w = tooltipRect.rect.width, h = tooltipRect.rect.height;
+        float halfW = w * 0.5f;
+        pos.x = Mathf.Clamp(pos.x, panel.xMin + halfW, panel.xMax - halfW);
+        // 위로 넘치면 노드 **아래쪽**으로 내려 붙인다(노드를 가리지 않게). 그래도 넘치면 바닥에 가둔다.
+        if (pos.y + h > panel.yMax) pos.y = local.y - (34f * zoom + 14f) - h;
+        pos.y = Mathf.Clamp(pos.y, panel.yMin, panel.yMax - h);
+
+        tooltipRect.anchoredPosition = pos;
     }
 
     private static Color BaseColor(SkillNodeType type) => type switch

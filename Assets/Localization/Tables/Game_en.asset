@@ -2497,6 +2497,14 @@ MonoBehaviour:
     m_Localized: Locked
     m_Metadata:
       m_Items: []
+  - m_Id: 4693959512891392
+    m_Localized: Retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4693959529668608
+    m_Localized: Upgrades
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -132,6 +132,8 @@ ui.common.close	Close
 ui.common.back	Back
 ui.common.select	Select
 ui.result.toTitle	To Title
+ui.result.retry	Retry
+ui.result.upgrade	Upgrades
 ui.treasure.header	Treasure!
 ui.treasure.continue	Click to continue
 ui.collection.title	Collection
