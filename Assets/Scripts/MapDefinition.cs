@@ -54,7 +54,7 @@ public class MapDefinition : ScriptableObject
     public string UnlockConditionText()
     {
         if (unlockedFromStart || requiredClearMap == null) return "";
-        return Loc.F("unlock.clearMap", requiredClearMap.Name, requiredClearAscension);
+        return Loc.F("unlock.clearMap", requiredClearMap.Name, AscensionTable.DifficultyName(requiredClearAscension));
     }
 
     // 표시 문구는 표에서 읽는다. 키는 **에셋 이름**에서 파생 — displayName은 표시용이라 바뀔 수 있다(MapClearSave와 같은 이유).

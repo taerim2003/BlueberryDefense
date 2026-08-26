@@ -33,6 +33,18 @@ public class AscensionTable : ScriptableObject
     // 존재하는 최고 승천 레벨(1-based).
     public int MaxLevel => Mathf.Max(1, tiers != null ? tiers.Length : 1);
 
+    // 화면에 보이는 난이도 이름. 등급이 셋뿐이라 그대로 쉬움/보통/어려움으로 부르고,
+    // 등급이 늘면 이름이 모자라므로 "어려움 +N"으로 이어 붙인다.
+    // 🔴 UI에 등급 **숫자**를 그대로 쓰지 말 것 — "승천"이라는 말은 화면에서 폐지됐다(맵/캐릭터 해금 조건 포함).
+    private const int DifficultyNameCount = 3;
+
+    public static string DifficultyName(int level)
+    {
+        int i = Mathf.Clamp(level, 1, int.MaxValue) - 1;
+        if (i < DifficultyNameCount) return Loc.T("ui.difficulty." + i);
+        return Loc.F("ui.difficulty.plus", Loc.T("ui.difficulty." + (DifficultyNameCount - 1)), i - DifficultyNameCount + 1);
+    }
+
     // 승천 레벨(1-based)의 배율. 범위 밖은 클램프.
     public AscensionTier Get(int level)
     {

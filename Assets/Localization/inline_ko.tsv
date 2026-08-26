@@ -92,7 +92,6 @@ ui.evotree.continueRoute	1차에서 고른 루트를 이어갑니다
 ui.evotree.abandoned	[포기한 루트]
 ui.evotree.lockedPrereq	[잠김 — '{0}' 필요]
 ui.evotree.locked	[잠김]
-ui.evotree.tier1Bonus	피해량 {0}% 증가 · 레벨 1부터 다시 성장
 ui.essence	{0} 정수
 ui.tree.cost	{0} 정수
 ui.tree.clickUnlock	  ▸ 클릭하여 해금
@@ -117,7 +116,7 @@ ui.result.other	기타
 ui.result.earned	획득 정수: {0}
 ui.result.total	총 피해량: {0}
 unlock.essence	정수 {0} / {1}
-unlock.clearMap	{0} 승천{1} 클리어
+unlock.clearMap	{0} {1} 클리어
 ui.levelup.header	레벨 업!
 ui.title.play	플레이
 ui.title.upgrade	업그레이드

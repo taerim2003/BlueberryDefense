@@ -92,7 +92,6 @@ ui.evotree.continueRoute	Continuing the path you chose at tier 1
 ui.evotree.abandoned	[PATH NOT TAKEN]
 ui.evotree.lockedPrereq	[LOCKED — needs '{0}']
 ui.evotree.locked	[LOCKED]
-ui.evotree.tier1Bonus	Damage +{0}% · grows again from level 1
 ui.essence	{0} Essence
 ui.tree.cost	{0} Essence
 ui.tree.clickUnlock	  ▸ click to unlock
@@ -117,7 +116,7 @@ ui.result.other	Other
 ui.result.earned	Essence earned: {0}
 ui.result.total	Total damage: {0}
 unlock.essence	Essence {0} / {1}
-unlock.clearMap	Clear {0} at Ascension {1}
+unlock.clearMap	Clear {0} on {1}
 ui.levelup.header	Level Up!
 ui.title.play	Play
 ui.title.upgrade	Upgrades

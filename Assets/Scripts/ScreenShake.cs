@@ -11,8 +11,11 @@ using DG.Tweening;
 //    진폭이 0.3유닛 이하라 화면 밖 스폰 지점에는 영향이 없지만, 카메라 위치로 **판정**을 하게 되면 그땐 문제가 된다.
 public static class ScreenShake
 {
-    public const float SwingStrength = 0.28f;  // 망치 내려찍기 — 화면 높이가 10유닛이니 약 3%
-    public const float SwingDuration = 0.3f;
+    // 망치 내려찍기. 파인애플의 **기본공격**이라 판마다 수백 번 흔들린다 —
+    // 한 방의 손맛보다 누적 멀미가 먼저 온다(8/25 빌드 검수: "너무 많이 흔들려서 멀미남").
+    // 화면 높이가 10유닛이니 0.12 = 약 1.2%.
+    public const float SwingStrength = 0.12f;
+    public const float SwingDuration = 0.18f;
 
     private static Transform cam;
     private static Vector3 basePos;

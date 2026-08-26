@@ -6454,7 +6454,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CursorSetter
   cursorTexture: {fileID: 2800000, guid: 8f637b5bcb4ab4748a1092683d51cd27, type: 3}
   hotspot: {x: 11, y: 12}
-  pixelScale: 2
+  pixelScale: 3
 --- !u!1 &1240243507
 GameObject:
   m_ObjectHideFlags: 0

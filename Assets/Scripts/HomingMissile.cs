@@ -100,7 +100,9 @@ public class HomingMissile : MonoBehaviour
             {
                 GameObject vfx = ObjectPool.Instance.Spawn(explodeVfxPrefab, pos, Quaternion.identity);
                 vfx.transform.localScale = Vector3.one * explodeVfxScale;
-                ObjectPool.Instance.Despawn(vfx, 1.2f);
+                // Effect_Explosion은 4프레임 16fps(0.25초)에 `despawnOnFinish`가 꺼져 있다 —
+                // 반환을 늦추면 **마지막 연기 프레임이 그대로 얼어붙어** 남는다. 재생 길이 바로 뒤에 회수한다.
+                ObjectPool.Instance.Despawn(vfx, 0.3f);
             }
             foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             {

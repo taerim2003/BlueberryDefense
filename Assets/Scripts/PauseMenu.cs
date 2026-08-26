@@ -229,6 +229,16 @@ public class PauseMenu : MonoBehaviour
             AddWrapText(textCol.transform, detailRich, 20, new Color(0.82f, 0.82f, 0.82f));
     }
 
+    // 🔴 판 그림(`베개같이생긴네모_색칠` 373×195)은 **둥근 베개 모양**이라, 칸(rect)과 그림이 두 번 어긋난다:
+    //    ① 그림 둘레에 투명 여백이 있고(좌26·우20·상13·하18px), ② 안쪽 채워진 면은 그보다 더 작은 **둥근** 모양이다.
+    //    Preserve Aspect는 이걸 조용히 맞춰 그리므로 rect만 보고 자식을 놓으면 **판 밖 허공에** 놓인다 —
+    //    제목이 판 위로 떠 있고 버튼·ESC 힌트가 판 아래로 빠져 있었다(8/25 빌드 검수 "일시정지 UI 깨짐").
+    //    아래 좌표는 채워진 면의 실루엣을 PNG 알파로 재서 Box 좌표로 환산한 것이다(원본 y22~149 · x34~344,
+    //    Box 배율 1760/373 = 4.719). 세로 위치마다 쓸 수 있는 가로폭이 다르다 — **위아래 끝일수록 좁다.**
+    //      Box y 807 → x 684~1284 · y 741 → x 321~1477 · y 505 → x 160~1619 · y 275 → x 269~1520
+    //    ⚠️ 칸 크기(BoxW/BoxH)나 판 그림을 바꾸면 이 표가 통째로 낡는다 — 다시 찍어 잴 것.
+    private const float BoxW = 1760f, BoxH = 940f;
+
     // ── 런타임 UI 생성 (정적 셸: 창/제목/2열 컨테이너/힌트) ──
     private void BuildUI()
     {
@@ -250,20 +260,20 @@ public class PauseMenu : MonoBehaviour
         panelGroup = panel.AddComponent<CanvasGroup>();
 
         var box = NewUI("Box", panel.transform);
-        Center(box, new Vector2(1760, 940));
+        Center(box, new Vector2(BoxW, BoxH));
         UISkin.Panel(AddImage(box, SkinColor, true));
         boxRect = (RectTransform)box.transform;
 
         var title = NewUI("Title", box.transform);
-        // 판 스프라이트의 테두리(위 55·아래 45·좌우 50px) 안쪽으로 넣는다 — 안 그러면 글자가 테두리를 탄다.
-        Top(title, new Vector2(0, -40), new Vector2(1680, 64));
+        Top(title, new Vector2(0, -140), new Vector2(560, 64));
         titleText = AddText(title, font, Loc.T("ui.pause.title"), 46, TextAlignmentOptions.Center, Color.white);
 
         // 2열 컨테이너 — 제목과 힌트 사이 영역을 채움
         var columns = NewUI("Columns", box.transform);
         var colRt = columns.GetComponent<RectTransform>();
         colRt.anchorMin = Vector2.zero; colRt.anchorMax = Vector2.one;
-        colRt.offsetMin = new Vector2(66, 164); colRt.offsetMax = new Vector2(-66, -120);
+        colRt.offsetMin = new Vector2(330, 395);
+        colRt.offsetMax = new Vector2(-290, -212);
         var hg = columns.AddComponent<HorizontalLayoutGroup>();
         hg.spacing = 48;
         hg.childAlignment = TextAnchor.UpperLeft;
@@ -274,7 +284,10 @@ public class PauseMenu : MonoBehaviour
         rightColumn = MakeColumn(columns.transform);
 
         var settings = NewUI("SettingsButton", box.transform);
-        Bottom(settings, new Vector2(-190, 100), new Vector2(340, 56));
+        // 🔴 CLAUDE.md §5-1 — 칸 비율을 판 그림(`가로길쭉이_색칠` 361×103)에 맞춘다.
+        //    예전 340×56은 비율이 6.07이라 Preserve Aspect가 판을 196×56으로 **줄여 가운데에만** 그렸고,
+        //    글자는 340 폭을 그대로 써서 판 밖으로 삐져나왔다.
+        Bottom(settings, new Vector2(-200, 275), new Vector2(360, 103));
         var settingsBtn = settings.AddComponent<Button>();
         var settingsBg = AddImage(settings, SkinColor, true);
         UISkin.BarTinted(settingsBg, SkinColor);
@@ -287,7 +300,7 @@ public class PauseMenu : MonoBehaviour
         settingsText = AddText(settingsLabel, font, Loc.T("ui.options.title"), 26, TextAlignmentOptions.Center, new Color(0.92f, 0.92f, 0.95f));
 
         var giveUp = NewUI("GiveUpButton", box.transform);
-        Bottom(giveUp, new Vector2(190, 100), new Vector2(340, 56));
+        Bottom(giveUp, new Vector2(200, 275), new Vector2(360, 103));
         var giveUpBtn = giveUp.AddComponent<Button>();
         var giveUpBg = AddImage(giveUp, DangerColor, true);
         UISkin.BarTinted(giveUpBg, DangerColor); // 색은 위험 빨강 그대로, 모양만 스킨
@@ -300,7 +313,7 @@ public class PauseMenu : MonoBehaviour
         giveUpText = AddText(giveUpLabel, font, Loc.T("ui.pause.giveUp"), 26, TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.86f));
 
         var hint = NewUI("Hint", box.transform);
-        Bottom(hint, new Vector2(0, 52), new Vector2(1680, 40));
+        Bottom(hint, new Vector2(0, 215), new Vector2(900, 40));
         hintText = AddText(hint, font, Loc.T("ui.pause.hint"), 22, TextAlignmentOptions.Center, new Color(0.7f, 0.8f, 1f));
 
         UISkin.Refit(panel); // 크기가 다 정해진 뒤에 9-slice 테두리를 다시 재단

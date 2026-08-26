@@ -128,21 +128,10 @@ public class MapSelectUI : MonoBehaviour
         int max = MaxSelectableAscension;
         ascensionLevel = Mathf.Clamp(ascensionLevel, 1, max);
 
-        if (ascLevelText != null) ascLevelText.text = DifficultyName(ascensionLevel);
+        if (ascLevelText != null) ascLevelText.text = AscensionTable.DifficultyName(ascensionLevel);
         if (ascDescText != null) ascDescText.text = DescribeAscension(ascensionLevel, max);
         if (ascPrevButton != null) ascPrevButton.interactable = ascensionLevel > 1;
         if (ascNextButton != null) ascNextButton.interactable = ascensionLevel < max;
-    }
-
-    // 난이도 이름. 표에 등급이 셋뿐이라 그대로 쉬움/보통/어려움으로 부른다.
-    // 등급이 늘어나면 이름이 모자라므로 그때는 "어려움 +N"으로 이어 붙인다.
-    private const int DifficultyNameCount = 3;
-
-    private static string DifficultyName(int level)
-    {
-        int i = Mathf.Clamp(level, 1, int.MaxValue) - 1;
-        if (i < DifficultyNameCount) return Loc.T("ui.difficulty." + i);
-        return Loc.F("ui.difficulty.plus", Loc.T("ui.difficulty." + (DifficultyNameCount - 1)), i - DifficultyNameCount + 1);
     }
 
     // 등급 효과를 % 증가로 표기. 최고 해금 등급에 있고 위 등급이 더 있으면 해금 안내를 덧붙인다.

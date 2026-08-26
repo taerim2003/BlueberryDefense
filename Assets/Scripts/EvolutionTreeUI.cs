@@ -209,9 +209,6 @@ public class EvolutionTreeUI : MonoBehaviour
                 : skills.GetPathEffectText(currentSkill.Id, path, legacyTier);
             if (!string.IsNullOrEmpty(text)) parts.Add(text);
         }
-        if (tier == 1)
-            parts.Add("<color=#FF8A3C>" + Loc.F("ui.evotree.tier1Bonus", Mathf.RoundToInt((EvolutionRoutes.EvolveDamageMult - 1f) * 100f)) + "</color>");
-
         return string.Join("\n", parts);
     }
 

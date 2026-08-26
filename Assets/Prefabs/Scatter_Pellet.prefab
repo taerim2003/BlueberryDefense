@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92f4a232729719f4089aec8f704a950a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmallOrb
-  moveSpeed: 5
-  lifetime: 2
+  moveSpeed: 32
+  lifetime: 0.8
   impactVfxPrefab: {fileID: 4748681987041982144, guid: 35260861c151a204496200369fbb9182, type: 3}
 --- !u!114 &2894235327238057344
 MonoBehaviour:

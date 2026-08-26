@@ -938,7 +938,10 @@ public class PlayerSkills : MonoBehaviour
     private const int ArrowRainMaxWaves = 6;
 
     // T2부터 기본공격이 화살비로 교체된다. 이 조건이 곧 "정면 화살이 안 나간다"는 뜻이라 한 곳에 모아 둔다.
-    private static bool ArrowRainReplacesShot(EquippedSkill skill) => skill.PathTier[2] >= 2;
+    // ⚠️ **기본공격 전용 진화다.** Id를 안 보면 path2를 2티어까지 올린 **다른 스킬**까지 걸려서
+    //    레벨업 카드에 "화살비 +N차례"가 뜬다(호밍 "소형 미사일 다발"에서 실제로 그랬다).
+    private static bool ArrowRainReplacesShot(EquippedSkill skill) =>
+        skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[2] >= 2;
 
     private static int ArrowRainWaveCount(EquippedSkill skill) =>
         Mathf.Min(ArrowRainBaseWaves + (skill.PathTier[2] >= 3 ? 1 : 0) + skill.ExtraProjectiles,
@@ -1555,6 +1558,10 @@ public class PlayerSkills : MonoBehaviour
 
     private const float ScatterFireBackOffset = 0.35f; // 화약 불꽃을 알보다 얼마나 뒤에 놓을지(유닛)
 
+    // 🔴 산탄은 **한 프레임에 전탄을 동시에** 내보낸다(사용자 명세, 8/25 빌드 검수).
+    //    공격 애니메이션이 딱 한 번 도는 동안 탄이 전부 나가고 끝나는 것이 이 스킬이 원하는 손맛이다 —
+    //    시간차를 두고 나눠 쏘면 애니메이션이 여러 번 도는 것처럼 보여서 산탄이 아니게 된다.
+    //    빠르기·사거리는 `Scatter_Pellet.prefab`의 `moveSpeed`·`lifetime`이 정한다(게임에서 제일 빠른 투사체).
     // 적이 오는 왼쪽으로 부채꼴 산탄. 알이 늘어도 각도는 그대로라 **촘촘해지는 것**이 눈에 보인다.
     private void FireShotgunPellets(float damage, float critChance, EquippedSkill skill)
     {
@@ -1569,10 +1576,10 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[2] >= 3) { pellets *= 3; spreadDegrees = 0f; pelletDamage *= 1.6f; }
         else if (skill.PathTier[2] >= 2) { pellets *= 2; spreadDegrees = 0f; pelletDamage *= 1.3f; }
 
-        Vector3 origin = transform.position + Vector3.up * 0.2f;
-
         // 전용 그림이 배선돼 있으면 그쪽. 폴백(shotgunPelletPrefab)은 추적 오브와 공유하는 원본이라 그림이 오브다.
         GameObject pelletPrefab = scatterPelletPrefab != null ? scatterPelletPrefab : shotgunPelletPrefab;
+
+        Vector3 origin = transform.position + Vector3.up * 0.2f;
 
         for (int i = 0; i < pellets; i++)
         {
@@ -1594,6 +1601,9 @@ public class PlayerSkills : MonoBehaviour
             SmallOrb pellet = obj.GetComponent<SmallOrb>();
             if (pellet == null) continue;
             pellet.CritChance = critChance;
+            // 🔴 SmallOrb의 기본 출처가 Orb다 — 안 갈아주면 산탄 피해가 **데미지 미터에 오브로 잡힌다**.
+            pellet.Source = ActiveSkillId.Shotgun;
+            // 관통 없음(PierceRemaining=0 기본값) — 첫 명중에 바로 사라진다. 산탄의 정체성이라 켜지 말 것.
             pellet.Init(dir, pelletDamage, false);
         }
 
@@ -1790,12 +1800,12 @@ public class PlayerSkills : MonoBehaviour
     private static readonly Color LightningRodTipColor = new Color(1f, 0.95f, 0.45f, 1f); // 끝에 노란 촉
     private static Sprite lightningRodSprite;
 
-    private GameObject SpawnLightningRod(Vector3 center, bool empowered)
+    private GameObject SpawnLightningRod(Vector3 rodCenter, bool empowered)
     {
-        // 전용 도트가 배선돼 있으면 그쪽. 그림 높이(3.25유닛)가 프리미티브 높이(3.2)와 사실상 같아 scale 1로 쓴다.
+        // 전용 도트가 배선돼 있으면 그쪽. 프리팹이 이미 1.5배(다른 이펙트와 같은 픽셀 배율)라 여기서 더 곱하지 않는다.
         if (lightningRodPrefab != null)
         {
-            GameObject go = Instantiate(lightningRodPrefab, center + Vector3.down * 0.4f, Quaternion.identity);
+            GameObject go = Instantiate(lightningRodPrefab, rodCenter, Quaternion.identity);
             if (empowered) go.transform.localScale *= 1.25f;
             return go;
         }
@@ -1813,7 +1823,7 @@ public class PlayerSkills : MonoBehaviour
         body.sprite = lightningRodSprite;
         body.color = LightningRodColor;
         body.sortingOrder = 50; // 배경(-100)보다 앞, 적(100+)보다 뒤
-        rod.transform.position = center + Vector3.down * 0.4f;
+        rod.transform.position = rodCenter;
         rod.transform.localScale = new Vector3(LightningRodWidth, height, 1f);
 
         // 꼭대기의 촉 — 기둥 하나만 있으면 그냥 막대라, 번개를 받는 곳이 어딘지 보이게 한다.
@@ -1842,7 +1852,15 @@ public class PlayerSkills : MonoBehaviour
     private const float LightningRodDamageRatio = 3f;          // 1차: 본체 피해의 3배 = "개큰번개"
     private const float LightningRodEmpoweredRatio = 5f;       // 2차
     private const float LightningRodEmpoweredRadiusMult = 1.3f;
-    private const float BigThunderHalfHeight = 2.81f; // Effect_BigThunder 120px ÷ PPU32 × scale1.5 ÷ 2 — 낙뢰 아래끝을 기둥 꼭대기에 맞추는 데 쓴다
+    private const float BigThunderHalfHeight = 2.81f; // Effect_BigThunder 120px ÷ PPU32 × scale1.5 ÷ 2
+
+    // 🔴 낙뢰는 **기둥 위가 아니라 기둥 둘레**에 떨어진다(8/25 빌드 검수). 기둥은 번개를 부르는 표지일 뿐이고,
+    //    피해 범위가 반경 7유닛이라 한 줄기만 꽂히면 "넓게 때린다"는 게 화면에 안 보였다.
+    private const int LightningRodBoltsPerStrike = 3;
+    private const float LightningRodBoltSpreadRatio = 0.7f; // 반경의 몇 %까지 흩뿌리나
+    private const float LightningRodBoltScale = 1.5f;       // 프리팹(1.5배) 위에 더 키운다 — 화면을 채우는 크기
+    private const float LightningRodSpriteHeight = 4.875f;  // Effect_LightningRod 104px ÷ PPU32 × scale1.5
+    private const float LightningRodGroundOffset = 2.025f;  // 기둥 밑동이 서는 자리(카메라 중심 기준). 예전 3.25유닛 기둥의 밑동 그대로
 
     private IEnumerator LightningRodRoutine(float damage, float critChance, bool empowered)
     {
@@ -1852,17 +1870,30 @@ public class PlayerSkills : MonoBehaviour
         Vector3 center = Camera.main != null ? Camera.main.transform.position : transform.position;
         center.z = 0f;
 
-        GameObject rod = SpawnLightningRod(center, empowered);
+        // 🔴 기둥을 키울 땐 **밑동을 고정하고 위로** 키운다 — 중심을 고정하면 커진 만큼 땅에 파묻힌다.
+        float rodHeight = (lightningRodPrefab != null ? LightningRodSpriteHeight : LightningRodHeight)
+                          * (empowered ? 1.25f : 1f);
+        float groundY = center.y - LightningRodGroundOffset;
+        GameObject rod = SpawnLightningRod(new Vector3(center.x, groundY + rodHeight * 0.5f, 0f), empowered);
 
-        // 낙뢰가 기둥 꼭대기에서 위로 뻗도록 아래끝을 촉에 맞춘다(그림 pivot이 중앙이라 반높이만큼 올린다).
-        float rodHeight = LightningRodHeight * (empowered ? 1.25f : 1f);
-        float boltCenterY = center.y - 0.4f + rodHeight * 0.5f + BigThunderHalfHeight;
+        // 번개 아래끝도 같은 바닥선에 맞춘다(그림 pivot이 중앙이라 반높이만큼 올린다).
+        float boltCenterY = groundY + BigThunderHalfHeight * LightningRodBoltScale;
+        Vector3 boltScale = (bigThunderVfxPrefab != null ? bigThunderVfxPrefab.transform.localScale : Vector3.one)
+                            * LightningRodBoltScale;
 
         for (float elapsed = 0f; elapsed < LightningRodDuration; elapsed += LightningRodInterval)
         {
             // 연출과 판정을 같은 틱에 맞춘다 — 번개가 내리치는 순간 아래 루프가 피해·기절을 준다.
+            // ⚠️ 풀은 localScale을 되돌려 주지 않는다 — 재사용본이 옛 크기로 나오지 않게 매번 직접 넣는다.
             if (bigThunderVfxPrefab != null)
-                ObjectPool.Instance.Spawn(bigThunderVfxPrefab, new Vector3(center.x, boltCenterY, 0f), Quaternion.identity);
+            {
+                for (int i = 0; i < LightningRodBoltsPerStrike; i++)
+                {
+                    float x = center.x + Random.Range(-1f, 1f) * radius * LightningRodBoltSpreadRatio;
+                    GameObject bolt = ObjectPool.Instance.Spawn(bigThunderVfxPrefab, new Vector3(x, boltCenterY, 0f), Quaternion.identity);
+                    if (bolt != null) bolt.transform.localScale = boltScale;
+                }
+            }
 
             foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             {

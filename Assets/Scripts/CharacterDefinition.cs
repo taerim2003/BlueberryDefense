@@ -69,7 +69,7 @@ public class CharacterDefinition : ScriptableObject
         }
         if (requiredClearMap != null)
         {
-            lines.Add((ClearConditionMet ? "✔ " : "• ") + Loc.F("unlock.clearMap", requiredClearMap.Name, requiredClearAscension));
+            lines.Add((ClearConditionMet ? "✔ " : "• ") + Loc.F("unlock.clearMap", requiredClearMap.Name, AscensionTable.DifficultyName(requiredClearAscension)));
         }
         return lines.ToArray();
     }

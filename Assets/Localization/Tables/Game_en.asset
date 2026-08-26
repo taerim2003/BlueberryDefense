@@ -2386,7 +2386,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873268
-    m_Localized: Clear {0} at Ascension {1}
+    m_Localized: Clear {0} on {1}
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873269
