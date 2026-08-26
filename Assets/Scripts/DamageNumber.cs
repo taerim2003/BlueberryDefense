@@ -38,7 +38,7 @@ public class DamageNumber : MonoBehaviour
     }
 
     // offset은 같은 공격의 서브히트를 쌓기 위한 오프셋(세로는 고정 간격, 가로는 Enemy가 흔들어 넘긴다).
-    public void Init(float damage, bool isCrit = false, Vector3 offset = default)
+    public void Init(float damage, bool isCrit = false, Vector3 offset = default, float delay = 0f)
     {
         text.text = Mathf.RoundToInt(damage) + (isCrit ? "!" : "");
 
@@ -48,10 +48,13 @@ public class DamageNumber : MonoBehaviour
         // 치명타는 이미 전용 빨강이라 색은 그대로 두고 크기 차등만 받는다.
         baseGradient = isCrit ? CritGradient : DeepenGradient(startGradient, t);
 
-        timer = 0f;
+        timer = -delay;
         spawnPos = transform.position + offset;
         transform.position = spawnPos;
-        text.colorGradient = baseGradient;
+        // 딜레이 중엔 투명하게 대기
+        TMPro.VertexGradient g = baseGradient;
+        if (delay > 0f) { g.topLeft.a = 0f; g.topRight.a = 0f; g.bottomLeft.a = 0f; g.bottomRight.a = 0f; }
+        text.colorGradient = g;
     }
 
     private static TMPro.VertexGradient DeepenGradient(TMPro.VertexGradient g, float t) =>
@@ -62,10 +65,11 @@ public class DamageNumber : MonoBehaviour
     private void Update()
     {
         timer += Time.deltaTime;
-        transform.position = spawnPos + Vector3.up * (moveSpeed * timer);
+        float visible = Mathf.Max(0f, timer); // 딜레이 중엔 위치 고정, 알파 0 유지
+        transform.position = spawnPos + Vector3.up * (moveSpeed * visible);
 
         // 그라데이션을 쓰면 text.color로는 알파가 먹지 않아 네 꼭짓점을 직접 낮춘다.
-        float a = Mathf.Lerp(1f, 0f, timer / lifetime);
+        float a = timer < 0f ? 0f : Mathf.Lerp(1f, 0f, timer / lifetime);
         TMPro.VertexGradient g = baseGradient;
         g.topLeft.a = a; g.topRight.a = a; g.bottomLeft.a = a; g.bottomRight.a = a;
         text.colorGradient = g;
