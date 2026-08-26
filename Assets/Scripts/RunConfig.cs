@@ -7,4 +7,9 @@ public static class RunConfig
     public static MapDefinition Map;
     public static CharacterDefinition Character; // 선택 화면이 채움. null이면 프리팹 기본값(현행)으로 동작
     public static int AscensionLevel = 1;        // 이번 판 승천(난이도) 등급. 선택 화면이 채움(기본 1 = 현재 난이도)
+
+    // 이번 실행에서 판을 한 번이라도 시작했는가. TitleBgm이 첫 접속곡/복귀곡을 가르는 데 쓴다.
+    // RunBootstrap.Awake(=판 시작)가 세우고, 승패는 안 가린다. static이라 씬 전환은 넘어가고
+    // 게임을 껐다 켜면 false로 돌아온다(= 세션 기준. 사용자 결정).
+    public static bool HasPlayedThisSession;
 }

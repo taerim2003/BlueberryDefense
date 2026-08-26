@@ -9,7 +9,8 @@ using UnityEngine.UI;
 // SceneManager.LoadScene을 직접 부르는 자리가 새로 생기면 여기로 바꿔야 연출이 붙는다.
 public static class SceneFade
 {
-    public const float FadeOutDuration = 0.35f;  // 어두워지는 시간(누른 직후라 짧게)
+    public const float FadeOutDuration = 0.5f;   // 어두워지는 시간. BGM도 이 시간에 맞춰 잦아든다 —
+                                                 // 0.35s는 음악이 잦아드는 게 안 들려서 늘렸다
     public const float FadeInDuration = 0.45f;   // 밝아지는 시간(새 씬을 보여주는 쪽이라 조금 길게)
 
     public static void LoadScene(string sceneName)
@@ -83,5 +84,11 @@ public class SceneFadeRunner : MonoBehaviour
         cover.raycastTarget = to > 0f; // 다 밝아졌으면 클릭을 다시 통과시킨다
     }
 
-    private void SetAlpha(float a) => cover.color = new Color(0f, 0f, 0f, a);
+    // 화면이 어두워지는 만큼 BGM도 물러난다. 이걸 안 하면 음악은 만땅으로 울리다가
+    // 씬이 언로드되는 순간 뚝 끊긴다 — 검은 화면만으로는 그 끊김이 안 가려진다.
+    private void SetAlpha(float a)
+    {
+        cover.color = new Color(0f, 0f, 0f, a);
+        BgmMuffle.SceneFadeGain = 1f - a;
+    }
 }

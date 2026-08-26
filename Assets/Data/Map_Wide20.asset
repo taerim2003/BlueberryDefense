@@ -19,7 +19,7 @@ MonoBehaviour:
   background: {fileID: 0}
   backgroundFrames: []
   backgroundFrameSeconds: 0.4
-  bgm: {fileID: 0}
+  bgm: {fileID: 8300000, guid: c16096bea2422824092345d87fe4ed88, type: 3}
   unlockedFromStart: 0
   requiredClearMap: {fileID: 11400000, guid: 6e8e7f7751a96b746afa6b8fd4d9b777, type: 2}
   requiredClearAscension: 2

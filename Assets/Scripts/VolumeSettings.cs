@@ -20,6 +20,13 @@ public static class VolumeSettings
     // SfxPlayer가 원래 쓰던 값. 사용자 설정(0~1)을 여기에 곱한다.
     public const float SfxBaseGain = 1.3f;
 
+    // 배경음도 같은 방식. 구해 온 음원들이 효과음보다 훨씬 크게 뽑혀 있어 슬라이더 1.0에서도 귀가 아프다.
+    public const float BgmBaseGain = 0.5f;
+
+    // 실제로 BGM AudioSource에 넣을 값. BGM 볼륨을 만지는 곳은 전부 이걸 쓸 것 —
+    // Bgm을 직접 넣으면 그 소스만 기본 게인을 안 먹어 혼자 크게 난다.
+    public static float BgmVolume => Bgm * BgmBaseGain;
+
     public static float Master { get; private set; } = 1f;
     public static float Bgm { get; private set; } = 1f;
     public static float Sfx { get; private set; } = 1f;
@@ -50,7 +57,7 @@ public static class VolumeSettings
         if (source == null) return;
         EnsureLoaded();
         if (!bgmSources.Contains(source)) bgmSources.Add(source);
-        source.volume = Bgm; // 마스터는 AudioListener가 이미 곱한다
+        source.volume = BgmVolume; // 마스터는 AudioListener가 이미 곱한다
     }
 
     private static void Apply()
@@ -61,7 +68,7 @@ public static class VolumeSettings
         for (int i = bgmSources.Count - 1; i >= 0; i--)
         {
             if (bgmSources[i] == null) { bgmSources.RemoveAt(i); continue; }
-            bgmSources[i].volume = Bgm;
+            bgmSources[i].volume = BgmVolume;
         }
     }
 

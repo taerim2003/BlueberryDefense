@@ -8,9 +8,12 @@ public class RunBootstrap : MonoBehaviour
     [SerializeField] private MapDefinition defaultMap; // RunConfig.Map이 null일 때(씬 단독 실행) 사용
 
     private AudioSource bgmSource;
+    private AudioLowPassFilter bgmLowPass;
+    private float muffleBlend; // 0 = 평소, 1 = 클리어/게임오버 화면에서 "옆방" 소리
 
     private void Awake()
     {
+        RunConfig.HasPlayedThisSession = true; // 타이틀로 돌아갔을 때 TitleBgm이 복귀곡을 틀 근거
         ApplyCharacterVisuals();
         ApplyMap();
     }
@@ -85,8 +88,27 @@ public class RunBootstrap : MonoBehaviour
             bgmSource.loop = true;
             bgmSource.playOnAwake = false;
             VolumeSettings.RegisterBgm(bgmSource); // 옵션의 배경음 볼륨을 재생 전에 반영
+
+            // 클리어/게임오버 화면에서 곡을 뒤로 물리기 위한 필터. 판이 끝나도 곡은 계속 돌고
+            // 씬 전환도 없으므로, 새 소스를 만들 필요 없이 이 하나에 필터만 걸면 된다.
+            bgmLowPass = gameObject.AddComponent<AudioLowPassFilter>();
+            bgmLowPass.cutoffFrequency = BgmMuffle.OpenCutoff;
+
             bgmSource.Play();
         }
+    }
+
+    // 판이 끝나면(승패 무관) BGM을 "옆방에서 들리는" 소리로 물린다 — 타이틀 화면의 패널과 같은 처리.
+    // ⚠️ 이 시점엔 Time.timeScale이 0이므로 BgmMuffle이 unscaledDeltaTime으로 보간한다.
+    private void Update()
+    {
+        if (bgmSource == null) return;
+
+        GameManager gm = GameManager.Instance;
+        bool ended = gm != null && (gm.IsGameOver || gm.IsGameClear);
+
+        muffleBlend = BgmMuffle.Advance(muffleBlend, ended);
+        BgmMuffle.Apply(bgmSource, bgmLowPass, muffleBlend);
     }
 
     // 필드 확장 = 카메라 줌아웃 + 절대 좌표를 같은 비율로 벌리기. 캐릭터/적 스케일은 손대지 않는다.
