@@ -12,6 +12,13 @@ using TMPro;
 //
 // 사용자 피드백으로 톤을 바꿀 때 **여기 위쪽 토큰만 고치고 메뉴를 다시 돌리면** 전 화면이 따라온다.
 // 씬을 손으로 고치면 다음 실행에 되돌아가므로, 예외를 두고 싶으면 Skip 목록에 넣을 것.
+//
+// 🧰 이 도구가 **전 화면의 UI 스킨을 단독 소유**한다:
+//  - 런타임에 코드로 짓는 UI(설정·일시정지·컬렉션)는 씬이 아니라 `Assets/Resources/UISkin.asset`을 본다.
+//    그 에셋은 손으로 만들지 말고 `Window > Blueberry Defense > UI 스킨 에셋 만들기`로 굽는다.
+//  - 버튼 손맛(호버 배율·idleDim)은 `JuicyTuning.cs`가 단독 소유 — 인스펙터에서 고쳐도 이 도구가 덮는다.
+//  - ⚠️ `UISkin.FitSlice`는 아직 `img.type = Sliced`를 강제한다. CLAUDE.md §5-1("무조건 Simple")과
+//    정면으로 충돌하므로 **이 도구를 돌리기 전에 그 함수부터 볼 것** — 손으로 Simple로 바꿔 놔도 되돌아간다.
 public static class UISkinApply
 {
     // ── 스킨 토큰 (원본: Title 씬 CharacterSelectRoot / MapSelectRoot) ──

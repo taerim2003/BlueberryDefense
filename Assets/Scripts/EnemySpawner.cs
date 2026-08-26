@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// ⚠️ **UFO가 떨구는 투하물은 물량 쿼터에 안 잡힌다.** UFO 벽 스테이지(13·22)가 게임에서 제일 무거운 판인 이유고,
+//    프레임이 떨어진다는 신고가 오면 여기부터 의심할 것. 쿼터를 올려 잡으면 그 두 판이 먼저 터진다.
 public class EnemySpawner : MonoBehaviour
 {
     // 적 로스터·스폰 파라미터는 MapDefinition이 소유한다. RunBootstrap이 판 시작 시 ActiveMap을 세팅(Start 전).
@@ -171,6 +173,9 @@ public class EnemySpawner : MonoBehaviour
             bossSpawnedThisStage = true;
             spawnAsBoss = true;
         }
+        // ⚠️ 아래는 **else-if 사슬**이라 확률이 서로 묶여 있다 — 앞 확률을 올리면 뒤 종류가 전부 줄어든다.
+        //    한 종류만 늘리려고 그 줄의 확률을 올리면 아래쪽 적이 조용히 안 나오게 되므로,
+        //    벽 스테이지처럼 한 종류로 몰 때가 아니면 **사슬 전체를 같이 보고 조정할 것.**
         else if (map.treasureEnemyPrefab != null && ExtraTreasureChance > 0f && Random.value < ExtraTreasureChance)
             prefabToSpawn = map.treasureEnemyPrefab;
         else if (map.eliteEnemyPrefab != null && Random.value < eliteChance)

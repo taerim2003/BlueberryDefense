@@ -16,6 +16,11 @@ using TMPro;
 //
 // OptionsMenu·PauseMenu처럼 씬 배치 없이 런타임에 자체 Canvas를 만든다(옷은 UISkin이 입힌다).
 // 아이콘은 씬 배선이 아니라 Resources의 SkillIconLibrary에서 집는다 — 타이틀 씬엔 LevelUpUI가 없다.
+// 그 에셋은 `Window > Blueberry Defense > 스킬 아이콘 라이브러리 굽기`로 굽는다.
+// **enum ↔ 파일명 표는 그 도구가 단독 소유**한다 — 여기서 이름을 다시 매핑하지 말 것.
+//
+// 발견 기록은 `CollectionSave`(PlayerPrefs에 CSV 한 줄). 기록을 남기는 지점은 `Acquire`/`Evolve` **4곳뿐**이라,
+// 새 획득 경로를 만들면 거기서도 불러줘야 도감에 뜬다.
 public class CollectionUI : MonoBehaviour
 {
     public static CollectionUI Instance { get; private set; }

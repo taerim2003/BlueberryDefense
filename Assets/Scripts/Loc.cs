@@ -9,6 +9,14 @@ using UnityEngine.Localization.Tables;
 // 왜 래퍼를 두나 — 호출부가 600곳이라 API가 바뀌거나 캐싱 전략을 손볼 때 여기 한 곳만 고치면 된다.
 // 그리고 StringDatabase.GetLocalizedString()은 호출마다 테이블을 찾아 들어가므로
 // HUD처럼 매 프레임 도는 자리에서 쓰면 비싸다 — 테이블을 잡아두고 엔트리만 읽는다.
+//
+// 🧰 번역 시스템 소유권:
+//  - 🔴 **TSV가 원본**(`Assets/Localization/*_ko.tsv`·`*_en.tsv`). 표(`Tables/Game`)를 손으로 편집하면 되돌릴 수 없다.
+//    적재는 `Window > Blueberry Defense > 번역 - 모든 TSV를 표에 적재` 하나로 끝난다(파일명 접미사가 곧 로케일).
+//    ⚠️ 그 도구는 추가·갱신만 한다 — TSV에서 키를 지워도 표에는 남는다(안 읽으면 무해).
+//  - 🔴 **표시 문구를 SO에서 직접 읽지 말 것.** `SkillNode.Name` 같은 프로퍼티가 `Loc.TOr` 창구다.
+//    UI 문구를 `const string`으로 두지 말 것.
+//  - 씬 TMP는 `LocalizedTmp`로 키에 묶되, **런타임에 코드가 값을 덮어쓰는 TMP에는 붙이지 말 것**(서로 싸운다).
 public static class Loc
 {
     public const string Table = "Game";
