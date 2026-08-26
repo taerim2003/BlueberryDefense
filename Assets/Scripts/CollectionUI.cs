@@ -2,19 +2,24 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using DG.Tweening;
 using TMPro;
 
 // 컬렉션(도감) — 지금까지 얻어 본 스킬과 그 진화 트리를 보는 화면. 타이틀 Btn_컬렉션이 연다.
 //
-// 레퍼런스는 **캐릭터 선택 화면**이다: 큰 판 하나로 화면을 덮지 않고, 흐르는 블루베리 벽지 위에
-// 작은 판을 여러 개 놓아 영역을 나눈다. 오른쪽 상세의 2루트 × 2티어 배치는 인게임 진화 창
-// (EvolutionTreeUI)을 그대로 따른다 — 같은 그림을 두 화면에서 다르게 보여주면 다시 배워야 한다.
+// 🔴 **화면은 이 코드가 아니라 프리팹이 갖는다** — Assets/Prefabs/UI/CollectionPanel.prefab.
+//    Title 씬에 그 프리팹 인스턴스가 놓여 있고, 여기서는 참조를 받아 내용을 채울 뿐이다.
+//    위치·크기·색·스프라이트는 전부 인스펙터에서 고친다.
+//    (예전엔 이 클래스가 BuildUI()로 Canvas부터 통째로 지어서 인스펙터에 아무것도 안 보였다.)
+//    판·글자 규격은 CLAUDE.md §5-1 표가 원본이다 — 여기 옮겨 적지 않는다.
 //
-// 🔴 **판은 그림 원본 크기를 넘기지 않는다.** 자리가 모자라면 판을 키우는 게 아니라 더 쪼갠다.
-//    (베개네모 373x195 · 넓은바 561x145 · 바 361x103 · 아이콘칸 143x141 — UISkinApply의 표가 원본)
+// ⚠️ **반복 칸(스킬 16칸 · 진화 노드 4칸)은 인스펙터 배선이 아니라 이름 규칙으로 찾는다** —
+//    `Slot_A{액티브 enum 값}` · `Slot_P{패시브 enum 값}` · `Node_R{루트}T{티어}`.
+//    칸 하나하나를 배열에 꽂아 두면 로스터가 바뀔 때 조용히 어긋나서, 이름을 단일 소스로 삼았다.
+//    **프리팹에서 이 칸들의 이름을 바꾸거나 지우면 그 칸이 사라진다.** 개수가 로스터와 어긋나면
+//    Awake가 경고를 찍는다 — 그때는 프리팹을 다시 구워야 한다(BakeRuntimePanels 참고).
 //
-// OptionsMenu·PauseMenu처럼 씬 배치 없이 런타임에 자체 Canvas를 만든다(옷은 UISkin이 입힌다).
 // 아이콘은 씬 배선이 아니라 Resources의 SkillIconLibrary에서 집는다 — 타이틀 씬엔 LevelUpUI가 없다.
 // 그 에셋은 `Window > Blueberry Defense > 스킬 아이콘 라이브러리 굽기`로 굽는다.
 // **enum ↔ 파일명 표는 그 도구가 단독 소유**한다 — 여기서 이름을 다시 매핑하지 말 것.
@@ -24,15 +29,6 @@ using TMPro;
 public class CollectionUI : MonoBehaviour
 {
     public static CollectionUI Instance { get; private set; }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Bootstrap()
-    {
-        if (Instance != null) return;
-        var go = new GameObject("CollectionUI");
-        DontDestroyOnLoad(go);
-        go.AddComponent<CollectionUI>();
-    }
 
     // 폐지된 Refresh는 뺀다 — enum엔 남아 있지만(정수 직렬화) 게임에 안 나오는 칸이다.
     private static readonly PassiveSkillId[] PassiveRoster =
@@ -44,25 +40,36 @@ public class CollectionUI : MonoBehaviour
     private static readonly ActiveSkillId[] ActiveRoster =
         (ActiveSkillId[])Enum.GetValues(typeof(ActiveSkillId));
 
-    // 색은 UISkin이 스프라이트에 곱할 값 겸, 스킨 에셋이 없을 때의 폴백(OptionsMenu와 같은 규칙).
+    // 색은 UISkin이 스프라이트에 곱할 값. 발견 여부·선택 여부에 따라 런타임에 갈리는 것만 남긴다
+    // (판 바탕색처럼 안 변하는 것은 프리팹이 갖는다).
     private static readonly Color SkinColor = new Color(0.420f, 0.482f, 0.910f, 1f);
-    private static readonly Color DimColor = new Color(0.031f, 0.020f, 0.051f, 0.961f);
     private static readonly Color SelectedColor = new Color(1f, 0.878f, 0.302f, 1f);
     private static readonly Color LockedColor = new Color(0.22f, 0.22f, 0.30f, 1f);
     private static readonly Color LockedTextColor = new Color(0.62f, 0.62f, 0.70f, 1f);
     private static readonly Color SilhouetteColor = new Color(0f, 0f, 0f, 0.55f);
     private static readonly Color SubTextColor = new Color(0.88f, 0.90f, 1f, 1f);
 
-    // ── 칸 크기 (전부 그림 원본 이하) ──
-    private const float SlotSize = 110f;      // 아이콘칸 143x141
-    private const float SlotStep = 124f;
-    // 열 수는 칸 수에 맞춰 직사각형이 되게 나눈다 — 액티브 10=5×2, 패시브 6=3×2.
-    // (둘 다 5열로 두면 패시브 마지막 한 칸이 홀로 남아 줄이 깨진다)
-    private const int ActiveCols = 5, PassiveCols = 3;
-    private const float NodeW = 360f, NodeH = 188f;   // 베개네모 373x195
-    private const float RosterX = 210f;
-    private const float DetailX = 900f;
-    private const float NodeGap = 60f;
+    [Header("골격")]
+    [SerializeField] private GameObject panel;
+    [SerializeField] private CanvasGroup group;
+    [SerializeField] private RectTransform content;
+
+    [Header("머리 · 상세")]
+    [SerializeField] private TMP_Text headerLabel;
+    [SerializeField] private TMP_Text progressText;
+    [SerializeField] private TMP_Text activeGroupLabel;
+    [SerializeField] private TMP_Text passiveGroupLabel;
+    [SerializeField] private Image detailIcon;
+    [SerializeField] private TMP_Text detailName;
+    [SerializeField] private TMP_Text detailSub;
+
+    [Header("루트 (0 · 1)")]
+    [SerializeField] private TMP_Text[] routeLabels = new TMP_Text[2];
+    [SerializeField] private TMP_Text[] routeArrows = new TMP_Text[2];
+
+    [Header("닫기")]
+    [SerializeField] private Button backButton;
+    [SerializeField] private TMP_Text backLabel;
 
     // 한 칸(스킬 하나). 발견 여부에 따라 실루엣/원본으로 갈린다.
     private class Slot
@@ -82,20 +89,10 @@ public class CollectionUI : MonoBehaviour
         public TMP_Text desc;
     }
 
-    private GameObject panel;
-    private CanvasGroup group;
-    private RectTransform content;
     private Tween showTween;
     private bool isOpen;
 
-    private TMP_FontAsset font;   // 씬에 이미 쓰이는 폰트를 한 번만 잡아 둔다(한글이 깨지지 않게)
     private readonly List<Slot> slots = new List<Slot>();
-    private TMP_Text progressText;
-    private Image detailIcon;
-    private TMP_Text detailName;
-    private TMP_Text detailSub;
-    private readonly TMP_Text[] routeLabels = new TMP_Text[2];
-    private readonly TMP_Text[] routeArrows = new TMP_Text[2];
     private readonly Node[,] nodes = new Node[2, 2];   // [루트][티어-1]
 
     private bool selectedIsPassive;
@@ -104,7 +101,112 @@ public class CollectionUI : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        BuildUI();
+        BindSlots();
+        BindNodes();
+        if (backButton != null) backButton.onClick.AddListener(Close);
+        panel.SetActive(false);
+        Loc.LocaleChanged += ApplyText;
+    }
+
+    private void OnDestroy()
+    {
+        Loc.LocaleChanged -= ApplyText;
+        if (Instance == this) Instance = null;
+    }
+
+    // ── 배선 ──
+
+    // 이름 규칙으로 칸을 모은다. 순서는 상관없다 — Refresh가 칸마다 자기 id로 조회한다.
+    private void BindSlots()
+    {
+        slots.Clear();
+        foreach (var tr in content.GetComponentsInChildren<Transform>(true))
+        {
+            bool passive;
+            if (tr.name.StartsWith("Slot_A")) passive = false;
+            else if (tr.name.StartsWith("Slot_P")) passive = true;
+            else continue;
+
+            if (!int.TryParse(tr.name.Substring("Slot_A".Length), out int id))
+            {
+                Debug.LogWarning("[CollectionUI] 칸 이름에서 id를 못 읽었다: " + tr.name, tr);
+                continue;
+            }
+
+            var icon = FindDeep(tr, "Icon");
+            var slot = new Slot
+            {
+                frame = tr.GetComponent<Image>(),
+                icon = icon != null ? icon.GetComponent<Image>() : null,
+                isPassive = passive,
+                id = id,
+            };
+            if (slot.frame == null || slot.icon == null)
+            {
+                Debug.LogWarning("[CollectionUI] 칸에 Image나 Icon 자식이 없다: " + tr.name, tr);
+                continue;
+            }
+            slots.Add(slot);
+
+            var btn = tr.GetComponent<Button>();
+            if (btn != null) btn.onClick.AddListener(() => { Select(slot.isPassive, slot.id); Refresh(); });
+        }
+
+        int expected = ActiveRoster.Length + PassiveRoster.Length;
+        if (slots.Count != expected)
+            Debug.LogWarning("[CollectionUI] 칸 수가 로스터와 다르다 — 프리팹이 낡았다. 프리팹=" + slots.Count + " 로스터=" + expected, this);
+    }
+
+    private void BindNodes()
+    {
+        for (int route = 0; route < 2; route++)
+            for (int tierIdx = 0; tierIdx < 2; tierIdx++)
+            {
+                string name = "Node_R" + route + "T" + (tierIdx + 1);
+                var tr = FindDeep(content, name);
+                if (tr == null)
+                {
+                    Debug.LogWarning("[CollectionUI] 진화 노드를 못 찾았다: " + name, this);
+                    continue;
+                }
+                var icon = FindDeep(tr, "Icon");
+                var title = FindDeep(tr, "Title");
+                var desc = FindDeep(tr, "Desc");
+                var node = new Node
+                {
+                    frame = tr.GetComponent<Image>(),
+                    icon = icon != null ? icon.GetComponent<Image>() : null,
+                    title = title != null ? title.GetComponent<TMP_Text>() : null,
+                    desc = desc != null ? desc.GetComponent<TMP_Text>() : null,
+                };
+                nodes[route, tierIdx] = node;
+
+                // 조각이 하나만 빠져도 그 칸은 조용히 비어 보인다 — 어느 조각인지 이름을 찍어 준다.
+                if (node.frame == null || node.icon == null || node.title == null || node.desc == null)
+                    Debug.LogWarning("[CollectionUI] " + name + "에 조각이 없다 —"
+                        + (node.frame == null ? " Image" : "") + (node.icon == null ? " Icon" : "")
+                        + (node.title == null ? " Title" : "") + (node.desc == null ? " Desc" : ""), tr);
+            }
+    }
+
+    // 🔴 자식을 **깊이** 찾는다 — 직속 자식만 보면 안 된다.
+    //    칸 안에 액자를 한 겹 더 두는 배치(`Node_R0T1/IconBox/Icon`)가 실제로 쓰이고 있고,
+    //    그때 `Find("Icon")`은 조용히 null을 돌려줘서 아이콘이 통째로 안 그려진다.
+    private static Transform FindDeep(Transform root, string name)
+    {
+        foreach (var tr in root.GetComponentsInChildren<Transform>(true))
+            if (tr.name == name) return tr;
+        return null;
+    }
+
+    // 언어가 바뀌면 고정 문구를 다시 채운다(나머지는 Open→Refresh가 채운다).
+    // 예전엔 이 글자들이 Awake에 한 번만 정해져서, 언어를 바꾼 뒤 도감을 열면 옛 언어로 남아 있었다.
+    private void ApplyText()
+    {
+        if (headerLabel != null) headerLabel.text = Loc.T("ui.collection.title");
+        if (activeGroupLabel != null) activeGroupLabel.text = Loc.T("ui.collection.active");
+        if (passiveGroupLabel != null) passiveGroupLabel.text = Loc.T("ui.collection.passive");
+        if (backLabel != null) backLabel.text = Loc.T("ui.common.back");
     }
 
     // ── 열고 닫기 ──
@@ -116,6 +218,7 @@ public class CollectionUI : MonoBehaviour
         if (isOpen) return;
         isOpen = true;
 
+        ApplyText();
         Select(false, (int)ActiveRoster[0]);
         Refresh();
 
@@ -132,7 +235,10 @@ public class CollectionUI : MonoBehaviour
 
     private void Update()
     {
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape)) Close();
+        if (!isOpen) return;
+
+        var kb = Keyboard.current;
+        if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
     }
 
     private void PlayShow()
@@ -156,181 +262,6 @@ public class CollectionUI : MonoBehaviour
         seq.Join(group.DOFade(0f, 0.1f));
         seq.OnComplete(() => panel.SetActive(false));
         showTween = seq;
-    }
-
-    // ── 화면 짓기 ──
-
-    private void BuildUI()
-    {
-        font = FindSceneFont();
-
-        var canvasGo = new GameObject("CollectionCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasGo.transform.SetParent(transform, false);
-        var canvas = canvasGo.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 900; // 설정(1100)·일시정지(1000)보다 아래 — 그 위에 설정이 뜰 수 있다
-        var scaler = canvasGo.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-
-        panel = NewUI("Panel", canvasGo.transform);
-        Stretch(panel);
-        UISkin.Dim(AddImage(panel, DimColor, true), DimColor.a);
-        group = panel.AddComponent<CanvasGroup>();
-
-        AddWallpaper(panel.transform);
-
-        var contentGo = NewUI("Content", panel.transform);
-        Stretch(contentGo);
-        content = (RectTransform)contentGo.transform;
-        Transform root = contentGo.transform;
-
-        // 제목·발견도 — 각각 자기 판을 쓴다(머리 판 하나로 가로를 다 먹지 않게).
-        var header = MakePlate(root, "Header", new Vector2(760, -36), new Vector2(400, 104), PlateKind.BarWide);
-        AddText(header, Loc.T("ui.collection.title"), 40, TextAlignmentOptions.Center, Color.white);
-
-        var progress = MakePlate(root, "Progress", new Vector2(1500, -45), new Vector2(300, 86), PlateKind.Bar);
-        progressText = AddText(progress, "", 24, TextAlignmentOptions.Center, Color.white);
-
-        BuildRoster(root);
-        BuildDetail(root);
-
-        var close = MakeButton(root, Loc.T("ui.common.back"), Close);
-        Bottom(close, new Vector2(0, 40), new Vector2(280, 80));
-        JuicyTuning.CenterPivot(close);
-
-        UISkin.Refit(panel); // 크기가 다 정해진 뒤에 9-slice 테두리를 다시 재단
-        panel.SetActive(false);
-    }
-
-    // 캐릭터 선택 화면의 흐르는 벽지를 그대로 복제한다(속도·타일 크기까지 같아야 한 화면으로 보인다).
-    // 씬에 없으면(인게임 등) 그냥 딤만 남는다 — 컬렉션은 타이틀에서만 열린다.
-    private void AddWallpaper(Transform parent)
-    {
-        ScrollingWallpaper source = null;
-        foreach (var w in FindObjectsByType<ScrollingWallpaper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-        {
-            source = w;
-            break;
-        }
-        if (source == null) return;
-
-        var go = Instantiate(source.gameObject, parent, false);
-        go.name = "Wallpaper";
-        go.SetActive(true);
-        Stretch(go);
-        var img = go.GetComponent<RawImage>();
-        if (img != null) img.raycastTarget = false;
-    }
-
-    // 왼쪽 — 액티브·패시브 아이콘 격자. 격자를 감싸는 판은 두지 않는다(칸 하나하나가 판이다).
-    private void BuildRoster(Transform root)
-    {
-        float y = -172f;
-        MakeGroupLabel(root, ref y, Loc.T("ui.collection.active"));
-        MakeSlotGrid(root, ref y, false, Array.ConvertAll(ActiveRoster, a => (int)a), ActiveCols);
-
-        y -= 30f;
-        MakeGroupLabel(root, ref y, Loc.T("ui.collection.passive"));
-        MakeSlotGrid(root, ref y, true, Array.ConvertAll(PassiveRoster, p => (int)p), PassiveCols);
-    }
-
-    private void MakeGroupLabel(Transform parent, ref float y, string text)
-    {
-        var plate = MakePlate(parent, "Label_" + text, new Vector2(RosterX, y), new Vector2(220, 64), PlateKind.Bar);
-        AddText(plate, text, 22, TextAlignmentOptions.Center, Color.white);
-        y -= 76f;
-    }
-
-    private void MakeSlotGrid(Transform parent, ref float y, bool isPassive, int[] ids, int perRow)
-    {
-        for (int i = 0; i < ids.Length; i++)
-        {
-            int col = i % perRow;
-            int row = i / perRow;
-
-            var go = MakePlate(parent, "Slot_" + (isPassive ? "P" : "A") + ids[i],
-                new Vector2(RosterX + col * SlotStep, y - row * SlotStep),
-                new Vector2(SlotSize, SlotSize), PlateKind.IconBox);
-
-            var iconGo = NewUI("Icon", go.transform);
-            Center(iconGo, new Vector2(SlotSize - 34, SlotSize - 34));
-            var icon = AddImage(iconGo, Color.white, false);
-            icon.preserveAspect = true;
-
-            var slot = new Slot { frame = go.GetComponent<Image>(), icon = icon, isPassive = isPassive, id = ids[i] };
-            slots.Add(slot);
-
-            var btn = go.AddComponent<Button>();
-            btn.targetGraphic = slot.frame;
-            btn.transition = Selectable.Transition.None; // 선택 하이라이트를 직접 칠하므로 기본 틴트는 끈다
-            btn.onClick.AddListener(() => { Select(slot.isPassive, slot.id); Refresh(); });
-            JuicyTuning.Attach(go);
-        }
-
-        int rows = Mathf.CeilToInt(ids.Length / (float)perRow);
-        y -= rows * SlotStep;
-    }
-
-    // 오른쪽 — 고른 스킬의 아이콘·이름표와 2루트 × 2티어 진화 트리. 여기도 감싸는 판 없이 조각들만.
-    private void BuildDetail(Transform root)
-    {
-        var iconPlate = MakePlate(root, "DetailIcon", new Vector2(DetailX, -160), new Vector2(130, 128), PlateKind.IconBox);
-        var iconGo = NewUI("Icon", iconPlate.transform);
-        Center(iconGo, new Vector2(92, 92));
-        detailIcon = AddImage(iconGo, Color.white, false);
-        detailIcon.preserveAspect = true;
-
-        var namePlate = MakePlate(root, "DetailName", new Vector2(DetailX + 146, -159), new Vector2(520, 130), PlateKind.BarWide);
-        var nameGo = NewUI("Name", namePlate.transform);
-        Anchored(nameGo, new Vector2(0.5f, 1f), new Vector2(0, -26), new Vector2(440, 46));
-        detailName = AddText(nameGo, "", 32, TextAlignmentOptions.Center, Color.white);
-
-        var subGo = NewUI("Sub", namePlate.transform);
-        Anchored(subGo, new Vector2(0.5f, 1f), new Vector2(0, -76), new Vector2(440, 34));
-        detailSub = AddText(subGo, "", 18, TextAlignmentOptions.Center, SubTextColor, true);
-
-        float y = -300f;
-        for (int route = 0; route < 2; route++) BuildRouteRow(root, ref y, route);
-    }
-
-    private void BuildRouteRow(Transform parent, ref float y, int route)
-    {
-        // 560x96 — 넓은바 그림 원본(561x145)을 넘지 않는 최대 폭.
-        var plate = MakePlate(parent, "Route" + route, new Vector2(DetailX, y), new Vector2(560, 96), PlateKind.BarWide);
-        routeLabels[route] = AddText(plate, "", 20, TextAlignmentOptions.Center, Color.white, true);
-        y -= 106f;
-
-        for (int tierIdx = 0; tierIdx < 2; tierIdx++)
-            nodes[route, tierIdx] = MakeNode(parent, new Vector2(DetailX + tierIdx * (NodeW + NodeGap), y));
-
-        // 티어 사이 화살표 — 픽셀 폰트엔 ▶ 글리프가 없어 본문 폰트로 그린다(설정 화면 화살표와 같은 이유).
-        var arrow = NewUI("Arrow" + route, parent);
-        Anchored(arrow, new Vector2(0f, 1f), new Vector2(DetailX + NodeW, y - NodeH * 0.5f + 22), new Vector2(NodeGap, 44));
-        routeArrows[route] = AddText(arrow, "▶", 28, TextAlignmentOptions.Center, SubTextColor, true);
-
-        y -= NodeH + 24f;
-    }
-
-    private Node MakeNode(Transform parent, Vector2 pos)
-    {
-        var go = MakePlate(parent, "Node", pos, new Vector2(NodeW, NodeH), PlateKind.Panel);
-
-        var iconGo = NewUI("Icon", go.transform);
-        Anchored(iconGo, new Vector2(0f, 1f), new Vector2(26, -26), new Vector2(52, 52));
-        var icon = AddImage(iconGo, Color.white, false);
-        icon.preserveAspect = true;
-
-        var titleGo = NewUI("Title", go.transform);
-        Anchored(titleGo, new Vector2(0f, 1f), new Vector2(88, -30), new Vector2(246, 40));
-        var title = AddText(titleGo, "", 22, TextAlignmentOptions.Left, Color.white);
-
-        var descGo = NewUI("Desc", go.transform);
-        Anchored(descGo, new Vector2(0f, 1f), new Vector2(28, -88), new Vector2(NodeW - 56, NodeH - 116));
-        var desc = AddText(descGo, "", 15, TextAlignmentOptions.TopLeft, Color.white, true);
-        desc.enableWordWrapping = true;
-
-        return new Node { frame = go.GetComponent<Image>(), icon = icon, title = title, desc = desc };
     }
 
     // ── 내용 채우기 ──
@@ -411,27 +342,39 @@ public class CollectionUI : MonoBehaviour
 
     private void RefreshNode(Node node, int route, int tier, bool skillDiscovered, string unknown)
     {
+        if (node == null) return;   // 프리팹에서 노드가 빠졌을 때 — Awake가 이미 경고를 찍었다
+
         bool evoFound = skillDiscovered && (selectedIsPassive
             ? CollectionSave.HasPassiveEvo((PassiveSkillId)selectedId, route, tier)
             : CollectionSave.HasActiveEvo((ActiveSkillId)selectedId, route, tier));
 
-        node.frame.color = evoFound ? SkinColor : LockedColor;
+        // 조각별로 막는다 — 칸 배치를 바꾸다 하나가 빠져도 화면 전체가 예외로 죽지는 않게(경고는 Awake가 찍었다).
+        if (node.frame != null) node.frame.color = evoFound ? SkinColor : LockedColor;
 
-        node.icon.sprite = selectedIsPassive
-            ? SkillIconLibrary.PassiveEvo((PassiveSkillId)selectedId, route)
-            : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route);
-        node.icon.enabled = node.icon.sprite != null;
-        node.icon.color = evoFound ? Color.white : SilhouetteColor;
+        if (node.icon != null)
+        {
+            node.icon.sprite = selectedIsPassive
+                ? SkillIconLibrary.PassiveEvo((PassiveSkillId)selectedId, route)
+                : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route);
+            node.icon.enabled = node.icon.sprite != null;
+            node.icon.color = evoFound ? Color.white : SilhouetteColor;
+        }
 
-        node.title.text = evoFound
-            ? (selectedIsPassive
-                ? EvolutionRoutes.EvolvedName((PassiveSkillId)selectedId, route, tier)
-                : EvolutionRoutes.EvolvedName((ActiveSkillId)selectedId, route, tier))
-            : unknown;
-        node.title.color = evoFound ? Color.white : LockedTextColor;
+        if (node.title != null)
+        {
+            node.title.text = evoFound
+                ? (selectedIsPassive
+                    ? EvolutionRoutes.EvolvedName((PassiveSkillId)selectedId, route, tier)
+                    : EvolutionRoutes.EvolvedName((ActiveSkillId)selectedId, route, tier))
+                : unknown;
+            node.title.color = evoFound ? Color.white : LockedTextColor;
+        }
 
-        node.desc.text = evoFound ? EvoDescription(route, tier) : Loc.T("ui.collection.notFound");
-        node.desc.color = evoFound ? Color.white : LockedTextColor;
+        if (node.desc != null)
+        {
+            node.desc.text = evoFound ? EvoDescription(route, tier) : Loc.T("ui.collection.notFound");
+            node.desc.color = evoFound ? Color.white : LockedTextColor;
+        }
     }
 
     // 새 티어 하나가 옛 티어 여러 개를 한꺼번에 준다 — 설명도 이어 붙인다(인게임 진화 창과 같은 규칙).
@@ -450,105 +393,5 @@ public class CollectionUI : MonoBehaviour
             if (!string.IsNullOrEmpty(text)) parts.Add(text);
         }
         return string.Join("\n", parts);
-    }
-
-    // ── 헬퍼 ──
-
-    private enum PlateKind { Bar, BarWide, Panel, IconBox }
-
-    // 판 하나 = 그림 하나. 크기는 호출측이 주되 **그림 원본을 넘기지 않는 값**이어야 한다.
-    private GameObject MakePlate(Transform parent, string name, Vector2 pos, Vector2 size, PlateKind kind)
-    {
-        var go = NewUI(name, parent);
-        Anchored(go, new Vector2(0f, 1f), pos, size);
-        var img = AddImage(go, SkinColor, true);
-        switch (kind)
-        {
-            case PlateKind.Bar: UISkin.Bar(img); break;
-            case PlateKind.BarWide: UISkin.BarWide(img); break;
-            case PlateKind.Panel: UISkin.Panel(img); break;
-            case PlateKind.IconBox: UISkin.IconBox(img); break;
-        }
-        return go;
-    }
-
-    private GameObject MakeButton(Transform parent, string text, UnityEngine.Events.UnityAction onClick)
-    {
-        var go = NewUI("Button_" + text, parent);
-        var btn = go.AddComponent<Button>();
-        var bg = AddImage(go, SkinColor, true);
-        UISkin.Bar(bg);
-        btn.targetGraphic = bg;
-        btn.onClick.AddListener(onClick);
-
-        var label = NewUI("Label", go.transform);
-        Stretch(label);
-        AddText(label, text, 26, TextAlignmentOptions.Center, Color.white);
-
-        JuicyTuning.Attach(go);
-        return go;
-    }
-
-    private static TMP_FontAsset FindSceneFont()
-    {
-        foreach (var t in FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t.font != null) return t.font;
-        return null;
-    }
-
-    private static GameObject NewUI(string name, Transform parent)
-    {
-        var go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        return go;
-    }
-
-    private static Image AddImage(GameObject go, Color c, bool raycast)
-    {
-        var img = go.AddComponent<Image>();
-        img.color = c; img.raycastTarget = raycast;
-        return img;
-    }
-
-    // Image가 이미 붙은 오브젝트면 텍스트를 자식으로 깐다(한 오브젝트에 Graphic 둘은 불가).
-    private TMP_Text AddText(GameObject go, string txt, int size, TextAlignmentOptions align, Color c, bool body = false)
-    {
-        var host = go.GetComponent<Graphic>() != null ? NewUI("Text", go.transform) : go;
-        if (host != go) Stretch(host);
-
-        var t = host.AddComponent<TextMeshProUGUI>();
-        if (font != null) t.font = font;
-        t.text = txt; t.fontSize = size; t.alignment = align; t.color = c; t.raycastTarget = false;
-        UISkin.Text(t, body); // fontSize를 정한 뒤라야 크기별 머티리얼이 갈린다
-        return t;
-    }
-
-    private static void Stretch(GameObject go)
-    {
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-    }
-
-    private static void Center(GameObject go, Vector2 size)
-    {
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero; rt.sizeDelta = size;
-    }
-
-    private static void Bottom(GameObject go, Vector2 pos, Vector2 size)
-    {
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f); rt.pivot = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = pos; rt.sizeDelta = size;
-    }
-
-    // anchor 한 점에 붙여 배치. pivot을 anchor와 같게 잡아 위치 계산을 단순하게 유지한다.
-    private static void Anchored(GameObject go, Vector2 anchor, Vector2 pos, Vector2 size)
-    {
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = rt.pivot = anchor;
-        rt.anchoredPosition = pos; rt.sizeDelta = size;
     }
 }

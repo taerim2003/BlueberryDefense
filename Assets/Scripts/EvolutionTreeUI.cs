@@ -5,9 +5,11 @@ using TMPro;
 using DG.Tweening;
 
 // 진화 선택 창 — 2루트 × 2티어 (§EvolutionRoutes).
-// 씬의 노드는 여전히 3×3(Node_P{path}T{tier}) 9칸이지만, 여기서 왼쪽 위 2×2만 쓰고 나머지는 끈다.
-//   표시 행 0 = 루트 0 → nodes[0](T1), nodes[1](T2)
-//   표시 행 1 = 루트 1 → nodes[3](T1), nodes[4](T2)
+// 씬 오브젝트는 `Battle/Canvas/EvolutionPanel/Window` 밑의 `Node_R{루트}T{티어}` 4칸 + `Arrow_R{루트}` 2개.
+//   nodes 인덱스 = 루트*2 + (티어-1),  arrows 인덱스 = 루트.
+// 🔴 예전엔 씬에 3×3(9칸)이 깔려 있고 여기서 5칸을 런타임에 껐다 — 씬에서는 죽은 칸이 켜진 채
+//    산 칸 위에 겹쳐 보여서 어느 칸을 고쳐야 할지 분간이 안 됐다. 2026-08-26에 죽은 칸을 지우고
+//    배열을 4칸/2개로 줄였다. **씬에 보이는 것 = 화면에 나오는 것**이어야 인스펙터로 고칠 수 있다.
 public class EvolutionTreeUI : MonoBehaviour
 {
     [System.Serializable]
@@ -30,12 +32,6 @@ public class EvolutionTreeUI : MonoBehaviour
     private static readonly Color ActiveArrowColor = new Color(1f, 0.9f, 0.4f, 1f);
     private static readonly Color InactiveArrowColor = new Color(0.4f, 0.4f, 0.4f, 1f);
 
-    // 2×2로 쓰는 노드 인덱스 — [루트][티어-1]
-    private static readonly int[,] NodeIndex = { { 0, 1 }, { 3, 4 } };
-    private static readonly int[] ArrowIndex = { 0, 2 };            // 루트별 T1→T2 화살표
-    private static readonly int[] HiddenNodes = { 2, 5, 6, 7, 8 };  // 3×3 중 안 쓰는 칸
-    private static readonly int[] HiddenArrows = { 1, 3, 4, 5 };
-
     public static EvolutionTreeUI Instance { get; private set; }
 
     [SerializeField] private GameObject panel;
@@ -46,8 +42,8 @@ public class EvolutionTreeUI : MonoBehaviour
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
     [SerializeField] private Sprite[] pathIconSprites; // 루트 0~1 색상 아이콘 (기존 path 아이콘 재사용)
-    [SerializeField] private NodeButton[] nodes; // 길이 9, index = path*3 + (tier-1)
-    [SerializeField] private TMP_Text[] arrows;  // 길이 6, index = path*2 + (0: T1->T2, 1: T2->T3)
+    [SerializeField] private NodeButton[] nodes; // 길이 4, index = route*2 + (tier-1)
+    [SerializeField] private TMP_Text[] arrows;  // 길이 2, index = route (T1→T2 화살표)
 
     private PlayerSkills skills;
     private PlayerPassives passives;
@@ -65,12 +61,21 @@ public class EvolutionTreeUI : MonoBehaviour
         Instance = this;
         panel.SetActive(false);
 
+        // 🔴 배선이 비면 여기서 조용히 죽는 게 아니라 **무엇이 비었는지** 찍고 넘어간다.
+        //    씬에서 노드를 다시 만들면 배열이 통째로 NULL이 되는데, 예전엔 그 상태로 예외가 나서
+        //    진화창이 통째로 안 열렸고 원인이 화면에 안 드러났다.
         for (int route = 0; route < 2; route++)
         {
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
             {
+                int i = route * 2 + tierIdx;
+                if (nodes == null || i >= nodes.Length || nodes[i] == null || nodes[i].button == null)
+                {
+                    Debug.LogWarning("[EvolutionTreeUI] nodes[" + i + "](루트" + route + " " + (tierIdx + 1) + "차)의 Button이 비었다 — 인스펙터를 확인할 것", this);
+                    continue;
+                }
                 int capturedRoute = route;
-                nodes[NodeIndex[route, tierIdx]].button.onClick.AddListener(() => OnRouteClicked(capturedRoute));
+                nodes[i].button.onClick.AddListener(() => OnRouteClicked(capturedRoute));
             }
         }
     }
@@ -124,12 +129,6 @@ public class EvolutionTreeUI : MonoBehaviour
             nodeTweens.Add(skillIcon.rectTransform.DOPunchScale(Vector3.one * 0.4f, 0.26f, 8, 0.5f).SetUpdate(true));
         }
 
-        foreach (int i in HiddenNodes)
-            if (nodes[i].button != null) nodes[i].button.gameObject.SetActive(false);
-        if (arrows != null)
-            foreach (int i in HiddenArrows)
-                if (i < arrows.Length && arrows[i] != null) arrows[i].gameObject.SetActive(false);
-
         for (int route = 0; route < 2; route++)
         {
             // 1차 진화에서 고르지 않은 루트는 영영 닫힌다.
@@ -145,17 +144,19 @@ public class EvolutionTreeUI : MonoBehaviour
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
             {
                 int tier = tierIdx + 1;
-                NodeButton node = nodes[NodeIndex[route, tierIdx]];
-                node.button.gameObject.SetActive(true);
+                NodeButton node = nodes[route * 2 + tierIdx];
+                if (node == null) continue;   // 배선이 빈 칸 — Awake가 어느 칸인지 이미 찍었다
 
                 bool owned = !routeAbandoned && stage >= tier;
                 bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1;
                 bool locked = !owned && !available;
 
                 SetIcon(node.icon, RouteIcon(route) ?? GetIcon(pathIconSprites, route));
-                node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
-                                         : (locked ? LockedFrameColor : BaseFrameColor);
-                node.icon.color = locked ? new Color(0.55f, 0.55f, 0.55f, 1f) : Color.white;
+                if (node.frame != null)
+                    node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
+                                             : (locked ? LockedFrameColor : BaseFrameColor);
+                if (node.icon != null)
+                    node.icon.color = locked ? new Color(0.55f, 0.55f, 0.55f, 1f) : Color.white;
 
                 if (node.title != null)
                 {
@@ -164,22 +165,23 @@ public class EvolutionTreeUI : MonoBehaviour
                 }
 
                 string effect = RouteEffect(route, tier);
-                // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
-                node.description.text = routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
-                                      : !routeUnlocked ? Loc.F("ui.evotree.lockedPrereq", prereqName) + " " + effect
-                                      : locked ? Loc.T("ui.evotree.locked") + " " + effect
-                                      : effect;
-                node.description.color = locked ? LockedTextColor : Color.white;
-                node.button.interactable = available;
+                if (node.description != null)
+                {
+                    // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
+                    node.description.text = routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
+                                          : !routeUnlocked ? Loc.F("ui.evotree.lockedPrereq", prereqName) + " " + effect
+                                          : locked ? Loc.T("ui.evotree.locked") + " " + effect
+                                          : effect;
+                    node.description.color = locked ? LockedTextColor : Color.white;
+                }
 
+                if (node.button == null) continue;
+                node.button.interactable = available;
                 AnimateNode((RectTransform)node.button.transform, route * 2 + tierIdx, available, alreadyOpen);
             }
 
-            if (arrows != null && ArrowIndex[route] < arrows.Length && arrows[ArrowIndex[route]] != null)
-            {
-                arrows[ArrowIndex[route]].gameObject.SetActive(true);
-                arrows[ArrowIndex[route]].color = (!routeAbandoned && stage >= 1) ? ActiveArrowColor : InactiveArrowColor;
-            }
+            if (arrows != null && route < arrows.Length && arrows[route] != null)
+                arrows[route].color = (!routeAbandoned && stage >= 1) ? ActiveArrowColor : InactiveArrowColor;
         }
 
         // 닫힘 연출 중에 다시 열리는 경우 SetActive(true)만으로는 연출이 되돌아오지 않는다 (LevelUpUI와 동일)

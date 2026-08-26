@@ -2193,7 +2193,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873220
-    m_Localized: "Treasure Chest \u2014 what will you take?"
+    m_Localized: Treasure found!!
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873221
@@ -2241,8 +2241,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873232
-    m_Localized: A skill you own is upgraded at random (several times, if you are
-      lucky)
+    m_Localized: "1\u20135 random skill level-ups"
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873233
@@ -2250,7 +2249,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873234
-    m_Localized: '{0} available'
+    m_Localized: EVOLVE! {0} available
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873235

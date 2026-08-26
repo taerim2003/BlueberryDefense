@@ -68,7 +68,7 @@ skill.gain.rewind	Rewind time {0}s
 skill.gain.growth	Growth stacks {0} (stronger the more you use it)
 ui.levelup.evoHeader	Evolve!
 ui.levelup.evoFallbackHeader	Nothing to evolve — level up instead
-ui.levelup.treasureHeader	Treasure Chest — what will you take?
+ui.levelup.treasureHeader	Treasure found!!
 ui.levelup.reroll	Reroll
 ui.levelup.rerollLeft	{0} left
 ui.levelup.tagNew	NEW!
@@ -81,9 +81,9 @@ ui.levelup.levelRange	Level: {0} → {1}
 ui.levelup.instantLevels	+{0} levels instantly
 ui.levelup.routeChoice	Choose a path: {0}
 ui.treasure.boxTitle	Treasure Chest
-ui.treasure.boxDesc	A skill you own is upgraded at random (several times, if you are lucky)
+ui.treasure.boxDesc	1–5 random skill level-ups
 ui.treasure.evoTitle	Evolve
-ui.treasure.evoCount	{0} available
+ui.treasure.evoCount	EVOLVE! {0} available
 ui.treasure.evoDesc	Pick one skill to evolve
 ui.evotree.header	{0} Evolution — Lv.{1}
 ui.evotree.allDone	Fully evolved
