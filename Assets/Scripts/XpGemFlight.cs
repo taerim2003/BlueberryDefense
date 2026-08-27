@@ -16,7 +16,11 @@ public class XpGemFlight : MonoBehaviour
     public static XpGemFlight Instance { get; private set; }
 
     [SerializeField] private Image expFill;          // 경험치 바 Fill — 도착 지점 계산용
-    [SerializeField] private RectTransform barPunch;  // 도착 시 튕길 바 루트(선택, 미할당이면 생략)
+    // 경험치 바는 3겹인데 **테두리 층이 형제로 분리돼 있다**(ExpBar/ExpFill 은 부모-자식, ExpOuter 는 HUD 직속).
+    // 그래서 바탕만 튕기면 테두리가 제자리에 남아 "뒤에 바가 하나 더 있고 그것만 보잉하는" 것처럼 보인다.
+    // 두 층을 같은 펀치로 묶어야 한 덩어리로 튄다.
+    [SerializeField] private RectTransform barPunch;       // 바탕+채움 층(선택, 미할당이면 생략)
+    [SerializeField] private RectTransform barPunchOuter;  // 테두리 층 — barPunch 와 반드시 같이 튕긴다
     [SerializeField] private Sprite gemSprite;
     [SerializeField] private Color gemColor = new Color(1f, 0.85f, 0.15f, 1f); // 임시 노란 사각형
     [SerializeField] private Vector2 gemSize = new Vector2(44f, 44f);
@@ -141,13 +145,18 @@ public class XpGemFlight : MonoBehaviour
     {
         PlayerExperience.Instance?.AddXP(g.xp);
 
-        if (barPunch != null)
-        {
-            barPunch.DOKill(true); // 연속 도착 시 직전 펀치를 완료 처리하고 다시 — 스케일이 누적되지 않게
-            barPunch.DOPunchScale(new Vector3(0.03f, 0.3f, 0f), 0.22f, 6, 0.6f);
-        }
+        PunchBarLayer(barPunch);
+        PunchBarLayer(barPunchOuter);
 
         Return(g);
+    }
+
+    // 두 층이 같은 수치로 튕겨야 한 덩어리로 보인다 — 값을 여기 한 곳에만 둔다.
+    private static void PunchBarLayer(RectTransform rect)
+    {
+        if (rect == null) return;
+        rect.DOKill(true); // 연속 도착 시 직전 펀치를 완료 처리하고 다시 — 스케일이 누적되지 않게
+        rect.DOPunchScale(new Vector3(0.03f, 0.3f, 0f), 0.22f, 6, 0.6f);
     }
 
     private Gem Rent()

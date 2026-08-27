@@ -18,6 +18,15 @@ public class DamageNumber : MonoBehaviour
     private const float ScaleAtLow = 0.7f;
     private const float ScaleAtHigh = 1.15f;
 
+    // 뜨는 순간의 "보잉" — 작게 튀어나와 한 번 넘겼다가 제자리로. 진폭도 피해가 클수록 커진다.
+    // (최종 크기 차등과 별개다. 크기는 얼마나 아픈지, 보잉 진폭은 얼마나 세게 꽂혔는지를 말한다.)
+    // DOTween을 안 쓰는 이유: 이 오브젝트는 풀링돼 초당 수십 번 뜬다 — 트윈을 매번 만들면
+    // 할당이 쌓이고, 반납된 오브젝트에 트윈이 남아 스케일을 건드린다.
+    private const float PopTime = 0.2f;
+    private const float PopRise = 0.35f;    // 이 지점에서 최대까지 부풀고, 나머지 구간에 제자리로 돌아온다
+    private const float PopAtLow = 0.25f;
+    private const float PopAtHigh = 0.7f;
+
     // 큰 피해 쪽 색. 아랫색만 확 진하게 밀고 윗색은 거의 그대로 둔다 — 윗색까지 어둡게 하면
     // 흰 테두리 안에서 글자가 뭉개져 오히려 안 읽힌다(치명타 빨강과도 헷갈린다).
     private static readonly Color DeepTop = new Color(1f, 0.90f, 0.52f, 1f);
@@ -28,6 +37,8 @@ public class DamageNumber : MonoBehaviour
     private TMPro.VertexGradient startGradient;
     private TMPro.VertexGradient baseGradient;
     private Vector3 baseScale;
+    private Vector3 endScale;  // 보잉이 끝난 뒤 눌러앉을 크기(피해량에 따른 차등이 여기 들어 있다)
+    private float popAmount;
     private Vector3 spawnPos; // 뜬 자리(월드 고정) — 적/투사체가 이동해도 여기서 위로만 올라간다
 
     private void Awake()
@@ -44,11 +55,14 @@ public class DamageNumber : MonoBehaviour
 
         float t = Mathf.InverseLerp(Mathf.Log(DamageAtMinSize), Mathf.Log(DamageAtMaxSize),
                                     Mathf.Log(Mathf.Max(damage, 1f)));
-        transform.localScale = baseScale * Mathf.Lerp(ScaleAtLow, ScaleAtHigh, t);
+        endScale = baseScale * Mathf.Lerp(ScaleAtLow, ScaleAtHigh, t);
+        popAmount = Mathf.Lerp(PopAtLow, PopAtHigh, t);
         // 치명타는 이미 전용 빨강이라 색은 그대로 두고 크기 차등만 받는다.
         baseGradient = isCrit ? CritGradient : DeepenGradient(startGradient, t);
 
         timer = 0f;
+        // 첫 프레임을 Update에 맡기면 한 프레임 동안 최종 크기로 떠 보인다 — 여기서 0 지점을 직접 찍는다.
+        transform.localScale = endScale * PopScale(0f);
         spawnPos = transform.position + offset;
         transform.position = spawnPos;
         text.colorGradient = baseGradient;
@@ -59,10 +73,20 @@ public class DamageNumber : MonoBehaviour
             Color.Lerp(g.topLeft, DeepTop, t), Color.Lerp(g.topRight, DeepTop, t),
             Color.Lerp(g.bottomLeft, DeepBottom, t), Color.Lerp(g.bottomRight, DeepBottom, t));
 
+    // 0 → (작게) → 최대 → 1 로 수렴하는 크기 배율. p는 PopTime 기준 진행도.
+    private float PopScale(float p)
+    {
+        if (p >= 1f) return 1f;
+        return p < PopRise
+            ? Mathf.Lerp(1f - popAmount * 0.8f, 1f + popAmount, Mathf.SmoothStep(0f, 1f, p / PopRise))
+            : Mathf.Lerp(1f + popAmount, 1f, Mathf.SmoothStep(0f, 1f, (p - PopRise) / (1f - PopRise)));
+    }
+
     private void Update()
     {
         timer += Time.deltaTime;
         transform.position = spawnPos + Vector3.up * (moveSpeed * timer);
+        transform.localScale = endScale * PopScale(timer / PopTime);
 
         // 그라데이션을 쓰면 text.color로는 알파가 먹지 않아 네 꼭짓점을 직접 낮춘다.
         float a = Mathf.Lerp(1f, 0f, timer / lifetime);

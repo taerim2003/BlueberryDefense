@@ -9,7 +9,9 @@ public class CursorSetter : MonoBehaviour
 
     // 커서는 텍스처 원본 크기 그대로 그려진다 — 키우려면 그림 자체를 확대해 넘겨야 한다.
     // 도트가 뭉개지지 않게 **정수 배수**로만 늘린다(최근접 이웃).
-    [SerializeField, Range(1, 4)] private int pixelScale = 3;
+    // 상한이 있는 이유: 확대 결과가 OS 하드웨어 커서 한계를 넘으면 소프트웨어 커서로 떨어진다.
+    // (임포트가 64x64로 줄여 들이므로 6배 = 384x384가 사실상 한계선)
+    [SerializeField, Range(1, 6)] private int pixelScale = 3;
 
     private Texture2D scaled;
 
