@@ -938,6 +938,7 @@ public class Enemy : MonoBehaviour
     private const float DamageNumberBaseHeight = 0.85f;
     private const float DamageNumberStackStep = 0.52f;   // 0.62에서 좁힘(사용자 요청)
     private const float DamageNumberJitterX = 0.3f;
+    private const float DamageNumberStaggerDelay = 0.08f; // 멀티히트 숫자 간 타이밍 간격
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
@@ -946,7 +947,7 @@ public class Enemy : MonoBehaviour
         GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
         Vector3 offset = new Vector3(Random.Range(-DamageNumberJitterX, DamageNumberJitterX),
                                      DamageNumberBaseHeight + DamageNumberStackStep * hitIndex, 0f);
-        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset);
+        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset, hitIndex * DamageNumberStaggerDelay);
     }
 
     // 과잉 피해 처치 연출. 새 에셋 없이 **이미 있는 재료**(죽음 VFX + 타격 파편)를 키우고 사방으로 터뜨린다 —
