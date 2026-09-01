@@ -223,7 +223,40 @@ public class OptionsMenu : MonoBehaviour
 
     // ── 동작 ──
 
-    private void SetFullscreen(bool on) => Screen.fullScreen = on;
+    // 🔴 `Screen.fullScreen = on` 한 줄로는 **해상도가 창 모드의 것 그대로 남는다.**
+    //    전체화면 창은 그걸 모니터 크기로 늘려 그리므로 1280×720짜리 버퍼가 1920×1080으로 퍼져
+    //    도트가 뭉갠다("전체 화면 시 화질 저하", 8/27 빌드 QA — 창 모드에서만 선명했던 이유).
+    //    전체화면으로 갈 땐 모니터 네이티브 해상도를 함께 지정해 1:1로 그리게 한다.
+    private void SetFullscreen(bool on)
+    {
+        if (on)
+        {
+            // 창 크기를 되돌아올 자리로 기억해 둔다 — 안 하면 창 모드 복귀 때 모니터 크기 창이 뜬다.
+            windowedSize = new Vector2Int(Screen.width, Screen.height);
+            var native = Screen.currentResolution;
+            Screen.SetResolution(native.width, native.height, FullScreenMode.FullScreenWindow);
+            SyncResolutionIndex(native.width, native.height);
+        }
+        else
+        {
+            var w = windowedSize.x > 0 ? windowedSize : new Vector2Int(Screen.width, Screen.height);
+            Screen.SetResolution(w.x, w.y, FullScreenMode.Windowed);
+            SyncResolutionIndex(w.x, w.y);
+        }
+        RefreshResolutionLabel();
+    }
+
+    private Vector2Int windowedSize; // 전체화면 직전의 창 크기(복귀용)
+
+    // 해상도 라벨이 실제 화면과 어긋나지 않게 인덱스를 맞춘다.
+    // ⚠️ `Screen.SetResolution` 직후에 `Screen.width`를 읽으면 **아직 옛 값**이라(다음 프레임에 반영)
+    //    실제 화면이 아니라 **방금 지정한 값**으로 찾아야 한다.
+    private void SyncResolutionIndex(int w, int h)
+    {
+        if (resolutions == null || resolutions.Length == 0) return;
+        int i = System.Array.FindIndex(resolutions, r => r.x == w && r.y == h);
+        if (i >= 0) resolutionIndex = i;
+    }
 
     private void InitResolutions()
     {

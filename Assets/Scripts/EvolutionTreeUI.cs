@@ -44,6 +44,9 @@ public class EvolutionTreeUI : MonoBehaviour
     [SerializeField] private Sprite[] pathIconSprites; // 루트 0~1 색상 아이콘 (기존 path 아이콘 재사용)
     [SerializeField] private NodeButton[] nodes; // 길이 4, index = route*2 + (tier-1)
     [SerializeField] private TMP_Text[] arrows;  // 길이 2, index = route (T1→T2 화살표)
+    // 되돌아가기(X) — 고를 루트가 마음에 안 들면 진화 대상 선택으로 돌아간다.
+    // (8/27 빌드 QA "스킬 진화 창에 뒤로가기 버튼 추가" — 예전엔 노드를 골라야만 닫혔다.)
+    [SerializeField] private Button backButton;
 
     private PlayerSkills skills;
     private PlayerPassives passives;
@@ -51,6 +54,9 @@ public class EvolutionTreeUI : MonoBehaviour
     private EquippedPassive currentPassive;
     private bool isPassiveMode;
     private System.Action onClosed; // 진화 완료(모달 닫힘) 후 1회 콜백 — 연쇄 보상이 대기
+    // 되돌아가기(X)로 닫았을 때의 콜백. 진화를 **하지 않았으므로** 부른 쪽이 대상 선택을 다시 띄운다.
+    // 이게 없으면 X가 진화 기회를 그냥 날리는 버튼이 되어 버린다.
+    private System.Action onCancelled;
     private bool isOpen;            // 닫힘 연출 중에도 panel.activeSelf는 true라 ModalPause 짝을 이 플래그로 맞춘다
 
     // 진화 노드 카드에 붙는 juice 연출(등장 pop-in, 진화 가능 노드 강조 펄스)용 트윈 — 재오픈/닫기 시 정리
@@ -78,25 +84,29 @@ public class EvolutionTreeUI : MonoBehaviour
                 nodes[i].button.onClick.AddListener(() => OnRouteClicked(capturedRoute));
             }
         }
+
+        if (backButton != null) backButton.onClick.AddListener(Cancel);
     }
 
-    public void Show(PlayerSkills skillsRef, EquippedSkill skill, System.Action closed = null)
+    public void Show(PlayerSkills skillsRef, EquippedSkill skill, System.Action closed = null, System.Action cancelled = null)
     {
         skills = skillsRef;
         currentSkill = skill;
         currentPassive = null;
         isPassiveMode = false;
         onClosed = closed;
+        onCancelled = cancelled;
         ShowInternal();
     }
 
-    public void Show(PlayerPassives passivesRef, EquippedPassive passive, System.Action closed = null)
+    public void Show(PlayerPassives passivesRef, EquippedPassive passive, System.Action closed = null, System.Action cancelled = null)
     {
         passives = passivesRef;
         currentPassive = passive;
         currentSkill = null;
         isPassiveMode = true;
         onClosed = closed;
+        onCancelled = cancelled;
         ShowInternal();
     }
 
@@ -184,6 +194,9 @@ public class EvolutionTreeUI : MonoBehaviour
                 arrows[route].color = (!routeAbandoned && stage >= 1) ? ActiveArrowColor : InactiveArrowColor;
         }
 
+        // 되돌아갈 데가 있을 때만 X를 띄운다 — 돌아갈 곳이 없는데 X가 보이면 진화를 날리는 버튼이 된다.
+        if (backButton != null) backButton.gameObject.SetActive(onCancelled != null);
+
         // 닫힘 연출 중에 다시 열리는 경우 SetActive(true)만으로는 연출이 되돌아오지 않는다 (LevelUpUI와 동일)
         if (panelTransition != null) panelTransition.Show();
         else panel.SetActive(true);
@@ -248,15 +261,31 @@ public class EvolutionTreeUI : MonoBehaviour
 
     private void Close()
     {
+        System.Action cb = onClosed;
+        CloseInternal();
+        cb?.Invoke();
+    }
+
+    // 진화를 고르지 않고 물러난다 — 부른 쪽(LevelUpUI)이 대상 선택을 다시 띄운다.
+    private void Cancel()
+    {
+        System.Action cb = onCancelled;
+        CloseInternal();
+        cb?.Invoke();
+    }
+
+    // 닫힘 연출·모달 짝·콜백 정리. **콜백을 부르기 전에** 둘 다 비워야 한다 —
+    // 콜백이 곧바로 이 창을 다시 열 수 있는데(취소 → 대상 선택 → 다시 진화창) 그때 남은 콜백이 섞인다.
+    private void CloseInternal()
+    {
         isOpen = false;
         KillNodeTweens();
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);
 
-        System.Action cb = onClosed;
         onClosed = null;
-        cb?.Invoke();
+        onCancelled = null;
     }
 
     // 헤더 아이콘 = 지금 상태(진화했으면 고른 루트의 그림).

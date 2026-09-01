@@ -76,6 +76,7 @@ public class CollectionUI : MonoBehaviour
     {
         public Image frame;
         public Image icon;
+        public Image glow;      // 고른 칸 바깥을 두르는 노란 테(`SelectGlow`). 맵·캐릭터 카드와 같은 장치.
         public bool isPassive;
         public int id;          // (int)ActiveSkillId 또는 (int)PassiveSkillId
     }
@@ -134,10 +135,12 @@ public class CollectionUI : MonoBehaviour
             }
 
             var icon = FindDeep(tr, "Icon");
+            var glow = FindDeep(tr, "SelectGlow");
             var slot = new Slot
             {
                 frame = tr.GetComponent<Image>(),
                 icon = icon != null ? icon.GetComponent<Image>() : null,
+                glow = glow != null ? glow.GetComponent<Image>() : null,
                 isPassive = passive,
                 id = id,
             };
@@ -283,7 +286,10 @@ public class CollectionUI : MonoBehaviour
             if (discovered) found++;
 
             bool selected = slot.isPassive == selectedIsPassive && slot.id == selectedId;
-            slot.frame.color = selected ? SelectedColor : (discovered ? SkinColor : LockedColor);
+            // 판 자체를 노랗게 물들이지 않는다 — JuicyButton이 호버·클릭 때 이 색을 되돌려서
+            // 노랗게 번쩍했다 돌아오는 것처럼 보였다. 선택 표시는 판 **바깥**의 테가 맡는다.
+            slot.frame.color = discovered ? SkinColor : LockedColor;
+            if (slot.glow != null) slot.glow.color = selected ? SelectedColor : UISkin.Transparent;
 
             slot.icon.sprite = slot.isPassive
                 ? SkillIconLibrary.Passive((PassiveSkillId)slot.id)
@@ -326,18 +332,70 @@ public class CollectionUI : MonoBehaviour
 
         for (int route = 0; route < 2; route++)
         {
-            string prereq = selectedIsPassive
-                ? EvolutionRoutes.RoutePrereqName((PassiveSkillId)selectedId, route)
-                : EvolutionRoutes.RoutePrereqName((ActiveSkillId)selectedId, route);
+            // 연계 대상은 **이름 대신 그 스킬의 아이콘**으로 보여준다(8/27 빌드 QA — 글자만으로는
+            // 어떤 스킬인지 한눈에 안 들어왔다). 이름 자리를 비운 접두사만 남기고 그 뒤에 아이콘을 놓는다.
+            var pre = selectedIsPassive
+                ? EvolutionRoutes.RoutePrereq((PassiveSkillId)selectedId, route)
+                : EvolutionRoutes.RoutePrereq((ActiveSkillId)selectedId, route);
+            bool hasPrereq = pre.Passive.HasValue || pre.Active.HasValue;
 
-            routeLabels[route].text = discovered && !string.IsNullOrEmpty(prereq)
-                ? Loc.F("ui.collection.route", route + 1) + "   " + Loc.F("ui.collection.prereq", prereq)
+            routeLabels[route].text = discovered && hasPrereq
+                ? Loc.F("ui.collection.route", route + 1) + "   " + Loc.F("ui.collection.prereq", "")
                 : Loc.F("ui.collection.route", route + 1);
+            SetPrereqIcon(route, discovered && hasPrereq ? PrereqIcon(pre) : null);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
                 RefreshNode(nodes[route, tierIdx], route, tierIdx + 1, discovered, unknown);
         }
+    }
+
+    // ── 루트 라벨 뒤에 붙는 연계 스킬 아이콘 ─────────────────────────────────
+    private const float PrereqIconSize = 56f;  // 라벨 높이 96 안에 여백을 두고 들어가는 크기
+    private const float PrereqIconGap = 6f;    // 글자 끝과 아이콘 사이
+
+    private readonly Image[] prereqIcons = new Image[2];
+
+    private static Sprite PrereqIcon((PassiveSkillId? Passive, ActiveSkillId? Active) pre) =>
+        pre.Passive.HasValue ? SkillIconLibrary.Passive(pre.Passive.Value)
+        : pre.Active.HasValue ? SkillIconLibrary.Active(pre.Active.Value)
+        : null;
+
+    private void SetPrereqIcon(int route, Sprite sprite)
+    {
+        Image img = prereqIcons[route];
+        if (img == null)
+        {
+            if (sprite == null) return;         // 쓸 일이 없으면 만들지도 않는다
+            img = prereqIcons[route] = CreatePrereqIcon(routeLabels[route]);
+        }
+
+        img.sprite = sprite;
+        img.enabled = sprite != null;
+        if (sprite == null) return;
+
+        // 라벨이 Left 정렬이라 글자는 rect 왼쪽 끝에서 시작한다 — 그 **실제 폭**만큼 오른쪽에 놓는다.
+        // ⚠️ `preferredWidth`는 마지막으로 갱신된 메시 기준이라, 방금 바꾼 text를 반영하려면
+        //    강제로 한 번 재계산해야 한다(안 하면 이전 문구 폭으로 자리를 잡는다).
+        TMP_Text label = routeLabels[route];
+        label.ForceMeshUpdate();
+        var rt = img.rectTransform;
+        rt.anchoredPosition = new Vector2(label.preferredWidth + PrereqIconGap, 0f);
+    }
+
+    private static Image CreatePrereqIcon(TMP_Text label)
+    {
+        var go = new GameObject("PrereqIcon", typeof(RectTransform), typeof(Image));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(label.transform, false);
+        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);  // 라벨 왼쪽 끝 기준 — 글자와 같은 출발선
+        rt.pivot = new Vector2(0f, 0.5f);
+        rt.sizeDelta = new Vector2(PrereqIconSize, PrereqIconSize);
+
+        var img = go.GetComponent<Image>();
+        img.preserveAspect = true;   // 아이콘류는 확대해 쓰는 예외라 PA가 필수(CLAUDE.md §5-1)
+        img.raycastTarget = false;
+        return img;
     }
 
     private void RefreshNode(Node node, int route, int tier, bool skillDiscovered, string unknown)

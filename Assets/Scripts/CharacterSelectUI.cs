@@ -40,7 +40,7 @@ public class CharacterSelectUI : MonoBehaviour
     // 잠긴 캐릭터 카드의 초상화 색 — 거의 검은 실루엣만 남긴다.
     private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
 
-    // 고른 카드 뒤에 깔리는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
+    // 고른 카드 바깥을 두르는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
     private readonly List<Image> cardGlows = new List<Image>();
     private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>();  // 고른 카드만 원본 크기·색으로 남긴다
     private readonly List<Image> cardThumbs = new List<Image>();             // 클릭 시 공격 모션을 여기서 돌린다
@@ -136,9 +136,9 @@ public class CharacterSelectUI : MonoBehaviour
                 nameText.text = locked ? "???" : chr.Name;
 
             // 🔴 맵 선택 화면과 같은 사정 — `Frame` 자식이 사라져 하이라이트가 죽어 있었다.
-            //    테두리 그림(..._투명)은 순수 검정이라 물들일 수 없어서, `SelectGlow`가 그 선화를
-            //    마스크로 쓰고 그 안의 `Fill`을 노랗게 켠다(맵 선택 화면과 같은 구조).
-            cardGlows.Add(FindDeep(card.transform, "Fill")?.GetComponent<Image>());
+            //    테두리 그림(..._투명)은 순수 검정이라 물들일 수 없어서, `SelectGlow`가 판 그림을
+            //    `UI/SelectOutline` 셰이더로 그려 실루엣 바깥에만 테를 낸다(맵 선택 화면과 같은 구조).
+            cardGlows.Add(FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();

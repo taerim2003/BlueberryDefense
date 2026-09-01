@@ -44,7 +44,7 @@ public class MapSelectUI : MonoBehaviour
     // 카드 연출로 쓰기엔 늘어져서 여기만 따로 빠르게 센다.
     [SerializeField] private float cardAnimFrameSeconds = 0.18f;
 
-    // 고른 카드 뒤에 깔리는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
+    // 고른 카드 바깥을 두르는 노란 테(카드의 `SelectGlow`). 없는 카드는 null.
     private readonly List<Image> cardGlows = new List<Image>();
     private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>(); // 고른 카드만 원본 크기·색으로 남긴다
     private readonly List<Image> cardThumbs = new List<Image>();            // 배경 컷을 여기서 돌린다
@@ -223,10 +223,11 @@ public class MapSelectUI : MonoBehaviour
                 nameText.text = locked ? Loc.T("ui.mapselect.locked") : map.Name;
 
             // 🔴 예전엔 `Frame`이라는 자식을 껐다 켰는데 지금 카드엔 그런 자식이 없어 하이라이트가 죽어 있었다.
-            //    ⚠️ 대신 테두리 그림(..._투명)을 노랗게 물들이는 것도 안 된다 — 그 그림은 **전부 순수 검정**이라
+            //    ⚠️ 테두리 그림(..._투명)을 노랗게 물들이는 것도 안 된다 — 그 그림은 **전부 순수 검정**이라
             //       곱셈 틴트가 통째로 안 먹힌다(불투명 12107px 평균밝기 0.000, 실측).
-            //    그래서 `SelectGlow`가 그 선화를 **마스크**로 쓰고, 그 안의 `Fill`을 노랗게 켠다.
-            cardGlows.Add(FindDeep(card.transform, "Fill")?.GetComponent<Image>());
+            //    그래서 `SelectGlow`는 판 그림을 `UI/SelectOutline` 셰이더로 그린다 —
+            //    텍스처 색은 안 쓰고 실루엣 **바깥쪽에만** 이 Image.color로 테를 그린다.
+            cardGlows.Add(FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();

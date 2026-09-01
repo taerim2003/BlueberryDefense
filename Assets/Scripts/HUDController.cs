@@ -69,7 +69,6 @@ public class HUDController : MonoBehaviour
     private int lastSeenCurrency = -1;
     private TMP_Text essenceText;      // 이번 판 정수 표시 — 씬에 없어서 런타임 생성한다
     private Sequence stageBannerSeq;
-    private float baseHealthPanelWidth = -1f;
 
     private void OnEnable() => PlayerSkills.OnRefreshProc += PulseRefreshIcon;
     private void OnDisable() => PlayerSkills.OnRefreshProc -= PulseRefreshIcon;
@@ -107,7 +106,6 @@ public class HUDController : MonoBehaviour
         healthText.text = playerHealth.Overheal > 0
             ? $"{playerHealth.CurrentHealth} (+{playerHealth.Overheal}) / {playerHealth.MaxHealth}"
             : $"{playerHealth.CurrentHealth} / {playerHealth.MaxHealth}";
-        UpdateHealthPanelWidth();
         UpdateHealthFill();
         UpdateOverhealFill();
         UpdateDangerVignette();
@@ -196,21 +194,16 @@ public class HUDController : MonoBehaviour
         _ => null,
     };
 
-    // 오버힐(보호막)이 있으면 체력바 자체의 폭을 (최대체력+오버힐)/최대체력 비율만큼 왼쪽으로 늘린다 (pivot이 우측 고정이라
-    // sizeDelta만 키우면 자동으로 왼쪽으로만 자라 화면 밖으로 삐져나가지 않는다). 체력 1당 픽셀 밀도는 그대로 유지되므로
-    // 최대체력 100·오버힐 20이면 정확히 5:1 비율로 배분되어 보인다.
+    // 체력바의 눈금 기준. 오버힐이 붙으면 **같은 길이 안에서** 체력과 오버힐이 비율을 나눠 갖는다.
+    //
+    // 🔴 예전엔 이 비율만큼 바 자체를 왼쪽으로 늘렸다("체력 1당 픽셀 밀도 유지"). 그런데 늘어나는 건
+    //    바탕(`HealthPanel`) 하나뿐이었다 — 테두리(`HealthOuter`)도 채움 층도 형제/고정 크기라
+    //    따라가지 않는다. 오버힐 상한(200)에 최대체력 100이면 바탕만 370→1110px로 자라
+    //    **테두리 밖으로 740px이 삐져나왔다**(8/27 빌드 QA "추가 체력 증가 시 체력바가 범위를 벗어남").
+    //    셋을 같이 늘리는 길은 막혀 있다: 테두리는 `Simple + Preserve Aspect`라(CLAUDE.md §5-1)
+    //    가로로 늘리면 세로까지 따라 커지고, PA를 끄면 도트 테두리가 가로로 뭉갠다.
+    //    그래서 **바 길이를 고정**한다. 아래 두 Fill이 이미 이 값으로 비율을 내고 있어 계산은 그대로다.
     private float HealthBarScale => playerHealth.MaxHealth + playerHealth.Overheal;
-
-    private void UpdateHealthPanelWidth()
-    {
-        if (healthPanel == null) return;
-        if (baseHealthPanelWidth < 0f) baseHealthPanelWidth = healthPanel.sizeDelta.x;
-
-        float widthMultiplier = playerHealth.MaxHealth > 0 ? HealthBarScale / playerHealth.MaxHealth : 1f;
-        Vector2 sizeDelta = healthPanel.sizeDelta;
-        sizeDelta.x = baseHealthPanelWidth * widthMultiplier;
-        healthPanel.sizeDelta = sizeDelta;
-    }
 
     private void UpdateHealthFill()
     {
@@ -391,19 +384,32 @@ public class HUDController : MonoBehaviour
         slot.shotgunFrame.enabled = buffed;
     }
 
-    // 아이콘의 부모 아래, 아이콘보다 한 사이즈 크게 뒤(첫 형제)에 깔리는 노란 프레임을 만든다.
+    private const float ShotgunOutlineWidth = 6f; // 칸 바깥으로 삐져나오는 테 두께(px)
+
+    // 칸 **바깥**을 두르는 노란 테를 만든다.
+    // 🔴 예전엔 아이콘의 형제로 만들어 `SetAsFirstSibling()`으로 깔았는데, 그건 슬롯 판(`IconFrame`)
+    //    **위**다 — 부모 자신의 Image가 자식보다 먼저 그려지기 때문이다. 그래서 칸이 통째로
+    //    노랗게 채워져 보였다(8/27 빌드 QA "아이콘 칸 전체가 노랗게 채워진 상태").
+    //    슬롯의 **형제**로 옮기고 슬롯 바로 앞에 꽂으면, 불투명한 슬롯 판이 가운데를 가려
+    //    삐져나온 테두리만 남는다.
+    // ⚠️ `UI/SelectOutline` 셰이더를 쓰지 않는 이유: 그건 실루엣 **바깥**을 칠하는데
+    //    `IconFrame`은 40×40이 전부 불투명이라 rect 안에 칠할 여백이 없다(실측). 테가 통째로 사라진다.
     private Image CreateShotgunFrame(Image icon)
     {
         GameObject go = new GameObject("ShotgunFrame", typeof(RectTransform), typeof(Image));
         RectTransform rt = go.GetComponent<RectTransform>();
-        RectTransform iconRt = icon.rectTransform;
-        rt.SetParent(iconRt.parent, false);
-        rt.anchorMin = iconRt.anchorMin;
-        rt.anchorMax = iconRt.anchorMax;
-        rt.pivot = iconRt.pivot;
-        rt.anchoredPosition = iconRt.anchoredPosition;
-        rt.sizeDelta = iconRt.sizeDelta + new Vector2(12f, 12f); // 테두리 바깥으로 6px씩 삐져나오게
-        rt.SetAsFirstSibling(); // 아이콘·키라벨·쿨오버레이 뒤에 깔림
+        RectTransform slotRt = (RectTransform)icon.rectTransform.parent;
+        rt.SetParent(slotRt.parent, false);
+        rt.anchorMin = slotRt.anchorMin;
+        rt.anchorMax = slotRt.anchorMax;
+        // 슬롯 pivot을 그대로 쓰면 크기를 키울 때 한쪽으로만 자라 칸과 중심이 어긋난다 —
+        // 중심 기준으로 잡고 슬롯의 중심 좌표를 직접 계산해 얹는다.
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = slotRt.anchoredPosition + new Vector2(
+            (0.5f - slotRt.pivot.x) * slotRt.rect.width,
+            (0.5f - slotRt.pivot.y) * slotRt.rect.height);
+        rt.sizeDelta = slotRt.rect.size + Vector2.one * (ShotgunOutlineWidth * 2f);
+        rt.SetSiblingIndex(slotRt.GetSiblingIndex()); // 슬롯 바로 앞 = 슬롯보다 먼저 그려짐(뒤에 깔림)
 
         Image frame = go.GetComponent<Image>();
         frame.color = new Color(1f, 0.85f, 0.1f, 1f);

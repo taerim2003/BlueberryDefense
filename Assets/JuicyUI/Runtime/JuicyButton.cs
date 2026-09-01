@@ -102,6 +102,15 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 #endif
     }
 
+    // 🔴 선택 표시(노란 테)를 그리는 자식은 dim에서 통째로 뺀다.
+    //    아래 Start는 **그 시점의 색을 "원본"으로 기억**하는데, 선택 테는 평소 투명이라
+    //    투명이 원본으로 굳는다. 그 뒤 화면 코드가 노란색을 넣어도 ApplyDim이 기억한 투명으로 덮어써서,
+    //    ① 컬렉션에서는 테가 idleTint에 눌려 올리브색으로 죽고(실측 1.0·0.878·0.302 × 0.55·0.55·0.62)
+    //    ② 캐릭터·맵에서는 선택을 옮긴 카드의 테가 아예 안 뜨거나 커서가 떠나는 순간 사라졌다
+    //    (8/27 빌드 QA의 컬렉션·캐릭터 선택 아웃라인 버그가 전부 이 한 줄에서 나왔다).
+    //    이름으로 거르는 이유: 이 어셈블리는 asmdef라 게임 쪽 타입을 참조할 수 없다.
+    private const string SelectionGlowName = "SelectGlow";
+
     // 원본 색은 Awake가 아니라 Start에서 잡는다 — 카드를 런타임에 복제하는 화면들이
     // Instantiate 직후(=Awake 뒤, Start 앞)에 썸네일·이름 색을 덮어쓰기 때문이다.
     // Awake에서 잡으면 그 덮어쓰기 전의 색을 "원본"으로 기억해, 호버가 풀릴 때 되돌려 버린다.
@@ -114,6 +123,7 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             if (g == null) continue;
             if (colorOnHover && g == targetGraphic) continue; // 그쪽은 hoverColor/pressColor가 이미 몰고 있다
+            if (g.name == SelectionGlowName) continue;        // 아래 주석 참고 — 선택 표시는 dim이 건드리면 안 된다
             list.Add(g);
         }
         _dimGraphics = list.ToArray();

@@ -13,13 +13,24 @@ public static class LockBadge
         rt.SetParent(card.transform, false);
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
+        // 🔴 카드 rect 중앙 ≠ 판 그림 중앙이다. 카드에는 아래쪽에 이름표(`NameBox`)가 딸려 있어
+        //    rect가 판보다 아래로 길다 — 캐릭터 카드는 판이 y=+63, 맵 카드는 y=+54에 있다.
+        //    rect 중앙(0)에 두면 그만큼 자물쇠가 판 아래로 내려가 붙는다(8/27 빌드 QA "너무 아래에 위치").
+        rt.anchoredPosition = new Vector2(0f, PlateCenterY(card.transform));
         rt.sizeDelta = new Vector2(64f, 64f);
 
         var img = go.GetComponent<Image>();
         img.sprite = icon != null ? icon : Baked();
         img.raycastTarget = false;
         rt.SetAsLastSibling(); // 썸네일 위에 오도록
+    }
+
+    // 카드 안에서 "판"으로 볼 자식의 세로 중심(카드 기준). 캐릭터·맵 카드가 둘 다 `Bg`를 쓴다.
+    // 못 찾으면 0 — 예전 동작(카드 rect 중앙) 그대로라 새 카드 구조가 와도 자물쇠가 사라지지는 않는다.
+    private static float PlateCenterY(Transform card)
+    {
+        var plate = card.Find("Bg") as RectTransform;
+        return plate != null ? plate.anchoredPosition.y : 0f;
     }
 
     // 16x16 자물쇠. 한 장만 구워 모든 잠긴 카드가 공유한다.

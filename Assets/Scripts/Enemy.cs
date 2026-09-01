@@ -104,6 +104,11 @@ public class Enemy : MonoBehaviour
     private float knockbackElapsed;
     private float knockbackMoved;    // 지금까지 실제로 이동한 거리
     private Vector2 diveDir = Vector2.right; // 대각선 강하 방향(스폰 시 1회 결정)
+    // 강하 유닛이 더 내려갈 수 없는 바닥(조준했던 높이). 여기 닿으면 diveDir이 수평으로 눕는다.
+    // 🔴 없으면 땅속으로 파고든다: diveDir은 스폰 때 한 번 정해져 계속 아래를 향하는데,
+    //    넉백으로 뒤로 밀릴 때마다 그 거리를 **다시 강하각으로** 내려오기 때문에 왕복할수록 낮아진다
+    //    (8/27 빌드 QA "공중몹 땅속 이동버그").
+    private float diveFloorY;
     private Quaternion baseRotation; // 돌진 기울기를 얹기 전의 원래 회전(복귀 기준)
     private float laneJitter;       // 스폰 시 부여되는 y 흔들림 — 줄이 딱 맞게 정렬되지 않도록
 
@@ -293,6 +298,7 @@ public class Enemy : MonoBehaviour
         knockbackDistance = 0f; knockbackElapsed = 0f; knockbackMoved = 0f;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         diveDir = Vector2.right;
+        diveFloorY = float.NegativeInfinity; // SetupDive가 다시 채운다. 비강하 유닛에겐 바닥이 없다.
         // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.
         diveBobPhase = Random.Range(0f, Mathf.PI * 2f);
         diveBobPhase2 = Random.Range(0f, Mathf.PI * 2f);
@@ -359,6 +365,7 @@ public class Enemy : MonoBehaviour
             : new Vector2(p.x + 20f, camY + aimJitter); // 플레이어가 없으면 오른쪽으로 완만히 강하
         diveDir = (aim - (Vector2)p).normalized;
         if (diveDir.sqrMagnitude < 0.0001f) diveDir = Vector2.right;
+        diveFloorY = aim.y; // 조준한 높이가 이 개체의 바닥 — 여기까지만 내려온다
 
         // 기수를 진행 방향으로 — 종이비행기가 실제로 꽂히듯 기울어 날아간다.
         transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diveDir.y, diveDir.x) * Mathf.Rad2Deg);
@@ -456,7 +463,19 @@ public class Enemy : MonoBehaviour
         {
             // 강하 유닛은 기수가 돌아가 있으므로 반드시 월드 기준으로 이동해야 한다(로컬 right는 기울어져 있음).
             if (isDiveFlyer)
+            {
                 transform.Translate(diveDir * moveSpeed * slowMultiplier * Time.deltaTime, Space.World);
+                // 조준했던 높이에 닿으면 거기서 강하가 끝난다 — 각도를 눕혀 더 내려가지 않게 한다.
+                // (diveDir을 눕히는 것이 핵심이다. y만 클램프하면 다음 프레임에도 아래로 밀어서
+                //  넉백→전진을 반복할 때마다 바닥에 눌린 채 x만 흘러간다.)
+                if (transform.position.y < diveFloorY)
+                {
+                    Vector3 p = transform.position;
+                    p.y = diveFloorY;
+                    transform.position = p;
+                    diveDir = new Vector2(Mathf.Sign(diveDir.x) * Mathf.Max(Mathf.Abs(diveDir.x), 0.0001f), 0f).normalized;
+                }
+            }
             else
                 transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
         }

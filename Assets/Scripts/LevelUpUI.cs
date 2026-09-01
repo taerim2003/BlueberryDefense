@@ -1098,20 +1098,31 @@ public class LevelUpUI : MonoBehaviour
             PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
             PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
             bool done = false;
+            bool cancelled = false;
+            System.Action onCancel = () => { cancelled = true; done = true; };
 
             if (opt.SkillId.HasValue)
             {
                 EquippedSkill s = skills.EquippedSkills.FirstOrDefault(x => x.Id == opt.SkillId.Value);
-                if (s != null) EvolutionTreeUI.Instance.Show(skills, s, () => done = true); else done = true;
+                if (s != null) EvolutionTreeUI.Instance.Show(skills, s, () => done = true, onCancel); else done = true;
             }
             else if (opt.PassiveId.HasValue)
             {
                 EquippedPassive p = passives.GetPassive(opt.PassiveId.Value);
-                if (p != null) EvolutionTreeUI.Instance.Show(passives, p, () => done = true); else done = true;
+                if (p != null) EvolutionTreeUI.Instance.Show(passives, p, () => done = true, onCancel); else done = true;
             }
             else done = true;
 
             yield return new WaitUntil(() => done);
+
+            // 진화 창에서 물러났으면 진화권을 되돌려주고 대상 선택을 다시 띄운다 —
+            // 아래로 그냥 흘려보내면 X가 진화 기회를 삼키는 버튼이 된다.
+            if (cancelled)
+            {
+                pendingEvolutions++;
+                QueueNextPending();
+                yield break;
+            }
         }
         else
         {
