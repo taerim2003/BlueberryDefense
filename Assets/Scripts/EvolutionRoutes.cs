@@ -50,6 +50,7 @@ public static class EvolutionRoutes
         (ActiveSkillId.Shotgun, 0) => 1,     (ActiveSkillId.Shotgun, _) => 2,
         (ActiveSkillId.Rewind, 0) => 1,      (ActiveSkillId.Rewind, _) => 2,
         (ActiveSkillId.Swing, 0) => 1,       (ActiveSkillId.Swing, _) => 2,
+        (ActiveSkillId.GrapeToss, 0) => 1,   (ActiveSkillId.GrapeToss, _) => 2,
         _ => route == 0 ? 0 : 1,
     };
 
@@ -101,6 +102,10 @@ public static class EvolutionRoutes
 
         (ActiveSkillId.Swing, 0) => Need(PassiveSkillId.Health),
         (ActiveSkillId.Swing, _) => Need(ActiveSkillId.Lightning),
+
+        // 포도 — R0 생화학(건강) / R1 찌릿찌릿(낙뢰). 기획안 그대로.
+        (ActiveSkillId.GrapeToss, 0) => Need(PassiveSkillId.Health),
+        (ActiveSkillId.GrapeToss, _) => Need(ActiveSkillId.Lightning),
 
         _ => (null, null),
     };

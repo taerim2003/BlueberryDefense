@@ -68,7 +68,7 @@ tree.desc.Sniping_TwoTarget	Sniping targets one additional enemy.
 tree.name.swing_StartLev	Swing Mastery
 tree.desc.swing_StartLev	(With Pineapple) Start Swing at level 3
 char.name.Char_Pineapple	Pineapple
-char.name.Char_Slot3	???
+char.name.Char_Slot3	Grape
 char.name.Char_Strawberry	Strawberry
 map.name.Map_BlueberryField	Blueberry Field
 map.name.Map_Wide15	Seaside

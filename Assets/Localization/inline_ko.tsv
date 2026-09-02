@@ -17,7 +17,6 @@ passive.cur.Strength.dmg	전체 피해량 +{0}%
 passive.cur.Strength.qfallback	Q 스킬
 passive.cur.Strength.q	Q({0}) 피해량 +{1}%
 passive.cur.Health.max	최대 체력 {0}
-passive.cur.Health.regen	{0}초마다 체력 {1} 재생
 passive.cur.Health.dmgPerHp	최대 체력 1당 피해량 +{0}%
 passive.cur.Health.heartDrop	체력 회복 드랍률 x{0}
 passive.cur.Knowledge.xp	경험치 획득량 +{0}%

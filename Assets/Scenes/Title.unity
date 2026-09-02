@@ -5536,6 +5536,7 @@ MonoBehaviour:
   characters:
   - {fileID: 11400000, guid: b6448b9263dc6204b8a21acfd1d7eaf1, type: 2}
   - {fileID: 11400000, guid: d9ae7a9f108219944bae5e1192e89da6, type: 2}
+  - {fileID: 11400000, guid: f621348af1abde848b00ce295a6d80e7, type: 2}
   root: {fileID: 483121938}
   silhouette: {fileID: 1526399272}
   conditionText: {fileID: 1015282022}

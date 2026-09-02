@@ -78,14 +78,6 @@ public static class LightningStorm
         stackEndTimes.Add(Time.time + duration);
     }
 
-    // 회오리 연계 path2 T2: 현재 살아있는 모든 스택의 지속시간을 연장
-    public static void ExtendActiveStacks(float amount)
-    {
-        Prune();
-        for (int i = 0; i < stackEndTimes.Count; i++)
-            stackEndTimes[i] += amount;
-    }
-
     // 타격 1회당 살아있는 스택 수만큼 독립적으로 발동 확률을 판정한다.
     public static int RollProcCount()
     {

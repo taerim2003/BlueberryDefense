@@ -17,7 +17,6 @@ passive.cur.Strength.dmg	Total damage +{0}%
 passive.cur.Strength.qfallback	Q skill
 passive.cur.Strength.q	Q ({0}) damage +{1}%
 passive.cur.Health.max	Max health {0}
-passive.cur.Health.regen	Restore {1} health every {0}s
 passive.cur.Health.dmgPerHp	Damage +{0}% per 1 max health
 passive.cur.Health.heartDrop	Health pickup drop rate x{0}
 passive.cur.Knowledge.xp	Experience gain +{0}%

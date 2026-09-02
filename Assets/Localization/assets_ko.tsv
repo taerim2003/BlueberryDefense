@@ -68,7 +68,7 @@ tree.desc.Sniping_TwoTarget	스나이핑이 한 놈을 추가로 타겟팅합니
 tree.name.swing_StartLev	휘두르기 숙련
 tree.desc.swing_StartLev	(파인애플 선택 시) 휘두르기 3레벨로 시작
 char.name.Char_Pineapple	파인애플
-char.name.Char_Slot3	???
+char.name.Char_Slot3	포도
 char.name.Char_Strawberry	딸기
 map.name.Map_BlueberryField	블루베리 밭
 map.name.Map_Wide15	해안가

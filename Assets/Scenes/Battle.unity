@@ -6807,7 +6807,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.7999939, y: -0.5}
+  m_AnchoredPosition: {x: 0.7999878, y: -0.5}
   m_SizeDelta: {x: 0.000012218952, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &876458245
@@ -13220,6 +13220,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
+  - {fileID: -2376438512102916653, guid: cc8cac9e4ae7aa34fb085cb5274ee7d9, type: 3}
   passiveIcons:
   - {fileID: 6929312441436723685, guid: 20aa78e88f1917048bd470c011e76354, type: 3}
   - {fileID: -5499187749238686383, guid: 881e17147270f7141ab54205b1b2f26a, type: 3}
@@ -13407,6 +13408,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
+  - {fileID: -2376438512102916653, guid: cc8cac9e4ae7aa34fb085cb5274ee7d9, type: 3}
   passiveIcons:
   - {fileID: 6929312441436723685, guid: 20aa78e88f1917048bd470c011e76354, type: 3}
   - {fileID: -5499187749238686383, guid: 881e17147270f7141ab54205b1b2f26a, type: 3}
@@ -16701,6 +16703,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
+  - {fileID: -2376438512102916653, guid: cc8cac9e4ae7aa34fb085cb5274ee7d9, type: 3}
   gemIconSprites:
   - {fileID: 6613588427734777530, guid: a0edddfd4847ab5428cd00cea6a70ca8, type: 3}
   - {fileID: 1592231510907667000, guid: 6b1b0bbcc1e04d842bdbb96f08bbceb9, type: 3}
@@ -19620,7 +19623,6 @@ MonoBehaviour:
   lightningRodPrefab: {fileID: 5310107282684247074, guid: e52c39b174e1c464ba3db35fb41d511d, type: 3}
   bigThunderVfxPrefab: {fileID: 2421693898407340826, guid: f26fa841d90bd904b8ce13dd7f177439, type: 3}
   rewindVfxPrefab: {fileID: 2799329666111628083, guid: 3fa2c0ba199fa0a44b4d3f5c573506b5, type: 3}
-  rewindRoute1VfxPrefab: {fileID: 3021534565609420928, guid: 7ab922c007377f341a33d270072ec305, type: 3}
   rewindRoute2VfxPrefab: {fileID: 5256276268673320489, guid: 7e094f03688814e43a65ca5be57b3876, type: 3}
   rockDebrisPrefab: {fileID: 3800901426102578592, guid: 6522ba420ef08f5428ce845314ac8e17, type: 3}
   bigHammerController: {fileID: 22100000, guid: 542351b9926d7734fa38eff38e448e4c, type: 2}
@@ -19640,8 +19642,9 @@ MonoBehaviour:
   overkillSplashVfxScale: 0.5
   homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
   swingShockwavePrefab: {fileID: 830679570193835966, guid: 4d97f9d976d13194084297fcab195f5f, type: 3}
+  grapeBallPrefab: {fileID: 0}
+  grapeExplosionVfxPrefab: {fileID: 0}
   animator: {fileID: 2031227614}
-  evolutionTextOverrides: {fileID: 11400000, guid: 82f64ce823e197443ae5ae43db44ee1f, type: 2}
   progressions:
   - {fileID: 11400000, guid: 2d193ef8697aa854ca6671efb0a07774, type: 2}
   - {fileID: 11400000, guid: 27b910c8d2cb0e9458a74b0dcf84b52d, type: 2}

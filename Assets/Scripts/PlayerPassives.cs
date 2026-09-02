@@ -81,10 +81,6 @@ public class PlayerPassives : MonoBehaviour
     private PlayerSkills skills;
     private PlayerHealth health;
 
-    private float regenTimer;
-    private float regenAmount;
-    private float regenInterval;
-
     public bool HasMaxPassives => equippedPassives.Count >= MaxPassives;
     public IReadOnlyList<EquippedPassive> EquippedPassives => equippedPassives;
 
@@ -154,18 +150,6 @@ public class PlayerPassives : MonoBehaviour
     {
         PassiveProgression p = Prog(id);
         return p != null ? p.perLevelBonus : PassiveProgression.DefaultPerLevelBonus(id);
-    }
-
-    private void Update()
-    {
-        if (regenInterval <= 0f || regenAmount <= 0f || health == null) return;
-
-        regenTimer += Time.deltaTime;
-        if (regenTimer >= regenInterval)
-        {
-            regenTimer = 0f;
-            health.Heal(Mathf.RoundToInt(regenAmount));
-        }
     }
 
     // 피격 반응 3종이 전부 여기 모인다(전부 "맞을 때마다" 발동하는 진화라 트리거가 같다).
@@ -315,7 +299,6 @@ public class PlayerPassives : MonoBehaviour
 
             case PassiveSkillId.Health:
                 if (health != null) lines.Add(Loc.F("passive.cur.Health.max", health.MaxHealth));
-                if (regenInterval > 0f && regenAmount > 0f) lines.Add(Loc.F("passive.cur.Health.regen", regenInterval.ToString("0.#"), regenAmount.ToString("0.#")));
                 if (HealthDamagePerHp > 0f) lines.Add(Loc.F("passive.cur.Health.dmgPerHp", Pct(HealthDamagePerHp)));
                 if (HeartDropMultiplier > 1f) lines.Add(Loc.F("passive.cur.Health.heartDrop", HeartDropMultiplier.ToString("0.#")));
                 break;
@@ -408,10 +391,7 @@ public class PlayerPassives : MonoBehaviour
     {
         switch (passive.Id, path, newTier)
         {
-            // 힘
-            case (PassiveSkillId.Strength, 0, 1): skills.IncreaseDamageMultiplier(0.08f); break;
-            case (PassiveSkillId.Strength, 0, 2): skills.IncreaseDamageMultiplier(0.15f); break;
-            case (PassiveSkillId.Strength, 0, 3): skills.IncreaseDamageMultiplier(0.22f); break;
+            // 힘  (path0은 버려진 루트 — 패시브는 R0=path1 / R1=path2다. EvolutionRoutes.RoutePath 참고)
             case (PassiveSkillId.Strength, 1, 1): AssassinateCritMultiplier += 0.15f; break;
             case (PassiveSkillId.Strength, 1, 2): AssassinateCritMultiplier += 0.35f; break;
             case (PassiveSkillId.Strength, 1, 3): AssassinateCritMultiplier += 0.5f; break;
@@ -420,9 +400,6 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Strength, 2, 3): FirstSlotDamageMultiplierBonus += 0.25f; break;
 
             // 건강
-            case (PassiveSkillId.Health, 0, 1): regenAmount = 2f; regenInterval = 5f; break;
-            case (PassiveSkillId.Health, 0, 2): regenAmount = 5f; regenInterval = 5f; break;
-            case (PassiveSkillId.Health, 0, 3): regenAmount = 8f; regenInterval = 3f; break;
             case (PassiveSkillId.Health, 1, 1): HealthDamagePerHp += 0.0005f; break;
             case (PassiveSkillId.Health, 1, 2): HealthDamagePerHp += 0.0005f; break;
             case (PassiveSkillId.Health, 1, 3): HealthDamagePerHp += 0.0005f; break;
@@ -433,9 +410,6 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Health, 2, 3): HeartDropMultiplier = 10f; break;
 
             // 지식
-            case (PassiveSkillId.Knowledge, 0, 1): PlayerExperience.Instance.IncreaseXPMultiplier(0.08f); break;
-            case (PassiveSkillId.Knowledge, 0, 2): PlayerExperience.Instance.IncreaseXPMultiplier(0.15f); break;
-            case (PassiveSkillId.Knowledge, 0, 3): PlayerExperience.Instance.IncreaseXPMultiplier(0.22f); break;
             case (PassiveSkillId.Knowledge, 1, 1): EnemySpawner.ExtraTreasureChance += 0.005f; break;
             case (PassiveSkillId.Knowledge, 1, 2): EnemySpawner.ExtraTreasureChance += 0.005f; break;
             case (PassiveSkillId.Knowledge, 1, 3): EnemySpawner.ExtraTreasureChance += 0.005f; break;
@@ -444,9 +418,6 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Knowledge, 2, 3): EagleDropCastXpBonus += 4; break;
 
             // 암살
-            case (PassiveSkillId.Assassinate, 0, 1): AssassinateCritChance += 0.08f; break;
-            case (PassiveSkillId.Assassinate, 0, 2): AssassinateCritChance += 0.15f; break;
-            case (PassiveSkillId.Assassinate, 0, 3): AssassinateCritChance += 0.22f; break;
             case (PassiveSkillId.Assassinate, 1, 1): AssassinateKillXpMultiplier += 0.25f; break;
             case (PassiveSkillId.Assassinate, 1, 2): AssassinateKillXpMultiplier += 0.75f; break;
             case (PassiveSkillId.Assassinate, 1, 3): AssassinateKillXpMultiplier += 0.5f; break;
@@ -457,9 +428,6 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Assassinate, 2, 3): AssassinateSlowSkillCritCooldown = 3f; AssassinateCritMultiplier += 0.6f; break;
 
             // 리프레쉬
-            case (PassiveSkillId.Refresh, 0, 1): RefreshChance += 0.03f; break;
-            case (PassiveSkillId.Refresh, 0, 2): RefreshChance += 0.02f; break;
-            case (PassiveSkillId.Refresh, 0, 3): RefreshChance += 0.03f; break;
             case (PassiveSkillId.Refresh, 1, 1): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 2): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 3): RefreshHealOnResetAmount += 2f; break;

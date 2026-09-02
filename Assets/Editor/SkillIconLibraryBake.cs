@@ -26,6 +26,7 @@ public static class SkillIconLibraryBake
         ActiveSkillId.Shotgun => "Icon_Scatter",
         ActiveSkillId.Rewind => "Icon_Rewind",
         ActiveSkillId.Swing => "Icon_Swing",
+        ActiveSkillId.GrapeToss => "Icon_GrapeBomb", // 포도 독성 포도알 — 진화 아이콘(R1/R2)은 아직 없다
         _ => null,
     };
 

@@ -12,18 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d402c541f6647e4ba3e140056474daf, type: 3}
   m_Name: Char_Slot3
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinition
-  displayName: ???
+  displayName: "\uD3EC\uB3C4"
   description: 
-  portrait: {fileID: 0}
-  sprite: {fileID: 0}
-  animatorController: {fileID: 0}
-  attackFrames: []
+  portrait: {fileID: 21300000, guid: c7cba4b9722dcb84ea8db4290f8f33d2, type: 3}
+  sprite: {fileID: 21300000, guid: b22169c2f8c141645b4dbb102b92cd73, type: 3}
+  animatorController: {fileID: 9100000, guid: cdc185652fbc5ae4e9d2fd884e1743cf, type: 2}
+  attackFrames:
+  - {fileID: 21300000, guid: b22169c2f8c141645b4dbb102b92cd73, type: 3}
+  - {fileID: 21300000, guid: 146c69d22c21a4744a2e793d96b2786d, type: 3}
+  - {fileID: 21300000, guid: 0f542d60729b7fc4aae9d2ea4d53f5f7, type: 3}
+  - {fileID: 21300000, guid: 72290ae5c5fd6074b9abd6962463a4dc, type: 3}
+  - {fileID: 21300000, guid: 0c7e82e2ae8339e408db6622325ccb34, type: 3}
   attackFrameSeconds: 0.09
-  baseHealth: 100
+  attackFrameScale: 1
+  attackFrameOffset: {x: 0, y: 0}
+  baseHealth: 85
   unlockedFromStart: 0
   requiredEssenceEarned: 2000
   requiredClearMap: {fileID: 11400000, guid: 9db28795bfcf4d74f8bf189493c35ce4, type: 2}
   requiredClearAscension: 1
-  startingSkill: 0
+  startingSkill: 10
   allowedActivePool: 
   allowedPassivePool: 

@@ -71,6 +71,7 @@ public class SkillProgression : ScriptableObject
         ActiveSkillId.Shotgun => 14f,
         ActiveSkillId.Rewind => 6f,
         ActiveSkillId.Swing => 1.8f,
+        ActiveSkillId.GrapeToss => 6f, // 안개가 4초 깔려 있어 쿨이 짧으면 화면이 안개로 덮인다
         _ => 1f,
     };
 
@@ -86,6 +87,7 @@ public class SkillProgression : ScriptableObject
         ActiveSkillId.Shotgun => 12f,
         ActiveSkillId.Rewind => 0f,
         ActiveSkillId.Swing => 20f,
+        ActiveSkillId.GrapeToss => 4f, // 틱당 피해 — 기본 6틱 × 알 3개라 총량은 이 값의 몇 배가 된다
         _ => 6f,
     };
 
@@ -119,6 +121,10 @@ public class SkillProgression : ScriptableObject
             ? Step(SkillStat.Duration, StatOp.Add, 0.5f)
             : Step(SkillStat.Scale, StatOp.Add, 0.05f),
         ActiveSkillId.EagleDrop => Step(SkillStat.Cooldown, StatOp.Multiply, 0.95f),
+        // 포도: 안개 범위와 던지는 알 수를 번갈아 올린다(기획안의 레벨업 축 — 범위·피해·알 수).
+        ActiveSkillId.GrapeToss => occurrence % 2 == 0
+            ? Step(SkillStat.Scale, StatOp.Add, 0.08f)
+            : Step(SkillStat.ProjectileCount, StatOp.Add, 1f),
         _ => Step(SkillStat.Scale, StatOp.Add, 0.05f), // Orb·Sniping·Homing·Shotgun
     };
 

@@ -351,7 +351,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983108
-    m_Localized: ???
+    m_Localized: Grape
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983109
@@ -377,30 +377,6 @@ MonoBehaviour:
   - m_Id: 709082423296
     m_Localized: Fires an arrow at the nearest enemy. Leveling up adds arrows and
       pierce
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811904
-    m_Localized: The arrow pierces without a care
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811905
-    m_Localized: Piercing Arrow
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811906
-    m_Localized: A heavier head sinks deeper
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811907
-    m_Localized: Heavier Head
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811908
-    m_Localized: What lines up dies in a line
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811909
-    m_Localized: Gone in a Line
     m_Metadata:
       m_Items: []
   - m_Id: 709090811910
@@ -496,30 +472,6 @@ MonoBehaviour:
     m_Localized: Fierce Swarm
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811934
-    m_Localized: The wind does not wait
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811935
-    m_Localized: Wind That Won't Wait
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811936
-    m_Localized: Once it starts spinning there is no reason to stop
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811937
-    m_Localized: No Reason to Stop
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811938
-    m_Localized: It comes the moment you call
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811939
-    m_Localized: Comes When Called
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811940
     m_Localized: Feet stick to the ground where it passed
     m_Metadata:
@@ -567,30 +519,6 @@ MonoBehaviour:
   - m_Id: 709090811951
     m_Localized: Summons an orb that pierces forward. Deals damage over time to every
       enemy it touches and slows them
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811952
-    m_Localized: The sky is no safe place
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811953
-    m_Localized: No Exception in the Sky
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811954
-    m_Localized: The orb grows visibly heavier
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811955
-    m_Localized: Heavy Orb
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811956
-    m_Localized: The winged ones regret it most
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811957
-    m_Localized: Winged Regret
     m_Metadata:
       m_Items: []
   - m_Id: 709090811958
@@ -715,30 +643,6 @@ MonoBehaviour:
     m_Localized: Pulls the Sky Down
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811988
-    m_Localized: The storm stays a long while
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811989
-    m_Localized: Lingering Storm
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811990
-    m_Localized: When the whirlwind blows, the storm settles in too
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811991
-    m_Localized: Storm Settled In
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811992
-    m_Localized: The lingering storm rides on every blow
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811993
-    m_Localized: Storm on Every Blow
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811994
     m_Localized: Thundercloud Buildup
     m_Metadata:
@@ -762,30 +666,6 @@ MonoBehaviour:
   - m_Id: 709090811999
     m_Localized: Drops eagles across the whole screen twice, one second apart, damaging
       every enemy
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812000
-    m_Localized: One more comes flying
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812001
-    m_Localized: One More
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812002
-    m_Localized: The fewer the prey, the harder it strikes
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812003
-    m_Localized: Fewer, Harder
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812004
-    m_Localized: They pour down without rest
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812005
-    m_Localized: Pouring Sky
     m_Metadata:
       m_Items: []
   - m_Id: 709090812006
@@ -858,30 +738,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 709090812023
     m_Localized: Snipes the enemy with the most health three times for heavy damage
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812024
-    m_Localized: One more crosshair appears
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812025
-    m_Localized: Another Crosshair
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812026
-    m_Localized: More names go on the list
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812027
-    m_Localized: Growing List
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812028
-    m_Localized: The list grows with no end in sight
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812029
-    m_Localized: End of the List
     m_Metadata:
       m_Items: []
   - m_Id: 709090812030
@@ -957,30 +813,6 @@ MonoBehaviour:
       and it grows stronger the more you use it (this run only)
     m_Metadata:
       m_Items: []
-  - m_Id: 709090812048
-    m_Localized: The magazine doubles in thickness
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812049
-    m_Localized: Thick Magazine
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812050
-    m_Localized: The sky is covered in missiles
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812051
-    m_Localized: Sky of Missiles
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812052
-    m_Localized: You give up on counting
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812053
-    m_Localized: Too Many to Count
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090812054
     m_Localized: The warhead grows heavy
     m_Metadata:
@@ -1051,30 +883,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 709090812071
     m_Localized: Sprays buckshot forward in a fan
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006208
-    m_Localized: Every skill fires one more time
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006209
-    m_Localized: One More Time
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006210
-    m_Localized: It feels like an extra hand
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006211
-    m_Localized: An Extra Hand
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006212
-    m_Localized: Whatever you press, it pours
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006213
-    m_Localized: Whatever You Press
     m_Metadata:
       m_Items: []
   - m_Id: 709095006214
@@ -1148,30 +956,6 @@ MonoBehaviour:
   - m_Id: 709095006231
     m_Localized: Pulls every other skill's cooldown forward by 1 second. Rewinds
       further with each level
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006232
-    m_Localized: Time steps back a little
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006233
-    m_Localized: Time Steps Back
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006234
-    m_Localized: It steps back further
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006235
-    m_Localized: Further Back
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006236
-    m_Localized: What you just used never happened
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006237
-    m_Localized: Never Happened
     m_Metadata:
       m_Items: []
   - m_Id: 709095006238
@@ -1315,30 +1099,6 @@ MonoBehaviour:
     m_Localized: Strength
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006273
-    m_Localized: The fist grows heavy
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006274
-    m_Localized: Heavy Fist
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006275
-    m_Localized: Heavier still
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006276
-    m_Localized: Heavier Fist
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006277
-    m_Localized: Everything you swing at breaks
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006278
-    m_Localized: Swing and It Breaks
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006279
     m_Localized: A clean hit lands deeper
     m_Metadata:
@@ -1405,30 +1165,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 709095006295
     m_Localized: Vitality
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006296
-    m_Localized: Wounds close on their own
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006297
-    m_Localized: Closes on Its Own
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006298
-    m_Localized: They close faster
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006299
-    m_Localized: Closes Fast
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006300
-    m_Localized: It outpaces the wounding
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006301
-    m_Localized: Outpaces the Wounds
     m_Metadata:
       m_Items: []
   - m_Id: 709095006302
@@ -1499,30 +1235,6 @@ MonoBehaviour:
     m_Localized: Knowledge
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006319
-    m_Localized: You learn quickly just by watching
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006320
-    m_Localized: Learns Fast
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006321
-    m_Localized: Faster still
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006322
-    m_Localized: Faster Still
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006323
-    m_Localized: One look is enough
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006324
-    m_Localized: One Look Is Enough
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006325
     m_Localized: Now and then one of them carries a chest
     m_Metadata:
@@ -1591,30 +1303,6 @@ MonoBehaviour:
     m_Localized: Assassination
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006342
-    m_Localized: Weak spots keep catching your eye
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006343
-    m_Localized: Weak Spots Show
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006344
-    m_Localized: You see them more often
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006345
-    m_Localized: Seen More Often
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006346
-    m_Localized: Everywhere you look is a weak spot
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006347
-    m_Localized: Weak Spots Everywhere
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006348
     m_Localized: A clean finish pays
     m_Metadata:
@@ -1681,30 +1369,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 709095006364
     m_Localized: Refresh
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006365
-    m_Localized: Now and then what you just used is ready again
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006366
-    m_Localized: Ready Again
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006367
-    m_Localized: It happens more often
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006368
-    m_Localized: More Often
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006369
-    m_Localized: Waiting becomes rare
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006370
-    m_Localized: No More Waiting
     m_Metadata:
       m_Items: []
   - m_Id: 709095006371
@@ -1989,10 +1653,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 269049805873169
     m_Localized: Max health {0}
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873170
-    m_Localized: Restore {1} health every {0}s
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873171
@@ -2501,6 +2161,79 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 4693959529668608
     m_Localized: Upgrades
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524159980249088
+    m_Localized: Toxic Grapes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386432
+    m_Localized: Lobs toxic grapes where enemies gather. Each burst leaves a poison
+      cloud that infects anyone inside, dealing damage over time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386433
+    m_Localized: Biotoxin Grapes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386434
+    m_Localized: Plague Grapes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386435
+    m_Localized: Crackling Grapes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386436
+    m_Localized: Paralysis Grapes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386437
+    m_Localized: Thicker Fog
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386438
+    m_Localized: The cloud spreads wider
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386439
+    m_Localized: Faster Rot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386440
+    m_Localized: The poison courses more often
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386441
+    m_Localized: They Burst
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386442
+    m_Localized: Whatever falls poisoned bursts, staining those beside it
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386443
+    m_Localized: One More Handful
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386444
+    m_Localized: More go out at once
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386445
+    m_Localized: Crackling Poison
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386446
+    m_Localized: Each pulse of poison locks them up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386447
+    m_Localized: They Seize
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7524160026386448
+    m_Localized: They lock up more often, and what unlocks is soft
     m_Metadata:
       m_Items: []
   references:

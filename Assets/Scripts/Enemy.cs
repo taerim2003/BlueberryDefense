@@ -175,6 +175,14 @@ public class Enemy : MonoBehaviour
     private float slowTimer;
     private float vulnerableMultiplier = 1f;
     private float vulnerableTimer;
+
+    // 중독 — 포도의 독성 안개가 거는 도트. 안개 안에 있는 동안 계속 갱신된다.
+    private float poisonDamage;
+    private float poisonTimer;
+    private float poisonInterval;
+    private float poisonNextTick;
+    private int poisonTicksTaken;   // 찌릿찌릿 루트가 "N번째 중독 피해마다 기절"을 세는 값
+    private bool poisonFromExplosion; // 폭발이 옮긴 중독 — 이걸로 죽어도 다시 폭발하지 않는다(연쇄 무한루프 차단)
     private SpriteRenderer spriteRenderer;
     private Animator animator; // 걷기 애니메이터(없을 수 있음) — 기절 중 정지시키기 위해 캐시
 
@@ -299,6 +307,8 @@ public class Enemy : MonoBehaviour
         holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
         knockbackDistance = 0f; knockbackElapsed = 0f; knockbackMoved = 0f;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
+        poisonDamage = 0f; poisonTimer = 0f; poisonInterval = 0f; poisonNextTick = 0f;
+        poisonTicksTaken = 0; poisonFromExplosion = false;
         diveDir = Vector2.right;
         diveFloorY = float.NegativeInfinity; // SetupDive가 다시 채운다. 비강하 유닛에겐 바닥이 없다.
         // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.
@@ -434,6 +444,8 @@ public class Enemy : MonoBehaviour
             if (vulnerableTimer <= 0f)
                 vulnerableMultiplier = 1f;
         }
+
+        TickPoison();
 
         if (isCarrier)
         {
@@ -739,6 +751,65 @@ public class Enemy : MonoBehaviour
         vulnerableTimer = duration;
     }
 
+    public bool IsPoisoned => poisonTimer > 0f;
+
+    // 독성 안개가 매 프레임 다시 걸어 온다 — 지속시간은 새로 채우고 피해는 **더 센 쪽**만 남긴다
+    // (약한 안개가 강한 안개의 중독을 덮어쓰면 진화가 손해가 된다).
+    // 첫 틱은 interval만큼 기다린 뒤에 들어간다 — 안개에 발을 들이자마자 피해가 터지면
+    // 스치듯 지나간 적까지 다 맞아서 "중독"이 아니라 즉발 광역기가 된다.
+    public void ApplyPoison(float damagePerTick, float duration, float interval, bool fromExplosion = false)
+    {
+        if (isDead || popping) return;
+        if (damagePerTick > poisonDamage) poisonDamage = damagePerTick;
+        if (poisonTimer <= 0f) { poisonNextTick = interval; poisonTicksTaken = 0; poisonFromExplosion = fromExplosion; }
+        poisonInterval = interval;
+        poisonTimer = Mathf.Max(poisonTimer, duration);
+    }
+
+    private void TickPoison()
+    {
+        if (poisonTimer <= 0f || isDead) return;
+
+        poisonTimer -= Time.deltaTime;
+        poisonNextTick -= Time.deltaTime;
+        if (poisonNextTick > 0f)
+        {
+            if (poisonTimer <= 0f) poisonDamage = 0f;
+            return;
+        }
+
+        poisonNextTick += Mathf.Max(0.05f, poisonInterval);
+        poisonTicksTaken++;
+        TakeDamage(poisonDamage, source: ActiveSkillId.GrapeToss, rollLightning: false);
+
+        // 찌릿찌릿 루트: N번째 중독 피해마다 기절. 2차는 기절이 끝난 뒤 취약까지 남긴다.
+        int stunEvery = PlayerSkills.GrapeStunEveryNPoisonTicks;
+        if (stunEvery > 0 && poisonTicksTaken % stunEvery == 0 && !isDead)
+        {
+            ApplySlow(0f, PlayerSkills.GrapeStunDuration);
+            if (PlayerSkills.GrapeStunAppliesVulnerable)
+                ApplyVulnerable(PlayerSkills.GrapeStunVulnerableMult,
+                                PlayerSkills.GrapeStunDuration + PlayerSkills.GrapeStunVulnerableDuration);
+        }
+
+        if (poisonTimer <= 0f) poisonDamage = 0f;
+    }
+
+    // 생화학 루트 2차: 중독 상태로 죽으면 터져서 주변을 함께 중독시킨다.
+    // 폭발이 옮긴 중독은 다시 폭발하지 않는다(poisonFromExplosion) — 안 막으면 한 무리가 통째로 연쇄한다.
+    private void ExplodePoison()
+    {
+        float radius = PlayerSkills.GrapeExplodeRadius;
+        float damage = maxHealth * PlayerSkills.GrapeExplodeDamageRatio;
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (e == null || e == this || !e.IsAlive) continue;
+            if (Vector2.Distance(e.transform.position, transform.position) > radius) continue;
+            e.ApplyPoison(poisonDamage, PlayerSkills.GrapePoisonDuration, poisonInterval, fromExplosion: true);
+            e.TakeDamage(damage, source: ActiveSkillId.GrapeToss, rollLightning: false);
+        }
+    }
+
     private const int MaxLightningChain = 4;
 
     // rollLightning:    이 타격이 낙뢰 발동을 굴릴지. 멀티히트(TakeSkillHit)에선 첫 서브히트만 true로 넘겨
@@ -799,6 +870,10 @@ public class Enemy : MonoBehaviour
         {
             isDead = true;
             SfxPlayer.Play(SfxId.EnemyDeath);
+
+            // 생화학 루트 2차 — 중독된 채 죽으면 터진다. isDead를 세운 뒤라 이 적은 다시 안 죽는다.
+            if (poisonTimer > 0f && !poisonFromExplosion && PlayerSkills.GrapePoisonExplodeOnDeath)
+                ExplodePoison();
 
             // 과잉 피해 처치 — 남은 체력을 최대 체력만큼 더 넘겨서 죽인 경우 = "한 방에 터뜨렸다".
             // 이 시점의 currentHealth는 이미 음수라 그 절댓값이 곧 초과 피해다.
