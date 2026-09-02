@@ -43,6 +43,7 @@ public class EquippedSkill
     // 반복 타격 간격 배율(작을수록 자주 때림) — 회오리 피해 주기, 독수리 투하 간격
     public float TickIntervalMult = 1f;
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
+    public float ExtraShotgunDuration = 0f;   // 산탄: 버프 지속 + 관통 산탄 전탄발사 지속(초) 추가
     public int GrowthStacks = 0; // 호밍 미사일: 사용할수록 누적되는 성장 스택(이번 판 한정)
     public float RewindAmount = 1f; // 되감기: 다른 스킬 쿨타임을 앞당기는 시간(초). 짝수 레벨업마다 +0.15
 
@@ -365,7 +366,11 @@ public class PlayerSkills : MonoBehaviour
             case SkillStat.Pierce: skill.ExtraPierce = Mathf.RoundToInt(Op(skill.ExtraPierce, s)); break;
             case SkillStat.ProjectileCount: skill.ExtraProjectiles = Mathf.RoundToInt(Op(skill.ExtraProjectiles, s)); break;
             case SkillStat.ProcChance: skill.ProcChanceBonus = Op(skill.ProcChanceBonus, s); break;
-            case SkillStat.Duration: skill.ExtraWhirlwindDuration = Op(skill.ExtraWhirlwindDuration, s); break;
+            // 같은 "지속시간" 스텝이라도 붙는 곳은 스킬마다 다르다(카드 문구는 둘 다 "지속시간 N초 증가"라 거짓말이 아니다).
+            case SkillStat.Duration:
+                if (skill.Id == ActiveSkillId.Shotgun) skill.ExtraShotgunDuration = Op(skill.ExtraShotgunDuration, s);
+                else skill.ExtraWhirlwindDuration = Op(skill.ExtraWhirlwindDuration, s);
+                break;
             case SkillStat.Scale: skill.Scale = Op(skill.Scale, s); break;
             case SkillStat.RewindAmount: skill.RewindAmount = Op(skill.RewindAmount, s); break;
             case SkillStat.TickRate: skill.TickIntervalMult = Mathf.Max(0.15f, Op(skill.TickIntervalMult, s)); break;
@@ -625,38 +630,26 @@ public class PlayerSkills : MonoBehaviour
     public static string GetSkillCategoryLabel(SkillCategory c) =>
         Loc.TOr("skill.cat." + c, c.ToString());
 
-    private static string CategoryColorHex(SkillCategory c) => c switch
-    {
-        SkillCategory.Buff => "6FD3FF",    // 하늘 = 버프
-        SkillCategory.Utility => "C7A8FF", // 보라 = 유틸
-        _ => "FF8A6B",                     // 주황 = 공격
-    };
-
     // 레벨업 선택지처럼 액티브/패시브가 섞여 나오는 곳에서 쓰는 종류 배지.
     // ⚠️ 리치텍스트 마크업은 코드에 남기고 **낱말만** 표에 둔다 — 번역자가 태그를 깨뜨릴 자리를 만들지 않는다.
     public static string ActiveTypeBadge => "<size=68%><color=#FFD86B>[" + Loc.T("ui.badge.active") + "]</color></size>";
     public static string PassiveTypeBadge => "<size=68%><color=#9BE86B>[" + Loc.T("ui.badge.passive") + "]</color></size>";
 
-    // 레벨업 선택지 제목: 배지를 이름 뒤에 붙인다 — "회오리 [액티브] [공격]" / "힘 [패시브]"
+    // 레벨업 선택지 제목: 배지를 이름 뒤에 붙인다 — "회오리 [액티브]" / "힘 [패시브]"
+    // 🔴 종류 배지(공격/버프/유틸)는 **전부 뺐다**(사용자 결정 2026-09-02) — 액티브·패시브만 남긴다.
+    //    `SkillCategory`는 남아 있지만 화면에는 안 나온다(에디터의 번역 수확 도구가 아직 쓴다).
     public static string GetActiveSkillTitleWithTags(ActiveSkillId id) =>
-        $"{GetActiveSkillName(id)} {ActiveTypeBadge} {GetActiveSkillBadge(id).TrimEnd()}";
+        $"{GetActiveSkillName(id)} {ActiveTypeBadge}";
 
     public static string GetPassiveSkillTitleWithTags(PassiveSkillId id) =>
         $"{GetPassiveSkillName(id)} {PassiveTypeBadge}";
 
     // 이미 장착한 스킬은 진화 후 이름(DisplayName)으로 표시한다.
     public static string GetActiveSkillTitleWithTags(EquippedSkill s) =>
-        $"{s.DisplayName} {ActiveTypeBadge} {GetActiveSkillBadge(s.Id).TrimEnd()}";
+        $"{s.DisplayName} {ActiveTypeBadge}";
 
     public static string GetPassiveSkillTitleWithTags(EquippedPassive p) =>
         $"{p.DisplayName} {PassiveTypeBadge}";
-
-    // 이름 앞에 붙이는 리치텍스트 배지("[공격] " 등). UI 요소 추가 없이 제목에 인라인.
-    public static string GetActiveSkillBadge(ActiveSkillId id)
-    {
-        SkillCategory c = GetSkillCategory(id);
-        return $"<size=68%><color=#{CategoryColorHex(c)}>[{GetSkillCategoryLabel(c)}]</color></size> ";
-    }
 
     // 일시정지(ESC) 요약용: 이 스킬이 1레벨 기본값 대비 레벨업으로 얼마나 강해졌는지 항목별로 정리.
     // (진화 효과는 PauseMenu가 PathTier 제목으로 따로 표시하므로 여기선 레벨업 성장분만 다룬다)
@@ -1273,8 +1266,15 @@ public class PlayerSkills : MonoBehaviour
     {
         FireShotgunPellets(damage, critChance, skill);
 
-        float duration = 5f + (skill.PathTier[1] >= 1 ? 2f : 0f) + (skill.PathTier[2] >= 1 ? 2f : 0f);
-        // Route1(path0): 공격 횟수 추가
+        // 🔴 **버프는 집중 산탄 루트를 골랐을 때만 켜진다**(사용자 결정 2026-09-02 — 8/27 QA "산탄 구조 개편").
+        //    화면의 "루트 1"(= route 0, 스나이핑 연계 · 집중 산탄 → 일점사 산탄)이 그 루트다.
+        //    미진화 산탄과 관통 산탄 루트는 **순수 공격기**다 — 예전엔 공격+버프가 한 스킬에 섞여 있어서
+        //    진화로 버프를 고를 이유가 없었다.
+        if (skill.PathTier[1] <= 0) return true;
+
+        // 루트를 탔으므로 +2초는 늘 붙는다(관통 산탄 루트는 위에서 이미 빠져나갔다).
+        float duration = 5f + 2f + skill.ExtraShotgunDuration; // 레벨업 "지속시간" 스텝
+        // Route1(path0): 공격 횟수 추가 — ⚠️ 산탄은 path0 루트가 없어 이 항은 늘 0이다(개편 전부터 그랬다)
         int bonus = 1 + (skill.PathTier[0] >= 1 ? 1 : 0) + (skill.PathTier[0] >= 2 ? 1 : 0) + (skill.PathTier[0] >= 3 ? 2 : 0);
         // Route2(path1) T2: 최고 공격력 스킬 1개에만, 보너스 2배(T3=3배)
         bool single = skill.PathTier[1] >= 2;
@@ -1556,11 +1556,26 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.ExtraLifetime = extraLifetime;
     }
 
-    private const float ScatterFireBackOffset = 0.35f; // 화약 불꽃을 알보다 얼마나 뒤에 놓을지(유닛)
+    // 총구 화염 손잡이. 알마다 하나씩이 아니라 **한 번 쏠 때(=볼리마다) 하나**다(사용자 명세 2026-09-02).
+    private const float ScatterFireScale = 1.8f;      // 🔴 절대값이다 — 풀에서 재사용되므로 곱하면 매번 커진다
+    private const float ScatterFireMuzzleGap = 0.75f; // 몸 중심에서 총구까지(유닛)
 
-    // 🔴 산탄은 **한 프레임에 전탄을 동시에** 내보낸다(사용자 명세, 8/25 빌드 검수).
-    //    공격 애니메이션이 딱 한 번 도는 동안 탄이 전부 나가고 끝나는 것이 이 스킬이 원하는 손맛이다 —
+    // ── 전탄발사(관통 산탄 이후) 손잡이 ─────────────────────────────────────
+    // 한 방으로 끝나던 산탄이 **여기서만** 일정 시간 전방을 훑는 연사가 된다
+    // (사용자 명세 2026-09-02 — 메이플 메탈아머 전탄발사).
+    private const float BarrageBaseDuration = 2f;      // 기본 지속(초). 레벨업 "지속시간" 스텝이 더해진다
+    private const float BarrageVolleyInterval = 0.12f; // 볼리 간격(초)
+    private const float BarrageBandHeight = 4.5f;      // 세로로 훑는 총 높이(유닛)
+    private const float BarrageBandDown = 1.2f;        // 그중 발사점 **아래**로 내려가는 몫 — 지면 바로 위까지만
+    // 관통 **무한**(사용자 결정 2026-09-02). 알은 사거리(=`Scatter_Pellet`의 lifetime)가 다할 때까지 뚫고 지나간다.
+    // 같은 적을 두 번 때리지는 않는다(`SmallOrb.hitEnemies`), 방패 블루베리는 관통과 무관하게 끊는다.
+    private const int BarragePierce = int.MaxValue;
+
+    // 🔴 **미진화 산탄은 한 프레임에 전탄을 동시에** 내보낸다(사용자 명세, 8/25 빌드 검수).
+    //    공격 애니메이션이 딱 한 번 도는 동안 탄이 전부 나가고 끝나는 것이 그 스킬이 원하는 손맛이다 —
     //    시간차를 두고 나눠 쏘면 애니메이션이 여러 번 도는 것처럼 보여서 산탄이 아니게 된다.
+    //    ⚠️ 이 규칙은 이제 **미진화 산탄에만** 적용된다. 관통 산탄(path2 T2+)은 2026-09-02에 연사로 바뀌었고,
+    //       거기서는 애니메이션이 볼리마다 도는 것이 의도다(사용자 결정).
     //    빠르기·사거리는 `Scatter_Pellet.prefab`의 `moveSpeed`·`lifetime`이 정한다(게임에서 제일 빠른 투사체).
     // 적이 오는 왼쪽으로 부채꼴 산탄. 알이 늘어도 각도는 그대로라 **촘촘해지는 것**이 눈에 보인다.
     private void FireShotgunPellets(float damage, float critChance, EquippedSkill skill)
@@ -1576,10 +1591,34 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[2] >= 3) { pellets *= 3; spreadDegrees = 0f; pelletDamage *= 1.6f; }
         else if (skill.PathTier[2] >= 2) { pellets *= 2; spreadDegrees = 0f; pelletDamage *= 1.3f; }
 
+        if (skill.PathTier[2] >= 2) { StartCoroutine(Barrage(skill, pellets, pelletDamage, critChance)); return; }
+
+        FireVolley(skill, pellets, spreadDegrees, pelletDamage, critChance, pierce: 0);
+    }
+
+    // 전탄발사 — 같은 볼리를 지속시간 동안 되풀이한다.
+    // 🔴 총 피해량은 **한 방이던 시절과 같다**(사용자 결정 2026-09-02). 볼리 수로 나눠 담을 뿐이라
+    //    레벨업(탄 수·피해)은 그대로 총량에 실리고, 지속시간만 늘리면 총량은 안 변한다.
+    private IEnumerator Barrage(EquippedSkill skill, int pellets, float pelletDamage, float critChance)
+    {
+        float duration = BarrageBaseDuration + skill.ExtraShotgunDuration;
+        int volleys = Mathf.Max(1, Mathf.RoundToInt(duration / BarrageVolleyInterval));
+
+        for (int v = 0; v < volleys; v++)
+        {
+            FireVolley(skill, pellets, 0f, pelletDamage / volleys, critChance, BarragePierce);
+            yield return new WaitForSeconds(BarrageVolleyInterval);
+        }
+    }
+
+    // 한 번의 발사. 총구 화염 · 알 · 공격 애니메이션이 한 세트다.
+    private void FireVolley(EquippedSkill skill, int pellets, float spreadDegrees, float pelletDamage, float critChance, int pierce)
+    {
         // 전용 그림이 배선돼 있으면 그쪽. 폴백(shotgunPelletPrefab)은 추적 오브와 공유하는 원본이라 그림이 오브다.
         GameObject pelletPrefab = scatterPelletPrefab != null ? scatterPelletPrefab : shotgunPelletPrefab;
-
         Vector3 origin = transform.position + Vector3.up * 0.2f;
+
+        SpawnMuzzleFire(origin);
 
         for (int i = 0; i < pellets; i++)
         {
@@ -1587,13 +1626,15 @@ public class PlayerSkills : MonoBehaviour
             float angle = Mathf.Lerp(-spreadDegrees, spreadDegrees, t);
             Vector2 dir = Quaternion.Euler(0f, 0f, angle) * Vector2.left;
 
-            // 각도가 0이면(전방 집중) 전부 한 점에서 겹쳐 한 발처럼 보인다 — 출발 높이를 위아래로 벌려 "다발"이 보이게 한다.
-            Vector3 spawnAt = origin + (spreadDegrees <= 0f ? Vector3.up * Mathf.Lerp(-0.45f, 0.45f, t) : Vector3.zero);
-
-            // 알 하나당 화약 불꽃을 발사 지점 **뒤쪽**에 하나씩 남긴다 — 그림은 한 발짜리라 알이 늘면 같이 늘어난다.
-            // 불꽃 그림은 위를 향해 그려져 있어 -90도 보정해야 진행 방향으로 뻗는다.
-            if (scatterFireVfxPrefab != null)
-                ObjectPool.Instance.Spawn(scatterFireVfxPrefab, spawnAt - (Vector3)(dir * ScatterFireBackOffset), Quaternion.Euler(0f, 0f, angle - 90f));
+            // 전방 집중(각도 0)이면 전부 한 점에서 겹쳐 한 발처럼 보인다 — 출발 높이를 세로로 벌린다.
+            // 🔴 균등 배치가 아니라 **칸을 나눠 그 칸 안에서만 흔든다**(층화 추출). 균등이면 볼리마다 같은 자리라
+            //    격자무늬로 보이고, 완전 무작위면 뭉쳐서 빈 구간이 생긴다.
+            Vector3 spawnAt = origin;
+            if (spreadDegrees <= 0f)
+            {
+                float slot = (i + Random.value) / pellets;
+                spawnAt += Vector3.up * Mathf.Lerp(-BarrageBandDown, BarrageBandHeight - BarrageBandDown, slot);
+            }
 
             // 알 그림은 왼쪽으로 날아가는 형태(궤적이 뒤로 뻗음)라 부채꼴 각도만큼 같이 돌려야 궤적이 진행 방향과 맞는다.
             GameObject obj = Instantiate(pelletPrefab, spawnAt, Quaternion.Euler(0f, 0f, angle));
@@ -1603,11 +1644,30 @@ public class PlayerSkills : MonoBehaviour
             pellet.CritChance = critChance;
             // 🔴 SmallOrb의 기본 출처가 Orb다 — 안 갈아주면 산탄 피해가 **데미지 미터에 오브로 잡힌다**.
             pellet.Source = ActiveSkillId.Shotgun;
-            // 관통 없음(PierceRemaining=0 기본값) — 첫 명중에 바로 사라진다. 산탄의 정체성이라 켜지 말 것.
+            // 🔴 **미진화 산탄은 관통 0** — 첫 명중에 바로 사라진다. 그 스킬의 정체성이라 켜지 말 것.
+            //    관통 산탄(path2 T2+)만 이름값대로 뚫는다(무한, 사용자 결정 2026-09-02).
+            pellet.PierceRemaining = pierce;
             pellet.Init(dir, pelletDamage, false);
         }
 
         animator.SetTrigger("Attack");
+    }
+
+    // 총구 화염. 알을 따라가지 않고 정면(왼쪽)을 향한다.
+    // 🔴 회전은 0이다 — 불꽃 그림은 **이미 왼쪽(알이 날아가는 쪽)을 보고** 그려져 있다.
+    //    예전 -90도 보정은 그림을 위로 세워서 "바닥에서 불이 솟는" 것처럼 보이게 하고 있었다.
+    // ⚠️ 앵커를 총구보다 위·뒤에 두는 건 그림 탓이다: 96x96 캔버스의 pivot은 한가운데인데
+    //    불꽃은 왼쪽 아래에 치우쳐 그려져 있어(pivot 기준 x -21~+16px · y -39~+3px) 그만큼 되민다.
+    private void SpawnMuzzleFire(Vector3 origin)
+    {
+        if (scatterFireVfxPrefab == null) return;
+
+        float px = ScatterFireScale / 32f;   // 그림 1px이 몇 유닛인가(PPU 32)
+        Vector3 muzzle = origin
+            + Vector3.left * (ScatterFireMuzzleGap + 16.5f * px)
+            + Vector3.up * (18f * px);
+        GameObject fire = ObjectPool.Instance.Spawn(scatterFireVfxPrefab, muzzle, Quaternion.identity);
+        if (fire != null) fire.transform.localScale = Vector3.one * ScatterFireScale;
     }
 
     // 반환값은 회오리 R0이 "사라질 때 미니를 남기는" 콜백을 배선하는 데 쓴다(그 외 호출부는 무시해도 된다).

@@ -1050,8 +1050,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090812071
-    m_Localized: Sprays buckshot forward, and for 5 seconds every skill attacks one
-      extra time
+    m_Localized: Sprays buckshot forward in a fan
     m_Metadata:
       m_Items: []
   - m_Id: 709095006208
@@ -1103,11 +1102,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006220
-    m_Localized: The heat lingers even longer
+    m_Localized: It keeps pouring instead of stopping at one burst
     m_Metadata:
       m_Items: []
   - m_Id: 709095006221
-    m_Localized: Even Longer
+    m_Localized: Never Stops
     m_Metadata:
       m_Items: []
   - m_Id: 709095006222
@@ -2361,11 +2360,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873262
-    m_Localized: ACTIVE SKILLS
+    m_Localized: ACTIVE
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873263
-    m_Localized: PASSIVES
+    m_Localized: PASSIVE
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873264
@@ -2473,7 +2472,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 4204751576834054
-    m_Localized: Synergy {0}
+    m_Localized: '{0} Synergy'
     m_Metadata:
       m_Items: []
   - m_Id: 4204751576834055

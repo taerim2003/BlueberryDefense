@@ -149,6 +149,19 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
+    // 🔴 위 Start의 스냅샷은 **그 한 번뿐**이다. 화면 코드가 나중에 칸 색을 다시 칠하는 경우
+    //    (도감의 발견 여부처럼) 그 색은 원본으로 기록되지 않아, 다음 dim 연출이 옛 색으로 통째로 덮어쓴다.
+    //    그런 색은 Graphic.color에 직접 대입하지 말고 이 창구로 칠할 것.
+    public void SetDimBaseColor(Graphic graphic, Color baseColor)
+    {
+        if (graphic == null) return;
+        graphic.color = baseColor;
+        if (_dimGraphics == null) return; // Start 전 — Start가 지금 넣은 이 색을 원본으로 잡는다
+
+        for (int i = 0; i < _dimGraphics.Length; i++)
+            if (_dimGraphics[i] == graphic) { _dimColors[i] = baseColor; ApplyDim(); return; }
+    }
+
     private void TweenDim(float target)
     {
         if (_dimGraphics == null) return; // Start 전 — Start가 최종 상태로 맞춘다

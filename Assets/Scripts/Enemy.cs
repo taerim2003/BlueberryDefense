@@ -230,6 +230,8 @@ public class Enemy : MonoBehaviour
     // 뜬 높이만큼 자식 좌표를 아래로 내려 월드 y를 지면에 고정한다(부모 스케일로 나눠 보정).
     private void LateUpdate()
     {
+        RefreshDamageNumbers();   // 데미지 숫자 큐가 이 적을 따라다닌다 — 아래 그림자 분기보다 먼저
+
         if (shadowTr == null) return;
 
         float groundY = popping ? popGroundY : (isHopper ? hopBaseY : transform.position.y);
@@ -951,13 +953,18 @@ public class Enemy : MonoBehaviour
         return anyCrit;
     }
 
-    // 데미지 숫자는 적 머리 위(DamageNumberBaseHeight)에서 뜨고, 같은 공격의 서브히트는 세로로 쌓인다.
-    // 가로는 매번 조금씩 흔든다 — x를 0으로 완전 정렬했더니 숫자가 자로 잰 듯 일직선으로 올라와 부자연스러웠다.
-    // ⚠️ StackStep(0.52)보다 훨씬 작게 유지할 것. 이보다 커지면 9/9/9 세로 묶음이 흩어져 한 공격으로 안 읽힌다.
+    // ── 데미지 숫자 큐 ────────────────────────────────────────────────────────
+    // 🔴 **적 한 마리가 큐 하나를 든다**(2026-09-02 명세, 메이플 방식). 새 숫자는 머리 바로 위(맨 아래)에 뜨고,
+    //    먼저 있던 것들이 한 칸씩 **위로 밀린다.** 예전엔 숫자마다 제자리에서 혼자 떠올라서,
+    //    같은 적을 연달아 때리면 전부 같은 높이에 겹쳐 안 읽혔다(한 공격 안의 서브히트만 쌓였다).
+    // ⚠️ 큐가 자리를 매 프레임 정해 주므로 숫자는 **적을 따라다닌다** — 예전의 "뜬 자리 월드 고정"과 반대다.
     private const float DamageNumberBaseHeight = 0.85f;
     private const float DamageNumberStackStep = 0.52f;   // 0.62에서 좁힘(사용자 요청)
-    private const float DamageNumberJitterX = 0.3f;
+    private const float DamageNumberJitterX = 0.3f;      // 가로 흔들림. StackStep보다 훨씬 작게 유지할 것
     private const float DamageNumberStaggerDelay = 0.08f; // 멀티히트 숫자 간 타이밍 간격
+    private const int DamageNumberMaxStack = 10;          // 이보다 쌓이면 맨 위(가장 오래된)부터 떠나보낸다
+
+    private readonly List<DamageNumber> damageNumbers = new List<DamageNumber>();
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
@@ -965,9 +972,43 @@ public class Enemy : MonoBehaviour
 
         GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
         Vector3 offset = new Vector3(Random.Range(-DamageNumberJitterX, DamageNumberJitterX),
-                                     DamageNumberBaseHeight + DamageNumberStackStep * hitIndex, 0f);
-        obj.GetComponent<DamageNumber>().Init(amount, isCrit, offset, hitIndex * DamageNumberStaggerDelay);
+                                     DamageNumberBaseHeight, 0f);
+        var num = obj.GetComponent<DamageNumber>();
+        if (num == null) return;
+        num.Init(amount, isCrit, offset, hitIndex * DamageNumberStaggerDelay);
+
+        damageNumbers.Insert(0, num);   // 맨 아래 = 목록 앞
+
+        int live = 0;
+        foreach (var n in damageNumbers) if (n != null && !n.IsRetiring) live++;
+        for (int i = damageNumbers.Count - 1; i >= 0 && live > DamageNumberMaxStack; i--)
+            if (damageNumbers[i] != null && !damageNumbers[i].IsRetiring) { damageNumbers[i].Retire(); live--; }
+
+        // 🔴 여기서도 자리를 잡아야 한다 — LateUpdate는 **비활성 오브젝트에서 안 돈다.**
+        //    죽은 적(그 프레임에 반납되는)에게 꽂힌 숫자들이 전부 같은 높이에 겹쳐 뜨던 원인이었다.
+        RefreshDamageNumbers();
     }
+
+    // 큐의 자리를 매 프레임 다시 정한다. 물러나는 숫자는 즉시 큐에서 뺀다 —
+    // 그래야 풀이 그 오브젝트를 다른 적에게 재사용해도 이 목록에 남지 않는다.
+    private void RefreshDamageNumbers()
+    {
+        if (damageNumbers.Count == 0) return;
+
+        Vector3 anchor = transform.position + Vector3.up * DamageNumberBaseHeight;
+        int slot = 0;
+        for (int i = 0; i < damageNumbers.Count; i++)
+        {
+            DamageNumber n = damageNumbers[i];
+            if (n == null || n.IsRetiring) { damageNumbers.RemoveAt(i--); continue; }
+            if (!n.IsVisible) continue;   // 멀티히트 지연 중 — 아직 자리를 차지하지 않는다
+            n.SetTarget(anchor + Vector3.up * (DamageNumberStackStep * slot));
+            slot++;
+        }
+    }
+
+    // 적이 풀로 반납되면 큐만 비운다 — 떠 있는 숫자는 제 수명대로 그 자리에서 사라진다.
+    private void OnDisable() => damageNumbers.Clear();
 
     // 과잉 피해 처치 연출. 새 에셋 없이 **이미 있는 재료**(죽음 VFX + 타격 파편)를 키우고 사방으로 터뜨린다 —
     // 평소 타격 파편은 위로 튀지만(SpawnHitParticles) 이건 360도로, 더 많이, 더 빠르게 나간다.

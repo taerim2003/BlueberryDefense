@@ -1,9 +1,15 @@
 using UnityEngine;
 
+// 🔴 숫자는 **혼자 떠오르지 않는다** — 적이 들고 있는 큐(`Enemy`)가 매 프레임 자리를 정해 준다(2026-09-02 명세).
+//    새 숫자가 맨 아래에 뜨고 먼저 있던 것들이 위로 밀리는 메이플식 쌓기라, 자리를 아는 쪽은 적이어야 한다.
+//    떠오르며 사라지는 건 **물러날 때(`Retire`)뿐**이다 — 큐가 넘쳤거나 수명이 다했을 때.
 public class DamageNumber : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 1.2f;
-    [SerializeField] private float lifetime = 0.85f;
+    [SerializeField] private float moveSpeed = 1.2f;   // 물러날 때 위로 떠오르는 속도
+    [SerializeField] private float lifetime = 0.85f;   // 이만큼 큐에 머문 뒤 스스로 물러난다
+
+    private const float FadeOutTime = 0.35f;   // 물러나는 동안 페이드
+    private const float FollowSharpness = 18f; // 큐가 정해 준 자리로 따라붙는 빠르기(밀릴 때 툭 튀지 않게)
 
     // 일반 데미지의 그라데이션은 프리팹에서 잡고, 치명타만 여기서 빨강으로 갈아끼운다.
     // 윗색까지 빨강 계열로 밀어야 구분된다 — 밝은 윗색을 쓰면 흰 테두리에 가려 일반과 안 갈린다.
@@ -39,7 +45,32 @@ public class DamageNumber : MonoBehaviour
     private Vector3 baseScale;
     private Vector3 endScale;  // 보잉이 끝난 뒤 눌러앉을 크기(피해량에 따른 차등이 여기 들어 있다)
     private float popAmount;
-    private Vector3 spawnPos; // 뜬 자리(월드 고정) — 적/투사체가 이동해도 여기서 위로만 올라간다
+    private float jitterX;    // 이 숫자만의 가로 흔들림. 큐가 주는 자리에 매번 더한다
+    private Vector3 target;   // 큐가 정해 준 자리
+    private bool hasTarget;
+    private bool retiring;
+    private float retireTimer;
+
+    // 큐(Enemy)가 보는 것들.
+    public bool IsVisible => timer >= 0f;   // 멀티히트 지연 중이면 아직 자리를 차지하지 않는다
+    public bool IsRetiring => retiring;
+
+    // 큐가 매 프레임 자리를 준다. 적을 따라다니므로 적이 움직이면 숫자도 같이 간다.
+    public void SetTarget(Vector3 worldPos)
+    {
+        if (retiring) return;
+        target = worldPos + Vector3.right * jitterX;
+        hasTarget = true;
+    }
+
+    // 큐에서 밀려났거나 수명이 다했을 때. 있던 자리에서 위로 떠오르며 사라진다.
+    public void Retire()
+    {
+        if (retiring) return;
+        retiring = true;
+        retireTimer = 0f;
+        hasTarget = false;
+    }
 
     private void Awake()
     {
@@ -61,11 +92,16 @@ public class DamageNumber : MonoBehaviour
         baseGradient = isCrit ? CritGradient : DeepenGradient(startGradient, t);
 
         timer = -delay;
+        // 🔴 풀에서 재사용되므로 상태를 여기서 전부 되돌린다 — Awake는 한 번밖에 안 돈다.
+        retiring = false;
+        retireTimer = 0f;
+        hasTarget = false;
+        jitterX = offset.x;
+
         // 첫 프레임을 Update에 맡기면 한 프레임 동안 최종 크기로 떠 보인다 — 여기서 0 지점을 직접 찍는다.
         // 딜레이가 걸려 있어도 같은 자리에서 시작한다 — 보잉은 숫자가 보이기 시작할 때 돈다.
         transform.localScale = endScale * PopScale(0f);
-        spawnPos = transform.position + offset;
-        transform.position = spawnPos;
+        transform.position += offset;
         // 딜레이 중엔 투명하게 대기
         TMPro.VertexGradient g = baseGradient;
         if (delay > 0f) { g.topLeft.a = 0f; g.topRight.a = 0f; g.bottomLeft.a = 0f; g.bottomRight.a = 0f; }
@@ -89,16 +125,30 @@ public class DamageNumber : MonoBehaviour
     private void Update()
     {
         timer += Time.deltaTime;
-        float visible = Mathf.Max(0f, timer); // 딜레이 중엔 위치 고정, 알파 0 유지
-        transform.position = spawnPos + Vector3.up * (moveSpeed * visible);
+        float visible = Mathf.Max(0f, timer); // 딜레이 중엔 알파 0으로 대기
         transform.localScale = endScale * PopScale(visible / PopTime); // 보잉도 딜레이가 끝나야 시작한다
 
+        float a;
+        if (retiring)
+        {
+            retireTimer += Time.deltaTime;
+            transform.position += Vector3.up * (moveSpeed * Time.deltaTime);
+            a = Mathf.Lerp(1f, 0f, retireTimer / FadeOutTime);
+            if (retireTimer >= FadeOutTime) { ObjectPool.Instance.Despawn(gameObject); return; }
+        }
+        else
+        {
+            // 큐가 준 자리로 부드럽게 따라간다(밀릴 때 툭 튀지 않게). 프레임률에 안 흔들리는 지수 보간.
+            if (hasTarget)
+                transform.position = Vector3.Lerp(transform.position, target,
+                                                  1f - Mathf.Exp(-FollowSharpness * Time.deltaTime));
+            a = timer < 0f ? 0f : 1f;
+            if (timer >= lifetime) Retire();   // 수명이 다하면 스스로 물러난다
+        }
+
         // 그라데이션을 쓰면 text.color로는 알파가 먹지 않아 네 꼭짓점을 직접 낮춘다.
-        float a = timer < 0f ? 0f : Mathf.Lerp(1f, 0f, timer / lifetime);
         TMPro.VertexGradient g = baseGradient;
         g.topLeft.a = a; g.topRight.a = a; g.bottomLeft.a = a; g.bottomRight.a = a;
         text.colorGradient = g;
-
-        if (timer >= lifetime) ObjectPool.Instance.Despawn(gameObject);
     }
 }

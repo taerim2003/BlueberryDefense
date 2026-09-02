@@ -110,7 +110,7 @@ ui.ascension.nextUnlock	클리어하면 다음 난이도가 열립니다
 ui.pause.title	일시정지
 ui.pause.giveUp	타이틀로 돌아가기
 ui.pause.hint	ESC — 계속하기
-ui.pause.activeHeader	액티브 스킬
+ui.pause.activeHeader	액티브
 ui.pause.passiveHeader	패시브
 ui.result.other	기타
 ui.result.earned	획득 정수: {0}
@@ -142,5 +142,5 @@ ui.collection.passive	패시브
 ui.collection.unknown	???
 ui.collection.hint	아직 만나지 못한 스킬입니다
 ui.collection.route	루트 {0}
-ui.collection.prereq	연계 {0}
+ui.collection.prereq	{0} 연계
 ui.collection.notFound	아직 이 진화를 본 적이 없다

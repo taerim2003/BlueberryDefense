@@ -77,6 +77,7 @@ public class CollectionUI : MonoBehaviour
         public Image frame;
         public Image icon;
         public Image glow;      // 고른 칸 바깥을 두르는 노란 테(`SelectGlow`). 맵·캐릭터 카드와 같은 장치.
+        public JuicyButton juicy;  // 판·아이콘 색은 이 창구로 칠한다 — 아래 Recolor 주석 참고
         public bool isPassive;
         public int id;          // (int)ActiveSkillId 또는 (int)PassiveSkillId
     }
@@ -141,6 +142,7 @@ public class CollectionUI : MonoBehaviour
                 frame = tr.GetComponent<Image>(),
                 icon = icon != null ? icon.GetComponent<Image>() : null,
                 glow = glow != null ? glow.GetComponent<Image>() : null,
+                juicy = tr.GetComponent<JuicyButton>(),
                 isPassive = passive,
                 id = id,
             };
@@ -288,18 +290,27 @@ public class CollectionUI : MonoBehaviour
             bool selected = slot.isPassive == selectedIsPassive && slot.id == selectedId;
             // 판 자체를 노랗게 물들이지 않는다 — JuicyButton이 호버·클릭 때 이 색을 되돌려서
             // 노랗게 번쩍했다 돌아오는 것처럼 보였다. 선택 표시는 판 **바깥**의 테가 맡는다.
-            slot.frame.color = discovered ? SkinColor : LockedColor;
+            Recolor(slot.juicy, slot.frame, discovered ? SkinColor : LockedColor);
             if (slot.glow != null) slot.glow.color = selected ? SelectedColor : UISkin.Transparent;
 
             slot.icon.sprite = slot.isPassive
                 ? SkillIconLibrary.Passive((PassiveSkillId)slot.id)
                 : SkillIconLibrary.Active((ActiveSkillId)slot.id);
             slot.icon.enabled = slot.icon.sprite != null;
-            slot.icon.color = discovered ? Color.white : SilhouetteColor;
+            Recolor(slot.juicy, slot.icon, discovered ? Color.white : SilhouetteColor);
         }
 
         progressText.text = Loc.F("ui.collection.progress", found, slots.Count);
         RefreshDetail();
+    }
+
+    // 🔴 칸의 색은 `Image.color`에 직접 넣지 않는다 — JuicyButton은 Start 때 잡은 색을 "원본"으로 들고 있다가
+    //    호버가 풀릴 때 그 색으로 되돌린다. 발견 여부는 그 뒤에도 바뀌므로(플레이 중 새 스킬을 얻는다)
+    //    직접 넣으면 호버하는 순간 **옛 실루엣 색으로 되돌아가** 아이콘이 오히려 검어졌다.
+    private static void Recolor(JuicyButton juicy, Graphic graphic, Color color)
+    {
+        if (juicy != null) juicy.SetDimBaseColor(graphic, color);
+        else if (graphic != null) graphic.color = color;
     }
 
     private void RefreshDetail()
@@ -322,7 +333,7 @@ public class CollectionUI : MonoBehaviour
                 : PlayerSkills.GetActiveSkillName((ActiveSkillId)selectedId);
             detailSub.text = selectedIsPassive
                 ? PlayerSkills.PassiveTypeBadge
-                : PlayerSkills.ActiveTypeBadge + " " + PlayerSkills.GetActiveSkillBadge((ActiveSkillId)selectedId).TrimEnd();
+                : PlayerSkills.ActiveTypeBadge;
         }
         else
         {
@@ -339,10 +350,17 @@ public class CollectionUI : MonoBehaviour
                 : EvolutionRoutes.RoutePrereq((ActiveSkillId)selectedId, route);
             bool hasPrereq = pre.Passive.HasValue || pre.Active.HasValue;
 
-            routeLabels[route].text = discovered && hasPrereq
-                ? Loc.F("ui.collection.route", route + 1) + "   " + Loc.F("ui.collection.prereq", "")
-                : Loc.F("ui.collection.route", route + 1);
-            SetPrereqIcon(route, discovered && hasPrereq ? PrereqIcon(pre) : null);
+            // 아이콘은 "연계" **앞**에 온다(9/1 피드백). 어순은 번역문의 {0} 자리가 정한다 —
+            // 그 자리를 아이콘 폭만큼 <space>로 비워 두고, 비운 자리 위에 아이콘을 겹쳐 놓는다.
+            string routeText = Loc.F("ui.collection.route", route + 1);
+            string spacer = "<space=" + (RouteGap + PrereqIconSize + PrereqIconGap) + ">";
+            string full = routeText + Loc.F("ui.collection.prereq", spacer);
+            int spacerAt = full.IndexOf(spacer, StringComparison.Ordinal);
+
+            bool showPrereq = discovered && hasPrereq;
+            routeLabels[route].text = showPrereq ? full : routeText;
+            SetPrereqIcon(route, showPrereq ? PrereqIcon(pre) : null,
+                spacerAt >= 0 ? full.Substring(0, spacerAt) : full);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
@@ -352,7 +370,8 @@ public class CollectionUI : MonoBehaviour
 
     // ── 루트 라벨 뒤에 붙는 연계 스킬 아이콘 ─────────────────────────────────
     private const float PrereqIconSize = 56f;  // 라벨 높이 96 안에 여백을 두고 들어가는 크기
-    private const float PrereqIconGap = 6f;    // 글자 끝과 아이콘 사이
+    private const float PrereqIconGap = 6f;    // 아이콘과 그 뒤 글자 사이
+    private const float RouteGap = 40f;        // "루트 N"과 아이콘 사이
 
     private readonly Image[] prereqIcons = new Image[2];
 
@@ -361,7 +380,7 @@ public class CollectionUI : MonoBehaviour
         : pre.Active.HasValue ? SkillIconLibrary.Active(pre.Active.Value)
         : null;
 
-    private void SetPrereqIcon(int route, Sprite sprite)
+    private void SetPrereqIcon(int route, Sprite sprite, string textBeforeIcon)
     {
         Image img = prereqIcons[route];
         if (img == null)
@@ -374,13 +393,12 @@ public class CollectionUI : MonoBehaviour
         img.enabled = sprite != null;
         if (sprite == null) return;
 
-        // 라벨이 Left 정렬이라 글자는 rect 왼쪽 끝에서 시작한다 — 그 **실제 폭**만큼 오른쪽에 놓는다.
-        // ⚠️ `preferredWidth`는 마지막으로 갱신된 메시 기준이라, 방금 바꾼 text를 반영하려면
-        //    강제로 한 번 재계산해야 한다(안 하면 이전 문구 폭으로 자리를 잡는다).
-        TMP_Text label = routeLabels[route];
-        label.ForceMeshUpdate();
+        // 라벨이 Left 정렬이라 글자는 rect 왼쪽 끝에서 시작한다 — 아이콘 자리는 그 **앞 글자들의 폭**이다.
+        // 라벨 자신의 폭을 읽지 않는 이유는 아이콘이 글자 끝이 아니라 문장 중간에 오기 때문(뒤에 "연계"가 더 붙는다).
+        // ⚠️ RouteGap을 앞 글자에 태그로 붙여 재면 안 된다 — TMP는 **문자열 끝의 `<space>`는 폭에 안 센다**.
+        //    그래서 간격은 재지 않고 여기서 더한다.
         var rt = img.rectTransform;
-        rt.anchoredPosition = new Vector2(label.preferredWidth + PrereqIconGap, 0f);
+        rt.anchoredPosition = new Vector2(routeLabels[route].GetPreferredValues(textBeforeIcon).x + RouteGap, 0f);
     }
 
     private static Image CreatePrereqIcon(TMP_Text label)

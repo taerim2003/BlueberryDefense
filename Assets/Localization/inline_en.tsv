@@ -110,8 +110,8 @@ ui.ascension.nextUnlock	Clear this to unlock the next difficulty
 ui.pause.title	Paused
 ui.pause.giveUp	Return to Title
 ui.pause.hint	ESC — Resume
-ui.pause.activeHeader	ACTIVE SKILLS
-ui.pause.passiveHeader	PASSIVES
+ui.pause.activeHeader	ACTIVE
+ui.pause.passiveHeader	PASSIVE
 ui.result.other	Other
 ui.result.earned	Essence earned: {0}
 ui.result.total	Total damage: {0}
@@ -142,5 +142,5 @@ ui.collection.passive	Passive
 ui.collection.unknown	???
 ui.collection.hint	You have not met this skill yet
 ui.collection.route	Route {0}
-ui.collection.prereq	Synergy {0}
+ui.collection.prereq	{0} Synergy
 ui.collection.notFound	This evolution is still unseen
