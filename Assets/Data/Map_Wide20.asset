@@ -36,4 +36,5 @@ MonoBehaviour:
   riderEnemyPrefab: {fileID: 6695594374957680745, guid: 6712b983e4ac3c542bfcc99377910015, type: 3}
   hopperEnemyPrefab: {fileID: 0}
   surferEnemyPrefab: {fileID: 0}
+  airshipEnemyPrefab: {fileID: 8099291569125172224, guid: d5f2b64da2264b249b892dbf608cd9ab, type: 3}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}

@@ -93,11 +93,11 @@ ui.evotree.lockedPrereq	[잠김 — '{0}' 필요]
 ui.evotree.locked	[잠김]
 ui.essence	{0} 정수
 ui.tree.cost	{0} 정수
-ui.tree.clickUnlock	  ▸ 클릭하여 해금
+ui.tree.clickUnlock	  > 클릭하여 해금
 ui.tree.maxed	(최대)
 ui.tree.unlocked	해금됨
 ui.tree.next	  · 다음 {0} 정수
-ui.tree.click	  ▸ 클릭
+ui.tree.click	  > 클릭
 ui.difficulty.0	쉬움
 ui.difficulty.1	보통
 ui.difficulty.2	어려움

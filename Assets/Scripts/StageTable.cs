@@ -36,6 +36,7 @@ public class StageData
     public float riderChance = 0f;  // 라이더 블루베리(지상 고속 돌진·저HP) 스폰 확률
     public float hopperChance = 0f; // 콩콩이 블루베리(지상을 높이 뛰며 전진 — 공중에 뜬 동안 지상 히트박스를 피함) 스폰 확률
     public float surferChance = 0f; // 서핑 블루베리(라이더보다 빠른 최고속·최저HP — 무리로 몰려나오라고 만든 적) 스폰 확률
+    public float airshipChance = 0f; // 해적 비행선(느리고 체력 많은 공중 엘리트 — 격추되면 선원이 쏟아진다) 스폰 확률
     public float enemyHpMultiplier = 1f;
     public float enemySpeedMultiplier = 1f;
     public float enemyDamageMultiplier = 1f;

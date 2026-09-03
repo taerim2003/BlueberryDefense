@@ -65,11 +65,11 @@ public class CharacterDefinition : ScriptableObject
         {
             int have = Mathf.Min(SkillTreeSave.EssenceEarned, requiredEssenceEarned);
             bool ok = SkillTreeSave.EssenceEarned >= requiredEssenceEarned;
-            lines.Add((ok ? "✔ " : "• ") + Loc.F("unlock.essence", have, requiredEssenceEarned));
+            lines.Add((ok ? "✓ " : "• ") + Loc.F("unlock.essence", have, requiredEssenceEarned));
         }
         if (requiredClearMap != null)
         {
-            lines.Add((ClearConditionMet ? "✔ " : "• ") + Loc.F("unlock.clearMap", requiredClearMap.Name, AscensionTable.DifficultyName(requiredClearAscension)));
+            lines.Add((ClearConditionMet ? "✓ " : "• ") + Loc.F("unlock.clearMap", requiredClearMap.Name, AscensionTable.DifficultyName(requiredClearAscension)));
         }
         return lines.ToArray();
     }

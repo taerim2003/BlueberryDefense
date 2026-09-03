@@ -77,5 +77,6 @@ public class MapDefinition : ScriptableObject
     public GameObject riderEnemyPrefab;
     public GameObject hopperEnemyPrefab;
     public GameObject surferEnemyPrefab;
+    public GameObject airshipEnemyPrefab;   // 해적 비행선(엘리트 공중) — 이 프리팹을 꽂은 맵에만 등장한다
     public GameObject bossEnemyPrefab;
 }

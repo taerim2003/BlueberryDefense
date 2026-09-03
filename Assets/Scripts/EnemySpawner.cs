@@ -120,6 +120,7 @@ public class EnemySpawner : MonoBehaviour
         float riderChance = stage != null ? stage.riderChance : 0f;
         float hopperChance = stage != null ? stage.hopperChance : 0f;
         float surferChance = stage != null ? stage.surferChance : 0f;
+        float airshipChance = stage != null ? stage.airshipChance : 0f;
 
         // 웨이브(무리) 스폰: 무리를 다 쏟았으면 spawnInterval 대신 burstRest만큼 쉰다.
         // burstSize가 0/1이면 resting이 영원히 false라 기존의 균일 간격 스폰과 완전히 동일하게 동작한다.
@@ -192,6 +193,8 @@ public class EnemySpawner : MonoBehaviour
             prefabToSpawn = map.hopperEnemyPrefab;
         else if (map.surferEnemyPrefab != null && Random.value < surferChance)
             prefabToSpawn = map.surferEnemyPrefab;
+        else if (map.airshipEnemyPrefab != null && Random.value < airshipChance)
+            prefabToSpawn = map.airshipEnemyPrefab;
 
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage, spawnAsBoss);
     }

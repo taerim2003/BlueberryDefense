@@ -1956,7 +1956,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873246
-    m_Localized: "  \u25B8 click to unlock"
+    m_Localized: '  > click to unlock'
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873247
@@ -1972,7 +1972,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873250
-    m_Localized: "  \u25B8 click"
+    m_Localized: '  > click'
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873251

@@ -93,11 +93,11 @@ ui.evotree.lockedPrereq	[LOCKED — needs '{0}']
 ui.evotree.locked	[LOCKED]
 ui.essence	{0} Essence
 ui.tree.cost	{0} Essence
-ui.tree.clickUnlock	  ▸ click to unlock
+ui.tree.clickUnlock	  > click to unlock
 ui.tree.maxed	(MAX)
 ui.tree.unlocked	Unlocked
 ui.tree.next	  · next {0} Essence
-ui.tree.click	  ▸ click
+ui.tree.click	  > click
 ui.difficulty.0	Easy
 ui.difficulty.1	Normal
 ui.difficulty.2	Hard

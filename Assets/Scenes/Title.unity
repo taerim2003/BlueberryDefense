@@ -6965,6 +6965,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9d846aed6588b3c44bdb5de6b1a5e6be, type: 3}
   - {fileID: 21300000, guid: 0646077b63a3583459defc399f18188a, type: 3}
   - {fileID: 21300000, guid: ceb9c7a4952938548bed7c6367915e44, type: 3}
+  - {fileID: -2376438512102916653, guid: cc8cac9e4ae7aa34fb085cb5274ee7d9, type: 3}
   skillIcon: {fileID: 1182498713}
   skillNameText: {fileID: 294699164}
   skillDescText: {fileID: 134774990}

@@ -59,6 +59,10 @@ public class SkillProgression : ScriptableObject
     public static float DefaultDamageMult(ActiveSkillId id) =>
         id == ActiveSkillId.BasicAttack || id == ActiveSkillId.Swing ? 1.13f : 1.2f;
 
+    // 🔴 아래 두 표(DefaultBaseCooldown / DefaultBaseDamage)는 **Prog_* 에셋이 없는 스킬에만** 쓰인다.
+    //    PlayerSkills 가 `p != null ? p.baseCooldown : Default...` 로 읽으므로, 에셋이 있는 스킬은
+    //    여기 값을 고쳐도 게임이 안 본다. 2026-09-03 현재 스킬 11종 모두 에셋이 있으므로 **이 표는 전부 가려져 있다.**
+    //    밸런스를 고칠 곳은 `Assets/Data/Skills/Prog_*.asset` 이다(CLAUDE.md "밸런스 수치는 에셋이 정답").
     public static float DefaultBaseCooldown(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => 1.5f,

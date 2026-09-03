@@ -2017,7 +2017,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873246
-    m_Localized: "  \u25B8 \uD074\uB9AD\uD558\uC5EC \uD574\uAE08"
+    m_Localized: "  > \uD074\uB9AD\uD558\uC5EC \uD574\uAE08"
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873247
@@ -2033,7 +2033,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873250
-    m_Localized: "  \u25B8 \uD074\uB9AD"
+    m_Localized: "  > \uD074\uB9AD"
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873251

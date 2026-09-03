@@ -303,10 +303,9 @@ public class SkillTreeUI : MonoBehaviour
 
             if (v.label != null)
             {
-                // 이름은 인접 노드부터 공개. 레벨제 노드(만렙>1)이고 보유 중이면 Lv 표기.
-                v.label.text = (isUnlocked && lv >= 1 && max > 1)
-                    ? v.node.Name + "\n<size=65%>Lv " + lv + "/" + max + "</size>"
-                    : v.node.Name;
+                // 노드는 이제 **네모 아이콘 칸**이라 이름을 담지 않는다 — 이름·설명·비용은 호버 툴팁이 전부 보여준다.
+                // 칸 안에 남기는 건 레벨제 노드의 진행도뿐(만렙>1 이고 보유 중일 때).
+                v.label.text = (isUnlocked && lv >= 1 && max > 1) ? lv + "/" + max : "";
             }
 
             if (v.ring != null)

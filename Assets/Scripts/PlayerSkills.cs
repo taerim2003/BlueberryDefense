@@ -151,8 +151,12 @@ public class PlayerSkills : MonoBehaviour
         return Vector2.Distance(instance.transform.position, enemyPos) <= ShotgunCloseRange ? 2 : 0;
     }
 
-    // 버프류 스킬 = 지속시간 버프를 부여하고 HUD 우상단에 버프 아이콘이 뜨는 스킬 (산탄·낙뢰)
-    public static bool IsBuffSkill(ActiveSkillId id) => id == ActiveSkillId.Shotgun || id == ActiveSkillId.Lightning;
+    // 버프류 스킬 = 지속시간 버프를 부여하는 스킬. **산탄은 집중 산탄 루트를 탔을 때만** 해당한다 —
+    // 미진화 산탄과 관통 산탄은 순수 공격기라 버프를 아예 안 건다(FireShotgun의 PathTier[1] 게이트와 같은 조건).
+    // 그래서 id 만으로는 못 가른다. 루트를 들고 있는 EquippedSkill 을 받는다.
+    public static bool IsBuffSkill(EquippedSkill skill) =>
+        skill.Id == ActiveSkillId.Lightning
+        || (skill.Id == ActiveSkillId.Shotgun && skill.PathTier[1] >= 1);
 
     // 리프레쉬(재사용 초기화)가 발동될 때 — HUD가 구독해 리프레쉬 패시브 아이콘에 보잉 연출
     public static System.Action OnRefreshProc;
@@ -211,8 +215,11 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private AudioClip whirlwindCastSfx;
     [SerializeField] private AudioClip orbCastSfx;
     [SerializeField] private AudioClip eagleDropCastSfx;
+    [SerializeField] private AudioClip grapeTossCastSfx;   // 포도알을 던지는 순간
+    [SerializeField] private AudioClip grapePopSfx;        // 착탄해서 터지는 순간(알이 여러 개여도 같은 프레임이라 AudioThrottle이 한 번으로 묶는다)
     [SerializeField] private float castSfxVolume = 0.7f;
     [SerializeField] private float orbCastSfxVolume = 0.55f; // 원본 오브 발사음 자체가 다른 캐스트음보다 훨씬 크게(0dBFS 근접) 마스터링되어 있어 별도 볼륨 필요
+    [SerializeField] private float grapePopSfxVolume = 0.6f; // 터짐은 한 번 시전에 한 번만 나지만 안개가 계속 깔리므로 캐스트음보다 낮게
     [SerializeField] private float whirlwindCastSfxVolume = 0.4f; // 원본 회오리 소환음 클립이 사실상 무음에 가까운 깨진 파일이었는데, 임포터 normalize 설정 때문에 재생 시 0dB까지 증폭되어 오히려 굉음으로 들리던 버그 — 정상 클립으로 교체 후 볼륨도 재보정
 
     private readonly List<EquippedSkill> equippedSkills = new List<EquippedSkill>();
@@ -800,7 +807,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.Id == ActiveSkillId.Whirlwind && MetaBonuses.WhirlwindCooldownBonus)
             cdMult = Mathf.Max(0.05f, 1f - 1.5f * (1f - MetaBonuses.CooldownMult));
         // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소
-        if (PlayerPassives.BuffSkillCooldownMult < 1f && IsBuffSkill(skill.Id))
+        if (PlayerPassives.BuffSkillCooldownMult < 1f && IsBuffSkill(skill))
             cdMult *= PlayerPassives.BuffSkillCooldownMult;
         // 패시브 "가속": 전 스킬 쿨타임 감소. 스킬트리 전역 쿨감과 같은 축이라 곱해서 들어간다.
         // 스킬트리 보너스는 리프레쉬와 같은 방식으로 **가속을 보유했을 때만** 얹힌다.
@@ -1359,6 +1366,7 @@ public class PlayerSkills : MonoBehaviour
     private void FireGrapeToss(float damage, EquippedSkill skill)
     {
         animator.SetTrigger("Attack");
+        PlayCastSfx(grapeTossCastSfx, castSfxVolume);
 
         int balls = GrapeBaseBalls + skill.ExtraProjectiles;
         if (skill.PathTier[2] >= 1) balls += 2;              // 찌릿찌릿 1차: 던지는 알이 늘어난다
@@ -1389,6 +1397,8 @@ public class PlayerSkills : MonoBehaviour
     // 착탄 — 터짐을 한 번 보여주고 그 자리에 안개를 남긴다.
     private void LandGrape(Vector3 at, float radius, float damage, float interval)
     {
+        PlayCastSfx(grapePopSfx, grapePopSfxVolume);
+
         if (grapeExplosionVfxPrefab != null)
         {
             GameObject vfx = ObjectPool.Instance.Spawn(grapeExplosionVfxPrefab, at, Quaternion.identity);
@@ -1422,8 +1432,9 @@ public class PlayerSkills : MonoBehaviour
         return ball;
     }
 
-    // 적이 모인 자리를 고른다. 안개끼리 겹치면 넓이가 낭비되므로 이미 고른 지점과 떨어뜨린다.
-    // 적이 하나도 없으면 전방 허공에라도 던진다 — 키를 눌렀는데 아무것도 안 나가면 고장난 것처럼 느껴진다.
+    // 적이 모인 자리를 고른다 — **무리의 앞줄**(플레이어에 가까운 쪽)부터. 안개끼리 겹치면 넓이가 낭비되므로
+    // 이미 고른 지점과는 떨어뜨린다. 적이 하나도 없으면 전방 허공에라도 던진다 —
+    // 키를 눌렀는데 아무것도 안 나가면 고장난 것처럼 느껴진다.
     private List<Vector3> PickGrapeSpots(int count, float radius)
     {
         List<Vector3> spots = new List<Vector3>();
@@ -1431,25 +1442,46 @@ public class PlayerSkills : MonoBehaviour
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
             if (e != null && e.IsAlive) alive.Add(e);
 
+        // 플레이어에 가까운 순 = 무리의 앞줄부터. 뒤에 던지면 앞줄은 이미 지나가 버려 아무도 안 맞는다.
+        float playerX = transform.position.x;
+        alive.Sort((a, b) => Mathf.Abs(a.transform.position.x - playerX)
+                                 .CompareTo(Mathf.Abs(b.transform.position.x - playerX)));
+
         float minGap = radius * 1.2f;
         for (int i = 0; i < count; i++)
         {
-            Vector3 pick = Vector3.zero;
-            bool found = false;
-            // 몇 번 굴려서 서로 떨어진 자리를 찾고, 못 찾으면 마지막 후보를 그냥 쓴다(무한 루프 금지).
-            for (int attempt = 0; attempt < 6 && !found; attempt++)
+            if (alive.Count == 0)
             {
-                pick = alive.Count > 0
-                    ? alive[Random.Range(0, alive.Count)].transform.position
-                    : transform.position + new Vector3(Random.Range(2f, 7f), Random.Range(-1.5f, 1.5f), 0f);
+                spots.Add(transform.position + new Vector3(Random.Range(2f, 7f), Random.Range(-1.5f, 1.5f), 0f));
+                continue;
+            }
 
-                found = true;
+            // 앞줄부터 훑어 이미 고른 자리와 떨어진 첫 적을 쓴다.
+            // 다 붙어 있어 못 고르면 **앞에서 i번째** 적으로 떨어진다 — alive[0]로 고정하면
+            // 빽빽한 무리에서 알이 전부 한 마리 위에 겹쳐 안개 넓이가 통째로 낭비된다.
+            Vector3 pick = LeadGrapeTarget(alive[Mathf.Min(i, alive.Count - 1)], playerX);
+            foreach (Enemy e in alive)
+            {
+                Vector3 cand = LeadGrapeTarget(e, playerX);
+                bool far = true;
                 foreach (Vector3 s in spots)
-                    if (Vector2.Distance(s, pick) < minGap) { found = false; break; }
+                    if (Vector2.Distance(s, cand) < minGap) { far = false; break; }
+                if (far) { pick = cand; break; }
             }
             spots.Add(pick);
         }
         return spots;
+    }
+
+    // 착탄 시점의 위치를 미리 짚는다 — 포도알은 GrapeFlightTime만큼 날아가는데 그동안 적이 걸어 나가
+    // 지금 위치에 던지면 안개가 빈 자리에 깔린다. 적은 x축으로만 걸어오므로 x만 민다.
+    private Vector3 LeadGrapeTarget(Enemy e, float playerX)
+    {
+        Vector3 p = e.transform.position;
+        float dir = Mathf.Sign(playerX - p.x);   // 적은 늘 플레이어 쪽으로 온다
+        p.x += dir * e.CurrentMoveSpeed * GrapeFlightTime;
+        if ((playerX - p.x) * dir < 0f) p.x = playerX; // 플레이어를 지나쳐 뒤로는 안 던진다
+        return p;
     }
 
     private void FireSwing(float damage, float critChance, EquippedSkill skill)

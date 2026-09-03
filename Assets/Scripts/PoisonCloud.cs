@@ -5,12 +5,13 @@ using UnityEngine;
 //
 // 전용 그림이 아직 없어 **원형 스프라이트를 코드로 만들어 여러 장 겹친다**(사용자 결정: 프리미티브 보라 연기).
 // 픽셀 아트라 가장자리는 일부러 하드하게 자른다 — 부드럽게 하면 다른 이펙트와 재질이 안 맞는다.
-// 적(sortingOrder 100+)보다 뒤에 깔아서 안개가 적을 가리지 않게 한다.
+// 적(sortingOrder 1~180)보다 **앞**에 깔고, 대신 알파 상한을 걸어 뒤의 적이 비쳐 보이게 한다(사용자 결정 2026-09-02).
 public class PoisonCloud : MonoBehaviour
 {
     private const int PuffCount = 7;
     private const int PuffTexSize = 32;
-    private const int SortingOrder = 50;      // 배경(-100)보다 앞, 적(100+)보다 뒤 — 낙뢰 기둥과 같은 층
+    private const int SortingOrder = 250;     // 적(1~180)보다 앞, 만화 효과(600)·미사일(400)보다 뒤
+    private const float MaxAlpha = 0.33f;     // 덩이 7장이 겹치므로 장당 알파를 낮춰야 뒤의 적이 보인다
     private const float ReapplyInterval = 0.2f; // 적 탐색 주기. 매 프레임 FindObjects는 안개 여러 개면 비싸다
     private const float FadeInTime = 0.15f;
     private const float FadeOutTime = 0.4f;
@@ -86,6 +87,7 @@ public class PoisonCloud : MonoBehaviour
         float alpha = 1f;
         if (age < FadeInTime) alpha = age / FadeInTime;
         else if (age > lifetime - FadeOutTime) alpha = Mathf.Max(0f, (lifetime - age) / FadeOutTime);
+        alpha *= MaxAlpha;
 
         for (int i = 0; i < puffs.Count; i++)
         {

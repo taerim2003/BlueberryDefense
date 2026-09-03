@@ -184,6 +184,10 @@ public class Enemy : MonoBehaviour
     private int poisonTicksTaken;   // 찌릿찌릿 루트가 "N번째 중독 피해마다 기절"을 세는 값
     private bool poisonFromExplosion; // 폭발이 옮긴 중독 — 이걸로 죽어도 다시 폭발하지 않는다(연쇄 무한루프 차단)
     private SpriteRenderer spriteRenderer;
+    private Color baseColor = Color.white;    // 중독 틴트가 풀리면 돌아갈 원래 색(프리팹이 흰색이 아닐 수 있다)
+
+    // 중독 중인 적은 보라로 어둡게 물든다 — 안개 밖으로 나가도 아픈 상태라 누가 중독됐는지 보여야 한다.
+    private static readonly Color PoisonTint = new Color(0.58f, 0.38f, 0.72f);
     private Animator animator; // 걷기 애니메이터(없을 수 있음) — 기절 중 정지시키기 위해 캐시
 
     // 죽었거나 풀에 반납된 적을 걸러내는 생존 판정.
@@ -192,9 +196,13 @@ public class Enemy : MonoBehaviour
     //    (안 그러면 유도미사일이 재활용된 새 적을 계속 쫓는다). 소비처: Orb·Whirlwind·HomingMissile.
     public bool IsAlive => !isDead && gameObject.activeInHierarchy;
 
+    // 지금 실제로 걷는 속도(둔화·기절 반영). 포도알이 착탄 지점을 미리 짚는 데 쓴다.
+    public float CurrentMoveSpeed => moveSpeed * slowMultiplier;
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null) baseColor = spriteRenderer.color;
         animator = GetComponentInChildren<Animator>();
         CreateShadow();
         InitializeSpawn(transform.position);
@@ -309,6 +317,7 @@ public class Enemy : MonoBehaviour
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         poisonDamage = 0f; poisonTimer = 0f; poisonInterval = 0f; poisonNextTick = 0f;
         poisonTicksTaken = 0; poisonFromExplosion = false;
+        SetPoisonTint(false);
         diveDir = Vector2.right;
         diveFloorY = float.NegativeInfinity; // SetupDive가 다시 채운다. 비강하 유닛에겐 바닥이 없다.
         // 파도 흔들림: 위상 2개와 속도를 개체마다 새로 굴려 무리가 한 몸처럼 출렁이지 않게.
@@ -764,6 +773,13 @@ public class Enemy : MonoBehaviour
         if (poisonTimer <= 0f) { poisonNextTick = interval; poisonTicksTaken = 0; poisonFromExplosion = fromExplosion; }
         poisonInterval = interval;
         poisonTimer = Mathf.Max(poisonTimer, duration);
+        SetPoisonTint(true);
+    }
+
+    private void SetPoisonTint(bool on)
+    {
+        if (spriteRenderer == null) return;
+        spriteRenderer.color = on ? baseColor * PoisonTint : baseColor;
     }
 
     private void TickPoison()
@@ -774,7 +790,7 @@ public class Enemy : MonoBehaviour
         poisonNextTick -= Time.deltaTime;
         if (poisonNextTick > 0f)
         {
-            if (poisonTimer <= 0f) poisonDamage = 0f;
+            if (poisonTimer <= 0f) { poisonDamage = 0f; SetPoisonTint(false); }
             return;
         }
 
@@ -792,7 +808,7 @@ public class Enemy : MonoBehaviour
                                 PlayerSkills.GrapeStunDuration + PlayerSkills.GrapeStunVulnerableDuration);
         }
 
-        if (poisonTimer <= 0f) poisonDamage = 0f;
+        if (poisonTimer <= 0f) { poisonDamage = 0f; SetPoisonTint(false); }
     }
 
     // 생화학 루트 2차: 중독 상태로 죽으면 터져서 주변을 함께 중독시킨다.

@@ -24,8 +24,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 72290ae5c5fd6074b9abd6962463a4dc, type: 3}
   - {fileID: 21300000, guid: 0c7e82e2ae8339e408db6622325ccb34, type: 3}
   attackFrameSeconds: 0.09
-  attackFrameScale: 1
-  attackFrameOffset: {x: 0, y: 0}
+  attackFrameScale: 1.3714286
+  attackFrameOffset: {x: 0.0429, y: 0.019}
   baseHealth: 85
   unlockedFromStart: 0
   requiredEssenceEarned: 2000
