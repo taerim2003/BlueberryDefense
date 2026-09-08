@@ -109,34 +109,36 @@ public class PlayerSkills : MonoBehaviour
     private const int ShotgunBasePellets = BalanceConstants.ShotgunBasePellets;
     private const float SnipingShotInterval = BalanceConstants.SnipingShotInterval;
 
-    // 산탄(타수) 버프 — 5초간 스킬 공격 횟수 증가. 전역(모든 스킬) 또는 최고공격력 스킬 1개(Route2).
+    // 산탄(타수) 버프 — 지속시간 동안 **모든 공격**의 타수를 올린다.
+    // 🔴 예전엔 집중 산탄 루트가 "최고 공격력 스킬 **하나**에만" 몰아줬다. 2026-09-08에 문구가
+    //    "모든 공격에 추가 타수"로 확정되면서 단일 지정(shotgunSingleTarget/shotgunTargetSkill)을 걷어냈다.
     private static float shotgunTimer;
     private static int shotgunBonus;
-    private static bool shotgunSingleTarget;
-    private static ActiveSkillId shotgunTargetSkill;
 
-    // 되감기 Route2: 다음에 사용하는 스킬의 피해를 1회 증가시키는 보너스(ComputeBaseDamage가 소비)
+    // 되감기 R0: 다음에 사용하는 스킬의 피해를 1회 증가시키는 보너스(ComputeBaseDamage가 소비)
     private static float nextSkillDamageBonus;
+    // 되감기 R0 2차 「과충전」: 다음 스킬에 얹히는 추가 타수. 소비되면 아래 overcharge* 로 옮겨 간다.
+    private static int nextSkillBonusHits;
+    private static ActiveSkillId overchargeSkill;
+    private static float overchargeHitsTimer;
+    private const float OverchargeWindow = 2.5f;   // 한 캐스트의 타격이 다 끝날 만큼만 — 다음 캐스트로 안 샌다
 
     // Enemy.TakeSkillHit가 참조: 스킬 고유 타수(기본공격만 >1, 그 외 1)
     public static int NaturalHits(ActiveSkillId source) =>
         Prog(source) != null && Prog(source).baseHits > 0 ? Prog(source).baseHits
         : source == ActiveSkillId.BasicAttack ? Mathf.Max(1, BasicAttackHits) : 1;
 
-    // Enemy.TakeSkillHit가 참조: 산탄 버프로 추가되는 타격 수
+    // Enemy.TakeSkillHit가 참조: 산탄 버프로 추가되는 타격 수(스킬을 안 가린다) + 과충전이 얹은 1회분
     public static int GlobalBonusHits(ActiveSkillId source)
     {
-        if (shotgunTimer <= 0f) return 0;
-        if (shotgunSingleTarget) return source == shotgunTargetSkill ? shotgunBonus : 0;
-        return shotgunBonus;
+        int hits = shotgunTimer > 0f ? shotgunBonus : 0;
+        if (overchargeHitsTimer > 0f && source == overchargeSkill) hits += RewindOverchargeBonusHits;
+        return hits;
     }
 
-    // HUD가 참조: 이 스킬이 지금 산탄 타수버프를 받고 있는지(노란 테두리 하이라이트용)
-    public static bool IsShotgunBuffed(ActiveSkillId source)
-    {
-        if (shotgunTimer <= 0f || shotgunBonus <= 0) return false;
-        return !shotgunSingleTarget || source == shotgunTargetSkill;
-    }
+    // 지금 산탄 타수버프가 걸려 있는지. 버프 표시는 HUD 버프 줄의 **아이콘**이 맡는다(낙뢰와 같은 방식) —
+    // 스킬 칸에 두르던 노란 테는 2026-09-08에 걷어냈다.
+    public static bool IsShotgunBuffed => shotgunTimer > 0f && shotgunBonus > 0;
 
     private static PlayerSkills instance; // 근거리 판정 등 정적 메서드가 플레이어 위치를 참조하기 위한 인스턴스
     private const float ShotgunCloseRange = 3.5f;
@@ -152,7 +154,7 @@ public class PlayerSkills : MonoBehaviour
     public static int CloseRangeBonusHits(ActiveSkillId source, Vector3 enemyPos)
     {
         if (!MetaBonuses.ShotgunCloseBonus || instance == null) return 0;
-        if (!IsShotgunBuffed(source)) return 0;
+        if (!IsShotgunBuffed) return 0;
         return Vector2.Distance(instance.transform.position, enemyPos) <= ShotgunCloseRange ? 2 : 0;
     }
 
@@ -200,6 +202,9 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject scatterFireVfxPrefab; // 산탄을 뿜을 때 알 뒤에 남는 화약/불꽃(Effect_ScatterFire). 알 개수만큼 스폰
     [SerializeField] private GameObject eagleDropPrefab;
     [SerializeField] private GameObject eagleImpactVfxPrefab;
+    // 폭탄 독수리(R0 1차)의 폭발 — 호밍 미사일이 쓰는 것과 **같은 에셋**(Effect_Explosion)을 배선한다.
+    // 안 배선돼 있으면 착탄 연출(eagleImpactVfxPrefab)로 떨어진다 — 판정은 그대로 돌고 그림만 수수해진다.
+    [SerializeField] private GameObject eagleBombVfxPrefab;
     [SerializeField] private GameObject snipingEffectPrefab;      // 스나이핑 후속 타격 VFX(Effect_Sniping, 2~5번째 저격)
     [SerializeField] private GameObject snipingSplashPrefab;      // 스나이핑 첫 타격 강조 VFX(Effect_SplashSniping — 기본 이펙트 화려 버전)
     [SerializeField] private GameObject overkillSplashVfxPrefab;  // Route2 초과데미지 연쇄 전용 VFX(Vefects Impact Sparks)
@@ -273,8 +278,11 @@ public class PlayerSkills : MonoBehaviour
         BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
         shotgunTimer = 0f;
         shotgunBonus = 0;
-        shotgunSingleTarget = false;
         nextSkillDamageBonus = 0f;
+        nextSkillBonusHits = 0;
+        // ⚠️ 타이머까지 지워야 한다 — 판이 끝나면 Update가 멈춰 값이 그대로 남고,
+        //    다음 판 첫 2.5초 동안 과충전 타수가 공짜로 얹힌다.
+        overchargeHitsTimer = 0f;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격(정적 메서드용). 미포함 스킬은 조회 실패 → 코드 기본 규칙 폴백.
@@ -324,6 +332,7 @@ public class PlayerSkills : MonoBehaviour
 
         globalCooldownTimer -= Time.deltaTime;
         if (shotgunTimer > 0f) shotgunTimer -= Time.deltaTime;
+        if (overchargeHitsTimer > 0f) overchargeHitsTimer -= Time.deltaTime;
 
         foreach (EquippedSkill skill in equippedSkills)
         {
@@ -478,10 +487,12 @@ public class PlayerSkills : MonoBehaviour
     // 2차: 다시 만렙 도달 → 1차에서 고른 루트의 다음 티어(선택지 없음)
     public bool CanEvolve(EquippedSkill skill)
     {
-        if (skill == null || skill.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
+        if (skill == null || skill.EvolutionStage >= EvolutionRoutes.MaxStageFor(skill.Id)) return false;
         // 스킬트리 "진화 해금" / "2차 진화 해금". 트리에 그 노드가 없으면 둘 다 true라 게이팅이 없다.
         if (!(skill.EvolutionStage == 0 ? MetaBonuses.EvolutionUnlocked : MetaBonuses.Evolution2Unlocked)) return false;
         if (skill.Level < EvolutionRoutes.RequiredLevel) return false;
+        // 2차는 **열쇠 진화체**가 이미 만들어져 있어야 한다(2026-09-08 신설 — §EvolutionRoutes.Stage2Prereq).
+        if (skill.EvolutionStage >= 1 && !IsStage2KeyReady(skill.Id, skill.Route)) return false;
         return SelectableRoutes(skill).Any(r => IsRouteUnlocked(skill.Id, r));
     }
 
@@ -492,6 +503,24 @@ public class PlayerSkills : MonoBehaviour
         if (p.HasValue && (passives == null || !passives.HasPassive(p.Value))) return false;
         ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
         return !a.HasValue || HasSkill(a.Value);
+    }
+
+    // 2차 열쇠: 지정된 (스킬/패시브, 루트)가 **1차 이상 진화**돼 있어야 한다.
+    // ⚠️ 보유만으로는 안 된다 — 루트까지 그 루트여야 한다("화살비"는 되고 "검은 화살"은 안 된다).
+    public bool IsStage2KeyReady(ActiveSkillId id, int route)
+    {
+        var (p, a, keyRoute) = EvolutionRoutes.Stage2Prereq(id, route);
+        if (p.HasValue)
+        {
+            EquippedPassive kp = passives != null ? passives.GetPassive(p.Value) : null;
+            return kp != null && kp.EvolutionStage >= 1 && kp.Route == keyRoute;
+        }
+        if (a.HasValue)
+        {
+            EquippedSkill ks = equippedSkills.FirstOrDefault(s => s.Id == a.Value);
+            return ks != null && ks.EvolutionStage >= 1 && ks.Route == keyRoute;
+        }
+        return true;   // 열쇠가 정의되지 않은 조합은 잠그지 않는다(새 스킬을 넣고 표를 안 채웠을 때)
     }
 
     // 이 진화에서 고를 수 있는 루트들. 1차는 0·1 둘 다, 2차는 이미 고른 루트 하나뿐.
@@ -593,9 +622,13 @@ public class PlayerSkills : MonoBehaviour
             // Whirlwind path0 T1/T3(미니 회오리 개수)는 FireWhirlwind에서 매 캐스트마다 실시간 계산
 
             // path1(패시브 연계)
-            // R0(산탄 연계) 1차 = 3초짜리 독수리 비. 화면 전체를 10틱 넘게 두들기는 값이라
-            // 예전의 쿨감(×0.85) 대신 **쿨타임을 늘려** 대가를 치르게 한다("한 번 부르면 하늘이 덮이지만 자주 못 부른다").
-            case (ActiveSkillId.EagleDrop, 1, 2):
+            // 🔴 독수리 R0 1차는 2026-09-08에 "독수리 비"에서 **폭탄 독수리**로 바뀌었다 — 화면 전체를
+            //    10틱 넘게 두들기던 값이 아니라 착탄 폭발이라, 짝이던 쿨 1.4배도 같이 R1 2차로 옮겼다.
+            //    (거래의 한쪽만 남기지 말 것 — 「급강하 폭격」에서 한 번 겪은 실수다.)
+
+            // R1(회오리 연계) 2차 = **독수리의 비**. 4초 동안 40마리가 쏟아지는 값이라
+            // 쿨타임을 늘려 대가를 치르게 한다("한 번 부르면 하늘이 덮이지만 자주 못 부른다").
+            case (ActiveSkillId.EagleDrop, 2, 3):
                 skill.Cooldown *= 1.4f;
                 break;
             // Orb 1,3은 문서상 슬로우 강화만이다(FireOrb 실시간). 딸려 있던 쿨감 0.9배는 걷어냈다.
@@ -702,32 +735,38 @@ public class PlayerSkills : MonoBehaviour
     public static string GetPassiveSkillName(PassiveSkillId id) =>
         Loc.TOr("passive.name." + id, id.ToString());
 
-    // 한 티어 = 한 효과. 표시 문구는 번역 표가 소유한다(아래 DescribePathEffect/GetPathTierTitle).
-    public string GetPathEffectText(ActiveSkillId id, int path, int tier)
-    {
-        return DescribePathEffect(id, path, tier);
-    }
-
     // 🔴 진화 설명은 **일부러 수치를 안 쓴다.** BTD6 파라곤 설명처럼 그림만 던져서,
     //    "고르면 뭐가 나올까"라는 호기심으로 루트를 고르게 하는 게 목적이다.
     //    (실제 수치는 ApplyPathTierEffect와 각 Fire*에 있다 — 밸런스는 거기서 확인할 것.)
-    //    티어1 카드에는 legacy 1·2가 **두 줄로 함께** 뜨므로, 두 문장이 이어 읽히게 쓸 것.
-    // 문장은 번역 표(`Assets/Localization/Tables/Game`)가 소유한다. 키 = evo.active.desc.{스킬}.{루트}.{티어}.
+    // 문장은 번역 표(`Assets/Localization/Tables/Game`)가 소유한다.
+    // 🔴 키 좌표는 **화면에 보이는 것 그대로**다 — 루트 0/1 × 차수 1/2(2026-09-08 개편).
+    //    예전엔 legacy path·tier(1~3)를 키에 썼고 1차 칸이 옛 1·2 두 줄을 이어 붙여 그렸다.
+    //    지금은 한 칸 = 한 줄이다. **effect 쪽 PathTier(1차=2, 2차=3)와 헷갈리지 말 것** — 그건 그대로다.
     // 정의가 없는 조합은 빈 문자열 — 옛 `_ => ""` 분기와 같다.
-    public static string DescribePathEffect(ActiveSkillId id, int path, int tier) =>
-        Loc.TOr($"evo.active.desc.{id}.{path}.{tier}", "");
-
-    // 진화 카드에 붙는 짧은 제목. 설명과 마찬가지로 **기능명이 아니라 별명**이다 — 뭘 하는지는 눌러 봐야 안다.
-    public static string GetPathTierTitle(ActiveSkillId id, int path, int tier) =>
-        Loc.TOr($"evo.active.title.{id}.{path}.{tier}", "");
+    public static string DescribePathEffect(ActiveSkillId id, int route, int tier) =>
+        Loc.TOr($"evo.active.desc.{id}.{route}.{tier}", "");
 
     private void TryUseSkill(EquippedSkill skill)
     {
         if (globalCooldownTimer > 0f || skill.CooldownTimer > 0f) return;
 
+        // 되감기 R0 2차 「과충전」 — 되감기 **직후 한 번** 쓰는 스킬이 타수 +2를 받고 쿨이 2배가 된다.
+        // ⚠️ 피해 보너스는 ComputeBaseDamage가 소비하며 **거기서 0으로 지운다** — 그래서 여기서 먼저 집는다.
+        bool overcharged = skill.Id != ActiveSkillId.Rewind && nextSkillBonusHits > 0;
+        if (overcharged) nextSkillBonusHits = 0;
+
         // 타격 기준 치명타: 캐스트 시점엔 확률만 확정하고, 실제 치명타 여부는 각 데미지 이벤트(투사체 명중/틱)마다 개별적으로 굴린다.
         float critChance = GetCritChance(skill);
         float damage = ComputeBaseDamage(skill);
+
+        // 타수는 Enemy.TakeSkillHit가 **명중할 때마다** 읽으므로, 이번 캐스트가 결과를 낼 동안 살아 있어야 한다.
+        // 캐스트 시점에 한 번 끊지 못하는 대신 짧은 창(OverchargeWindow)을 둔다 — 화살비처럼 늘어지는 캐스트도 덮되
+        // 다음 캐스트로는 안 새는 길이다.
+        if (overcharged)
+        {
+            overchargeSkill = skill.Id;
+            overchargeHitsTimer = OverchargeWindow;
+        }
 
         switch (skill.Id)
         {
@@ -781,9 +820,14 @@ public class PlayerSkills : MonoBehaviour
                 break;
         }
 
-        // 스킬트리 "되감기: 전역 쿨타임 미발동" — 되감기만 GCD를 안 건다(다른 스킬을 바로 이어 쓸 수 있다).
-        if (!(skill.Id == ActiveSkillId.Rewind && MetaBonuses.RewindSkipsGlobalCooldown))
-            globalCooldownTimer = GlobalCooldown * GlobalCooldownScale(); // 되감기 Route3 T3: 전역 쿨타임 절반
+        // GCD를 아예 안 거는 경우 둘:
+        //   · 스킬트리 "되감기: 전역 쿨타임 미발동" — 되감기만 해당(다른 스킬을 바로 이어 쓸 수 있다).
+        //   · 스나이핑 R1 1차 「자동 방어 시스템」 — 문구가 "글로벌 쿨타임을 트리거하지 않는다"다(2026-09-08).
+        //     어차피 이 루트는 스킬 쿨 대신 고정 간격 자동시전으로 도므로 GCD가 걸리면 다른 스킬만 막는다.
+        bool skipsGcd = (skill.Id == ActiveSkillId.Rewind && MetaBonuses.RewindSkipsGlobalCooldown)
+                     || (skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2);
+        if (!skipsGcd)
+            globalCooldownTimer = GlobalCooldown * GlobalCooldownScale(); // 되감기 R1: 1차 절반 · 2차 0
         // 스나이핑 자동시전(path2 T2+)은 스킬 쿨타임 대신 고정 간격(T2=3초, T3=1.5초)으로 발동
         // (오브 설치기의 긴 전용 쿨은 오브 R1이 추적 오브 무리로 바뀌며 사라졌다 — 이제 평범한 스킬 쿨을 쓴다)
         float baseCd = (skill.Id == ActiveSkillId.Sniping && skill.PathTier[2] >= 2) ? (skill.PathTier[2] >= 3 ? 1.5f : 3f)
@@ -792,6 +836,8 @@ public class PlayerSkills : MonoBehaviour
         // (쿨감을 쌓으면 이 3초도 같이 줄어든다 — 다른 쿨 강화와 같은 층에 두는 게 맞다).
         if (skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 2)
             baseCd += AssassinArrowExtraCooldown;
+        // 되감기 R0 2차 「과충전」의 대가 — 되감기 직후 쓴 **그 한 번**의 쿨이 2배가 된다.
+        if (overcharged) baseCd *= RewindOverchargeCooldownMult;
         // 스킬트리 "호밍: 기본 쿨 -1초" — 감소**율**이 곱해지기 전의 기본 쿨에서 먼저 뺀다.
         if (skill.Id == ActiveSkillId.Homing && MetaBonuses.HomingCooldownCut > 0f)
             baseCd = Mathf.Max(GlobalCooldown, baseCd - MetaBonuses.HomingCooldownCut);
@@ -809,6 +855,8 @@ public class PlayerSkills : MonoBehaviour
             float cut = PlayerPassives.AccelCooldownReduction + MetaBonuses.AccelCooldownBonus;
             if (cut > 0f) cdMult *= Mathf.Max(0.05f, 1f - cut);
         }
+        // 되감기 R1 2차 「블루베리 절멸의 시간」 — 모든 스킬의 쿨타임이 감소한다(진화 쿨감 금지의 유일한 예외).
+        cdMult *= RewindEndTimesCooldownScale();
         skill.CooldownTimer = baseCd * cdMult;
 
         // 쿨타임 초기화. 리프레쉬는 폐지됐지만 **가속 진화 path1**이 RefreshChance를 물려받아 켠다 —
@@ -855,16 +903,16 @@ public class PlayerSkills : MonoBehaviour
         float chance = skill.Id == ActiveSkillId.BasicAttack && skill.PathTier[1] >= 1 ? 0.15f : 0f;
         if (passives != null && passives.HasPassive(PassiveSkillId.Assassinate))
             chance += PlayerPassives.AssassinateCritChance;
-        // 암살 연계 path2(스나이핑): 쿨타임이 긴 스킬은 **확정 치명타**다.
-        // 상한(MaxCritChance 70%)보다 먼저 빠져나간다 — "항상 급소"가 이 진화의 정체성이라 상한에 눌리면 안 된다.
-        if (PlayerPassives.AssassinateSlowSkillCritCooldown > 0f
-            && skill.Cooldown >= PlayerPassives.AssassinateSlowSkillCritCooldown) return 1f;
         chance += MetaBonuses.CritBonus; // 메타 "치명타" 업그레이드(전역 가산)
         // 스킬트리 스킬별 치명타 강화(산탄·스나이핑). ⚠️ 상한(MaxCritChance 70%) 안쪽에서 더해진다 —
         // 다른 치명타 원천이 이미 높으면 +30%p가 그대로 안 들어간다.
         if (skill.Id == ActiveSkillId.Shotgun) chance += MetaBonuses.ShotgunCritBonus;
         else if (skill.Id == ActiveSkillId.Sniping) chance += MetaBonuses.SnipingCritBonus;
-        return Mathf.Min(chance, MaxCritChance);
+        // 암살 R1 「필중 암살」이 상한을 100%로 연다(2026-09-08). 0이면 기본 상한(MaxCritChance 70%) 그대로.
+        // ⚠️ 예전엔 "쿨 5초 이상 스킬은 확정 치명타"라 상한을 **건너뛰었다** — 지금은 상한 자체를 올린다.
+        //    그래서 확률을 실제로 쌓아야 100%에 닿는다(레벨업이 그 몫을 준다).
+        float cap = PlayerPassives.CritChanceCapOverride > 0f ? PlayerPassives.CritChanceCapOverride : MaxCritChance;
+        return Mathf.Min(chance, cap);
     }
 
     // 🔴 스킬 **하나**를 받는다 — 스킬트리 "힘(쿨 5초 이상)"·"가속(쿨 4초 이하)" 강화가 그 스킬의
@@ -897,10 +945,6 @@ public class PlayerSkills : MonoBehaviour
         // 낙뢰 연계 path2 T3: 낙뢰 버프 중첩당 전체 공격 피해량 증가
         if (LightningStorm.StackDamageEnabled && LightningStorm.ActiveStackCount > 0)
             damage *= 1f + LightningStorm.StackDamageBonusPerStack * LightningStorm.ActiveStackCount;
-
-        // 건강 연계 path1(패시브): 최대체력에 비례한 전체 피해량 증가
-        if (health != null && PlayerPassives.HealthDamagePerHp > 0f)
-            damage *= 1f + PlayerPassives.HealthDamagePerHp * health.MaxHealth;
 
         // 되감기 Route2: 되감기 직후 사용하는 스킬(되감기 제외)의 피해를 1회 증가시킨다.
         if (skillId != ActiveSkillId.Rewind && nextSkillDamageBonus > 0f)
@@ -1255,8 +1299,10 @@ public class PlayerSkills : MonoBehaviour
 
         // R1(가속 연계, path2): **더 작은 미사일을 더 여러 개**(2026-08-06 명세).
         // 쿨 감소는 영구 스탯이라 ApplyPathTierEffect가 맡고, 여기선 개수와 크기만 다룬다.
+        // 2차 「저 하늘의 별처럼」 = "셀 수 없이 많은 미사일로 세상을 뒤덮는다" — 1차의 2배에서 **5배**로 올린다
+        //    (2026-09-08. 새 그림이 필요 없는 진화라 물량으로만 간다).
         float missileScale = 1f;
-        if (skill.PathTier[2] >= 3) { count *= 3; missileScale = 0.55f; }
+        if (skill.PathTier[2] >= 3) { count *= 5; missileScale = 0.45f; }
         else if (skill.PathTier[2] >= 2) { count *= 2; missileScale = 0.7f; }
         // 스킬트리 "더 많은 폭격"(Homing_MissileNum) 해금 시에만: 10회 사용마다 미사일 +1발
         if (MetaBonuses.HomingMissileGrowth) count += skill.GrowthStacks / 10;
@@ -1292,48 +1338,51 @@ public class PlayerSkills : MonoBehaviour
     // ── 산탄 장착: 전방으로 산탄을 뿌리고, 동시에 5초간 타수 버프를 건다 ──
     // 예전엔 버프만 걸어서 **시전해도 화면에 아무 일도 안 일어나는** 유일한 스킬이었다.
     // 실제로 산탄을 쏘게 해 이름값을 하게 하고, 알 개수를 레벨업 주 성장축으로 삼는다.
+    // R0 2차 「내 지휘를 따라!」 — 산탄 발사를 통째로 포기하는 대신 타수 버프를 **배수**로 키운다.
+    // 🔴 더하기가 아니라 곱하기다(사용자 결정 2026-09-08): Lv.1에 2배, 만렙에 3배.
+    //    스킬트리 "산탄 타수 +1"이 켜져 있으면 그 몫까지 같이 배가된다 — 의도한 결이다.
+    private const float ShotgunMegaMultAtLv1 = 2f;
+    private const float ShotgunMegaMultAtMax = 3f;
+
     private bool FireShotgun(float damage, float critChance, EquippedSkill skill)
     {
-        FireShotgunPellets(damage, critChance, skill);
+        // 🔴 R0 2차 「내 지휘를 따라!」 = **공격하는 대신** 엄청난 타수 버프를 건다(2026-09-08 명세).
+        //    그래서 이 루트만 산탄을 아예 안 쏜다 — 화면에 알이 안 나가는 게 의도다.
+        bool megaBuff = skill.PathTier[1] >= 3;
+        if (!megaBuff) FireShotgunPellets(damage, critChance, skill);
+        // 🔴 공격 모션은 `FireVolley` 안에 있다 — 발사를 건너뛰면 **시전해도 화면에 아무 일도 안 일어난다.**
+        //    이 스킬이 예전에 겪었던 바로 그 문제라(위 주석) 여기서 모션만 따로 튼다.
+        else animator.SetTrigger("Attack");
 
         // 🔴 **버프는 집중 산탄 루트를 골랐을 때만 켜진다**(사용자 결정 2026-09-02 — 8/27 QA "산탄 구조 개편").
-        //    화면의 "루트 1"(= route 0, 스나이핑 연계 · 집중 산탄 → 일점사 산탄)이 그 루트다.
+        //    화면의 "루트 1"(= route 0, 스나이핑 연계 · 집중 산탄)이 그 루트다.
         //    미진화 산탄과 관통 산탄 루트는 **순수 공격기**다 — 예전엔 공격+버프가 한 스킬에 섞여 있어서
         //    진화로 버프를 고를 이유가 없었다.
         if (skill.PathTier[1] <= 0) return true;
 
         // 루트를 탔으므로 +2초는 늘 붙는다(관통 산탄 루트는 위에서 이미 빠져나갔다).
-        // 기본 7초(5+2, 루트를 탔으므로 +2는 늘 붙는다) — 에셋 `Prog_Shotgun.baseDuration`이 있으면 그쪽이 이긴다.
+        // 기본 7초(5+2) — 에셋 `Prog_Shotgun.baseDuration`이 있으면 그쪽이 이긴다.
         float duration = BaseDuration(skill.Id, 5f + 2f) + skill.ExtraShotgunDuration; // 레벨업 "지속시간" 스텝
         // 스킬트리 "산탄 타수 +1"은 버프가 주는 타수에 더해진다.
         // ⚠️ 그래서 **집중 산탄 루트를 타야만 효과가 있다** — 바로 위 게이트에서 미진화·관통 산탄은 이미 빠져나갔다.
+        // 🔴 1차 = **모든 공격에 +1**(2026-09-08 명세). 스킬을 고르지도, 배수를 곱하지도 않는다.
         int bonus = 1 + MetaBonuses.ShotgunExtraBonusHit;
-        // R0(집중 산탄, path1) T2: 최고 공격력 스킬 1개에만, 보너스 2배(T3=3배)
-        bool single = skill.PathTier[1] >= 2;
-        if (single) bonus *= skill.PathTier[1] >= 3 ? 3 : 2;
+        if (megaBuff)
+        {
+            float t = Mathf.InverseLerp(1f, BalanceConstants.MaxSkillLevel, skill.Level);
+            bonus = Mathf.RoundToInt(bonus * Mathf.Lerp(ShotgunMegaMultAtLv1, ShotgunMegaMultAtMax, t));
+        }
 
         shotgunTimer = duration;
         shotgunBonus = bonus;
-        shotgunSingleTarget = single;
-        if (single) shotgunTargetSkill = HighestDamageSkill();
 
         // R1(휘두르기 연계, path2)은 "화면 전체 5회 공격 + 기절"에서 **전방 집중 산탄**으로 바뀌었다(2026-08-06 명세).
         // 실제 변화는 전부 FireShotgunPellets(탄 수·발사 각도·피해)에 있다 — 여기서 따로 할 일이 없다.
 
+        // HUD 버프 줄에 아이콘 + **남은 시간**만 뜬다. 타수 숫자는 안 붙인다(사용자 결정 2026-09-08) —
+        // 스킬 칸에 두르던 노란 테를 걷어낸 자리를 숫자로 메우려던 것인데, 지속시간만으로 충분하다.
         BuffTracker.Set("Shotgun", Time.time + duration);
         return true;
-    }
-
-    private ActiveSkillId HighestDamageSkill()
-    {
-        ActiveSkillId best = ActiveSkillId.BasicAttack;
-        float bestDmg = -1f;
-        foreach (EquippedSkill s in equippedSkills)
-        {
-            if (s.Id == ActiveSkillId.Shotgun || s.Id == ActiveSkillId.Rewind) continue; // 자신·피해 없는 유틸 제외
-            if (s.Damage > bestDmg) { bestDmg = s.Damage; best = s.Id; }
-        }
-        return best;
     }
 
     // ── 휘두르기(파인애플 전용): 앞의 적을 돌망치로 후려쳐 뒤로 밀어낸다 ──
@@ -1590,11 +1639,19 @@ public class PlayerSkills : MonoBehaviour
 
     private const float RewindVfxHeight = 1.9f; // 되감기 표식이 뜨는 머리 위 높이(유닛)
 
+    // 되감기 진화 손잡이 — 문구가 말하는 것과 1:1로 붙여 둔다(§evo.active.desc.Rewind.*).
+    private const float RewindAcceleratedMult = 1.6f;      // R1 1차 "되감기가 강력해지고"
+    private const float RewindOverchargeDamageBonus = 0.5f; // R0 2차 "다음 피해 +50%"
+    private const int RewindOverchargeBonusHits = 2;        // R0 2차 "타수 +2"
+    private const float RewindOverchargeCooldownMult = 2f;  // R0 2차 "그 공격의 쿨타임 2배"
+
     // ── 되감기: 다른 스킬의 쿨타임을 앞당긴다 ──
     private void FireRewind(EquippedSkill skill)
     {
-        // 되감기 정도(앞당길 시간) — 레벨업 "되감기 시간" 스텝만 늘린다.
-        float amount = skill.RewindAmount;
+        // 되감기 정도(앞당길 시간) — 레벨업 "되감기 시간" 스텝이 늘린다.
+        // R1(가속 되감기, path2) 1차: **되감기 자체가 강력해진다**(2026-09-08 문구 "되감기가 강력해지고").
+        //   예전엔 이 루트 1차에 GCD 절반뿐이라 "무엇이 강해졌는지"가 화면에 안 보였다.
+        float amount = skill.RewindAmount * (skill.PathTier[2] >= 2 ? RewindAcceleratedMult : 1f);
 
         foreach (EquippedSkill s in equippedSkills)
             if (s != skill) s.CooldownTimer = Mathf.Max(0f, s.CooldownTimer - amount);
@@ -1604,9 +1661,15 @@ public class PlayerSkills : MonoBehaviour
             foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
                 if (e != null) e.ApplySlow(0.5f, 2f);
 
-        // Route2(path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
+        // R0(충전 되감기, path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
+        // 🔴 2차 「과충전」은 피해 +50%에 **타수 +2**를 얹고, 그 대신 그 스킬의 쿨이 2배가 된다
+        //    (2026-09-08 사용자 지시). 1차보다 피해 배수는 낮지만 타수가 곱으로 들어가 훨씬 세다.
         if (skill.PathTier[1] >= 1)
-            nextSkillDamageBonus = skill.PathTier[1] >= 3 ? 1.0f : skill.PathTier[1] >= 2 ? 0.6f : 0.3f;
+        {
+            nextSkillDamageBonus = skill.PathTier[1] >= 3 ? RewindOverchargeDamageBonus
+                                 : skill.PathTier[1] >= 2 ? 0.6f : 0.3f;
+            nextSkillBonusHits = skill.PathTier[1] >= 3 ? RewindOverchargeBonusHits : 0;
+        }
 
         // 되감기는 여태 화면에 아무것도 안 나왔다 — 머리 위에 표식을 한 번 띄운다.
         // R0(충전 되감기)만 전용 그림이 있다. R1(가속 되감기)과 진화 전은 기본 그림.
@@ -1618,15 +1681,26 @@ public class PlayerSkills : MonoBehaviour
         animator.SetTrigger("Attack");
     }
 
-    // 되감기 Route3 T3을 보유하면 전역 쿨타임(GCD)이 절반이 된다.
+    // 되감기 R1(가속 되감기, path2)이 전역 쿨타임(GCD)을 줄인다. 1차 = 절반, 2차 = **아예 없앤다**.
+    // ⚠️ 1차 = PathTier 2, 2차 = 3.
     private float GlobalCooldownScale()
     {
         foreach (EquippedSkill s in equippedSkills)
-            // 🔴 **1차부터** 켜진다(2026-09-08 사용자 결정 — 옛 2차 효과를 1차로 끌어왔다).
-            //    원래 1차 효과였던 "되감기 자체 쿨감"은 진화 쿨감 금지로 사라져서 1차가 빈 칸이 됐었다.
-            //    ⚠️ 1차 = PathTier 2, 2차 = 3. `>= 3`으로 쓰면 다시 2차 전용이 된다.
-            //    ⚠️ **2차는 지금 효과가 없다** — 태리미가 채울 자리다.
-            if (s.Id == ActiveSkillId.Rewind && s.PathTier[2] >= 2) return 0.5f;
+            if (s.Id == ActiveSkillId.Rewind && s.PathTier[2] >= 2)
+                return s.PathTier[2] >= 3 ? 0f : 0.5f;   // 2차 「블루베리 절멸의 시간」 = GCD 소멸
+        return 1f;
+    }
+
+    // 🔴 되감기 R1 2차만은 **진화가 쿨을 줄인다** — 2026-09-07의 "진화 쿨감 금지"에 대한 유일한 예외다
+    //    (사용자 결정 2026-09-08: "기본 쿨감이 없단 소리지 쿨감이 진화효과면 하는 게 맞지").
+    //    그게 이 루트의 정체이고, 문구도 "모든 스킬의 쿨타임이 감소하고"라고 말한다.
+    //    ⚠️ 새 진화에 쿨감을 넣을 땐 여기 예외가 하나 더 느는 것임을 알고 넣을 것.
+    private const float RewindEndTimesCooldownMult = 0.7f;
+
+    private float RewindEndTimesCooldownScale()
+    {
+        foreach (EquippedSkill s in equippedSkills)
+            if (s.Id == ActiveSkillId.Rewind && s.PathTier[2] >= 3) return RewindEndTimesCooldownMult;
         return 1f;
     }
 
@@ -1948,58 +2022,124 @@ public class PlayerSkills : MonoBehaviour
         altar.CritChance = critChance;
     }
 
+    // ── 독수리의 비(R1 2차) ────────────────────────────────────────────────
+    // 🔴 **"화면의 적 전원에게 동시에 N번"이 아니다**(사용자 지시 2026-09-08). 일정 시간 동안
+    //    한 마리씩 **넓게 흩어져 두두두둑** 떨어진다 — 그래야 "비가 내린다"로 보인다.
+    //    그래서 대상이 적이 아니라 **자리**다: 적 근처를 중심으로 좌우로 흩뿌리고, 떨어진 자리 반경만 때린다.
+    private const float EagleRainDuration = 4f;
+    private const float EagleRainInterval = 0.1f;     // 40마리
+    private const float EagleRainDamageRatio = 0.22f; // 40 × 0.22 ≈ 기존 투하 8~9회분(전탄 명중 기준)
+    // 🔴 **반경과 흩뿌림 폭은 짝이다 — 한쪽만 고치면 스킬이 조용히 약해진다.**
+    //    흩뿌림 ±3.5에 반경 1.1이던 첫 판은 한 마리가 제 목표를 맞출 확률이 |dx|<1.1 / ±3.5 ≈ 0.3뿐이라
+    //    40마리 중 12마리만 유효했다(= 2차가 1차보다 안 세지는 값). 반경을 키우고 폭을 좁혀 ≈0.65로 올린다.
+    //    폭을 더 좁히면 "넓게 두두두둑"이라는 요구가 깨지므로, 손댈 땐 두 값을 같이 볼 것.
+    private const float EagleRainRadius = 2f;         // 한 마리가 훑는 반경
+    private const float EagleRainSpreadX = 3f;
+    private const float EagleRainSpreadY = 1.2f;
+
+    // 폭탄 독수리(R0) — 호밍 R0과 **같은 폭발 에셋**을 쓴다(사용자 지시). 반경 밖은 안 맞는다.
+    private const float EagleBombVfxScale = 1.4f;
+
     private IEnumerator EagleDropRoutine(float damage, float critChance, EquippedSkill skill)
     {
         PlayCastSfx(eagleDropCastSfx, castSfxVolume);
 
-        // 지식 연계 path2(패시브): 독수리 투하 시전마다 즉시 경험치 획득
-        if (PlayerPassives.EagleDropCastXpBonus > 0)
-            PlayerExperience.Instance?.AddXP(PlayerPassives.EagleDropCastXpBonus);
+        // R0(산탄 연계, path1) = **폭탄 독수리**. 떨어진 자리에 폭발이 남는다(2026-09-08 명세).
+        // ⚠️ 예전엔 이 루트가 "독수리 비"였다 — **그 기믹은 R1 2차로 옮겨갔다.** 문구와 코드를 같이 옮긴 것이라
+        //    한쪽만 되돌리면 이름과 효과가 어긋난다.
+        // ⚠️ 폭발은 **투하 1회당 적 수만큼** 터진다 — 적이 뭉쳐 있으면 서로의 폭발에 겹쳐 맞아 피해가 곱으로 불어난다.
+        //    그래서 비율은 호밍 미사일 폭발과 같은 값(1차 0.4 · 2차 0.6)으로 맞춰 둔다. 올릴 땐 뭉친 판을 보고 정할 것.
+        bool bombEagle = skill.PathTier[1] >= 2;
+        float bombRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;   // 2차(슈퍼 다이너마이트)는 아트 대기 — 지금은 폭발만 커진다
+        float bombRadius = skill.PathTier[1] >= 3 ? 2.6f : 1.8f;
 
-        bool spawnMiniWhirlwind = skill.PathTier[2] >= 2; // 회오리 연계 path T2: 미니 회오리 생성 (T1은 쿨타임/투하횟수 트레이드오프)
+        // R1(회오리 연계, path2) 1차 = 낙하 자리에 미니 회오리 / 2차 = **독수리의 비**
+        bool spawnMiniWhirlwind = skill.PathTier[2] >= 2;
         float miniWhirlwindDamageMult = skill.PathTier[2] >= 3 ? 0.35f : 0.25f;
         int miniWhirlwindMaxHits = skill.PathTier[2] >= 3 ? 8 : 5;
+        if (skill.PathTier[2] >= 3)
+        {
+            yield return StartCoroutine(EagleRainRoutine(damage, critChance, skill, miniWhirlwindDamageMult, miniWhirlwindMaxHits));
+            yield break;
+        }
 
-        // R0(산탄 연계, path1) = **독수리 비**. 정해진 횟수가 아니라 3초 동안 계속 쏟아진다(2026-08-06 명세).
-        // 투하 간격도 촘촘해져 "하늘을 뒤덮는" 그림이 된다.
-        bool eagleRain = skill.PathTier[1] >= 2;
-        float rainDuration = skill.PathTier[1] >= 3 ? 4.5f : 3f;
-        float rainInterval = skill.PathTier[1] >= 3 ? 0.2f : 0.3f;
-
-        // 레벨업 보조축: 투하 횟수(ExtraProjectiles).
-        // 스킬트리 "독수리 투하수 +1"도 여기 더해진다(독수리 비 루트는 횟수가 아니라 시간이라 영향 없음).
-        // 🔴 예전엔 여기에 `- (PathTier[2] >= 1 ? 1 : 0)`(급강하 폭격 1차 = 투하 −1)이 있었다. 그건
-        //    **쿨감 40%의 대가**로 짝지어 둔 것인데, 2026-09-07에 진화 쿨감을 전부 걷어내면서
-        //    대가만 남아 그 진화가 **순손해**가 됐다 — 그래서 같이 걷어낸다. 거래의 한쪽만 지우지 말 것.
+        // 레벨업 보조축: 투하 횟수(ExtraProjectiles). 스킬트리 "독수리 투하수 +1"도 여기 더해진다.
         int dropCount = Mathf.Max(1, EagleBaseDrops + skill.ExtraProjectiles + MetaBonuses.EagleExtraDrops);
         // 레벨업 주 성장축: 투하 간격(TickIntervalMult)
         float interval = skill.TickIntervalMult;
 
-        // 독수리 비는 투하가 훨씬 촘촘해서(3초/0.3초 = 10틱) 틱당 피해를 낮추지 않으면 혼자 압도적이 된다.
-        // 총량은 기존 2~4회 투하의 3~6배 수준으로 맞춘다.
-        float rainDamageRatio = skill.PathTier[1] >= 3 ? 0.28f : 0.35f;
-
-        float elapsed = 0f;
-        for (int i = 0; eagleRain ? elapsed < rainDuration : i < dropCount; i++)
+        for (int i = 0; i < dropCount; i++)
         {
             List<Enemy> enemies = new List<Enemy>(FindObjectsByType<Enemy>(FindObjectsSortMode.None));
 
-            float dropDamage = damage * (eagleRain ? rainDamageRatio : 1f);
-
             foreach (Enemy enemy in enemies)
             {
+                if (enemy == null) continue;
                 Vector3 pos = enemy.transform.position;
-                enemy.TakeSkillHit(dropDamage, critChance, ActiveSkillId.EagleDrop);
+                enemy.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
 
-                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, dropDamage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
+                if (bombEagle) EagleBombExplode(pos, damage * bombRatio, critChance, bombRadius, enemy);
+                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, damage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
 
                 StartCoroutine(MeteorImpact(pos, skill.Scale));
             }
 
-            float wait = eagleRain ? rainInterval : interval;
-            yield return new WaitForSeconds(wait);
-            elapsed += wait;
+            yield return new WaitForSeconds(interval);
         }
+    }
+
+    // 떨어진 자리에서 터진다. 직격을 이미 맞은 적(origin)은 제외 — 호밍 미사일 폭발과 같은 규칙이다.
+    private void EagleBombExplode(Vector3 pos, float damage, float critChance, float radius, Enemy origin)
+    {
+        GameObject vfx = eagleBombVfxPrefab != null ? eagleBombVfxPrefab : eagleImpactVfxPrefab;
+        if (vfx != null)
+        {
+            GameObject go = ObjectPool.Instance.Spawn(vfx, pos, Quaternion.identity);
+            go.transform.localScale = Vector3.one * EagleBombVfxScale;
+            // Effect_Explosion은 4프레임 16fps(0.25초)에 despawnOnFinish가 꺼져 있다 — 재생 길이 바로 뒤에 회수한다.
+            ObjectPool.Instance.Despawn(go, 0.3f);
+        }
+        foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            if (o != null && o != origin && o.IsAlive && Vector2.Distance(pos, o.transform.position) <= radius)
+                o.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
+    }
+
+    private IEnumerator EagleRainRoutine(float damage, float critChance, EquippedSkill skill, float miniMult, int miniHits)
+    {
+        float dropDamage = damage * EagleRainDamageRatio;
+        for (float elapsed = 0f; elapsed < EagleRainDuration; elapsed += EagleRainInterval)
+        {
+            StartCoroutine(EagleRainStrike(PickEagleRainSpot(), dropDamage, critChance, skill, miniMult, miniHits));
+            yield return new WaitForSeconds(EagleRainInterval);
+        }
+    }
+
+    // 한 마리가 떨어져 그 자리 반경을 때린다. 낙하 연출이 끝난 **뒤에** 판정한다(그림보다 먼저 죽으면 안 보인다).
+    private IEnumerator EagleRainStrike(Vector3 pos, float damage, float critChance, EquippedSkill skill, float miniMult, int miniHits)
+    {
+        yield return StartCoroutine(MeteorImpact(pos, skill.Scale));
+
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            if (e != null && e.IsAlive && Vector2.Distance(pos, e.transform.position) <= EagleRainRadius)
+                e.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
+
+        // 1차(회오리 폭격)를 이어받는다 — 비가 오는 내내 자리마다 미니 회오리가 남는다.
+        SpawnWhirlwind(pos, damage * miniMult * (1f + MiniWhirlwindDamageBonus), critChance,
+            skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniHits, isMini: true);
+    }
+
+    // 떨어질 자리 — 산 적 하나를 골라 그 주위로 흩뿌린다. 적이 없으면 플레이어 왼쪽(적이 오는 쪽)에 떨군다.
+    private Vector3 PickEagleRainSpot()
+    {
+        List<Enemy> alive = new List<Enemy>();
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            if (e != null && e.IsAlive) alive.Add(e);
+
+        Vector3 center = alive.Count > 0
+            ? alive[Random.Range(0, alive.Count)].transform.position
+            : transform.position + Vector3.left * 4f;
+        return center + new Vector3(Random.Range(-EagleRainSpreadX, EagleRainSpreadX),
+                                    Random.Range(-EagleRainSpreadY, EagleRainSpreadY), 0f);
     }
 
     // 🧱 임시 프리미티브 — 전용 도트가 나오면 이 함수의 스프라이트만 교체하면 된다.

@@ -904,8 +904,12 @@ public class Enemy : MonoBehaviour
 
             if (overkill) SpawnOverkillBurst();
 
-            // 암살 연계 path1: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
-            int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
+            // 암살 R0 「현상금」: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
+            float xpMult = isCrit ? PlayerPassives.AssassinateKillXpMultiplier : 1f;
+            // 지식 R1 「전투 통찰」: **호밍 미사일로** 처리한 적이 추가 경험치를 남긴다(2026-09-08 명세).
+            // ⚠️ 예전엔 "독수리 투하 시전마다 즉시 XP"였다 — 문구가 바뀌면서 대상이 통째로 옮겨갔다.
+            if (source == ActiveSkillId.Homing) xpMult *= PlayerPassives.HomingKillXpMultiplier;
+            int grantedXp = Mathf.RoundToInt(xpValue * xpMult);
             // 경험치 보석이 경험치 바까지 날아가 도착하는 순간 적립된다. 연출이 불가능하면(HUD 없는 씬 등) 즉시 적립.
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);
@@ -1024,8 +1028,8 @@ public class Enemy : MonoBehaviour
         int total = natural + PlayerSkills.GlobalBonusHits(source)     // 산탄(타수) 버프로 추가된 타격 수
                     + PlayerSkills.CloseRangeBonusHits(source, transform.position) // 산탄 근거리 조준(+2, 스킬트리)
                     // 스킬트리 "암살: 치명타 확률 100%인 스킬은 타수 +1".
-                    // ⚠️ 확률 상한이 70%(BalanceConstants.MaxCritChance)라, 지금 100%가 되는 길은
-                    //    암살 진화 path2(AssassinateSlowSkillCritCooldown)가 상한을 건너뛰는 경우뿐이다.
+                    // ⚠️ 기본 상한은 70%(BalanceConstants.MaxCritChance)다. 100%에 닿는 길은
+                    //    암살 R1 「필중 암살」이 상한을 열고(CritChanceCapOverride) 레벨업으로 확률을 쌓는 경우뿐이다.
                     + (PlayerPassives.FullCritExtraHit && critChance >= 1f ? 1 : 0);
         float per = baseDamage / natural;                             // 자연 타수 기준 1히트 크기 → 보너스 히트는 추가 데미지
 

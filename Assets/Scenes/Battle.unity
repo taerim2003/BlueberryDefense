@@ -19636,6 +19636,7 @@ MonoBehaviour:
   scatterFireVfxPrefab: {fileID: 2108096441357373658, guid: 828290014ec336f4f9dd83df67668dda, type: 3}
   eagleDropPrefab: {fileID: 9157304669273838960, guid: 20af74ddf124cc5408f927b8792f8b33, type: 3}
   eagleImpactVfxPrefab: {fileID: 4748681987041982144, guid: 69f9c1460d45c5a4bb7a014ad125a17f, type: 3}
+  eagleBombVfxPrefab: {fileID: 4445664314901236262, guid: d25df58ec7ab40e4d9b55e295d8663a9, type: 3}
   snipingEffectPrefab: {fileID: 6341454868045255947, guid: 29ebc5a5461bbda489328264bcce8a32, type: 3}
   snipingSplashPrefab: {fileID: 4541086124990004514, guid: 686b719a63328a441a5b94fe20cdb3ab, type: 3}
   overkillSplashVfxPrefab: {fileID: 4748681987041982144, guid: 69737fbfadd51ad49acee7f444182f95, type: 3}

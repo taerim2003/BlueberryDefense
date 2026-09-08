@@ -547,8 +547,15 @@ public class LevelUpUI : MonoBehaviour
 
     private static string EvolutionHint(EquippedSkill s)
     {
-        if (!PlayerPassives.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStage) return "";
+        if (!PlayerPassives.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) return "";
         var names = new List<string>();
+        // 2차를 앞둔 스킬은 조건이 "보유"가 아니라 **열쇠 진화체**다 — 그쪽 이름을 보여준다.
+        if (s.EvolutionStage >= 1)
+        {
+            string k = EvolutionRoutes.Stage2PrereqName(s.Id, s.Route);
+            if (!string.IsNullOrEmpty(k)) names.Add(k);
+            return EvoHintText(names);
+        }
         foreach (int r in PlayerSkills.SelectableRoutes(s))
         {
             string n = EvolutionRoutes.RoutePrereqName(s.Id, r);
@@ -559,7 +566,7 @@ public class LevelUpUI : MonoBehaviour
 
     private static string EvolutionHint(EquippedPassive p)
     {
-        if (!PlayerPassives.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStage) return "";
+        if (!PlayerPassives.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStageFor(p.Id)) return "";
         var names = new List<string>();
         foreach (int r in PlayerPassives.SelectableRoutes(p))
         {

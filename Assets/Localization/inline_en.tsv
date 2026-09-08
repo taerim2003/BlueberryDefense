@@ -17,14 +17,13 @@ passive.cur.Strength.dmg	Total damage +{0}%
 passive.cur.Strength.qfallback	Q skill
 passive.cur.Strength.q	Q ({0}) damage +{1}%
 passive.cur.Health.max	Max health {0}
-passive.cur.Health.dmgPerHp	Damage +{0}% per 1 max health
 passive.cur.Health.heartDrop	Health pickup drop rate x{0}
 passive.cur.Knowledge.xp	Experience gain +{0}%
 passive.cur.Knowledge.treasure	Blueberries have a {0}% chance to appear as treasure chests
-passive.cur.Knowledge.eagleXp	+{0} experience per Eagle Drop cast
+passive.cur.Knowledge.homingXp	Homing Missile kills grant {0}x experience
 passive.cur.Assassinate.chance	Critical chance {0}%
 passive.cur.Assassinate.mult	Critical damage x{0}
-passive.cur.Assassinate.slowCrit	Skills with {0}s or longer cooldown always crit
+passive.cur.Assassinate.critCap	Crit chance cap {0}%
 passive.cur.Assassinate.killXp	Experience x{0} on critical kills
 passive.cur.Refresh.reset	{0}% chance to reset cooldowns on skill use
 passive.cur.Refresh.heal	Restore {0} health on every reset
@@ -77,6 +76,7 @@ ui.evotree.pickRoute	Choose one path — you cannot change it later
 ui.evotree.continueRoute	Continuing the path you chose at tier 1
 ui.evotree.abandoned	[PATH NOT TAKEN]
 ui.evotree.lockedPrereq	[LOCKED — needs '{0}']
+ui.evotree.lockedKey	[LOCKED — evolve '{0}' first]
 ui.evotree.locked	[LOCKED]
 ui.essence	{0} Essence
 ui.tree.cost	{0} Essence

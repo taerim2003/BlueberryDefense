@@ -85,6 +85,7 @@ public class CollectionUI : MonoBehaviour
     // 진화 트리 한 칸(루트 r, 티어 t).
     private class Node
     {
+        public GameObject root;   // 칸을 통째로 껐다 켰다 하려면 필요하다(패시브는 2차 칸이 없다)
         public Image frame;
         public Image icon;
         public TMP_Text title;
@@ -179,6 +180,7 @@ public class CollectionUI : MonoBehaviour
                 var desc = UITreeUtil.FindDeep(tr, "Desc");
                 var node = new Node
                 {
+                    root = tr.gameObject,
                     frame = tr.GetComponent<Image>(),
                     icon = icon != null ? icon.GetComponent<Image>() : null,
                     title = title != null ? title.GetComponent<TMP_Text>() : null,
@@ -351,10 +353,21 @@ public class CollectionUI : MonoBehaviour
             routeLabels[route].text = showPrereq ? full : routeText;
             SetPrereqIcon(route, showPrereq ? PrereqIcon(pre) : null,
                 spacerAt >= 0 ? full.Substring(0, spacerAt) : full);
+            // 🔴 패시브는 2차 진화가 없다(2026-09-08) — 도감에서도 2차 칸과 T1→T2 화살표를 감춘다.
+            //    남기면 영원히 "미발견"인 칸이 도감에 두 개 뜬다.
+            int maxTier = selectedIsPassive
+                ? EvolutionRoutes.MaxStageFor((PassiveSkillId)selectedId)
+                : EvolutionRoutes.MaxStageFor((ActiveSkillId)selectedId);
+            routeArrows[route].gameObject.SetActive(maxTier >= 2);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
-                RefreshNode(nodes[route, tierIdx], route, tierIdx + 1, discovered, unknown);
+            {
+                Node n = nodes[route, tierIdx];
+                bool show = tierIdx + 1 <= maxTier;
+                if (n != null && n.root != null) n.root.SetActive(show);
+                if (show) RefreshNode(n, route, tierIdx + 1, discovered, unknown);
+            }
         }
     }
 
@@ -443,21 +456,8 @@ public class CollectionUI : MonoBehaviour
         }
     }
 
-    // 새 티어 하나가 옛 티어 여러 개를 한꺼번에 준다 — 설명도 이어 붙인다(인게임 진화 창과 같은 규칙).
-    private string EvoDescription(int route, int tier)
-    {
-        int path = selectedIsPassive
-            ? EvolutionRoutes.RoutePath((PassiveSkillId)selectedId, route)
-            : EvolutionRoutes.RoutePath((ActiveSkillId)selectedId, route);
-
-        var parts = new List<string>();
-        foreach (int legacyTier in EvolutionRoutes.LegacyTiersFor(tier))
-        {
-            string text = selectedIsPassive
-                ? PlayerPassives.DescribePathEffect((PassiveSkillId)selectedId, path, legacyTier)
-                : PlayerSkills.DescribePathEffect((ActiveSkillId)selectedId, path, legacyTier);
-            if (!string.IsNullOrEmpty(text)) parts.Add(text);
-        }
-        return string.Join("\n", parts);
-    }
+    // 한 칸 = 한 줄(인게임 진화 창과 같은 규칙 — EvolutionTreeUI.RouteEffect 참고).
+    private string EvoDescription(int route, int tier) => selectedIsPassive
+        ? PlayerPassives.DescribePathEffect((PassiveSkillId)selectedId, route, tier)
+        : PlayerSkills.DescribePathEffect((ActiveSkillId)selectedId, route, tier);
 }

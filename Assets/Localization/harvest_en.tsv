@@ -1,321 +1,145 @@
 KEY	EN
 skill.name.BasicAttack	Arrow Shot
 skill.desc.BasicAttack	Fires an arrow at the nearest enemy. Leveling up adds arrows and pierce
-evo.active.desc.BasicAttack.1.1	Many shots packed into one
-evo.active.title.BasicAttack.1.1	All in One Shot
-evo.active.desc.BasicAttack.1.2	One shot skewers the whole row, and a follow-up finds the weak spot
-evo.active.title.BasicAttack.1.2	Shot That Skewers
-evo.active.desc.BasicAttack.1.3	More arrows follow, and the string never rests
-evo.active.title.BasicAttack.1.3	Follow-up Arrows
-evo.active.desc.BasicAttack.2.1	Draw the string and the sky goes dark
-evo.active.title.BasicAttack.2.1	Darkening Sky
-evo.active.desc.BasicAttack.2.2	Every shot pours down like rain
-evo.active.title.BasicAttack.2.2	Pouring Arrow Rain
-evo.active.desc.BasicAttack.2.3	That rain does not know how to stop
-evo.active.title.BasicAttack.2.3	Rain Without End
-evo.name.BasicAttack.0.1	Assassin Shot
-evo.name.BasicAttack.0.2	Execution Shot
-evo.name.BasicAttack.1.1	Arrow Rain
-evo.name.BasicAttack.1.2	Storm of Arrows
+evo.active.desc.BasicAttack.0.1	Many shots packed into one
+evo.name.BasicAttack.0.1	All in One Shot
+evo.active.desc.BasicAttack.0.2	More arrows follow, and the string never rests
+evo.name.BasicAttack.0.2	Follow-up Arrows
+evo.active.desc.BasicAttack.1.1	Draw the string and the sky goes dark
+evo.name.BasicAttack.1.1	Darkening Sky
+evo.active.desc.BasicAttack.1.2	That rain does not know how to stop
+evo.name.BasicAttack.1.2	Rain Without End
 skill.name.Whirlwind	Whirlwind
 skill.desc.Whirlwind	Summons a whirlwind that hunts enemies on its own (lasts 4s). Deals damage over time on contact and slows while it damages
 evo.active.desc.Whirlwind.0.1	The whirlwind splits in two
-evo.active.title.Whirlwind.0.1	Split in Two
-evo.active.desc.Whirlwind.0.2	Two spin side by side, and a small one is left where they fade
-evo.active.title.Whirlwind.0.2	Leaves a Small One
-evo.active.desc.Whirlwind.0.3	More are left behind, and every one turns fierce
-evo.active.title.Whirlwind.0.3	Fierce Swarm
-evo.active.desc.Whirlwind.2.1	Feet stick to the ground where it passed
-evo.active.title.Whirlwind.2.1	Feet Stuck Fast
-evo.active.desc.Whirlwind.2.2	One vast vortex that grinds down everything
-evo.active.title.Whirlwind.2.2	All-Grinding Cyclone
-evo.active.desc.Whirlwind.2.3	What has been ground never stands again
-evo.active.title.Whirlwind.2.3	Never Stands Again
-evo.name.Whirlwind.0.1	Whirlwind Swarm
-evo.name.Whirlwind.0.2	Storm Legion
-evo.name.Whirlwind.1.1	Great Whirlwind
-evo.name.Whirlwind.1.2	Eye of Ruin
+evo.name.Whirlwind.0.1	Split in Two
+evo.active.desc.Whirlwind.0.2	More are left behind, and every one turns fierce
+evo.name.Whirlwind.0.2	Fierce Swarm
+evo.active.desc.Whirlwind.1.1	Feet stick to the ground where it passed
+evo.name.Whirlwind.1.1	Feet Stuck Fast
+evo.active.desc.Whirlwind.1.2	What has been ground never stands again
+evo.name.Whirlwind.1.2	Never Stands Again
 skill.name.Orb	Orb
 skill.desc.Orb	Summons an orb that pierces forward. Deals damage over time to every enemy it touches and slows them
-evo.active.desc.Orb.1.1	Where it passes turns to swamp
-evo.active.title.Orb.1.1	Swamp in Its Wake
-evo.active.desc.Orb.1.2	Bigger, more often, bluer
-evo.active.title.Orb.1.2	Big Blue Orb
-evo.active.desc.Orb.1.3	The swamp deepens and the hand quickens
-evo.active.title.Orb.1.3	Deepening Swamp
-evo.active.desc.Orb.2.1	Whatever it touches goes soft
-evo.active.title.Orb.2.1	Softened Things
-evo.active.desc.Orb.2.2	Instead of one orb, small ones give chase in a pack
-evo.active.title.Orb.2.2	Little Ones in Chase
-evo.active.desc.Orb.2.3	The pack swells and everything it grazes goes soft
-evo.active.title.Orb.2.3	Swollen Pack
-evo.name.Orb.0.1	Great Orb
-evo.name.Orb.0.2	Frost Orb
-evo.name.Orb.1.1	Seeking Orb
-evo.name.Orb.1.2	Orb Legion
+evo.active.desc.Orb.0.1	Where it passes turns to swamp
+evo.name.Orb.0.1	Swamp in Its Wake
+evo.active.desc.Orb.0.2	The swamp deepens and the hand quickens
+evo.name.Orb.0.2	Deepening Swamp
+evo.active.desc.Orb.1.1	Whatever it touches goes soft
+evo.name.Orb.1.1	Softened Things
+evo.active.desc.Orb.1.2	The pack swells and everything it grazes goes soft
+evo.name.Orb.1.2	Swollen Pack
 skill.name.Lightning	Lightning
 skill.desc.Lightning	For 6 seconds, every enemy that takes attack damage has a 30% chance to be struck by lightning
 evo.active.desc.Lightning.0.1	The clouds are slow to clear
-evo.active.title.Lightning.0.1	Clouds That Linger
-evo.active.desc.Lightning.0.2	The gathered clouds ride on every blow
-evo.active.title.Lightning.0.2	Clouds on Every Blow
-evo.active.desc.Lightning.0.3	The more it gathers, the less you can handle
-evo.active.title.Lightning.0.3	Fiercer as It Gathers
+evo.name.Lightning.0.1	Clouds That Linger
+evo.active.desc.Lightning.0.2	The more it gathers, the less you can handle
+evo.name.Lightning.0.2	Fiercer as It Gathers
 evo.active.desc.Lightning.1.1	The storm takes a short breath
-evo.active.title.Lightning.1.1	Short Breath
-evo.active.desc.Lightning.1.2	An iron rod is driven into the ground, and the sky aims at nothing else
-evo.active.title.Lightning.1.2	Iron Rod in the Ground
-evo.active.desc.Lightning.1.3	The rod pulls the sky down longer and wider
-evo.active.title.Lightning.1.3	Pulls the Sky Down
-evo.name.Lightning.0.1	Thundercloud Buildup
-evo.name.Lightning.0.2	Tempest
-evo.name.Lightning.1.1	Lightning Rod
-evo.name.Lightning.1.2	Great Lightning Rod
+evo.name.Lightning.1.1	Short Breath
+evo.active.desc.Lightning.1.2	The rod pulls the sky down longer and wider
+evo.name.Lightning.1.2	Pulls the Sky Down
 skill.name.EagleDrop	Eagle Drop
 skill.desc.EagleDrop	Drops eagles across the whole screen twice, one second apart, damaging every enemy
-evo.active.desc.EagleDrop.1.1	One of them stays a long while
-evo.active.title.EagleDrop.1.1	Stays a While
-evo.active.desc.EagleDrop.1.2	Call, and the sky is buried in eagles
-evo.active.title.EagleDrop.1.2	Covers the Sky
-evo.active.desc.EagleDrop.1.3	The buried sky is slow to clear
-evo.active.title.EagleDrop.1.3	Sky That Won't Clear
-evo.active.desc.EagleDrop.2.1	Fewer, but far more often
-evo.active.title.EagleDrop.2.1	Fewer but Often
-evo.active.desc.EagleDrop.2.2	Wind lingers where the talons touched
-evo.active.title.EagleDrop.2.2	Wind from Talons
-evo.active.desc.EagleDrop.2.3	The leftover wind grinds on and on
-evo.active.title.EagleDrop.2.3	Long-Lasting Wind
-evo.name.EagleDrop.0.1	Eagle Rain
-evo.name.EagleDrop.0.2	Sky Eclipse
-evo.name.EagleDrop.1.1	Dive Bombing
-evo.name.EagleDrop.1.2	Cyclone Bombing
+evo.active.desc.EagleDrop.0.1	One of them stays a long while
+evo.name.EagleDrop.0.1	Stays a While
+evo.active.desc.EagleDrop.0.2	The buried sky is slow to clear
+evo.name.EagleDrop.0.2	Sky That Won't Clear
+evo.active.desc.EagleDrop.1.1	Fewer, but far more often
+evo.name.EagleDrop.1.1	Fewer but Often
+evo.active.desc.EagleDrop.1.2	The leftover wind grinds on and on
+evo.name.EagleDrop.1.2	Long-Lasting Wind
 skill.name.Sniping	Sniping
 skill.desc.Sniping	Snipes the enemy with the most health three times for heavy damage
-evo.active.desc.Sniping.1.1	One shot carries a different weight
-evo.active.title.Sniping.1.1	Changed Weight
-evo.active.desc.Sniping.1.2	An eagle comes down where the bullet struck
-evo.active.title.Sniping.1.2	Descending Eagle
-evo.active.desc.Sniping.1.3	Far more of them come down
-evo.active.title.Sniping.1.3	More Come Down
-evo.active.desc.Sniping.2.1	Reloading gets faster
-evo.active.title.Sniping.2.1	Fast Reload
-evo.active.desc.Sniping.2.2	Let go, and the barrel moves on its own
-evo.active.title.Sniping.2.2	Barrel Moves Itself
-evo.active.desc.Sniping.2.3	There is no time even to blink
-evo.active.title.Sniping.2.3	Without a Blink
-evo.name.Sniping.0.1	Bombard Shot
-evo.name.Sniping.0.2	Carpet Shot
-evo.name.Sniping.1.1	Auto-Aim
-evo.name.Sniping.1.2	Watchtower
+evo.active.desc.Sniping.0.1	One shot carries a different weight
+evo.name.Sniping.0.1	Changed Weight
+evo.active.desc.Sniping.0.2	Far more of them come down
+evo.name.Sniping.0.2	More Come Down
+evo.active.desc.Sniping.1.1	Reloading gets faster
+evo.name.Sniping.1.1	Fast Reload
+evo.active.desc.Sniping.1.2	There is no time even to blink
+evo.name.Sniping.1.2	Without a Blink
 skill.name.Homing	Homing Missile
 skill.desc.Homing	Fires 3 missiles that chase enemies. Each level adds many more, and it grows stronger the more you use it (this run only)
-evo.active.desc.Homing.1.1	The warhead grows heavy
-evo.active.title.Homing.1.1	Heavy Warhead
-evo.active.desc.Homing.1.2	It bursts the moment it touches
-evo.active.title.Homing.1.2	Bursts on Contact
-evo.active.desc.Homing.1.3	The blast reaches far wider
-evo.active.title.Homing.1.3	Wider Blaze
-evo.active.desc.Homing.2.1	The rounds get lighter
-evo.active.title.Homing.2.1	Lighter Rounds
-evo.active.desc.Homing.2.2	Smaller means many times more, and the hand quickens too
-evo.active.title.Homing.2.2	Pours Many Times Over
-evo.active.desc.Homing.2.3	You would not dare to count
-evo.active.title.Homing.2.3	Dare Not Count
-evo.name.Homing.0.1	Blast Missile
-evo.name.Homing.0.2	Carpet Bombing
-evo.name.Homing.1.1	Micro Missile Swarm
-evo.name.Homing.1.2	Missile Storm
+evo.active.desc.Homing.0.1	The warhead grows heavy
+evo.name.Homing.0.1	Heavy Warhead
+evo.active.desc.Homing.0.2	The blast reaches far wider
+evo.name.Homing.0.2	Wider Blaze
+evo.active.desc.Homing.1.1	The rounds get lighter
+evo.name.Homing.1.1	Lighter Rounds
+evo.active.desc.Homing.1.2	You would not dare to count
+evo.name.Homing.1.2	Dare Not Count
 skill.name.Shotgun	Buckshot Load
 skill.desc.Shotgun	Sprays buckshot forward in a fan
-evo.active.desc.Shotgun.1.1	The heat lingers
-evo.active.title.Shotgun.1.1	Lingering Heat
-evo.active.desc.Shotgun.1.2	Everything is poured into the strongest one
-evo.active.title.Shotgun.1.2	All Into One
-evo.active.desc.Shotgun.1.3	That one is more than anything can take
-evo.active.title.Shotgun.1.3	One Too Much to Take
-evo.active.desc.Shotgun.2.1	It keeps pouring instead of stopping at one burst
-evo.active.title.Shotgun.2.1	Never Stops
-evo.active.desc.Shotgun.2.2	The scattering pellets gather into one forward stream
-evo.active.title.Shotgun.2.2	One Forward Stream
-evo.active.desc.Shotgun.2.3	That stream grows far thicker
-evo.active.title.Shotgun.2.3	Thicker Stream
-evo.name.Shotgun.0.1	Focused Buckshot
-evo.name.Shotgun.0.2	Pinpoint Buckshot
-evo.name.Shotgun.1.1	Piercing Buckshot
-evo.name.Shotgun.1.2	Bursting Buckshot
+evo.active.desc.Shotgun.0.1	The heat lingers
+evo.name.Shotgun.0.1	Lingering Heat
+evo.active.desc.Shotgun.0.2	That one is more than anything can take
+evo.name.Shotgun.0.2	One Too Much to Take
+evo.active.desc.Shotgun.1.1	It keeps pouring instead of stopping at one burst
+evo.name.Shotgun.1.1	Never Stops
+evo.active.desc.Shotgun.1.2	That stream grows far thicker
+evo.name.Shotgun.1.2	Thicker Stream
 skill.name.Rewind	Rewind
 skill.desc.Rewind	Pulls every other skill's cooldown forward by 1 second. Rewinds further with each level
-evo.active.desc.Rewind.1.1	The next blow after a rewind hurts more
-evo.active.title.Rewind.1.1	A Harder Blow
-evo.active.desc.Rewind.1.2	It hurts far more
-evo.active.title.Rewind.1.2	Far More
-evo.active.desc.Rewind.1.3	That one blow ends the round
-evo.active.title.Rewind.1.3	Blow That Ends It
-evo.active.desc.Rewind.2.1	Rewinding speeds up the whole run
-evo.active.title.Rewind.2.1	The Run Speeds Up
-evo.active.desc.Rewind.2.2	The gap between every skill is halved
-evo.active.title.Rewind.2.2	Half the Time
-evo.active.desc.Rewind.2.3	(effect TBD)
-evo.active.title.Rewind.2.3	TBD
-evo.name.Rewind.0.1	Charged Rewind
-evo.name.Rewind.0.2	Overload Rewind
-evo.name.Rewind.1.1	Accelerated Rewind
-evo.name.Rewind.1.2	Time Collapse
+evo.active.desc.Rewind.0.1	The next blow after a rewind hurts more
+evo.name.Rewind.0.1	A Harder Blow
+evo.active.desc.Rewind.0.2	That one blow ends the round
+evo.name.Rewind.0.2	Blow That Ends It
+evo.active.desc.Rewind.1.1	The rewinding itself gets faster
+evo.name.Rewind.1.1	Faster Rewind
+evo.active.desc.Rewind.1.2	Everything comes back in half the time
+evo.name.Rewind.1.2	Half the Time
 skill.name.Swing	Swing
 skill.desc.Swing	Strikes all around you, damaging every enemy in reach and knocking them back
-evo.active.desc.Swing.1.1	The arm swings wider
-evo.active.title.Swing.1.1	Wider Swing
-evo.active.desc.Swing.1.2	It sweeps far wider in one go
-evo.active.title.Swing.1.2	An Armful at a Time
-evo.active.desc.Swing.1.3	What gets knocked back cannot rise for a while
-evo.active.title.Swing.1.3	Cannot Rise
-evo.active.desc.Swing.2.1	The impact spreads out through the ground
-evo.active.title.Swing.2.1	Shock Through the Ground
-evo.active.desc.Swing.2.2	That shock runs all the way out
-evo.active.title.Swing.2.2	Runs to the End
-evo.active.desc.Swing.2.3	The running shock turns far fiercer
-evo.active.title.Swing.2.3	Fierce Tremor
-evo.name.Swing.0.1	Sweeping Blow
-evo.name.Swing.0.2	Smashing Blow
-evo.name.Swing.1.1	Seismic Wave
-evo.name.Swing.1.2	Earth Rift
+evo.active.desc.Swing.0.1	The arm swings wider
+evo.name.Swing.0.1	Wider Swing
+evo.active.desc.Swing.0.2	What gets knocked back cannot rise for a while
+evo.name.Swing.0.2	Cannot Rise
+evo.active.desc.Swing.1.1	The impact spreads out through the ground
+evo.name.Swing.1.1	Shock Through the Ground
+evo.active.desc.Swing.1.2	The running shock turns far fiercer
+evo.name.Swing.1.2	Fierce Tremor
+skill.name.GrapeToss	Toxic Grapes
+skill.desc.GrapeToss	Lobs toxic grapes where enemies gather. Each burst leaves a poison cloud that infects anyone inside, dealing damage over time
+evo.active.desc.GrapeToss.0.1	The cloud spreads wider
+evo.name.GrapeToss.0.1	Thicker Fog
+evo.active.desc.GrapeToss.0.2	Whatever falls poisoned bursts, staining those beside it
+evo.name.GrapeToss.0.2	They Burst
+evo.active.desc.GrapeToss.1.1	More go out at once
+evo.name.GrapeToss.1.1	One More Handful
+evo.active.desc.GrapeToss.1.2	They lock up more often, and what unlocks is soft
+evo.name.GrapeToss.1.2	They Seize
 passive.name.Strength	Strength
-evo.passive.desc.Strength.1.1	A clean hit lands deeper
-evo.passive.title.Strength.1.1	Lands Deep
-evo.passive.desc.Strength.1.2	Far deeper
-evo.passive.title.Strength.1.2	Deeper Still
-evo.passive.desc.Strength.1.3	A clean hit leaves nothing behind
-evo.passive.title.Strength.1.3	Nothing Left
-evo.passive.desc.Strength.2.1	The first thing you picked up fits your hand
-evo.passive.title.Strength.2.1	First in Hand
-evo.passive.desc.Strength.2.2	It fits better still
-evo.passive.title.Strength.2.2	Firmer Grip
-evo.passive.desc.Strength.2.3	What you took up first hits hardest
-evo.passive.title.Strength.2.3	First Hand Hits Hardest
-evo.name.Strength.0.1	Lethal Strength
-evo.name.Strength.0.2	Ruinous Strength
-evo.name.Strength.1.1	Brawn
-evo.name.Strength.1.2	Titan Strength
+evo.passive.desc.Strength.0.1	A clean hit lands deeper
+evo.name.Strength.0.1	Lands Deep
+evo.passive.desc.Strength.1.1	The first thing you picked up fits your hand
+evo.name.Strength.1.1	First in Hand
 passive.name.Health	Vitality
-evo.passive.desc.Health.1.1	The more you endure, the stronger you get
-evo.passive.title.Health.1.1	Stronger as You Endure
-evo.passive.desc.Health.1.2	Stronger still
-evo.passive.title.Health.1.2	Stronger Still
-evo.passive.desc.Health.1.3	A thick body becomes strength itself
-evo.passive.title.Health.1.3	Bulk Is Strength
-evo.passive.desc.Health.2.1	Something to eat is left where they fall
-evo.passive.title.Health.2.1	Something Left to Eat
-evo.passive.desc.Health.2.2	Left far more often
-evo.passive.title.Health.2.2	Left Often
-evo.passive.desc.Health.2.3	The ground underfoot is always red
-evo.passive.title.Health.2.3	Red Underfoot
-evo.name.Health.0.1	Hardiness
-evo.name.Health.0.2	Indomitable
-evo.name.Health.1.1	Bountiful Harvest
-evo.name.Health.1.2	Endless Feast
+evo.passive.desc.Health.0.1	The more you endure, the stronger you get
+evo.name.Health.0.1	Stronger as You Endure
+evo.passive.desc.Health.1.1	Something to eat is left where they fall
+evo.name.Health.1.1	Something Left to Eat
 passive.name.Knowledge	Knowledge
-evo.passive.desc.Knowledge.1.1	Now and then one of them carries a chest
-evo.passive.title.Knowledge.1.1	The One With a Chest
-evo.passive.desc.Knowledge.1.2	They turn up more often
-evo.passive.title.Knowledge.1.2	Turns Up More Often
-evo.passive.desc.Knowledge.1.3	They turn up noticeably often
-evo.passive.title.Knowledge.1.3	Noticeably Often
-evo.passive.desc.Knowledge.2.1	When the eagles fly, something is left behind
-evo.passive.title.Knowledge.2.1	What Eagles Leave
-evo.passive.desc.Knowledge.2.2	More is left behind
-evo.passive.title.Knowledge.2.2	More Is Left
-evo.passive.desc.Knowledge.2.3	Every flight pays well
-evo.passive.title.Knowledge.2.3	Rich Every Flight
-evo.name.Knowledge.0.1	Treasure Sense
-evo.name.Knowledge.0.2	Treasure Appraisal
-evo.name.Knowledge.1.1	Battle Insight
-evo.name.Knowledge.1.2	Sage of the Field
+evo.passive.desc.Knowledge.0.1	Now and then one of them carries a chest
+evo.name.Knowledge.0.1	The One With a Chest
+evo.passive.desc.Knowledge.1.1	When the eagles fly, something is left behind
+evo.name.Knowledge.1.1	What Eagles Leave
 passive.name.Assassinate	Assassination
-evo.passive.desc.Assassinate.1.1	A clean finish pays
-evo.passive.title.Assassinate.1.1	Clean Payoff
-evo.passive.desc.Assassinate.1.2	The pay goes up
-evo.passive.title.Assassinate.1.2	Rising Payoff
-evo.passive.desc.Assassinate.1.3	The more you finish, the fuller you get
-evo.passive.title.Assassinate.1.3	Fuller With Every Kill
-evo.passive.desc.Assassinate.2.1	The heavier the strike, the surer the weak spot
-evo.passive.title.Assassinate.2.1	Heavy Weak Point
-evo.passive.desc.Assassinate.2.2	That one blow lands deeper
-evo.passive.title.Assassinate.2.2	Deeper Still
-evo.passive.desc.Assassinate.2.3	Almost everything lands on a weak spot
-evo.passive.title.Assassinate.2.3	All Weak Points
-evo.name.Assassinate.0.1	Hunter
-evo.name.Assassinate.0.2	Slaughterer
-evo.name.Assassinate.1.1	Certain Kill
-evo.name.Assassinate.1.2	Absolute Weak Point
+evo.passive.desc.Assassinate.0.1	A clean finish pays
+evo.name.Assassinate.0.1	Clean Payoff
+evo.passive.desc.Assassinate.1.1	The heavier the strike, the surer the weak spot
+evo.name.Assassinate.1.1	Heavy Weak Point
 passive.name.Refresh	Refresh
-evo.passive.desc.Refresh.1.1	Every refill lets you breathe
-evo.passive.title.Refresh.1.1	Room to Breathe
-evo.passive.desc.Refresh.1.2	You breathe deeper
-evo.passive.title.Refresh.1.2	Deeper Still
-evo.passive.desc.Refresh.1.3	The more it refills, the better you hold up
-evo.passive.title.Refresh.1.3	Whole as It Refills
-evo.passive.desc.Refresh.2.1	The things that warm you up come back fast
-evo.passive.title.Refresh.2.1	Comes Back Fast
-evo.passive.desc.Refresh.2.2	When lightning strikes, everything is pulled forward
-evo.passive.title.Refresh.2.2	Lightning Pulls Ahead
-evo.passive.desc.Refresh.2.3	Lightning takes your side more often
-evo.passive.title.Refresh.2.3	Lightning Takes Your Side
-evo.name.Refresh.0.1	Regen Cycle
-evo.name.Refresh.0.2	Life Cycle
-evo.name.Refresh.1.1	Haste Cycle
-evo.name.Refresh.1.2	Endless Cycle
 passive.name.Defense	Defense
-evo.passive.desc.Defense.1.1	When you are hit, the body reacts first
-evo.passive.title.Defense.1.1	Body Reacts First
-evo.passive.desc.Defense.1.2	That reflex grows heavy
-evo.passive.title.Defense.1.2	Heavy Reflex
-evo.passive.desc.Defense.1.3	The moment you are hit is the counter
-evo.passive.title.Defense.1.3	Hit Is the Counter
-evo.passive.desc.Defense.2.1	Your whole frame swells up
-evo.passive.title.Defense.2.1	Swells Whole
-evo.passive.desc.Defense.2.2	It returns exactly what it took
-evo.passive.title.Defense.2.2	Returned in Kind
-evo.passive.desc.Defense.2.3	Whoever touched you falls first
-evo.passive.title.Defense.2.3	Toucher Falls First
-evo.name.Defense.0.1	Reflex Guard
-evo.name.Defense.0.2	Etched Counter
-evo.name.Defense.1.1	Thorn Mail
-evo.name.Defense.1.2	Vengeance Mail
+evo.passive.desc.Defense.0.1	When you are hit, the body reacts first
+evo.name.Defense.0.1	Body Reacts First
+evo.passive.desc.Defense.1.1	Your whole frame swells up
+evo.name.Defense.1.1	Swells Whole
 passive.name.Accel	Haste
-evo.passive.desc.Accel.1.1	Now and then what you just used is ready again
-evo.passive.title.Accel.1.1	Ready Again
-evo.passive.desc.Accel.1.2	It happens more often
-evo.passive.title.Accel.1.2	More Often
-evo.passive.desc.Accel.1.3	Waiting becomes rare
-evo.passive.title.Accel.1.3	No More Waiting
-evo.passive.desc.Accel.2.1	The more you are hit, the faster your hands
-evo.passive.title.Accel.2.1	Faster as You're Hit
-evo.passive.desc.Accel.2.2	Faster still
-evo.passive.title.Accel.2.2	Faster Still
-evo.passive.desc.Accel.2.3	Being hit becomes the urging
-evo.passive.title.Accel.2.3	Hits Urge You On
-evo.name.Accel.0.1	Reignite
-evo.name.Accel.0.2	Endless Ignition
-evo.name.Accel.1.1	Pain Haste
-evo.name.Accel.1.2	Runaway Haste
+evo.passive.desc.Accel.0.1	Now and then what you just used is ready again
+evo.name.Accel.0.1	Ready Again
+evo.passive.desc.Accel.1.1	The more you are hit, the faster your hands
+evo.name.Accel.1.1	Faster as You're Hit
 skill.cat.Attack	Attack
 skill.cat.Buff	Buff
 skill.cat.Utility	Utility
-skill.name.GrapeToss	Toxic Grapes
-skill.desc.GrapeToss	Lobs toxic grapes where enemies gather. Each burst leaves a poison cloud that infects anyone inside, dealing damage over time
-evo.name.GrapeToss.0.1	Biotoxin Grapes
-evo.name.GrapeToss.0.2	Plague Grapes
-evo.name.GrapeToss.1.1	Crackling Grapes
-evo.name.GrapeToss.1.2	Paralysis Grapes
-evo.active.title.GrapeToss.1.1	Thicker Fog
-evo.active.desc.GrapeToss.1.1	The cloud spreads wider
-evo.active.title.GrapeToss.1.2	Faster Rot
-evo.active.desc.GrapeToss.1.2	The poison courses more often
-evo.active.title.GrapeToss.1.3	They Burst
-evo.active.desc.GrapeToss.1.3	Whatever falls poisoned bursts, staining those beside it
-evo.active.title.GrapeToss.2.1	One More Handful
-evo.active.desc.GrapeToss.2.1	More go out at once
-evo.active.title.GrapeToss.2.2	Crackling Poison
-evo.active.desc.GrapeToss.2.2	Each pulse of poison locks them up
-evo.active.title.GrapeToss.2.3	They Seize
-evo.active.desc.GrapeToss.2.3	They lock up more often, and what unlocks is soft

@@ -17,14 +17,13 @@ passive.cur.Strength.dmg	전체 피해량 +{0}%
 passive.cur.Strength.qfallback	Q 스킬
 passive.cur.Strength.q	Q({0}) 피해량 +{1}%
 passive.cur.Health.max	최대 체력 {0}
-passive.cur.Health.dmgPerHp	최대 체력 1당 피해량 +{0}%
 passive.cur.Health.heartDrop	체력 회복 드랍률 x{0}
 passive.cur.Knowledge.xp	경험치 획득량 +{0}%
 passive.cur.Knowledge.treasure	블루베리가 {0}% 확률로 보물상자로 등장
-passive.cur.Knowledge.eagleXp	독수리 투하 시전마다 경험치 +{0}
+passive.cur.Knowledge.homingXp	호밍 미사일로 처치 시 경험치 {0}배
 passive.cur.Assassinate.chance	치명타 확률 {0}%
 passive.cur.Assassinate.mult	치명타 피해 배율 x{0}
-passive.cur.Assassinate.slowCrit	재사용 {0}초 이상 스킬은 항상 치명타
+passive.cur.Assassinate.critCap	치명타 확률 상한 {0}%
 passive.cur.Assassinate.killXp	치명타 처치 시 경험치 x{0}
 passive.cur.Refresh.reset	스킬 사용 시 {0}% 확률로 쿨타임 초기화
 passive.cur.Refresh.heal	초기화될 때마다 체력 {0} 회복
@@ -77,6 +76,7 @@ ui.evotree.pickRoute	루트를 하나 고르세요 — 고른 뒤에는 바꿀 �
 ui.evotree.continueRoute	1차에서 고른 루트를 이어갑니다
 ui.evotree.abandoned	[포기한 루트]
 ui.evotree.lockedPrereq	[잠김 — '{0}' 필요]
+ui.evotree.lockedKey	[잠김 — '{0}' 진화 필요]
 ui.evotree.locked	[잠김]
 ui.essence	{0} 정수
 ui.tree.cost	{0} 정수
