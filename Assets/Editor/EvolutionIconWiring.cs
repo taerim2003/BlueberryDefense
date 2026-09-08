@@ -160,7 +160,7 @@ public static class EvolutionIconWiring
         LevelUpUI ui = Object.FindAnyObjectByType<LevelUpUI>(FindObjectsInactive.Include);
         if (ui == null)
         {
-            log.AppendLine("  ⚠ 열린 씬에 LevelUpUI가 없다 — SampleScene을 열고 다시 실행할 것. (아이콘 임포트만 끝났다)");
+            log.AppendLine("  ⚠ 열린 씬에 LevelUpUI가 없다 — Battle 씬을 열고 다시 실행할 것. (아이콘 임포트만 끝났다)");
             return "배선 실패";
         }
 

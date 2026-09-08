@@ -10,6 +10,8 @@ public enum PassiveSkillId
     Assassinate,
     // 🚫 폐지(2026-08-06) — 진화 조건표 개편에서 빠지고 역할이 Accel(가속)로 넘어갔다.
     //    레벨업 후보 배열(LevelUpUI)에서만 뺐고 enum·에셋은 남긴다: 정수 직렬화라 지우면 뒤 값이 밀린다.
+    //    ⚠️ 그래서 아래 switch들의 Refresh 분기는 **죽은 코드가 아니다** — 에디터 치트 창(CheatWindow)이
+    //       enum 전체를 순회해 획득 버튼을 만들기 때문에 그쪽으로는 여전히 도달한다. 지우지 말 것.
     Refresh,
     // ↓ 아래는 뒤에만 추가할 것 — Passive_* 에셋이 이 enum을 정수로 직렬화해 두어서 중간에 끼우면 값이 밀린다.
     Defense,
@@ -23,7 +25,6 @@ public class EquippedPassive
 
     // 진화 효과 저장소(§EvolutionRoutes — 루트/티어를 여기로 번역해 넣는다).
     public readonly int[] PathTier = new int[3];
-    public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
 
     public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 표시용(진화 게이트는 표시 레벨 Level을 본다)
     public int EvolutionStage = 0;  // 0=미진화, 1=1차, 2=2차(최종)
@@ -210,7 +211,7 @@ public class PlayerPassives : MonoBehaviour
         if (HasMaxPassives || HasPassive(id)) return;
 
         equippedPassives.Add(new EquippedPassive { Id = id });
-        ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
+        ApplyPassiveValue(id, BaseValue(id));
         ApplyTreeEnhancements(id);            // 스킬트리 패시브 강화 중 스탯 밖에서 도는 것들
         CollectionSave.DiscoverPassive(id);   // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
     }
@@ -242,7 +243,7 @@ public class PlayerPassives : MonoBehaviour
 
     private void ApplyPassiveLevelEffect(EquippedPassive passive)
     {
-        ApplyPassiveValue(passive.Id, PerLevelBonus(passive.Id)); // 레벨업 = 레벨당 상승값 적용
+        ApplyPassiveValue(passive.Id, PerLevelBonus(passive.Id));
     }
 
     // 패시브별 대상 스탯에 값을 더한다(획득=기본값·레벨업=상승값 공통 경로).
@@ -369,7 +370,7 @@ public class PlayerPassives : MonoBehaviour
     }
 
     // ── 진화 (2루트 × 2티어, 진화 아이템으로만 열림) — 액티브 스킬과 동일 규칙 ──
-    // ⚠️ 폐지된 리프레쉬는 획득 경로가 없어 여기 닿지 않는다. 방어·가속은 2026-08-06에 진화가 설계돼
+    // ⚠️ 폐지된 리프레쉬는 게임 안에선 획득 경로가 없어 여기 닿지 않는다(치트 창으로만 온다). 방어·가속은 2026-08-06에 진화가 설계돼
     //    "설계 없는 패시브를 목록에서 빼던 가드"(HasEvolutionDesign)가 필요 없어져 사라졌다.
     //    새 패시브를 또 만들 거면 진화까지 같이 만들 것 — 안 그러면 이름도 효과도 그대로인 빈 진화가 뜬다.
     public bool CanEvolve(EquippedPassive passive)
@@ -398,7 +399,7 @@ public class PlayerPassives : MonoBehaviour
         EquippedPassive passive = GetPassive(id);
         if (passive == null || !CanEvolve(passive)) return;
         if (passive.EvolutionStage > 0 && route != passive.Route) return;
-        if (!IsRouteUnlocked(id, route)) return; // 연계 스킬 미보유
+        if (!IsRouteUnlocked(id, route)) return;
 
         int newTier = passive.EvolutionStage + 1;
         int path = EvolutionRoutes.RoutePath(id, route);
@@ -463,7 +464,7 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Refresh, 1, 1): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 2): RefreshHealOnResetAmount += 2f; break;
             case (PassiveSkillId.Refresh, 1, 3): RefreshHealOnResetAmount += 2f; break;
-            case (PassiveSkillId.Refresh, 2, 1): BuffSkillCooldownMult = 0.9f; break; // 버프류 스킬 쿨타임 10% 감소
+            case (PassiveSkillId.Refresh, 2, 1): BuffSkillCooldownMult = 0.9f; break;
             case (PassiveSkillId.Refresh, 2, 2): RefreshLightningCooldownProcChance += 0.05f; break;
             case (PassiveSkillId.Refresh, 2, 3): RefreshLightningCooldownProcChance += 0.03f; break;
 

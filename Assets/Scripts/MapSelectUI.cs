@@ -17,7 +17,7 @@ public class MapSelectUI : MonoBehaviour
     [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
     [SerializeField] private PanelSplitTransition splitTransition; // 위아래로 갈라지는 화면 전환(우선)
     [SerializeField] private Transform cardContainer;   // HorizontalLayoutGroup — 카드들이 담김
-    [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본(container 안). 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
+    [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본(container 안). 자식: Thumb(Image)/Name(TMP_Text)/SelectGlow(Image)
     [SerializeField] private Sprite lockIcon;            // 비우면 코드로 구운 자물쇠를 쓴다(캐릭터 선택과 같은 것)
 
     [Header("Actions")]
@@ -205,7 +205,7 @@ public class MapSelectUI : MonoBehaviour
 
             bool locked = map != null && !map.IsUnlocked;
 
-            var thumb = FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
+            var thumb = UITreeUtil.FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
             if (thumb != null && map != null)
             {
                 thumb.sprite = map.background;
@@ -216,7 +216,7 @@ public class MapSelectUI : MonoBehaviour
 
             if (locked) LockBadge.Add(card, lockIcon);
 
-            var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
+            var nameText = UITreeUtil.FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
                 // 자물쇠는 이제 카드 위 배지가 그린다(LockBadge). 여기 이모지를 두면 폰트에 글리프가 없어 두부(□)로 나온다.
                 // 해금 조건은 카드에 적지 않는다 — 카드를 **누르면** 난이도 설명 자리에 뜬다(RefreshAscension).
@@ -227,7 +227,7 @@ public class MapSelectUI : MonoBehaviour
             //       곱셈 틴트가 통째로 안 먹힌다(불투명 12107px 평균밝기 0.000, 실측).
             //    그래서 `SelectGlow`는 판 그림을 `UI/SelectOutline` 셰이더로 그린다 —
             //    텍스처 색은 안 쓰고 실루엣 **바깥쪽에만** 이 Image.color로 테를 그린다.
-            cardGlows.Add(FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
+            cardGlows.Add(UITreeUtil.FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();
@@ -241,16 +241,6 @@ public class MapSelectUI : MonoBehaviour
                 btn.onClick.AddListener(() => Select(idx));
             }
         }
-    }
-
-    // 카드 속 부품을 깊이와 상관없이 찾는다. Transform.Find는 직속 자식만 보기 때문에,
-    // 씬에서 Thumb을 Bg 아래로 옮기는(마스크를 걸려고) 순간 조용히 null이 되어
-    // 모든 카드가 템플릿에 구워진 그림을 그대로 쓰게 된다.
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var t in root.GetComponentsInChildren<Transform>(true))
-            if (t.name == name) return t;
-        return null;
     }
 
     // 처음 열 때 커서를 둘 곳. 잠긴 맵에 커서가 앉으면 "시작"이 눌리는 순간 잠긴 판이 시작된다.

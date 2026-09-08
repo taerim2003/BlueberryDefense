@@ -18,7 +18,7 @@ using TMPro;
 //    `Slot_A{액티브 enum 값}` · `Slot_P{패시브 enum 값}` · `Node_R{루트}T{티어}`.
 //    칸 하나하나를 배열에 꽂아 두면 로스터가 바뀔 때 조용히 어긋나서, 이름을 단일 소스로 삼았다.
 //    **프리팹에서 이 칸들의 이름을 바꾸거나 지우면 그 칸이 사라진다.** 개수가 로스터와 어긋나면
-//    Awake가 경고를 찍는다 — 그때는 프리팹을 다시 구워야 한다(BakeRuntimePanels 참고).
+//    Awake가 경고를 찍는다 — 그때는 프리팹을 다시 구워야 한다(칸을 늘리는 건 프리팹 편집이다).
 //
 // 아이콘은 씬 배선이 아니라 Resources의 SkillIconLibrary에서 집는다 — 타이틀 씬엔 LevelUpUI가 없다.
 // 그 에셋은 `Window > Blueberry Defense > 스킬 아이콘 라이브러리 굽기`로 굽는다.
@@ -135,8 +135,8 @@ public class CollectionUI : MonoBehaviour
                 continue;
             }
 
-            var icon = FindDeep(tr, "Icon");
-            var glow = FindDeep(tr, "SelectGlow");
+            var icon = UITreeUtil.FindDeep(tr, "Icon");
+            var glow = UITreeUtil.FindDeep(tr, "SelectGlow");
             var slot = new Slot
             {
                 frame = tr.GetComponent<Image>(),
@@ -168,15 +168,15 @@ public class CollectionUI : MonoBehaviour
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
             {
                 string name = "Node_R" + route + "T" + (tierIdx + 1);
-                var tr = FindDeep(content, name);
+                var tr = UITreeUtil.FindDeep(content, name);
                 if (tr == null)
                 {
                     Debug.LogWarning("[CollectionUI] 진화 노드를 못 찾았다: " + name, this);
                     continue;
                 }
-                var icon = FindDeep(tr, "Icon");
-                var title = FindDeep(tr, "Title");
-                var desc = FindDeep(tr, "Desc");
+                var icon = UITreeUtil.FindDeep(tr, "Icon");
+                var title = UITreeUtil.FindDeep(tr, "Title");
+                var desc = UITreeUtil.FindDeep(tr, "Desc");
                 var node = new Node
                 {
                     frame = tr.GetComponent<Image>(),
@@ -192,16 +192,6 @@ public class CollectionUI : MonoBehaviour
                         + (node.frame == null ? " Image" : "") + (node.icon == null ? " Icon" : "")
                         + (node.title == null ? " Title" : "") + (node.desc == null ? " Desc" : ""), tr);
             }
-    }
-
-    // 🔴 자식을 **깊이** 찾는다 — 직속 자식만 보면 안 된다.
-    //    칸 안에 액자를 한 겹 더 두는 배치(`Node_R0T1/IconBox/Icon`)가 실제로 쓰이고 있고,
-    //    그때 `Find("Icon")`은 조용히 null을 돌려줘서 아이콘이 통째로 안 그려진다.
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var tr in root.GetComponentsInChildren<Transform>(true))
-            if (tr.name == name) return tr;
-        return null;
     }
 
     // 언어가 바뀌면 고정 문구를 다시 채운다(나머지는 Open→Refresh가 채운다).

@@ -36,7 +36,7 @@ public class EquippedSkill
     public float ProcChanceBonus = 0f;
 
     // 레벨업 전용 고유 강화치 (진화 트리와 별개)
-    public int ExtraPierce = 0; // 기본공격: 관통 +1
+    public int ExtraPierce = 0; // 관통 +N (SkillStat.Pierce — 스킬 종류를 안 가린다)
     // 한 번의 시전에서 나가는 발사체/투하 수 — 기본공격 화살, 스나이핑 연사, 호밍 미사일, 독수리 투하, 산탄 알
     public int ExtraProjectiles = 0;
     // 동시에 상대하는 적 수 — 오브 동시 타격, 스나이핑 저격 대상
@@ -52,7 +52,6 @@ public class EquippedSkill
     // ⚠️ 이제 이 배열을 직접 올리지 않는다 — 진화는 EvolutionRoutes를 통해 루트/티어로만 다룬다(§EvolutionRoutes).
     //    Fire*/TryUseSkill이 이 값을 그대로 읽으므로 저장 형식만 유지하는 것.
     public readonly int[] PathTier = new int[3];
-    public int TotalEvolutionTier => PathTier[0] + PathTier[1] + PathTier[2];
 
     // ── 진화 상태 (2루트 × 2티어) ──
     public int TotalLevel = 1;      // 진화 리셋과 무관한 누적 레벨 — 표시용(진화 게이트는 표시 레벨 Level을 본다)
@@ -68,7 +67,6 @@ public class PlayerSkills : MonoBehaviour
 {
     // 전역 상수는 BalanceConstants에 모여 있고 여기선 별칭으로 참조(호출부 이름 유지). 값 편집은 BalanceConstants에서.
     private const float GlobalCooldown = BalanceConstants.GlobalCooldown;
-    private const float OrbAltarCooldown = BalanceConstants.OrbAltarCooldown;
     private const float MaxCritChance = BalanceConstants.MaxCritChance;
     private static readonly Key[] SlotKeys = { Key.Q, Key.W, Key.E, Key.R };
 
@@ -368,18 +366,6 @@ public class PlayerSkills : MonoBehaviour
         CollectionSave.DiscoverActive(id); // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
     }
 
-    public void UpgradeSkillDamage(ActiveSkillId id, float amount)
-    {
-        EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
-        if (skill != null) skill.Damage += amount;
-    }
-
-    public void UpgradeSkillCooldown(ActiveSkillId id, float multiplier)
-    {
-        EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
-        if (skill != null) skill.Cooldown *= multiplier;
-    }
-
     // 만렙(MaxSkillLevel)에 닿으면 더 이상 레벨업 후보로 뜨지 않는다 — 진화해서 Lv.1로 리셋해야 다시 큰다.
     public bool CanUpgradeSkill(EquippedSkill skill) => skill != null && skill.Level < BalanceConstants.MaxSkillLevel;
 
@@ -517,7 +503,7 @@ public class PlayerSkills : MonoBehaviour
         EquippedSkill skill = equippedSkills.FirstOrDefault(s => s.Id == id);
         if (skill == null || !CanEvolve(skill)) return;
         if (skill.EvolutionStage > 0 && route != skill.Route) return; // 2차는 루트 변경 불가
-        if (!IsRouteUnlocked(id, route)) return;                      // 연계 스킬 미보유
+        if (!IsRouteUnlocked(id, route)) return;
 
         int newTier = skill.EvolutionStage + 1;
         int path = EvolutionRoutes.RoutePath(id, route);
@@ -595,13 +581,13 @@ public class PlayerSkills : MonoBehaviour
         {
             // path0(기본) — 회오리 R0·낙뢰 R0만 여기 남는다(나머지 스킬의 path0은 버려진 루트).
             case (ActiveSkillId.Whirlwind, 0, 2):
-                MiniWhirlwindDamageBonus += 0.4f; // 미니 회오리 피해량 40% 증가
+                MiniWhirlwindDamageBonus += 0.4f;
                 break;
             case (ActiveSkillId.Whirlwind, 0, 3):
-                MiniWhirlwindDamageBonus += 0.25f; // 미니 회오리 피해량 25% 추가 증가
+                MiniWhirlwindDamageBonus += 0.25f;
                 break;
             case (ActiveSkillId.Lightning, 0, 2):
-                skill.Damage *= 1.4f; // 피해량 40% 증가
+                skill.Damage *= 1.4f;
                 break;
             // Lightning path0 T3(재귀마다 피해량 누적 증가)는 LightningStorm.RecursiveDamageGrowth로 실시간 계산
             // Whirlwind path0 T1/T3(미니 회오리 개수)는 FireWhirlwind에서 매 캐스트마다 실시간 계산
@@ -630,7 +616,7 @@ public class PlayerSkills : MonoBehaviour
                 break;
             // 낙뢰 R0 1차는 쿨감 25%가 전부였다 — 걷어내서 지금은 진화 공통 피해 도약만 남는다.
             case (ActiveSkillId.Lightning, 1, 3):
-                skill.Damage *= 1.3f; // 피해량 30% 증가
+                skill.Damage *= 1.3f;
                 break;
 
             // path2(액티브 연계)
@@ -689,14 +675,6 @@ public class PlayerSkills : MonoBehaviour
     public static string GetActiveSkillName(ActiveSkillId id) =>
         Loc.TOr("skill.name." + id, id.ToString());
 
-    // ── 스킬 종류(공격/버프/유틸) ── 대부분 공격, 산탄=버프(타수↑), 되감기=유틸(쿨 되감기).
-    public static SkillCategory GetSkillCategory(ActiveSkillId id) => id switch
-    {
-        ActiveSkillId.Shotgun => SkillCategory.Buff,
-        ActiveSkillId.Rewind => SkillCategory.Utility,
-        _ => SkillCategory.Attack,
-    };
-
     public static string GetSkillCategoryLabel(SkillCategory c) =>
         Loc.TOr("skill.cat." + c, c.ToString());
 
@@ -707,7 +685,7 @@ public class PlayerSkills : MonoBehaviour
 
     // 레벨업 선택지 제목: 배지를 이름 뒤에 붙인다 — "회오리 [액티브]" / "힘 [패시브]"
     // 🔴 종류 배지(공격/버프/유틸)는 **전부 뺐다**(사용자 결정 2026-09-02) — 액티브·패시브만 남긴다.
-    //    `SkillCategory`는 남아 있지만 화면에는 안 나온다(에디터의 번역 수확 도구가 아직 쓴다).
+    //    `SkillCategory` enum과 라벨만 남아 있다 — 화면엔 안 나오고 에디터의 번역 수확 도구(LocHarvest)만 쓴다.
     public static string GetActiveSkillTitleWithTags(ActiveSkillId id) =>
         $"{GetActiveSkillName(id)} {ActiveTypeBadge}";
 
@@ -721,42 +699,6 @@ public class PlayerSkills : MonoBehaviour
     public static string GetPassiveSkillTitleWithTags(EquippedPassive p) =>
         $"{p.DisplayName} {PassiveTypeBadge}";
 
-    // 일시정지(ESC) 요약용: 이 스킬이 1레벨 기본값 대비 레벨업으로 얼마나 강해졌는지 항목별로 정리.
-    // (진화 효과는 PauseMenu가 PathTier 제목으로 따로 표시하므로 여기선 레벨업 성장분만 다룬다)
-    public static List<string> DescribeLevelUpGains(EquippedSkill s)
-    {
-        var lines = new List<string>();
-
-        float baseDmg = GetDefaultDamage(s.Id);
-        if (baseDmg > 0f)
-        {
-            int dmgPct = Mathf.RoundToInt((s.Damage / baseDmg - 1f) * 100f);
-            if (dmgPct != 0) lines.Add(Loc.F("skill.gain.dmg", (dmgPct > 0 ? "+" : "") + dmgPct, baseDmg.ToString("0.#"), s.Damage.ToString("0.#")));
-        }
-
-        float baseCd = GetDefaultCooldown(s.Id);
-        if (baseCd > 0f)
-        {
-            int cdPct = Mathf.RoundToInt((1f - s.Cooldown / baseCd) * 100f);
-            if (cdPct != 0) lines.Add(Loc.F("skill.gain.cd", (cdPct > 0 ? "-" : "+") + Mathf.Abs(cdPct), baseCd.ToString("0.#"), s.Cooldown.ToString("0.#")));
-        }
-
-        if (s.ProjectileSpeedMultiplier > 1.0001f)
-            lines.Add(Loc.F("skill.gain.projSpeed", Mathf.RoundToInt((s.ProjectileSpeedMultiplier - 1f) * 100f)));
-        if (s.ExtraPierce > 0) lines.Add(Loc.F("skill.gain.pierce", s.ExtraPierce));
-        if (s.ExtraProjectiles > 0) lines.Add(Loc.F("skill.gain.projCount", s.ExtraProjectiles));
-        if (s.ExtraTargets > 0) lines.Add(s.Id == ActiveSkillId.Orb ? Loc.F("skill.gain.targets.orb", s.ExtraTargets) : Loc.F("skill.gain.targets", s.ExtraTargets));
-        if (s.TickIntervalMult < 0.9999f) lines.Add(Loc.F("skill.gain.tickRate", Mathf.RoundToInt((1f - s.TickIntervalMult) * 100f)));
-        if (s.ProcChanceBonus > 0f) lines.Add(Loc.F("skill.gain.procChance", Mathf.RoundToInt(s.ProcChanceBonus * 100f)));
-        if (s.ExtraWhirlwindDuration > 0f) lines.Add(Loc.F("skill.gain.duration", s.ExtraWhirlwindDuration.ToString("0.#")));
-        if (s.Scale > 1.0001f) lines.Add(Loc.F("skill.gain.scale", Mathf.RoundToInt((s.Scale - 1f) * 100f)));
-        if (s.Id == ActiveSkillId.Rewind) lines.Add(Loc.F("skill.gain.rewind", s.RewindAmount.ToString("0.#")));
-        if (s.Id == ActiveSkillId.Homing && s.GrowthStacks > 0)
-            lines.Add(Loc.F("skill.gain.growth", s.GrowthStacks));
-
-        return lines;
-    }
-
     public static string GetPassiveSkillName(PassiveSkillId id) =>
         Loc.TOr("passive.name." + id, id.ToString());
 
@@ -764,11 +706,6 @@ public class PlayerSkills : MonoBehaviour
     public string GetPathEffectText(ActiveSkillId id, int path, int tier)
     {
         return DescribePathEffect(id, path, tier);
-    }
-
-    public string GetPathTitleText(ActiveSkillId id, int path, int tier)
-    {
-        return GetPathTierTitle(id, path, tier);
     }
 
     // 🔴 진화 설명은 **일부러 수치를 안 쓴다.** BTD6 파라곤 설명처럼 그림만 던져서,
@@ -978,15 +915,11 @@ public class PlayerSkills : MonoBehaviour
     private bool FireBasicAttack(EquippedSkill skill, float damage, float critChance, bool allowBonusShot)
     {
         // 적이 화면에 없어도 발사는 되어야 한다(허공에 쏘더라도 키 입력에 무반응인 건 고장난 것처럼 느껴짐).
-        // target은 조준에는 안 쓰이고(투사체는 항상 정면으로 직선 발사) 과거엔 "쏠 게 있는지" 게이트로만 쓰였다.
         int pierce = skill.ExtraPierce + MetaBonuses.ArrowExtraPierce; // 레벨업 고유 강화 + 스킬트리 "화살 관통"
 
         // R0(암살 연계, path1) = **개쎈 화살 한 발**. 여러 발 쏘던 것을 한 발로 모으고 관통을 무한으로 준다
         // (방패 블루베리는 그래도 막는다 — Projectile이 BlocksProjectiles에서 끊는다. 2026-08-06 명세 그대로).
         if (skill.PathTier[1] >= 2) pierce = int.MaxValue;
-
-        // ⚠️ 아래 두 상수는 **암살 연계(path1) 진화 전체**에 걸린다 — 1차(암살 사격)·2차(처형 사격) 둘 다.
-        //    한 발이 무거워진 만큼 느리게 날고 쉬는 시간도 길다(2026-09-07 사용자 요청).
 
         // R1(독수리 연계, path2) T2+ = 기본공격이 **통째로 화살비로 바뀐다.** 정면 화살은 나가지 않는다.
         // 예전엔 정면 화살과 비가 같이 쏟아져 "중복 출력"으로 보였다(8/24 플레이스루).
@@ -1999,7 +1932,7 @@ public class PlayerSkills : MonoBehaviour
 
     // ⚠️ 2026-08-06 이후 **호출하는 곳이 없다** — 오브 R1이 "설치기"에서 "추적 오브 무리"로 바뀌면서 빠졌다.
     //    프리팹(orbAltarPrefab)·OrbAltar.cs와 함께 통째로 남겨 둔다. 되살리려면 FireOrb에서 다시 부르면 되고,
-    //    그때 TryUseSkill의 OrbAltarCooldown 분기도 같이 되돌려야 한다(지금은 평범한 스킬 쿨을 쓴다).
+    //    그때 TryUseSkill의 쿨타임 분기(BalanceConstants.OrbAltarCooldown)도 같이 되돌려야 한다 — 지금은 평범한 스킬 쿨을 쓴다.
     private void SpawnOrbAltar(Vector3 position, float damage, float critChance, EquippedSkill skill)
     {
         if (orbAltarPrefab == null) return;
@@ -2024,8 +1957,8 @@ public class PlayerSkills : MonoBehaviour
             PlayerExperience.Instance?.AddXP(PlayerPassives.EagleDropCastXpBonus);
 
         bool spawnMiniWhirlwind = skill.PathTier[2] >= 2; // 회오리 연계 path T2: 미니 회오리 생성 (T1은 쿨타임/투하횟수 트레이드오프)
-        float miniWhirlwindDamageMult = skill.PathTier[2] >= 3 ? 0.35f : 0.25f; // T2=25%, T3=35%
-        int miniWhirlwindMaxHits = skill.PathTier[2] >= 3 ? 8 : 5; // T2=5회, T3=+3(총 8회)
+        float miniWhirlwindDamageMult = skill.PathTier[2] >= 3 ? 0.35f : 0.25f;
+        int miniWhirlwindMaxHits = skill.PathTier[2] >= 3 ? 8 : 5;
 
         // R0(산탄 연계, path1) = **독수리 비**. 정해진 횟수가 아니라 3초 동안 계속 쏟아진다(2026-08-06 명세).
         // 투하 간격도 촘촘해져 "하늘을 뒤덮는" 그림이 된다.
@@ -2235,8 +2168,6 @@ public class PlayerSkills : MonoBehaviour
         return p != null ? p.baseCooldown : SkillProgression.DefaultBaseCooldown(id);
     }
 
-    // 낙뢰 기본 피해는 고정 상수(BaseProcDamage)를 쓴다 — 실시간 ProcDamage는 배율이 적용된 '현재값'이라
-    // 레벨업 성장 표시의 기준(기본값)으로 쓰면 부호가 뒤집힌다. 나머지 스킬은 progression 참조.
     // ── 에셋(Prog_*)이 정하는 시작값들 ────────────────────────────────────────
     // 넷 다 **0이면 "안 쓴다"** 는 뜻이라 호출부의 코드 기본값이 그대로 남는다(에셋을 안 채운 스킬은 현행 유지).
     private static int GetBasePierce(ActiveSkillId id) => Prog(id) != null ? Prog(id).basePierce : 0;
@@ -2249,6 +2180,8 @@ public class PlayerSkills : MonoBehaviour
         return p != null && p.baseDuration > 0f ? p.baseDuration : codeDefault;
     }
 
+    // 낙뢰만 고정 상수(BaseProcDamage)를 쓴다 — 실시간 ProcDamage는 배율이 적용된 '현재값'이라
+    // 레벨업 성장 표시의 기준(기본값)으로 쓰면 부호가 뒤집힌다.
     private static float GetDefaultDamage(ActiveSkillId id)
     {
         if (id == ActiveSkillId.Lightning) return LightningStorm.BaseProcDamage;

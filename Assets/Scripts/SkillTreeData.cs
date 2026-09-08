@@ -5,7 +5,8 @@ using UnityEngine;
 // 런타임 인게임 트리 UI가 같은 에셋을 읽는다. 노드 위치(editorPos)는 인게임 레이아웃으로도 재사용.
 
 // 노드 4종:
-//   Normal        = 일반 스탯 노드(레벨제 가능, 효과는 id 기준 SkillEffects 레지스트리)
+//   Normal        = 일반 스탯 노드(레벨제 가능). **어느 스탯인지는 노드의 effect 필드가 정한다** —
+//                   코드를 안 고치고 에디터에서 축을 고를 수 있다(SkillEffects.Compute의 AddNormal 경로).
 //   SkillUnlock   = 스킬 해금 노드. 해금해야 그 스킬(node.skill)이 인게임 레벨업 카드 풀에 등장
 //   SkillEnhance  = 스킬 강화 노드. 스킬별 고유 강화(오브 비행타격·낙뢰 쿨감 등, id 기준 SkillEffects)
 //   SpecialUnlock = 특수(기능) 해금 노드. 스킬이 아닌 기능류(리롤 등) 1회 개방. 효과는 id 기준 SkillEffects.
@@ -30,16 +31,13 @@ public class SkillNode
     // 인게임엔 계산된 정수만 보이고 등급은 노출 안 함.
     public int tier = 1;
 
-    // 효과(스탯 반영) 메모 — 실제 효과는 id 기준 SkillEffects 레지스트리(effect 필드는 신뢰 안 함).
-    public bool hasEffect = true;
+    // Normal 노드가 올리는 스탯 축과 그 크기. SkillEffects.Compute가 이 둘을 그대로 읽는다.
     public MetaUpgradeId effect = MetaUpgradeId.Attack;
     public float perLevel = 5f;
     public int maxLevel = 5;
 
     public List<string> prereqIds = new List<string>();
     public Vector2 editorPos = new Vector2(200, 200);
-
-    public float TotalAt(int level) => perLevel * level;
 
     // 표시 문구는 표에서 읽는다. 키는 노드 id에서 파생 — 노드를 추가하면 키도 저절로 는다.
     // 표에 없으면 에셋에 적힌 값이 그대로 나오므로, 번역이 덜 채워져도 화면이 비지 않는다.
@@ -121,10 +119,6 @@ public static class SkillTreeSave
         }
         return set;
     }
-
-    // 인게임 카드 풀 게이팅 판정: 게이팅 대상이 아니거나(=트리에 unlock 노드 없음) 이미 해금됐으면 사용 가능.
-    public static bool SkillAvailable(SkillTreeData tree, ActiveSkillId id) =>
-        !GatedSkills(tree).Contains(id) || UnlockedSkills(tree).Contains(id);
 
     // ── 노드 비용(정수) ── 등급(tier) 기반 선형변환.
     //   tier 0 = 1정수 고정(극초반 해금용). tier 1 = TierCostBase, 이후 등급마다 +TierCostStep (등속).

@@ -58,7 +58,7 @@ public class HeartPickup : MonoBehaviour
             SfxPlayer.Play(SfxId.HeartPickup);
 
             if (absorbVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(absorbVfxPrefab, targetPos, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(absorbVfxPrefab, targetPos, 2f);
 
             Destroy(gameObject);
         }

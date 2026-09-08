@@ -29,7 +29,6 @@ public class Whirlwind : MonoBehaviour
     public float ExtraLifetime { get; set; } // 레벨업 고유 강화: 지속시간(초) 추가
     // 0보다 크면 프리팹의 lifetime 대신 이 값을 쓴다 — `Prog_Whirlwind.baseDuration`이 넘겨 준다.
     public float BaseLifetimeOverride { get; set; }
-    public bool TargetHighestHealth { get; set; } // 최고 체력 적을 타겟팅 (지금은 켜는 진화가 없다 — 재활용 가능)
     public bool CanHitFlying { get; set; } = true; // 미니 회오리는 비행 적을 타격할 수 없다
 
     // 회오리 R0(화살 연계): 이 회오리가 사라질 때 그 자리(소멸 시점 위치)를 알려준다 — PlayerSkills가 미니를 남긴다.
@@ -76,7 +75,7 @@ public class Whirlwind : MonoBehaviour
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2f);
 
             if (MaxHitCount > 0 && ++hitCount >= MaxHitCount)
             {
@@ -104,31 +103,15 @@ public class Whirlwind : MonoBehaviour
         Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
         Enemy target = null;
 
-        if (TargetHighestHealth)
+        float nearestSqrDist = float.MaxValue;
+        foreach (Enemy enemy in enemies)
         {
-            float highestHealth = float.NegativeInfinity;
-            foreach (Enemy enemy in enemies)
+            if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
+            float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
+            if (sqrDist < nearestSqrDist)
             {
-                if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
-                if (enemy.CurrentHealth > highestHealth)
-                {
-                    highestHealth = enemy.CurrentHealth;
-                    target = enemy;
-                }
-            }
-        }
-        else
-        {
-            float nearestSqrDist = float.MaxValue;
-            foreach (Enemy enemy in enemies)
-            {
-                if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
-                float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
-                if (sqrDist < nearestSqrDist)
-                {
-                    nearestSqrDist = sqrDist;
-                    target = enemy;
-                }
+                nearestSqrDist = sqrDist;
+                target = enemy;
             }
         }
 

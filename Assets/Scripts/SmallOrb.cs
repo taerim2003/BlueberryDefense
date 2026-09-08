@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -21,7 +22,7 @@ public class SmallOrb : MonoBehaviour
     public int PierceRemaining { get; set; }        // 남은 관통 횟수. 0이면 첫 명중에 소멸(=산탄 알의 기존 동작)
     public ActiveSkillId Source { get; set; } = ActiveSkillId.Orb; // 데미지 집계용 출처
 
-    private readonly System.Collections.Generic.HashSet<Enemy> hitEnemies = new System.Collections.Generic.HashSet<Enemy>();
+    private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
     public void Init(Vector2 dir, float damage, bool applyVulnerable)
     {
@@ -39,24 +40,11 @@ public class SmallOrb : MonoBehaviour
         if (Homing)
         {
             if (homingTarget == null || !homingTarget.IsAlive || hitEnemies.Contains(homingTarget))
-                homingTarget = AcquireTarget();
+                homingTarget = Projectile.NearestLivingEnemy(transform.position, true, hitEnemies);
             if (homingTarget != null)
                 direction = ((Vector2)homingTarget.transform.position - (Vector2)transform.position).normalized;
         }
         transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
-    }
-
-    private Enemy AcquireTarget()
-    {
-        Enemy best = null;
-        float bestSqr = float.MaxValue;
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (e == null || !e.IsAlive || hitEnemies.Contains(e)) continue;
-            float sqr = ((Vector2)e.transform.position - (Vector2)transform.position).sqrMagnitude;
-            if (sqr < bestSqr) { best = e; bestSqr = sqr; }
-        }
-        return best;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -70,7 +58,7 @@ public class SmallOrb : MonoBehaviour
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);
+            ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2.2f);
 
         // 관통이 남았으면 살아서 다음 적을 찾아간다(오브 R1). 방패는 관통과 무관하게 끊는다.
         if (PierceRemaining > 0 && !enemy.BlocksProjectiles)

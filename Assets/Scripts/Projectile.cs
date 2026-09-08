@@ -108,7 +108,7 @@ public class Projectile : MonoBehaviour
         OnHitBonus?.Invoke(enemy, isCrit);
 
         if (impactVfxPrefab != null)
-            ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, transform.position, Quaternion.identity), 2f);
+            ObjectPool.Instance.SpawnTimed(impactVfxPrefab, transform.position, 2f);
 
         // 방패 블루베리는 관통을 끊는다 — 남은 관통 횟수와 무관하게 여기서 소멸(뒤에 있는 적은 못 맞힘)
         if (enemy.BlocksProjectiles)

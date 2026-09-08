@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 // 씬 전환을 검은 화면으로 감싼다. "GO를 누르면 게임이 뚝 끊겼다가 튀어나온다"는 게 고치려는 것이다.
 //
-// 부르는 곳: MapSelectUI.Confirm(맵선택 → 게임) · GameManager.ReturnToTitle(게임 → 타이틀).
+// 부르는 곳: MapSelectUI.Confirm(맵선택 → 게임) · GameManager의 ReturnToTitle/Retry.
 // SceneManager.LoadScene을 직접 부르는 자리가 새로 생기면 여기로 바꿔야 연출이 붙는다.
 public static class SceneFade
 {

@@ -52,19 +52,6 @@ step.MaxTargets.orb	Pierce targets +{0}
 step.MaxTargets	Simultaneous targets +{0}
 ui.badge.active	ACTIVE
 ui.badge.passive	PASSIVE
-skill.gain.dmg	Damage {0}%  ({1}→{2})
-skill.gain.cd	Cooldown {0}%  ({1}→{2}s)
-skill.gain.projSpeed	Projectile speed +{0}%
-skill.gain.pierce	Pierce +{0}
-skill.gain.projCount	Shots +{0}
-skill.gain.targets.orb	Pierce targets +{0}
-skill.gain.targets	Simultaneous targets +{0}
-skill.gain.tickRate	Hit interval -{0}%
-skill.gain.procChance	Proc chance +{0}%p
-skill.gain.duration	Duration +{0}s
-skill.gain.scale	Size +{0}%
-skill.gain.rewind	Rewind time {0}s
-skill.gain.growth	Growth stacks {0} (stronger the more you use it)
 ui.levelup.evoHeader	Evolve!
 ui.levelup.evoFallbackHeader	Nothing to evolve — level up instead
 ui.levelup.treasureHeader	Treasure found!!

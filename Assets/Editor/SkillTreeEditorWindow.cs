@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 
 // 비주얼 노드 스킬트리 편집기. SkillTreeData 에셋을 편집한다.
-// 노드는 id·이름·타입 + 효과(자유 텍스트)만 입력받는다(효과가 노드마다 제각각이라 enum이 아닌 자유 텍스트).
+// 노드는 id·이름·타입 + 효과 축(MetaUpgradeId enum)·레벨당 상승값·최대 레벨을 입력받는다.
 // 메뉴: Blueberry Defense > Skill Tree Editor
 //   · 캔버스 이동: 빈 공간 드래그(좌/가운데버튼)
 //   · 노드 이동: 노드 제목바 드래그
@@ -156,7 +156,6 @@ public class SkillTreeEditorWindow : EditorWindow
         {
             id = "node_" + data.nodes.Count,
             displayName = "새 노드",
-            hasEffect = false,
             editorPos = new Vector2(position.width, position.height) * 0.4f - panOffset,
         };
         data.nodes.Add(n);

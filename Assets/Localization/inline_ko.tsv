@@ -52,19 +52,6 @@ step.MaxTargets.orb	관통 대상 +{0}
 step.MaxTargets	동시 대상 +{0}
 ui.badge.active	액티브
 ui.badge.passive	패시브
-skill.gain.dmg	피해 {0}%  ({1}→{2})
-skill.gain.cd	재사용 대기시간 {0}%  ({1}→{2}초)
-skill.gain.projSpeed	투사체 속도 +{0}%
-skill.gain.pierce	관통 +{0}회
-skill.gain.projCount	발사 수 +{0}
-skill.gain.targets.orb	관통 대상 +{0}
-skill.gain.targets	동시 대상 +{0}
-skill.gain.tickRate	타격 주기 -{0}%
-skill.gain.procChance	발동 확률 +{0}%p
-skill.gain.duration	지속시간 +{0}초
-skill.gain.scale	크기 +{0}%
-skill.gain.rewind	되감기 시간 {0}초
-skill.gain.growth	성장 스택 {0} (사용할수록 강해짐)
 ui.levelup.evoHeader	진화!
 ui.levelup.evoFallbackHeader	진화할 스킬이 없다 — 대신 레벨업
 ui.levelup.treasureHeader	보물 발견!!

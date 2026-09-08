@@ -4,7 +4,7 @@
 // **진화 아이템**을 먹어야 열리고, 그때 진화 가능한 스킬 중 하나를 골라 진화시킨다.
 //
 // ⚠️ 저장 구조는 기존 PathTier[3]을 그대로 쓴다.
-//    PlayerSkills/PlayerPassives의 Fire*/TryUseSkill이 `skill.PathTier[n] >= t`를 115군데에서
+//    PlayerSkills/PlayerPassives의 Fire*/TryUseSkill이 `skill.PathTier[n] >= t`를 수십 군데에서
 //    직접 읽고 있어서, 저장 형식을 바꾸면 진화 효과 전체를 다시 짜야 한다. 대신 여기서
 //    "새 좌표 → 기존 좌표"만 번역한다:
 //

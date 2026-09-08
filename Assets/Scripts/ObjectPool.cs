@@ -76,6 +76,11 @@ public class ObjectPool : MonoBehaviour
         return obj;
     }
 
+    // 잠깐 보여주고 스스로 반납되는 일회성 연출(피격 이펙트·흡수 이펙트 등).
+    // Despawn(Spawn(...)) 중첩은 안팎이 뒤집혀 읽혀서 오독하기 쉬웠다.
+    public void SpawnTimed(GameObject prefab, Vector3 position, float seconds) =>
+        Despawn(Spawn(prefab, position, Quaternion.identity), seconds);
+
     public void Despawn(GameObject obj, float delay = 0f)
     {
         if (obj == null) return;

@@ -33,11 +33,10 @@ public class EnemySpawner : MonoBehaviour
     private readonly List<AmbushMarker> pendingAmbushes = new List<AmbushMarker>(); // 예고 중인 마커들(하나라도 있으면 정문 스폰 정지)
     private int spawnedInBurst;                  // 현재 무리에서 몇 마리 내보냈나(웨이브 스폰. burstSize=0/1이면 안 쓰임)
 
-    // 물량 기반 스폰 진행 상태 — GameManager가 클리어 판정에, HUD가 진행바에 참조
+    // 물량 기반 스폰 진행 상태 — GameManager가 스테이지 클리어 판정에 참조한다.
     public int SpawnedThisStage { get; private set; }
     public int SpawnTarget { get; private set; }
     public bool StageSpawnComplete => SpawnedThisStage >= SpawnTarget;
-    public float SpawnRatio => SpawnTarget > 0 ? Mathf.Clamp01(SpawnedThisStage / (float)SpawnTarget) : 1f;
 
     // 첫 프레임에 GameManager.Update가 EnemySpawner.Update보다 먼저 돌면 SpawnTarget이 0이라
     // StageSpawnComplete가 참이 되어 1스테이지가 즉시 넘어가버린다(첫 판이 2스테이지에서 시작).

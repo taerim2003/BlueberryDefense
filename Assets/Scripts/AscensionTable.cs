@@ -7,9 +7,9 @@ using UnityEngine;
 [System.Serializable]
 public class AscensionTier
 {
-    public float hpMult = 1f;      // 적 최대체력 배율
-    public float speedMult = 1f;   // 적 이동속도 배율
-    public float damageMult = 1f;  // 적 피해 배율
+    public float hpMult = 1f;
+    public float speedMult = 1f;
+    public float damageMult = 1f;
     public float essenceMult = 1f; // 정수 획득량 배율 — 어려운 만큼 보상도 커진다
     // 이 승천의 마지막 스테이지(=보스가 나오는 판). 승천이 오를수록 **판 자체가 길어진다**
     // (스테이지당 물량이 아니라 스테이지 개수). 0 이하면 DefaultFinalStage로 폴백.
@@ -70,7 +70,7 @@ public class AscensionTable : ScriptableObject
         return false;
     }
 
-    // 에셋 미할당 시 폴백(위 기본 tiers 그대로) — SampleScene 단독 실행도 동작.
+    // 에셋 미할당 시 폴백(위 기본 tiers 그대로) — Battle 씬 단독 실행도 동작.
     private static AscensionTable defaultInstance;
     public static AscensionTable Default
     {

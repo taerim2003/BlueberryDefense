@@ -6,7 +6,7 @@ using UnityEngine.Localization.Tables;
 
 // 번역 조회의 단일 창구. 게임 코드는 Unity Localization API를 직접 부르지 않고 전부 여기를 지난다.
 //
-// 왜 래퍼를 두나 — 호출부가 600곳이라 API가 바뀌거나 캐싱 전략을 손볼 때 여기 한 곳만 고치면 된다.
+// 왜 래퍼를 두나 — 호출부가 백 곳이 넘어서 API가 바뀌거나 캐싱 전략을 손볼 때 여기 한 곳만 고치면 된다.
 // 그리고 StringDatabase.GetLocalizedString()은 호출마다 테이블을 찾아 들어가므로
 // HUD처럼 매 프레임 도는 자리에서 쓰면 비싸다 — 테이블을 잡아두고 엔트리만 읽는다.
 //
@@ -30,7 +30,7 @@ public static class Loc
     public const string SourceLocale = "ko";
 
     // 언어가 바뀌면 화면에 이미 그려진 글자를 다시 그려야 한다.
-    // 런타임에 UI를 짓는 화면(OptionsMenu·PauseMenu)은 다시 지으면 되고,
+    // 런타임에 글자만 다시 채우는 화면(OptionsMenu·PauseMenu)은 이걸 구독해 스스로 갱신하고,
     // 씬에 박힌 TMP는 LocalizedTmp가 이걸 구독해 스스로 갱신한다.
     public static event System.Action LocaleChanged;
 

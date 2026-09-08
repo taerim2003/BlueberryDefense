@@ -44,7 +44,7 @@ public class PlayerExperience : MonoBehaviour
             xpToNextLevel += Scaling.xpToNextLevelPerLevel;
 
             if (levelUpVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(levelUpVfxPrefab, transform.position, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(levelUpVfxPrefab, transform.position, 2f);
 
             LevelUpUI.Instance.Show();
         }

@@ -27,7 +27,6 @@ public static class BalanceConstants
     public const int EagleBaseDrops = 3;      // 독수리 투하 횟수. 3→2로 내렸다가 8/24 플레이스루 후 다시 3
     public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
-    public const float FlyingArrowSpawnRaise = 0.65f; // 비행 타격 진화 시 발사점 상승
 
     // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──
     // 적은 더 이상 스스로 사라지지 않는다. 죽여야만 없어지고, 그 대신 1회 피해가 훨씬 약하다.

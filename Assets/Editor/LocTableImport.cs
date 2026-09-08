@@ -18,9 +18,6 @@ public static class LocTableImport
 {
     public const string Collection = "Game";
 
-    [MenuItem("Window/Blueberry Defense/번역 - 수확본을 ko 테이블에 적재")]
-    public static void ImportHarvestMenu() { Debug.Log(Import(LocHarvest.OutPath, "ko")); }
-
     // TSV 파일이 늘 때마다 메뉴를 하나씩 늘리면 en 쪽을 빠뜨린다(실제로 en 적재 메뉴가 없었다).
     // 파일 이름의 접미사(_ko / _en)가 곧 로케일이라, 폴더를 훑어 전부 밀어넣는다.
     public const string TsvFolder = "Assets/Localization";

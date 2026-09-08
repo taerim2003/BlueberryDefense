@@ -167,9 +167,9 @@ public class PauseMenu : MonoBehaviour
             if (child.name == "Header") { header = child.GetComponent<TMP_Text>(); continue; }
             if (!child.name.StartsWith(prefix)) continue;
 
-            var iconTr = FindDeep(child, "Icon");
-            var titleTr = FindDeep(child, "TitleLine");
-            var detailTr = FindDeep(child, "DetailLine");
+            var iconTr = UITreeUtil.FindDeep(child, "Icon");
+            var titleTr = UITreeUtil.FindDeep(child, "TitleLine");
+            var detailTr = UITreeUtil.FindDeep(child, "DetailLine");
             if (titleTr == null || detailTr == null)
             {
                 Debug.LogWarning("[PauseMenu] " + child.name + "에 조각이 없다 —"
@@ -184,13 +184,6 @@ public class PauseMenu : MonoBehaviour
                 detail = detailTr.GetComponent<TMP_Text>(),
             });
         }
-    }
-
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var tr in root.GetComponentsInChildren<Transform>(true))
-            if (tr.name == name) return tr;
-        return null;
     }
 
     // ── 스킬/패시브 요약 채우기 (열 때마다 갱신) ──

@@ -25,7 +25,7 @@ public class SkillNodeButton : MonoBehaviour, IPointerClickHandler, IPointerEnte
 
 // 인게임(타이틀) 스킬트리 패널. MainSkillTree.asset을 읽어 노드/연결선을 런타임 생성.
 // 팬(드래그)·줌(휠)·좌클릭 구매·호버 툴팁. **자원 1개(정수) · 되돌리기 불가**.
-// 인접(보유 노드 옆) 노드만 정보 노출, 나머지는 물음표로 마스킹.
+// 인접(보유 노드 옆) 노드만 정보 노출, 나머지는 통째로 감춘다(SetActive(false)).
 public class SkillTreeUI : MonoBehaviour
 {
     [Header("Data")]
@@ -58,14 +58,12 @@ public class SkillTreeUI : MonoBehaviour
 
     [Header("Layout")]
     [SerializeField] private float posScale = 0.55f;
-    [SerializeField] private float minZoom = 0.45f;
-    [SerializeField] private float maxZoom = 1.6f;
 
     // 타입 기본색
     private static readonly Color ColNormal = new Color(0.42f, 0.68f, 1f);
-    private static readonly Color ColUnlock = new Color(1f, 0.82f, 0.2f);   // 스킬 해금 = 금색
-    private static readonly Color ColEnhance = new Color(1f, 0.35f, 0.85f); // 스킬 강화 = 마젠타
-    private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f); // 특수 해금 = 노랑
+    private static readonly Color ColUnlock = new Color(1f, 0.82f, 0.2f);
+    private static readonly Color ColEnhance = new Color(1f, 0.35f, 0.85f);
+    private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f);
     private static readonly Color ColLineDim = new Color(1f, 1f, 1f, 0.12f);
     private static readonly Color ColLineOn = new Color(1f, 1f, 1f, 0.6f);
     // 노드 테두리 4상태(칸반 "폴리싱 할일 리스트업"): 만렙=파랑 / 지금 찍을 수 있음=초록 /
@@ -455,7 +453,4 @@ public class SkillTreeUI : MonoBehaviour
         _ => ColNormal,
     };
 
-    // TreePanDrag가 줌 클램프에 참조
-    public float MinZoom => minZoom;
-    public float MaxZoom => maxZoom;
 }

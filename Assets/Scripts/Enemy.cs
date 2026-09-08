@@ -603,7 +603,7 @@ public class Enemy : MonoBehaviour
             player.TakeDamage(hit);
 
             if (playerCollisionVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(playerCollisionVfxPrefab, transform.position, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(playerCollisionVfxPrefab, transform.position, 2f);
             SpawnHitParticles(hit);
         }
 
@@ -655,7 +655,7 @@ public class Enemy : MonoBehaviour
         return false;
     }
 
-    // 캐리어 궤적: 하강 → 호버(중간에 1회 투하) → 상승 후 화면 위로 퇴장(Destroy).
+    // 캐리어 궤적: 하강 → 호버(carrierDropCount번 반복 투하) → 상승 후 화면 위로 퇴장(Despawn = 풀 반납).
     // 투하 전에 격추당하면(하강 중 사망) 부대는 안 나온다 — 빠른 대공에 대한 보상.
     private void UpdateCarrier()
     {
@@ -757,8 +757,6 @@ public class Enemy : MonoBehaviour
         vulnerableMultiplier = multiplier;
         vulnerableTimer = duration;
     }
-
-    public bool IsPoisoned => poisonTimer > 0f;
 
     // 독성 안개가 매 프레임 다시 걸어 온다 — 지속시간은 새로 채우고 피해는 **더 센 쪽**만 남긴다
     // (약한 안개가 강한 안개의 중독을 덮어쓰면 진화가 손해가 된다).

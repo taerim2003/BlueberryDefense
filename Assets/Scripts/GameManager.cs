@@ -15,10 +15,7 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
     public bool IsGameClear { get; private set; }
     public int CurrentStage { get; private set; } = 1;
-    public bool IsStageBreak => stageBreakTimer > 0f;
     public bool IsSpawningPaused => stageBreakTimer > 0f;
-    // 물량 기반: 스테이지 진행률 = 스폰한 수 / 총 물량 (스포너가 소유). HUD 진행바 등이 참조.
-    public float StageElapsedRatio => spawner != null ? spawner.SpawnRatio : 0f;
 
     public StageData CurrentStageData => stageTable != null ? stageTable.GetStage(CurrentStage) : null;
 
