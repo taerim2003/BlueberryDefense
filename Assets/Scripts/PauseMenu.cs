@@ -167,9 +167,9 @@ public class PauseMenu : MonoBehaviour
             if (child.name == "Header") { header = child.GetComponent<TMP_Text>(); continue; }
             if (!child.name.StartsWith(prefix)) continue;
 
-            var iconTr = FindDeep(child, "Icon");
-            var titleTr = FindDeep(child, "TitleLine");
-            var detailTr = FindDeep(child, "DetailLine");
+            var iconTr = UITreeUtil.FindDeep(child, "Icon");
+            var titleTr = UITreeUtil.FindDeep(child, "TitleLine");
+            var detailTr = UITreeUtil.FindDeep(child, "DetailLine");
             if (titleTr == null || detailTr == null)
             {
                 Debug.LogWarning("[PauseMenu] " + child.name + "에 조각이 없다 —"
@@ -184,13 +184,6 @@ public class PauseMenu : MonoBehaviour
                 detail = detailTr.GetComponent<TMP_Text>(),
             });
         }
-    }
-
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var tr in root.GetComponentsInChildren<Transform>(true))
-            if (tr.name == name) return tr;
-        return null;
     }
 
     // ── 스킬/패시브 요약 채우기 (열 때마다 갱신) ──
@@ -263,9 +256,9 @@ public class PauseMenu : MonoBehaviour
             string desc = Loc.TOr("skill.desc." + s.Id, "");
             if (!string.IsNullOrEmpty(desc)) sb.AppendLine(desc);
         }
-        AppendPathLines(sb, s.PathTier,
-            (p, t) => PlayerSkills.GetPathTierTitle(s.Id, p, t),
-            (p, t) => PlayerSkills.DescribePathEffect(s.Id, p, t));
+        AppendPathLines(sb, s.EvolutionStage,
+            t => EvolutionRoutes.EvolvedName(s.Id, s.Route, t),
+            t => PlayerSkills.DescribePathEffect(s.Id, s.Route, t));
 
         // 진화 설명이 정의되지 않은 조합이면 빈 칸이 되므로 원래 설명으로 떨어진다.
         string body = sb.ToString().TrimEnd();
@@ -278,41 +271,25 @@ public class PauseMenu : MonoBehaviour
         var sb = new StringBuilder();
         foreach (var g in passives.DescribeCurrentEffect(pv))
             sb.AppendLine($"<color=#9FE0A0>·</color> {g}");
-        AppendPathLines(sb, pv.PathTier,
-            (p, t) => PlayerPassives.GetPathTierTitle(pv.Id, p, t),
-            (p, t) => PlayerPassives.DescribePathEffect(pv.Id, p, t));
+        AppendPathLines(sb, pv.EvolutionStage,
+            t => EvolutionRoutes.EvolvedName(pv.Id, pv.Route, t),
+            t => PlayerPassives.DescribePathEffect(pv.Id, pv.Route, t));
         return sb.ToString().TrimEnd();
     }
 
-    // effectFn을 주면 진화 티어를 "제목 — 효과" 한 줄씩으로, 없으면 제목만 한 줄에 모아 표시.
-    private static void AppendPathLines(StringBuilder sb, int[] pathTier, System.Func<int, int, string> titleFn,
-        System.Func<int, int, string> effectFn = null)
+    // 밟아 온 진화 차수를 "이름 — 효과" 한 줄씩으로 쌓는다.
+    // ⚠️ 예전엔 legacy `PathTier[3]` 배열을 훑었다 — 한 스킬이 루트 하나만 밟으므로 (Route, EvolutionStage)로 충분하고,
+    //    문구 키가 그 좌표로 옮겨간 뒤로는 배열 쪽이 오히려 틀린 칸을 집었다(2026-09-08).
+    private static void AppendPathLines(StringBuilder sb, int stage,
+        System.Func<int, string> nameFn, System.Func<int, string> effectFn)
     {
-        for (int p = 0; p < pathTier.Length; p++)
+        for (int t = 1; t <= stage; t++)
         {
-            int tier = pathTier[p];
-            if (tier <= 0) continue;
-
-            if (effectFn != null)
-            {
-                for (int t = 1; t <= tier; t++)
-                {
-                    string title = titleFn(p, t);
-                    string effect = effectFn(p, t);
-                    if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(effect)) continue;
-                    sb.AppendLine("<color=#FFC864>→</color> " + (string.IsNullOrEmpty(title) ? effect
-                        : string.IsNullOrEmpty(effect) ? title : $"{title} — {effect}"));
-                }
-                continue;
-            }
-
-            var parts = new List<string>();
-            for (int t = 1; t <= tier; t++)
-            {
-                string title = titleFn(p, t);
-                if (!string.IsNullOrEmpty(title)) parts.Add(title);
-            }
-            if (parts.Count > 0) sb.AppendLine("<color=#FFC864>→</color> " + string.Join(", ", parts));
+            string title = nameFn(t);
+            string effect = effectFn(t);
+            if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(effect)) continue;
+            sb.AppendLine("<color=#FFC864>→</color> " + (string.IsNullOrEmpty(title) ? effect
+                : string.IsNullOrEmpty(effect) ? title : $"{title} — {effect}"));
         }
     }
 

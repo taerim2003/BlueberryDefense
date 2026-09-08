@@ -32,13 +32,13 @@ public class TitleController : MonoBehaviour
         }
     }
 
-    // OptionsMenu는 씬에 없고 런타임에 자기를 만든다(PauseMenu와 같은 방식) — 클릭 시점에 찾는다.
+    // OptionsMenu는 씬에 프리팹 인스턴스로 놓여 있다 — 자기 Instance를 세우므로 클릭 시점에 찾는다.
     private void OpenSettings()
     {
         if (OptionsMenu.Instance != null) OptionsMenu.Instance.Open();
     }
 
-    // CollectionUI도 같은 방식(런타임 자체 생성)이라 클릭 시점에 찾는다.
+    // CollectionUI도 같은 방식(씬의 프리팹 인스턴스)이라 클릭 시점에 찾는다.
     private void OpenCollection()
     {
         if (CollectionUI.Instance != null) CollectionUI.Instance.Open();

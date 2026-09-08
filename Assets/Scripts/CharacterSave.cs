@@ -17,10 +17,4 @@ public static class CharacterSave
         PlayerPrefs.SetString(Key, characterId);
         PlayerPrefs.Save();
     }
-
-    public static void Reset()
-    {
-        PlayerPrefs.DeleteKey(Key);
-        PlayerPrefs.Save();
-    }
 }

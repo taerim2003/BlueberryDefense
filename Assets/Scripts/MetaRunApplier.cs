@@ -18,7 +18,10 @@ public class MetaRunApplier : MonoBehaviour
         // 전투 static이 이전 판/도메인 리로드 잔여값을 쓰지 않도록 먼저 초기화한 뒤 세팅.
         MetaBonuses.Reset();
         MetaRun.Reset();
-        totals = SkillEffects.Compute();
+        // 🔴 일반(Normal) 노드의 효과 축은 **에셋**이 들고 있다 — tree 없이는 스탯 노드가 통째로 무효다.
+        //    (예전엔 노드 id 스위치라 tree 없이도 됐다. 재설계로 축이 에셋으로 넘어가면서 필수가 됐다.)
+        if (tree == null) Debug.LogWarning("[MetaRunApplier] 스킬트리 에셋 미배선 — 일반 노드 효과가 전부 무효가 됩니다.");
+        totals = SkillEffects.Compute(tree);
         ApplyRuntimeBonuses();
         ApplySkillGating();
     }
@@ -40,12 +43,17 @@ public class MetaRunApplier : MonoBehaviour
     private void ApplyRuntimeBonuses()
     {
         MetaBonuses.CooldownMult = 1f - 0.01f * totals.CdReducePct;
+        MetaBonuses.DurationMult = 1f + 0.01f * totals.DurationPct;
+        MetaBonuses.RegenPer5s = totals.RegenPer5s;
         MetaBonuses.CritBonus = 0.01f * totals.CritPct;
+        MetaBonuses.CritDamageBonus = 0.01f * totals.CritDmgPct;
+        MetaBonuses.BossDamageBonus = 0.01f * totals.BossDmgPct;
         // 정수 획득량 = 스킬트리(부유) 보너스 × 승천 등급 보상 배율
         AscensionTable ascTable = ascension != null ? ascension : AscensionTable.Default;
         MetaBonuses.CurrencyMult = (1f + 0.01f * totals.CurrencyPct) * ascTable.Get(RunConfig.AscensionLevel).essenceMult;
         MetaBonuses.FlyDamageBonus = 0.01f * totals.FlyDmgPct;
         MetaBonuses.EagleFlyDamageBonus = 0.01f * totals.EagleFlyDmgPct;
+        MetaBonuses.WhirlwindFlyDamageBonus = 0.01f * totals.WhirlwindFlyDmgPct;
         MetaBonuses.HealDropChanceBonus = 0.01f * totals.HealDropPct;
         MetaBonuses.OrbCanHitFlying = totals.OrbFly;
         MetaBonuses.HomingMissileGrowth = totals.HomingGrowth;
@@ -58,7 +66,36 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.RerollCount = totals.RerollCount;
         if (totals.ArrowStartLevel > 1) MetaBonuses.ArrowStartLevel = totals.ArrowStartLevel;
         if (totals.SwingStartLevel > 1) MetaBonuses.SwingStartLevel = totals.SwingStartLevel;
-        // Duration/Regen은 현재 트리에 대응 노드 없음 → Reset 기본값 유지.
+
+        // ── 스킬 강화 노드(2026-09-03 재설계) ──
+        MetaBonuses.ArrowExtraPierce = totals.ArrowPierce;
+        MetaBonuses.SwingKnockbackMult = totals.SwingKnockbackMult;
+        MetaBonuses.OrbSlowBoost = totals.OrbSlowBoost;
+        MetaBonuses.OrbExtraTargets = totals.OrbTargets;
+        MetaBonuses.EagleExtraDrops = totals.EagleDrops;
+        MetaBonuses.ThunderStackable = totals.ThunderStack;
+        MetaBonuses.ShotgunExtraBonusHit = totals.ShotgunBonusHit;
+        MetaBonuses.ShotgunCritBonus = 0.01f * totals.ShotgunCritPct;
+        MetaBonuses.SnipingCritBonus = 0.01f * totals.SnipingCritPct;
+        MetaBonuses.HomingCooldownCut = totals.HomingCdCut;
+        MetaBonuses.RewindSkipsGlobalCooldown = totals.RewindNoGcd;
+
+        MetaBonuses.PassiveBaseStrength = totals.PassiveStrength;
+        MetaBonuses.PassiveBaseHealth = totals.PassiveHealth;
+        MetaBonuses.PassiveBaseKnowledge = totals.PassiveKnowledge;
+        MetaBonuses.PassiveBaseAssassinate = totals.PassiveAssassinate;
+        MetaBonuses.PassiveBaseDefense = totals.PassiveDefense;
+        MetaBonuses.PassiveBaseAccel = totals.PassiveAccel;
+
+        MetaBonuses.HealItemDouble = totals.HealItemDouble;
+        MetaBonuses.StrengthSlowSkillDouble = totals.StrengthSlowSkillDouble;
+        MetaBonuses.AssassinFullCritExtraHit = totals.AssassinFullCritExtraHit;
+        MetaBonuses.DefenseRevive = totals.DefenseRevive;
+        MetaBonuses.AccelFastSkillDamage = totals.AccelFastSkillDamage;
+        MetaBonuses.ShowEvolutionHint = totals.ShowEvolutionHint;
+
+        MetaBonuses.EvolutionUnlocked = totals.EvolutionUnlocked;
+        MetaBonuses.Evolution2Unlocked = totals.Evolution2Unlocked;
     }
 
     private void ApplyPlayerStats()

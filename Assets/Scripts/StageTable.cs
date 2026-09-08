@@ -95,7 +95,7 @@ public class StageTable : ScriptableObject
             burstSize = last.burstSize,
             burstRest = last.burstRest,
             eliteChance = last.eliteChance,
-            // 판이 길어진 만큼 진화 기회도 늘어난다(승천1=+1개, 2=+2, 3=+3).
+            // 판이 길어진 만큼 확정 엘리트도 늘어난다(승천1=+1개, 2=+2, 3=+3).
             evolutionItemDrops = (extendedEvolutionItemEvery > 0 && n % extendedEvolutionItemEvery == 0) ? 1 : 0,
             ambushCount = last.ambushCount,
             ambushSquads = last.ambushSquads,

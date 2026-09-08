@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 
 // 비주얼 노드 스킬트리 편집기. SkillTreeData 에셋을 편집한다.
-// 노드는 id·이름·타입 + 효과(자유 텍스트)만 입력받는다(효과가 노드마다 제각각이라 enum이 아닌 자유 텍스트).
+// 노드는 id·이름·타입 + 효과 축(MetaUpgradeId enum)·레벨당 상승값·최대 레벨을 입력받는다.
 // 메뉴: Blueberry Defense > Skill Tree Editor
 //   · 캔버스 이동: 빈 공간 드래그(좌/가운데버튼)
 //   · 노드 이동: 노드 제목바 드래그
@@ -156,7 +156,6 @@ public class SkillTreeEditorWindow : EditorWindow
         {
             id = "node_" + data.nodes.Count,
             displayName = "새 노드",
-            hasEffect = false,
             editorPos = new Vector2(position.width, position.height) * 0.4f - panOffset,
         };
         data.nodes.Add(n);
@@ -216,8 +215,19 @@ public class SkillTreeEditorWindow : EditorWindow
         n.tier = Mathf.Max(0, EditorGUILayout.IntField($"등급 (={SkillTreeSave.TierCost(Mathf.Max(0, n.tier))} 정수)", n.tier));
 
         // 스킬 해금/강화 노드는 대상 스킬을 지정(해금 노드는 이 스킬이 인게임 카드 풀에 등장).
+        // ⚠️ 강화 노드에선 **표시용**이다 — 실제 효과는 id로 정해진다(SkillEffects의 스위치).
+        //    패시브(건강·힘·암살·방어·가속·지식) 강화 노드는 여기 고를 게 없어 값이 의미 없다.
         if (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SkillEnhance)
             n.skill = (ActiveSkillId)EditorGUILayout.EnumPopup("스킬", n.skill);
+
+        // 일반 노드는 **여기 값이 곧 효과다**(SkillEffects가 축×레벨당×레벨로 읽는다).
+        // 코드를 안 고치고 노드를 얼마든지 늘릴 수 있는 자리 — 축과 크기를 반드시 채울 것.
+        if (n.type == SkillNodeType.Normal)
+        {
+            n.effect = (MetaUpgradeId)EditorGUILayout.EnumPopup("효과 축", n.effect);
+            n.perLevel = EditorGUILayout.FloatField("레벨당", n.perLevel);
+            n.maxLevel = Mathf.Max(1, EditorGUILayout.IntField("단계(만렙)", n.maxLevel));
+        }
 
         EditorGUILayout.LabelField("효과 / 메모", EditorStyles.miniBoldLabel);
         n.description = EditorGUILayout.TextArea(n.description, GUILayout.Height(42));

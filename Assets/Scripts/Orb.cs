@@ -47,7 +47,7 @@ public class Orb : MonoBehaviour
 
         // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로** 예산이 닿는 만큼만 붙잡는다.
         // 예산은 "처음 만난 적"에만 소모되고, 한 번 붙잡은 적은 죽을 때까지 계속 간다.
-        // 레벨업으로 이 예산이 올라가는 게 오브의 주 성장축(4마리 → 7마리).
+        // 레벨업으로 이 예산이 올라가는 게 오브의 주 성장축(BalanceConstants.OrbBaseTargets부터 시작해 만렙까지 오른다).
         List<Enemy> ordered = new List<Enemy>(overlappingEnemies);
         ordered.Sort((a, b) =>
         {
@@ -111,7 +111,7 @@ public class Orb : MonoBehaviour
             consumed = true;
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);
             if (impactVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(impactVfxPrefab, enemy.transform.position, Quaternion.identity), 2.2f);
+                ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2.2f);
             Destroy(gameObject);
             return;
         }

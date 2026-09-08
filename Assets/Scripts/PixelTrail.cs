@@ -39,7 +39,6 @@ public class PixelTrail : MonoBehaviour
         em.rateOverTime     = 0f;
         em.rateOverDistance = dotsPerUnit;
 
-        // 방향 없이 미사일 위치에서 바로 방출
         var shape = ps.shape;
         shape.enabled = false;
 

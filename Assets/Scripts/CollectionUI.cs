@@ -18,7 +18,7 @@ using TMPro;
 //    `Slot_A{액티브 enum 값}` · `Slot_P{패시브 enum 값}` · `Node_R{루트}T{티어}`.
 //    칸 하나하나를 배열에 꽂아 두면 로스터가 바뀔 때 조용히 어긋나서, 이름을 단일 소스로 삼았다.
 //    **프리팹에서 이 칸들의 이름을 바꾸거나 지우면 그 칸이 사라진다.** 개수가 로스터와 어긋나면
-//    Awake가 경고를 찍는다 — 그때는 프리팹을 다시 구워야 한다(BakeRuntimePanels 참고).
+//    Awake가 경고를 찍는다 — 그때는 프리팹을 다시 구워야 한다(칸을 늘리는 건 프리팹 편집이다).
 //
 // 아이콘은 씬 배선이 아니라 Resources의 SkillIconLibrary에서 집는다 — 타이틀 씬엔 LevelUpUI가 없다.
 // 그 에셋은 `Window > Blueberry Defense > 스킬 아이콘 라이브러리 굽기`로 굽는다.
@@ -85,6 +85,7 @@ public class CollectionUI : MonoBehaviour
     // 진화 트리 한 칸(루트 r, 티어 t).
     private class Node
     {
+        public GameObject root;   // 칸을 통째로 껐다 켰다 하려면 필요하다(패시브는 2차 칸이 없다)
         public Image frame;
         public Image icon;
         public TMP_Text title;
@@ -135,8 +136,8 @@ public class CollectionUI : MonoBehaviour
                 continue;
             }
 
-            var icon = FindDeep(tr, "Icon");
-            var glow = FindDeep(tr, "SelectGlow");
+            var icon = UITreeUtil.FindDeep(tr, "Icon");
+            var glow = UITreeUtil.FindDeep(tr, "SelectGlow");
             var slot = new Slot
             {
                 frame = tr.GetComponent<Image>(),
@@ -168,17 +169,18 @@ public class CollectionUI : MonoBehaviour
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
             {
                 string name = "Node_R" + route + "T" + (tierIdx + 1);
-                var tr = FindDeep(content, name);
+                var tr = UITreeUtil.FindDeep(content, name);
                 if (tr == null)
                 {
                     Debug.LogWarning("[CollectionUI] 진화 노드를 못 찾았다: " + name, this);
                     continue;
                 }
-                var icon = FindDeep(tr, "Icon");
-                var title = FindDeep(tr, "Title");
-                var desc = FindDeep(tr, "Desc");
+                var icon = UITreeUtil.FindDeep(tr, "Icon");
+                var title = UITreeUtil.FindDeep(tr, "Title");
+                var desc = UITreeUtil.FindDeep(tr, "Desc");
                 var node = new Node
                 {
+                    root = tr.gameObject,
                     frame = tr.GetComponent<Image>(),
                     icon = icon != null ? icon.GetComponent<Image>() : null,
                     title = title != null ? title.GetComponent<TMP_Text>() : null,
@@ -192,16 +194,6 @@ public class CollectionUI : MonoBehaviour
                         + (node.frame == null ? " Image" : "") + (node.icon == null ? " Icon" : "")
                         + (node.title == null ? " Title" : "") + (node.desc == null ? " Desc" : ""), tr);
             }
-    }
-
-    // 🔴 자식을 **깊이** 찾는다 — 직속 자식만 보면 안 된다.
-    //    칸 안에 액자를 한 겹 더 두는 배치(`Node_R0T1/IconBox/Icon`)가 실제로 쓰이고 있고,
-    //    그때 `Find("Icon")`은 조용히 null을 돌려줘서 아이콘이 통째로 안 그려진다.
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var tr in root.GetComponentsInChildren<Transform>(true))
-            if (tr.name == name) return tr;
-        return null;
     }
 
     // 언어가 바뀌면 고정 문구를 다시 채운다(나머지는 Open→Refresh가 채운다).
@@ -361,10 +353,21 @@ public class CollectionUI : MonoBehaviour
             routeLabels[route].text = showPrereq ? full : routeText;
             SetPrereqIcon(route, showPrereq ? PrereqIcon(pre) : null,
                 spacerAt >= 0 ? full.Substring(0, spacerAt) : full);
+            // 🔴 패시브는 2차 진화가 없다(2026-09-08) — 도감에서도 2차 칸과 T1→T2 화살표를 감춘다.
+            //    남기면 영원히 "미발견"인 칸이 도감에 두 개 뜬다.
+            int maxTier = selectedIsPassive
+                ? EvolutionRoutes.MaxStageFor((PassiveSkillId)selectedId)
+                : EvolutionRoutes.MaxStageFor((ActiveSkillId)selectedId);
+            routeArrows[route].gameObject.SetActive(maxTier >= 2);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
             for (int tierIdx = 0; tierIdx < 2; tierIdx++)
-                RefreshNode(nodes[route, tierIdx], route, tierIdx + 1, discovered, unknown);
+            {
+                Node n = nodes[route, tierIdx];
+                bool show = tierIdx + 1 <= maxTier;
+                if (n != null && n.root != null) n.root.SetActive(show);
+                if (show) RefreshNode(n, route, tierIdx + 1, discovered, unknown);
+            }
         }
     }
 
@@ -453,21 +456,8 @@ public class CollectionUI : MonoBehaviour
         }
     }
 
-    // 새 티어 하나가 옛 티어 여러 개를 한꺼번에 준다 — 설명도 이어 붙인다(인게임 진화 창과 같은 규칙).
-    private string EvoDescription(int route, int tier)
-    {
-        int path = selectedIsPassive
-            ? EvolutionRoutes.RoutePath((PassiveSkillId)selectedId, route)
-            : EvolutionRoutes.RoutePath((ActiveSkillId)selectedId, route);
-
-        var parts = new List<string>();
-        foreach (int legacyTier in EvolutionRoutes.LegacyTiersFor(tier))
-        {
-            string text = selectedIsPassive
-                ? PlayerPassives.DescribePathEffect((PassiveSkillId)selectedId, path, legacyTier)
-                : PlayerSkills.DescribePathEffect((ActiveSkillId)selectedId, path, legacyTier);
-            if (!string.IsNullOrEmpty(text)) parts.Add(text);
-        }
-        return string.Join("\n", parts);
-    }
+    // 한 칸 = 한 줄(인게임 진화 창과 같은 규칙 — EvolutionTreeUI.RouteEffect 참고).
+    private string EvoDescription(int route, int tier) => selectedIsPassive
+        ? PlayerPassives.DescribePathEffect((PassiveSkillId)selectedId, route, tier)
+        : PlayerSkills.DescribePathEffect((ActiveSkillId)selectedId, route, tier);
 }

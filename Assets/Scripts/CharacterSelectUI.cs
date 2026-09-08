@@ -7,7 +7,7 @@ using TMPro;
 
 // 맵 선택 화면 위에 뜨는 캐릭터 선택 팝업. MapSelectUI의 "캐릭터 변경" 버튼이 연다.
 // MapSelectUI(맵 선택)와 대칭인 카드 UI지만, 씬을 로드하지 않고 선택값만 갱신한 뒤 팝업을 닫는다.
-// 카드 클릭 = 즉시 선택 후 닫힘. 선택이 바뀌면 OnSelectionChanged로 MapSelectUI 표시를 갱신.
+// 카드 클릭 = 선택만 하고 창은 열어 둔다(확정은 "선택" 버튼). 선택이 바뀌면 OnSelectionChanged로 MapSelectUI 표시를 갱신.
 public class CharacterSelectUI : MonoBehaviour
 {
     [Header("Data")]
@@ -19,7 +19,7 @@ public class CharacterSelectUI : MonoBehaviour
     [SerializeField] private UITransition panelTransition; // 있으면 열고 닫을 때 팝 연출을 대신 태운다
     [SerializeField] private PanelSplitTransition splitTransition; // 위아래로 갈라지는 화면 전환(우선)
     [SerializeField] private Transform cardContainer;   // 카드들이 담기는 컨테이너
-    [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본. 자식: Thumb(Image)/Name(TMP_Text)/Frame(Image)
+    [SerializeField] private GameObject cardTemplate;    // 비활성 카드 원본. 자식: Thumb(Image)/Name(TMP_Text)/SelectGlow(Image)
 
     [Header("Actions")]
     [SerializeField] private Button backButton;
@@ -118,7 +118,7 @@ public class CharacterSelectUI : MonoBehaviour
 
             bool locked = chr != null && !chr.IsUnlocked;
 
-            var thumb = FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
+            var thumb = UITreeUtil.FindDeep(card.transform, "Thumb")?.GetComponent<Image>();
             if (thumb != null)
             {
                 bool hasPortrait = chr != null && chr.portrait != null;
@@ -131,14 +131,14 @@ public class CharacterSelectUI : MonoBehaviour
 
             if (locked) LockBadge.Add(card, lockIcon);
 
-            var nameText = FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
+            var nameText = UITreeUtil.FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && chr != null)
                 nameText.text = locked ? "???" : chr.Name;
 
             // 🔴 맵 선택 화면과 같은 사정 — `Frame` 자식이 사라져 하이라이트가 죽어 있었다.
             //    테두리 그림(..._투명)은 순수 검정이라 물들일 수 없어서, `SelectGlow`가 판 그림을
             //    `UI/SelectOutline` 셰이더로 그려 실루엣 바깥에만 테를 낸다(맵 선택 화면과 같은 구조).
-            cardGlows.Add(FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
+            cardGlows.Add(UITreeUtil.FindDeep(card.transform, "SelectGlow")?.GetComponent<Image>());
 
             int idx = i; // 클로저 캡처
             var juicy = card.GetComponent<JuicyButton>();
@@ -155,15 +155,6 @@ public class CharacterSelectUI : MonoBehaviour
             }
 
         }
-    }
-
-    // 카드 속 부품을 깊이와 상관없이 찾는다(MapSelectUI와 같은 이유 — 씬에서 Thumb을
-    // Bg 아래로 옮기면 Transform.Find는 조용히 null을 준다).
-    private static Transform FindDeep(Transform root, string name)
-    {
-        foreach (var t in root.GetComponentsInChildren<Transform>(true))
-            if (t.name == name) return t;
-        return null;
     }
 
     // 카드 클릭: 선택 확정 → 표시 갱신 알림 → 팝업 닫기.

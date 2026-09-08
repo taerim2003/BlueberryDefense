@@ -246,8 +246,6 @@ public class Enemy : MonoBehaviour
     // 뜬 높이만큼 자식 좌표를 아래로 내려 월드 y를 지면에 고정한다(부모 스케일로 나눠 보정).
     private void LateUpdate()
     {
-        RefreshDamageNumbers();   // 데미지 숫자 큐가 이 적을 따라다닌다 — 아래 그림자 분기보다 먼저
-
         if (shadowTr == null) return;
 
         float groundY = popping ? popGroundY : (isHopper ? hopBaseY : transform.position.y);
@@ -605,7 +603,7 @@ public class Enemy : MonoBehaviour
             player.TakeDamage(hit);
 
             if (playerCollisionVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(playerCollisionVfxPrefab, transform.position, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(playerCollisionVfxPrefab, transform.position, 2f);
             SpawnHitParticles(hit);
         }
 
@@ -657,7 +655,7 @@ public class Enemy : MonoBehaviour
         return false;
     }
 
-    // 캐리어 궤적: 하강 → 호버(중간에 1회 투하) → 상승 후 화면 위로 퇴장(Destroy).
+    // 캐리어 궤적: 하강 → 호버(carrierDropCount번 반복 투하) → 상승 후 화면 위로 퇴장(Despawn = 풀 반납).
     // 투하 전에 격추당하면(하강 중 사망) 부대는 안 나온다 — 빠른 대공에 대한 보상.
     private void UpdateCarrier()
     {
@@ -760,8 +758,6 @@ public class Enemy : MonoBehaviour
         vulnerableTimer = duration;
     }
 
-    public bool IsPoisoned => poisonTimer > 0f;
-
     // 독성 안개가 매 프레임 다시 걸어 온다 — 지속시간은 새로 채우고 피해는 **더 센 쪽**만 남긴다
     // (약한 안개가 강한 안개의 중독을 덮어쓰면 진화가 손해가 된다).
     // 첫 틱은 interval만큼 기다린 뒤에 들어간다 — 안개에 발을 들이자마자 피해가 터지면
@@ -843,10 +839,14 @@ public class Enemy : MonoBehaviour
         }
 
         float actualDamage = amount * vulnerableMultiplier;
-        // 스킬트리: 비행 적 추가피해(전역 + 독수리 전용)
+        // 스킬트리: 비행 적 추가피해(전역 + 스킬 전용 강화). 스킬 전용분은 전역 위에 **더해진다**.
         if (isFlying)
             actualDamage *= 1f + MetaBonuses.FlyDamageBonus
-                + (source == ActiveSkillId.EagleDrop ? MetaBonuses.EagleFlyDamageBonus : 0f);
+                + (source == ActiveSkillId.EagleDrop ? MetaBonuses.EagleFlyDamageBonus : 0f)
+                + (source == ActiveSkillId.Whirlwind ? MetaBonuses.WhirlwindFlyDamageBonus : 0f);
+        // 스킬트리: 보스 추가피해. isBoss는 프리팹이 아니라 **보스 슬롯으로 스폰됐는지**가 기준이다
+        // (EnemySpawner.MarkAsBoss) — 비행선 같은 엘리트는 여기 안 걸린다.
+        if (isBoss) actualDamage *= 1f + MetaBonuses.BossDamageBonus;
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
@@ -904,8 +904,12 @@ public class Enemy : MonoBehaviour
 
             if (overkill) SpawnOverkillBurst();
 
-            // 암살 연계 path1: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
-            int grantedXp = isCrit ? Mathf.RoundToInt(xpValue * PlayerPassives.AssassinateKillXpMultiplier) : xpValue;
+            // 암살 R0 「현상금」: 치명타로 처치한 적은 경험치를 배율만큼 추가로 지급
+            float xpMult = isCrit ? PlayerPassives.AssassinateKillXpMultiplier : 1f;
+            // 지식 R1 「전투 통찰」: **호밍 미사일로** 처리한 적이 추가 경험치를 남긴다(2026-09-08 명세).
+            // ⚠️ 예전엔 "독수리 투하 시전마다 즉시 XP"였다 — 문구가 바뀌면서 대상이 통째로 옮겨갔다.
+            if (source == ActiveSkillId.Homing) xpMult *= PlayerPassives.HomingKillXpMultiplier;
+            int grantedXp = Mathf.RoundToInt(xpValue * xpMult);
             // 경험치 보석이 경험치 바까지 날아가 도착하는 순간 적립된다. 연출이 불가능하면(HUD 없는 씬 등) 즉시 적립.
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);
@@ -1022,7 +1026,11 @@ public class Enemy : MonoBehaviour
     {
         int natural = Mathf.Max(1, PlayerSkills.NaturalHits(source)); // 스킬 고유 타수(기본공격=BasicAttackHits, 그 외 1)
         int total = natural + PlayerSkills.GlobalBonusHits(source)     // 산탄(타수) 버프로 추가된 타격 수
-                    + PlayerSkills.CloseRangeBonusHits(source, transform.position); // 산탄 근거리 조준(+2, 스킬트리)
+                    + PlayerSkills.CloseRangeBonusHits(source, transform.position) // 산탄 근거리 조준(+2, 스킬트리)
+                    // 스킬트리 "암살: 치명타 확률 100%인 스킬은 타수 +1".
+                    // ⚠️ 기본 상한은 70%(BalanceConstants.MaxCritChance)다. 100%에 닿는 길은
+                    //    암살 R1 「필중 암살」이 상한을 열고(CritChanceCapOverride) 레벨업으로 확률을 쌓는 경우뿐이다.
+                    + (PlayerPassives.FullCritExtraHit && critChance >= 1f ? 1 : 0);
         float per = baseDamage / natural;                             // 자연 타수 기준 1히트 크기 → 보너스 히트는 추가 데미지
 
         if (total <= 1)
@@ -1044,18 +1052,17 @@ public class Enemy : MonoBehaviour
         return anyCrit;
     }
 
-    // ── 데미지 숫자 큐 ────────────────────────────────────────────────────────
-    // 🔴 **적 한 마리가 큐 하나를 든다**(2026-09-02 명세, 메이플 방식). 새 숫자는 머리 바로 위(맨 아래)에 뜨고,
-    //    먼저 있던 것들이 한 칸씩 **위로 밀린다.** 예전엔 숫자마다 제자리에서 혼자 떠올라서,
-    //    같은 적을 연달아 때리면 전부 같은 높이에 겹쳐 안 읽혔다(한 공격 안의 서브히트만 쌓였다).
-    // ⚠️ 큐가 자리를 매 프레임 정해 주므로 숫자는 **적을 따라다닌다** — 예전의 "뜬 자리 월드 고정"과 반대다.
+    // ── 데미지 숫자 ──────────────────────────────────────────────────────────
+    // 🔴 **적은 숫자를 띄우기만 하고 그 뒤로는 손대지 않는다**(2026-09-07 사용자 결정).
+    //    숫자는 뜬 자리에 월드 고정돼 스스로 위로 떠오르며 사라진다 — 적이 움직여도 따라가지 않는다.
+    //    "새 데미지는 아래, 기존은 위로"는 먼저 뜬 숫자가 이미 올라가 있어서 저절로 성립한다.
+    // ⚠️ 여기에 큐(목록 + 매 프레임 자리 재계산)를 되살리지 말 것 — 풀에서 재사용된 숫자를
+    //    옛 주인과 새 주인이 동시에 잡아당겨 숫자가 방금 나온 적으로 튀던 원인이었다.
     private const float DamageNumberBaseHeight = 0.85f;
-    private const float DamageNumberStackStep = 0.52f;   // 0.62에서 좁힘(사용자 요청)
-    private const float DamageNumberJitterX = 0.3f;      // 가로 흔들림. StackStep보다 훨씬 작게 유지할 것
-    private const float DamageNumberStaggerDelay = 0.08f; // 멀티히트 숫자 간 타이밍 간격
-    private const int DamageNumberMaxStack = 10;          // 이보다 쌓이면 맨 위(가장 오래된)부터 떠나보낸다
-
-    private readonly List<DamageNumber> damageNumbers = new List<DamageNumber>();
+    private const float DamageNumberJitterX = 0.3f;       // 가로 흔들림. 연타가 한 줄로 겹쳐 보이지 않게 한다
+    private const float DamageNumberStaggerDelay = 0.18f; // 멀티히트 숫자 간 타이밍 간격.
+                                                          // 이 시간만큼 먼저 뜬 숫자가 위로 올라가 자리를 비운다 —
+                                                          // `DamageNumber.moveSpeed`와 곱한 값(≈0.58유닛)이 곧 세로 간격이다
 
     private void SpawnDamageNumber(float amount, bool isCrit = false, int hitIndex = 0)
     {
@@ -1067,39 +1074,7 @@ public class Enemy : MonoBehaviour
         var num = obj.GetComponent<DamageNumber>();
         if (num == null) return;
         num.Init(amount, isCrit, offset, hitIndex * DamageNumberStaggerDelay);
-
-        damageNumbers.Insert(0, num);   // 맨 아래 = 목록 앞
-
-        int live = 0;
-        foreach (var n in damageNumbers) if (n != null && !n.IsRetiring) live++;
-        for (int i = damageNumbers.Count - 1; i >= 0 && live > DamageNumberMaxStack; i--)
-            if (damageNumbers[i] != null && !damageNumbers[i].IsRetiring) { damageNumbers[i].Retire(); live--; }
-
-        // 🔴 여기서도 자리를 잡아야 한다 — LateUpdate는 **비활성 오브젝트에서 안 돈다.**
-        //    죽은 적(그 프레임에 반납되는)에게 꽂힌 숫자들이 전부 같은 높이에 겹쳐 뜨던 원인이었다.
-        RefreshDamageNumbers();
     }
-
-    // 큐의 자리를 매 프레임 다시 정한다. 물러나는 숫자는 즉시 큐에서 뺀다 —
-    // 그래야 풀이 그 오브젝트를 다른 적에게 재사용해도 이 목록에 남지 않는다.
-    private void RefreshDamageNumbers()
-    {
-        if (damageNumbers.Count == 0) return;
-
-        Vector3 anchor = transform.position + Vector3.up * DamageNumberBaseHeight;
-        int slot = 0;
-        for (int i = 0; i < damageNumbers.Count; i++)
-        {
-            DamageNumber n = damageNumbers[i];
-            if (n == null || n.IsRetiring) { damageNumbers.RemoveAt(i--); continue; }
-            if (!n.IsVisible) continue;   // 멀티히트 지연 중 — 아직 자리를 차지하지 않는다
-            n.SetTarget(anchor + Vector3.up * (DamageNumberStackStep * slot));
-            slot++;
-        }
-    }
-
-    // 적이 풀로 반납되면 큐만 비운다 — 떠 있는 숫자는 제 수명대로 그 자리에서 사라진다.
-    private void OnDisable() => damageNumbers.Clear();
 
     // 과잉 피해 처치 연출. 새 에셋 없이 **이미 있는 재료**(죽음 VFX + 타격 파편)를 키우고 사방으로 터뜨린다 —
     // 평소 타격 파편은 위로 튀지만(SpawnHitParticles) 이건 360도로, 더 많이, 더 빠르게 나간다.

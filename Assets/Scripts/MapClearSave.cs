@@ -29,7 +29,7 @@ public static class MapClearSave
 
     public static void RecordClear(string mapId, int ascension)
     {
-        if (string.IsNullOrEmpty(mapId)) return; // 맵 미선택(SampleScene 단독 실행)이면 기록할 곳이 없다
+        if (string.IsNullOrEmpty(mapId)) return; // 맵 미선택(Battle 씬 단독 실행)이면 기록할 곳이 없다
         if (ascension <= ClearedAscension(mapId)) return;
         PlayerPrefs.SetInt(Key(mapId), ascension);
         PlayerPrefs.Save();

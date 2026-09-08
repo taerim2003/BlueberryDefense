@@ -53,11 +53,12 @@ public class HeartPickup : MonoBehaviour
 
         if (Vector3.Distance(transform.position, targetPos) <= absorbDistance)
         {
-            target.Heal(healAmount);
+            // 스킬트리 "건강: 체력회복템 회복량 2배"(건강 패시브를 얻었을 때만 켜진다)
+            target.Heal(PlayerPassives.HealItemDouble ? healAmount * 2 : healAmount);
             SfxPlayer.Play(SfxId.HeartPickup);
 
             if (absorbVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(absorbVfxPrefab, targetPos, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(absorbVfxPrefab, targetPos, 2f);
 
             Destroy(gameObject);
         }

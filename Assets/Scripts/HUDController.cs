@@ -14,7 +14,6 @@ public class HUDController : MonoBehaviour
         public TMP_Text cooldownText;
         public TMP_Text levelLabel;
         public Image[] gemIcons;
-        [System.NonSerialized] public Image shotgunFrame; // 산탄 버프 시 아이콘 뒤에 켜지는 노란 하이라이트 프레임(런타임 생성)
     }
 
     [System.Serializable]
@@ -329,7 +328,6 @@ public class HUDController : MonoBehaviour
                 slot.cooldownText.enabled = false;
                 if (slot.levelLabel != null) slot.levelLabel.enabled = false;
                 SetPathIcons(slot, null);
-                if (slot.shotgunFrame != null) slot.shotgunFrame.enabled = false;
                 activeSlotWasFilled[i] = false;
                 activeSlotWasOnCooldown[i] = false;
                 continue;
@@ -361,60 +359,7 @@ public class HUDController : MonoBehaviour
             activeSlotWasOnCooldown[i] = onCooldown;
 
             SetPathIcons(slot, skill);
-            UpdateShotgunHighlight(slot, skill.Id);
         }
-    }
-
-    // 산탄 타수버프를 받는 동안 해당 스킬 아이콘 "테두리 바깥"에 노란 하이라이트 프레임을 켠다.
-    // (예전엔 아이콘 이미지에 uGUI Outline을 붙여 스프라이트가 4방향으로 복제돼 이미지 위에 뭔가 덧씌운 것처럼 보였음)
-    private void UpdateShotgunHighlight(ActiveSlot slot, ActiveSkillId id)
-    {
-        if (slot.icon == null) return;
-        bool buffed = PlayerSkills.IsShotgunBuffed(id);
-
-        // 예전 방식(아이콘 위 Outline 효과)이 남아 있으면 제거
-        Outline legacy = slot.icon.GetComponent<Outline>();
-        if (legacy != null) Destroy(legacy);
-
-        if (slot.shotgunFrame == null)
-        {
-            if (!buffed) return; // 필요할 때만 생성
-            slot.shotgunFrame = CreateShotgunFrame(slot.icon);
-        }
-        slot.shotgunFrame.enabled = buffed;
-    }
-
-    private const float ShotgunOutlineWidth = 6f; // 칸 바깥으로 삐져나오는 테 두께(px)
-
-    // 칸 **바깥**을 두르는 노란 테를 만든다.
-    // 🔴 예전엔 아이콘의 형제로 만들어 `SetAsFirstSibling()`으로 깔았는데, 그건 슬롯 판(`IconFrame`)
-    //    **위**다 — 부모 자신의 Image가 자식보다 먼저 그려지기 때문이다. 그래서 칸이 통째로
-    //    노랗게 채워져 보였다(8/27 빌드 QA "아이콘 칸 전체가 노랗게 채워진 상태").
-    //    슬롯의 **형제**로 옮기고 슬롯 바로 앞에 꽂으면, 불투명한 슬롯 판이 가운데를 가려
-    //    삐져나온 테두리만 남는다.
-    // ⚠️ `UI/SelectOutline` 셰이더를 쓰지 않는 이유: 그건 실루엣 **바깥**을 칠하는데
-    //    `IconFrame`은 40×40이 전부 불투명이라 rect 안에 칠할 여백이 없다(실측). 테가 통째로 사라진다.
-    private Image CreateShotgunFrame(Image icon)
-    {
-        GameObject go = new GameObject("ShotgunFrame", typeof(RectTransform), typeof(Image));
-        RectTransform rt = go.GetComponent<RectTransform>();
-        RectTransform slotRt = (RectTransform)icon.rectTransform.parent;
-        rt.SetParent(slotRt.parent, false);
-        rt.anchorMin = slotRt.anchorMin;
-        rt.anchorMax = slotRt.anchorMax;
-        // 슬롯 pivot을 그대로 쓰면 크기를 키울 때 한쪽으로만 자라 칸과 중심이 어긋난다 —
-        // 중심 기준으로 잡고 슬롯의 중심 좌표를 직접 계산해 얹는다.
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = slotRt.anchoredPosition + new Vector2(
-            (0.5f - slotRt.pivot.x) * slotRt.rect.width,
-            (0.5f - slotRt.pivot.y) * slotRt.rect.height);
-        rt.sizeDelta = slotRt.rect.size + Vector2.one * (ShotgunOutlineWidth * 2f);
-        rt.SetSiblingIndex(slotRt.GetSiblingIndex()); // 슬롯 바로 앞 = 슬롯보다 먼저 그려짐(뒤에 깔림)
-
-        Image frame = go.GetComponent<Image>();
-        frame.color = new Color(1f, 0.85f, 0.1f, 1f);
-        frame.raycastTarget = false;
-        return frame;
     }
 
     // 슬롯 아래 보석 = 진화 횟수(0~2). 예전엔 투자한 path 수였지만 진화가 2루트×2티어로 바뀌면서

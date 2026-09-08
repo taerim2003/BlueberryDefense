@@ -4,8 +4,9 @@ using UnityEngine;
 // UI 손맛의 단일 소스. "빠르고 통통 튀게" — 짧은 시간 + 큰 스케일 대비.
 //
 // 값이 두 군데로 갈리기 때문에 여기 모았다:
-//  · 씬에 배치된 버튼 → 인스펙터에 직렬화된 JuicyButton 필드 (에디터 스크립트가 이 상수로 덮는다)
-//  · 런타임에 만드는 버튼(OptionsMenu·PauseMenu) → AddComponent 직후 Apply()로 주입
+//  · 씬·프리팹에 배치된 버튼 → 인스펙터에 직렬화된 JuicyButton 필드. 에디터 도구
+//    (`Window > Blueberry Defense > UI 스킨 적용`)가 Apply()로 이 상수를 덮는다.
+//  · 코드가 직접 도는 트윈 → 상수만 읽어 쓴다(SkillTreeUI의 노드 호버).
 //
 // JuicyButton의 파라미터는 전부 private SerializeField라 코드에서 직접 대입할 수 없다.
 // 외부 패키지(JuicyUI)는 건드리지 않기로 했으므로 리플렉션으로 주입한다.
@@ -29,10 +30,6 @@ public static class JuicyTuning
     // (JuicyButton은 visualRoot가 있어야 회전을 켠다. 값은 남겨두되 shakeOnHover=false로 잠근다.)
     public const float ShakeStrength = 7f;
     public const bool ShakeOnHover = false;
-
-    // 패널 열고 닫힘(UITransition.duration). 딤이 반투명한 전체화면 패널은 페이드만 쓴다.
-    public const float PanelDuration = 0.13f;      // 타이틀 전체화면 패널(페이드)
-    public const float ModalDuration = 0.2f;       // 안쪽 창이 팝하는 인게임 모달
 
     private static readonly string[] FieldNames =
         { "hoverScale", "squashX", "squashDuration", "hoverDuration", "hoverReturnDuration",
@@ -66,32 +63,4 @@ public static class JuicyTuning
         if (f != null) f.SetValue(button, value);
     }
 
-    // 런타임 생성 버튼용 — AddComponent + 손맛 주입을 한 번에.
-    public static JuicyButton Attach(GameObject go)
-    {
-        var jb = go.AddComponent<JuicyButton>();
-        Apply(jb);
-        return jb;
-    }
-
-    // JuicyButton은 스케일을 pivot 기준으로 키운다. pivot이 끝(0 또는 1)에 있으면 버튼이
-    // 중앙이 아니라 한쪽 끝을 축으로 자라 보인다. 배치가 끝난 뒤 pivot만 중앙으로 옮긴다.
-    // ⚠️ 배치 함수(Bottom/Anchored 등)가 pivot을 덮으므로 반드시 **배치 다음에** 부를 것.
-    public static void CenterPivot(GameObject go)
-    {
-        if (go == null) return;
-        var rt = go.GetComponent<RectTransform>();
-        if (rt == null) return;
-
-        Vector2 delta = new Vector2(0.5f, 0.5f) - rt.pivot;
-        if (delta == Vector2.zero) return;
-
-        // anchorMin==anchorMax(한 점 앵커)일 때만 pivot이 화면 위치를 정한다 —
-        // 그 경우에만 anchoredPosition으로 되밀어 보이는 위치를 유지한다.
-        // stretch 앵커·레이아웃 자식은 pivot이 위치에 관여하지 않으므로 보정하지 않는다.
-        bool pointAnchor = rt.anchorMin == rt.anchorMax;
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        if (pointAnchor)
-            rt.anchoredPosition += new Vector2(delta.x * rt.rect.width, delta.y * rt.rect.height);
-    }
 }

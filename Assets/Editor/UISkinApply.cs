@@ -14,7 +14,8 @@ using TMPro;
 // 씬을 손으로 고치면 다음 실행에 되돌아가므로, 예외를 두고 싶으면 Skip 목록에 넣을 것.
 //
 // 🧰 이 도구가 **전 화면의 UI 스킨을 단독 소유**한다:
-//  - 런타임에 코드로 짓는 UI(설정·일시정지·컬렉션)는 씬이 아니라 `Assets/Resources/UISkin.asset`을 본다.
+//  - 런타임 코드가 `Assets/Resources/UISkin.asset`에서 집어 가는 것은 이제 **글자(폰트·머티리얼)와 강조색뿐**이다.
+//    설정·일시정지·컬렉션은 프리팹 주도로 바뀌어 판·바 스프라이트를 런타임에 입히지 않는다(UISkin.cs 머리말 참고).
 //    그 에셋은 손으로 만들지 말고 `Window > Blueberry Defense > UI 스킨 에셋 만들기`로 굽는다.
 //  - 버튼 손맛(호버 배율·idleDim)은 `JuicyTuning.cs`가 단독 소유 — 인스펙터에서 고쳐도 이 도구가 덮는다.
 //  - ⚠️ `UISkin.FitSlice`는 아직 `img.type = Sliced`를 강제한다. CLAUDE.md §5-1("무조건 Simple")과
@@ -45,7 +46,6 @@ public static class UISkinApply
     // 게이지 3겹 — 2026-08-25에 사용자가 그려 넣은 세트. 바탕(_색칠) → 채움(_내용물) → 테두리(_투명) 순으로 겹친다.
     const string SHealthFill  = "체력바_내용물";
     const string SHealthOuter = "체력바_투명";
-    const string OSquare  = "정사각형_투명";              // 속 빈 테두리 — 선택 하이라이트
     const string OPillow  = "베개같이생긴네모_투명";
 
     // UI 그림은 2026-08-24에 Assets/Sprites/UI/ 로 모았다(29장 = 위 틀 22 + UI_* 5 + IconFrame/IconMask).
@@ -65,15 +65,12 @@ public static class UISkinApply
         public string sprite;   // null이면 딤(스프라이트 없이 색만)
         public float alpha;     // 딤 전용. <0 = 전체 딤(FullDimAlpha)
         public Color tint;      // 기본은 Skin. 게이지 트랙처럼 어두워야 하는 것만 따로 준다
-        public bool back;       // 형제 맨 앞으로 = 뒤에 깔린다
     }
 
     static Target S(string path, string sprite) =>
         new Target { path = path, sprite = sprite, alpha = -1f, tint = Skin };
     static Target S(string path, string sprite, Color tint) =>
         new Target { path = path, sprite = sprite, alpha = -1f, tint = tint };
-    static Target Back(string path, string sprite, Color tint) =>
-        new Target { path = path, sprite = sprite, alpha = -1f, tint = tint, back = true };
     static Target D(string path, float alpha) =>
         new Target { path = path, sprite = null, alpha = alpha, tint = Skin };
     static Target DFull(string path) =>
@@ -85,14 +82,13 @@ public static class UISkinApply
     // ── 무엇을 무엇으로 (경로는 씬 루트부터) ──
     static readonly Target[] TitleTargets =
     {
-        // 🔴 그림은 비율이 아니라 **속이 얼마나 남나**로 고른다. 칸 높이 90에서는 어떤 그림도 42pt 라벨을 못 담는다
-        //    (제일 얇은 경치바조차 속 36). 가로길쭉길쭉이는 속이 14px이라 글자가 테두리를 28px 침범하고 있었다
-        //    = 8/24 플레이스루의 "텍스트 위아래 여백 부족". 아래 TitleRectFixes가 칸을 340x112로 잡아 속 281x54를 만든다.
-        S("Canvas/Btn_플레이",     SBar),       // 361x103, 테두리 세로 58 → 340x112 칸에서 속 281x54
-        S("Canvas/Btn_업그레이드", SBar),
-        S("Canvas/Btn_컬렉션",     SBar),
-        S("Canvas/Btn_설정",       SBar),
-        S("Canvas/Btn_종료",       SBar),
+        // ⚠️ 메인 메뉴 버튼 5개(플레이·업그레이드·컬렉션·설정·종료)는 이 표와 아래 TitleRectFixes에서 **뺐다.**
+        //    ① 경로가 낡아 한 번도 안 걸렸다 — 이제 `Canvas/Layout/Btn_*`이다(VerticalLayoutGroup 아래로 들어갔다).
+        //    ② 되살리면 안 된다 — 지금 그 버튼들은 `가로길쭉이_색칠`을 **Simple + 원본 361x103**으로 쓴다.
+        //       이 도구는 FitSlice로 Sliced를 강제하고 옛 RectFix는 340x112(비원본)로 줄였는데,
+        //       둘 다 CLAUDE.md §5-1("무조건 Simple + Set Native Size")과 어긋난다.
+        //       (옛 기록: 칸 높이 90에서는 어떤 그림도 42pt 라벨을 못 담아 340x112로 키웠던 것 —
+        //        지금은 세로 배치를 VerticalLayoutGroup이 잡으므로 그 계산 자체가 필요 없다.)
 
         DFull("Canvas/SkillTreeRoot"),
         S("Canvas/SkillTreeRoot/CloseButton",        SBarShort), // 120x56 (2.14)
@@ -100,33 +96,29 @@ public static class UISkinApply
         S("Canvas/SkillTreeRoot/UnlockPoster/Panel", SAngular),  // 230x280 (0.82)
 
         // ── 캐릭터 선택 ──
+        // ⚠️ 아래 목록에서 씬에 없는 경로 넷을 걷어냈다(전부 "?? 없음"만 찍고 있었다).
+        //    적혀 있던 이름 → 씬의 실제 이름: Frame → SelectGlow(카드 하이라이트는 이제 코드가 직접 켠다) ·
+        //    Border(캐릭터 카드엔 없다. 맵 카드에만 있다) · BackButton → CloseButton ·
+        //    CharacterHeader → TitleBox · SkillIconBox → SkillBox/SkillIconBox.
+        //    다시 넣으려면 실제 이름으로 쓸 것 — 넣는 순간 그 오브젝트의 그림이 바뀐다.
         S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Bg",     SSquare),  // 240x246
-        S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Border", OSquare),  // 그림이 테두리를 넘지 않게 덮는 겹
-        // 🔴 호버 표시는 **카드 뒤에 까는 노란 판**이다. _투명 그림은 순수 검정이라 색을 곱해도
-        //    노랗게 물들지 않는다(옛 UI_CornerBracket은 흰 부분이 있어 물들었다).
-        Back("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", SSquare, Highlight),
         S("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/NameBox", SBar),    // 200x54
-        S("Canvas/CharacterSelectRoot/BackButton",      SBar),      // 185x54
-        S("Canvas/CharacterSelectRoot/CharacterHeader", SBar),      // 300x87
-        S("Canvas/CharacterSelectRoot/SkillIconBox",    SIconBox),  // 130x134
         S("Canvas/CharacterSelectRoot/SelectButton",    SBar),      // 267x78
         // 460x308 (1.49)에 베개(373x195)를 쓰면 가로 1.23·세로 1.58배 **확대**라 테두리가 뭉갠다.
         // 개큰네모(721x289)면 가로는 축소·세로만 1.07배라 확대량이 거의 없다 — 비율은 조금 멀어져도 이쪽이 낫다.
         S("Canvas/CharacterSelectRoot/SkillBox",        SBigBox),   // 460x308 (1.49)
 
         // ── 맵 선택 ──
+        // ⚠️ 여기서도 셋을 걷어냈다 — StageTab(없어짐) · Frame → SelectGlow · StartButton/BackButton →
+        //    SelectButton/CloseButton. 위 캐릭터 선택 주석과 같은 이유다.
         S("Canvas/MapSelectRoot/MainPanel",                             SPillow),  // 1590x1010 (1.57)
-        S("Canvas/MapSelectRoot/MainPanel/StageTab",                    SBar),     // 261x76
         S("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Bg",      SPillow), // 340x228
         S("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Border",  OPillow),
-        Back("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Frame", SPillow, Highlight),
         S("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/NameBox", SBar),
         S("Canvas/MapSelectRoot/MainPanel/AscensionRow",         SPillow),  // 460x308
         S("Canvas/MapSelectRoot/MainPanel/AscensionRow/AscPrev", SRound),   // 54x56
         S("Canvas/MapSelectRoot/MainPanel/AscensionRow/AscNext", SRound),
-        S("Canvas/MapSelectRoot/MainPanel/StartButton", SBar),
         S("Canvas/MapSelectRoot/MainPanel/MapHeader",   SBar),
-        S("Canvas/MapSelectRoot/MainPanel/BackButton",  SBar),
         S("Canvas/MapSelectRoot/ChangeCharButton",      SBar),
     };
 
@@ -173,14 +165,6 @@ public static class UISkinApply
         EditorUtility.SetDirty(rt);
     }
 
-    // 선택 하이라이트의 네 모서리 꺾쇠(UI_CornerBracket) — 새 세트엔 대응 그림이 없다.
-    // 속 빈 테두리(_투명) 한 겹이 그 역할을 하므로 **끄기만** 한다(지우지 않아 되돌릴 수 있다).
-    static readonly string[] CornerBracketParents =
-    {
-        "Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame",
-        "Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Frame",
-    };
-
     // 게이지: 채움(Filled) 자식을 테두리 두께만큼 안으로 밀어 넣는다.
     static readonly string[] GaugePaths = { "Canvas/HUD/HealthPanel", "Canvas/HUD/ExpBar" };
 
@@ -224,22 +208,10 @@ public static class UISkinApply
         // NameBox는 앵커가 카드 하단(0.5,0)·pivot 위쪽이라 카드가 커져도 저절로 하단에 붙는다 — 크기만 키운다.
         // 가로길쭉이는 아래 그림자 띠가 두꺼워(ppu 보정 후 22px) 54면 글자가 들어갈 안쪽이 21px뿐이다 — 60으로.
         new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/NameBox", 200,  60),
-        // 호버 판은 카드 뒤에 깔린다. 여백 49 → rect 289, 그림의 투명 여백 8%를 빼면 보이는 판이 266이라
-        // 카드 밖으로 13px만 나오는 얇은 테두리가 된다. 옛 70(=rect 215, 밖으로 26px)이 "두껍다"는 지적을 받았다.
-        new RectFix("Canvas/CharacterSelectRoot/CardContainer/CardTemplate/Frame", 49, 49),
-        new RectFix("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Frame", 74, 70),
         // 이 Border는 카드보다 살짝 커야 테두리처럼 보이는데, 그 여백을 **localScale 1.04/1.06으로** 내고 있었다.
         // 스케일은 픽셀을 통째로 늘려 9-slice 재단을 무력화한다 — 같은 여백을 sizeDelta로 낸다(340x228 → 354x242).
         // (회의록 "모든 UI 패널·버튼의 스케일 변경 금지". UI 전체를 훑어 localScale != 1인 건 이 하나뿐이었다.)
         new RectFix("Canvas/MapSelectRoot/MainPanel/CardContainer/CardTemplate/Border", 14, 14),
-
-        // 메인 메뉴 5칸: 440x90 → 340x112. 폭은 "가로로 지나치게 길다"를, 높이는 "위아래 여백 부족"을 푼다.
-        // 세로 간격 130(틈 18). 위로는 TitleImage 아래끝 174에서 18px, 아래로는 화면 바닥까지 64px 남는다.
-        new RectFix("Canvas/Btn_플레이",     340, 112, 0,  100),
-        new RectFix("Canvas/Btn_업그레이드", 340, 112, 0,  -30),
-        new RectFix("Canvas/Btn_컬렉션",     340, 112, 0, -160),
-        new RectFix("Canvas/Btn_설정",       340, 112, 0, -290),
-        new RectFix("Canvas/Btn_종료",       340, 112, 0, -420),
     };
 
     static readonly RectFix[] GameRectFixes =
@@ -250,43 +222,17 @@ public static class UISkinApply
         // 테두리를 입히면 40px 중 24px을 테두리가 먹어 막대가 16px만 남는다 — 체력바와 같은 높이로.
         new RectFix("Canvas/HUD/ExpBar", 900, 54),
 
-        // ── 진화창: 쓰는 건 2×2인데 좌표가 3×3 시절 그대로라 **왼쪽 위로 쏠려** 있었다.
-        //    (열 -460/0 · 행 220/-40 → 오른쪽 3분의 1과 아래 3분의 1이 통째로 빈다.)
-        //    쓰는 4칸만 화면 중앙으로 옮기고, 남는 폭만큼 칸을 키워 설명이 덜 감기게 한다.
-        //    ⚠️ 안 쓰는 T3 열·P2 행은 건드리지 않는다 — 3티어로 되돌릴 때 좌표가 남아 있어야 한다.
-        new RectFix("Canvas/EvolutionPanel/Window/SkillIcon",     130, 130,    0,  400),
-        new RectFix("Canvas/EvolutionPanel/Window/SkillNameText", 800,  55,    0,  305),
-        new RectFix("Canvas/EvolutionPanel/Window/SubInfoText",   900,  40,    0,  258),
-
-        // 2026-08-25: 개큰네모를 620x290으로 **줄여 Sliced**로 쓰던 것을 원본 721x289 + Simple로 되돌렸다
-        // (CLAUDE.md §5-1). x는 ±410 — 721폭 두 장 사이에 화살표(80)가 들어갈 99px을 남긴 값이다.
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T1", 721, 289, -410,   45),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P0T2", 721, 289,  410,   45),
-        new RectFix("Canvas/EvolutionPanel/Window/Arrow_P0_0", 80,  60,    0,   45),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T1", 721, 289, -410, -285),
-        new RectFix("Canvas/EvolutionPanel/Window/Node_P1T2", 721, 289,  410, -285),
-        new RectFix("Canvas/EvolutionPanel/Window/Arrow_P1_0", 80,  60,    0, -285),
+        // ⚠️ 진화창(EvolutionPanel) 보정은 통째로 걷어냈다 — 경로가 씬과 하나도 안 맞아
+        //    **한 번도 실행된 적이 없다**(FindByPath가 매번 null → "?? 없음"만 찍혔다).
+        //    적혀 있던 이름 → 씬의 실제 이름:
+        //      Node_P0T1/P0T2/P1T1/P1T2 → Node_R0T1/R0T2/R1T1/R1T2   (P가 아니라 R = 루트)
+        //      Arrow_P0_0 / Arrow_P1_0  → Arrow_R0 / Arrow_R1
+        //      Window/SkillIcon         → Window/SkillBox/SkillIcon
+        //      Window/SkillNameText     → Window/SkillNameBox/SkillNameText
+        //      Window/SubInfoText       → Window/SkillNameBox/SubInfoText
+        //    지금 진화창은 아래 EvoNodePrefix 루프(노드 판에 개큰네모 입히기)만 실제로 손을 댄다.
+        //    다시 넣을 거면 **실제 이름으로** 쓰고, 넣는 순간 씬 좌표가 바뀌므로 한 번 확인하고 넣을 것.
     };
-
-    // 노드 안쪽(아이콘·제목·설명)은 4칸 모두 같은 배치라 접두사로 한 번에 잡는다.
-    //
-    // 🔴 옛 배치(Icon@92 · Title@32 · Desc 150@-60)는 **위아래로 테두리를 뚫고 있었다.**
-    //    노드 620x290에 개큰네모(721x289, 테두리 좌25·아래88·우23·위34)라 안쪽은 y[-57, +111] = 168px뿐인데,
-    //    아이콘이 위로 21px · 설명이 아래로 78px 넘어갔다(플레이스루 지적 "아이콘이 패널 밖으로 나간다").
-    //    아래 테두리 88px이 높이의 30%를 먹는 게 원인이라 세로로 셋을 쌓으면 어떻게 해도 안 들어간다.
-    //
-    // → 아이콘을 제목 **옆**으로 올려 한 줄을 아꼈다. 그래서 설명이 108px(4줄)을 쓴다.
-    //    진화 설명 144건을 전수로 재보니 평균 35.6자 · 최장 81자 = 570px/22pt 기준 **최대 4줄**이라 4줄이면 족하다.
-    //    (노드 4칸의 위치·크기와 2루트x2티어 구조는 그대로 둔다 — 여기서 고치는 건 칸 **안쪽**뿐이다.)
-    static readonly RectFix[] EvoNodeChildFixes =
-    {
-        new RectFix("Icon",         56,  56, -250,  83),
-        new RectFix("Title",       460,  36,   40,  83),
-        new RectFix("Description", 570, 108,    0,  -3),
-    };
-
-    static readonly string[] EvoUsedNodes =
-        { "Node_P0T1", "Node_P0T2", "Node_P1T1", "Node_P1T2" };
 
     // 글자 머티리얼을 건드리면 안 되는 것 — 전용 셰이더를 쓰는 데미지 숫자 계열.
     static readonly string[] FontMatSkip = { "pixelroborobo Num" };
@@ -303,7 +249,7 @@ public static class UISkinApply
         Debug.Log(CreateAsset());
     }
 
-    // 런타임 UI(설정·일시정지)가 집어 갈 `Assets/Resources/UISkin.asset`을 굽는다.
+    // 런타임 코드가 글자·강조색을 집어 갈 `Assets/Resources/UISkin.asset`을 굽는다.
     // 경로·파일명이 곧 배선이라 손으로 만들지 말 것 — 여기 값이 위 토큰과 같아야 두 쪽이 같은 옷이 된다.
     public static string CreateAsset()
     {
@@ -315,7 +261,7 @@ public static class UISkinApply
         bool isNew = skin == null;
         if (isNew) skin = ScriptableObject.CreateInstance<UISkin>();
 
-        // 런타임 코드 UI(설정·일시정지·갈림길 세로 카드·컬렉션)가 쓰는 5종.
+        // 판·바 스프라이트 5종 — 지금 런타임에서 읽는 코드는 없고 에셋의 기록으로만 남는다.
         skin.panel = Load(SpritePath(SPillow));  // 설정 980x850 · 일시정지 1760x940
         skin.bar = Load(SpritePath(SBar));
         skin.box = Load(SpritePath(SSquare));
@@ -385,14 +331,6 @@ public static class UISkinApply
             if (scene.name == "Battle")
             {
                 foreach (var f in GameRectFixes) ApplyRect(FindByPath(scene, f.path), f, sb);
-                foreach (var n in EvoUsedNodes)
-                {
-                    var node = FindByPath(scene, "Canvas/EvolutionPanel/Window/" + n);
-                    if (node == null) continue;
-                    foreach (var f in EvoNodeChildFixes)
-                        ApplyRect(node.transform.Find(f.path)?.gameObject, f, sb);
-                    OpaqueWhenDisabled(node, sb);
-                }
             }
 
             foreach (var t in table)
@@ -412,7 +350,6 @@ public static class UISkinApply
             if (scene.name == "Title")
             {
                 EnsureWallpaper(scene, sb);
-                RemoveCornerBrackets(scene, sb);
             }
 
             texts += SkinAllText(scene, sb);
@@ -485,23 +422,6 @@ public static class UISkinApply
         sb.AppendLine(report);
     }
 
-    // 🔴 잠긴 진화 노드가 **반투명**해 배경이 그대로 비치던 원인.
-    // uGUI `Selectable`은 interactable=false일 때 targetGraphic에 `disabledColor`를 곱하는데
-    // 기본값이 알파 0.5다. 잠김은 이미 어두운 판 색·회색 글자로 말하고 있으므로 알파는 1로 되돌린다.
-    // (맵·캐릭터의 잠긴 카드는 실루엣 연출이 의도라 건드리지 않는다.)
-    static void OpaqueWhenDisabled(GameObject go, StringBuilder sb)
-    {
-        var btn = go.GetComponent<Button>();
-        if (btn == null) return;
-        var c = btn.colors;
-        if (Mathf.Approximately(c.disabledColor.a, 1f)) return;
-        Undo.RecordObject(btn, "UI Skin");
-        c.disabledColor = new Color(c.disabledColor.r, c.disabledColor.g, c.disabledColor.b, 1f);
-        btn.colors = c;
-        EditorUtility.SetDirty(btn);
-        sb.AppendLine("  잠김 알파 " + go.name + " → 1.0");
-    }
-
     static void ApplyRect(GameObject go, RectFix f, StringBuilder sb)
     {
         if (go == null) { sb.AppendLine("  ?? 없음: " + f.path); return; }
@@ -547,31 +467,9 @@ public static class UISkinApply
         // _투명은 순수 검정 테두리다 — 색을 곱하면 그대로 검정이라 원래 색(흰색)을 지킨다.
         img.color = t.sprite.EndsWith("_투명") ? Color.white : t.tint;
         UISkin.FitSlice(img); // 테두리 두께 규칙은 런타임 UI와 한 벌만 쓴다
-        if (t.back) go.transform.SetAsFirstSibling(); // 뒤에 깔리는 판(호버 하이라이트)
         sb.AppendLine("  " + go.name + " ← " + s.name + " (ppu×" + img.pixelsPerUnitMultiplier.ToString("0.00") + ")");
         EditorUtility.SetDirty(img);
         return true;
-    }
-
-    // 선택 하이라이트의 꺾쇠 4개(UI_CornerBracket)를 **지운다**.
-    // 새 세트엔 대응 그림이 없고, 속 빈 테두리(_투명) 한 겹이 같은 역할을 한다.
-    // ⚠️ 되돌리려면: Frame 아래 TL/TR/BL/BR 네 개를 만들어 `UI_CornerBracket`을 색 #FFE04D로 깔고
-    //    캐릭터 카드는 57x57, 맵 카드는 71x71로 네 모서리에 앉히면 된다.
-    static void RemoveCornerBrackets(Scene scene, StringBuilder sb)
-    {
-        foreach (string parent in CornerBracketParents)
-        {
-            var frame = FindByPath(scene, parent);
-            if (frame == null) continue;
-            var doomed = new List<GameObject>();
-            foreach (Transform c in frame.transform)
-            {
-                var img = c.GetComponent<Image>();
-                if (img != null && img.sprite != null && img.sprite.name.StartsWith("UI_")) doomed.Add(c.gameObject);
-            }
-            foreach (var go in doomed) Undo.DestroyObjectImmediate(go);
-            if (doomed.Count > 0) sb.AppendLine("  꺾쇠 " + doomed.Count + "개 삭제 (" + frame.name + ")");
-        }
     }
 
     // 게이지의 채움 막대를 테두리 안쪽으로 밀어 넣는다.

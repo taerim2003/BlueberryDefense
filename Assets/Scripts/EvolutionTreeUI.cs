@@ -62,6 +62,10 @@ public class EvolutionTreeUI : MonoBehaviour
     // 진화 노드 카드에 붙는 juice 연출(등장 pop-in, 진화 가능 노드 강조 펄스)용 트윈 — 재오픈/닫기 시 정리
     private readonly List<Tween> nodeTweens = new List<Tween>();
 
+    // 씬에 배치된 노드의 원래 자리. 패시브(1차뿐)일 때 남은 칸을 가운데로 옮겼다가 되돌리려면 필요하다.
+    // 🔴 **Awake에서 한 번만** 읽는다 — 옮긴 뒤에 다시 읽으면 가운데 좌표가 "원래 자리"가 되어 창을 열 때마다 밀린다.
+    private Vector2[] nodeHome;
+
     private void Awake()
     {
         Instance = this;
@@ -84,6 +88,11 @@ public class EvolutionTreeUI : MonoBehaviour
                 nodes[i].button.onClick.AddListener(() => OnRouteClicked(capturedRoute));
             }
         }
+
+        nodeHome = new Vector2[nodes != null ? nodes.Length : 0];
+        for (int i = 0; i < nodeHome.Length; i++)
+            if (nodes[i] != null && nodes[i].button != null)
+                nodeHome[i] = ((RectTransform)nodes[i].button.transform).anchoredPosition;
 
         if (backButton != null) backButton.onClick.AddListener(Cancel);
     }
@@ -123,9 +132,15 @@ public class EvolutionTreeUI : MonoBehaviour
 
         skillNameText.text = Loc.F("ui.evotree.header", name, level);
 
+        // 🔴 패시브는 2차 진화가 없다(2026-09-08) — 칸이 2개뿐이라 T2 칸과 화살표를 끄고 남은 칸을 가운데로 옮긴다.
+        int maxTier = isPassiveMode
+            ? EvolutionRoutes.MaxStageFor(currentPassive.Id)
+            : EvolutionRoutes.MaxStageFor(currentSkill.Id);
+        LayoutNodes(maxTier);
+
         if (subInfoText != null)
         {
-            subInfoText.text = stage >= EvolutionRoutes.MaxStage
+            subInfoText.text = stage >= maxTier
                 ? Loc.T("ui.evotree.allDone")
                 : stage == 0
                     ? Loc.T("ui.evotree.pickRoute")
@@ -151,26 +166,39 @@ public class EvolutionTreeUI : MonoBehaviour
                 ? EvolutionRoutes.RoutePrereqName(currentPassive.Id, route)
                 : EvolutionRoutes.RoutePrereqName(currentSkill.Id, route);
 
-            for (int tierIdx = 0; tierIdx < 2; tierIdx++)
+            // 2차 열쇠 — 지정된 진화체를 먼저 만들어 뒀어야 2차 칸이 열린다(2026-09-08 신설).
+            // 패시브는 2차가 없어 이 조건이 닿지 않는다.
+            bool keyReady = isPassiveMode || skills.IsStage2KeyReady(currentSkill.Id, route);
+            string keyName = isPassiveMode ? null : EvolutionRoutes.Stage2PrereqName(currentSkill.Id, route);
+
+            for (int tierIdx = 0; tierIdx < maxTier; tierIdx++)
             {
                 int tier = tierIdx + 1;
                 NodeButton node = nodes[route * 2 + tierIdx];
                 if (node == null) continue;   // 배선이 빈 칸 — Awake가 어느 칸인지 이미 찍었다
 
+                bool keyMissing = tier >= 2 && !keyReady;
                 bool owned = !routeAbandoned && stage >= tier;
-                bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1;
+                bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1 && !keyMissing;
                 bool locked = !owned && !available;
 
-                SetIcon(node.icon, RouteIcon(route) ?? GetIcon(pathIconSprites, route));
+                // 🔴 스킬트리의 "2차 진화 개방"(New_Evolution2)을 안 샀으면 2차 칸은 **내용을 감춘다** —
+                //    이름·효과 대신 자물쇠만 보인다(2026-09-07 사용자 결정). 무엇이 오는지 미리 다 보여주면
+                //    그 노드를 살 이유가 없어진다. 이미 얻은 칸(owned)은 그대로 보여준다.
+                //    ⚠️ **진화 트리거 자체는 `CanEvolve`가 이미 막는다** — 여기는 보여주기만 담당한다.
+                bool sealed2 = tier >= 2 && !owned && !MetaBonuses.Evolution2Unlocked;
+                if (sealed2) locked = true;
+
+                SetIcon(node.icon, sealed2 ? null : RouteIcon(route) ?? GetIcon(pathIconSprites, route));
                 if (node.frame != null)
-                    node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
+                    node.frame.color = owned ? (tier == maxTier ? GoldFrameColor : OwnedFrameColor)
                                              : (locked ? LockedFrameColor : BaseFrameColor);
                 if (node.icon != null)
                     node.icon.color = locked ? new Color(0.55f, 0.55f, 0.55f, 1f) : Color.white;
 
                 if (node.title != null)
                 {
-                    node.title.text = RouteTitle(route, tier);
+                    node.title.text = sealed2 ? Loc.T("ui.evotree.sealed") : RouteTitle(route, tier);
                     node.title.color = locked ? LockedTextColor : Color.white;
                 }
 
@@ -178,8 +206,11 @@ public class EvolutionTreeUI : MonoBehaviour
                 if (node.description != null)
                 {
                     // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
-                    node.description.text = routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
+                    node.description.text = sealed2 ? Loc.T("ui.evotree.sealedDesc")   // 효과를 아예 안 붙인다
+                                          : routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
                                           : !routeUnlocked ? Loc.F("ui.evotree.lockedPrereq", prereqName) + " " + effect
+                                          // 열쇠는 **어느 진화체를 만들어야 하는지**를 이름으로 알려준다 — 안 그러면 왜 잠겼는지 알 길이 없다.
+                                          : keyMissing && !owned ? Loc.F("ui.evotree.lockedKey", keyName) + " " + effect
                                           : locked ? Loc.T("ui.evotree.locked") + " " + effect
                                           : effect;
                     node.description.color = locked ? LockedTextColor : Color.white;
@@ -190,7 +221,8 @@ public class EvolutionTreeUI : MonoBehaviour
                 AnimateNode((RectTransform)node.button.transform, route * 2 + tierIdx, available, alreadyOpen);
             }
 
-            if (arrows != null && route < arrows.Length && arrows[route] != null)
+            // 화살표는 T1→T2를 잇는 선이다 — 2차가 없으면(패시브) 이을 데가 없어 LayoutNodes가 통째로 껐다.
+            if (maxTier >= 2 && arrows != null && route < arrows.Length && arrows[route] != null)
                 arrows[route].color = (!routeAbandoned && stage >= 1) ? ActiveArrowColor : InactiveArrowColor;
         }
 
@@ -209,23 +241,51 @@ public class EvolutionTreeUI : MonoBehaviour
         ? EvolutionRoutes.EvolvedName(currentPassive.Id, route, tier)
         : EvolutionRoutes.EvolvedName(currentSkill.Id, route, tier);
 
-    // 새 티어의 설명: 한 번의 진화가 옛 티어 여러 개를 한꺼번에 주므로 설명도 이어 붙인다.
-    private string RouteEffect(int route, int tier)
+    // 차수 수에 맞춰 칸을 켜고 끈다. 2차가 없으면(패시브) T2 칸과 화살표를 끄고,
+    // 남은 T1 칸을 **창 한가운데**로 옮긴다.
+    // 🔴 두 칸의 중점이 아니라 **창 중심**이다. 4칸 배치 자체가 창 중심보다 74px 왼쪽에 있어서
+    //    중점으로 맞추면 제목 박스와 어긋나 보인다(실측 2026-09-08: 칸 886 vs 제목 960).
+    // ⚠️ anchoredPosition은 앵커 기준 오프셋이라 앵커가 어디든 맞도록 부모 rect로 역산한다 —
+    //    지금 노드는 앵커가 (0,1)(좌상단)이라 "960"을 손으로 박으면 앵커를 바꾸는 순간 틀어진다.
+    private void LayoutNodes(int maxTier)
     {
-        int path = isPassiveMode
-            ? EvolutionRoutes.RoutePath(currentPassive.Id, route)
-            : EvolutionRoutes.RoutePath(currentSkill.Id, route);
+        if (nodes == null || nodeHome == null) return;
+        bool showT2 = maxTier >= 2;
 
-        List<string> parts = new List<string>();
-        foreach (int legacyTier in EvolutionRoutes.LegacyTiersFor(tier))
+        for (int route = 0; route < 2; route++)
         {
-            string text = isPassiveMode
-                ? PlayerPassives.DescribePathEffect(currentPassive.Id, path, legacyTier)
-                : skills.GetPathEffectText(currentSkill.Id, path, legacyTier);
-            if (!string.IsNullOrEmpty(text)) parts.Add(text);
+            int i1 = route * 2, i2 = route * 2 + 1;
+            if (i2 >= nodes.Length) continue;
+
+            if (nodes[i2] != null && nodes[i2].button != null)
+                nodes[i2].button.gameObject.SetActive(showT2);
+
+            if (nodes[i1] == null || nodes[i1].button == null) continue;
+            RectTransform rt = (RectTransform)nodes[i1].button.transform;
+            rt.gameObject.SetActive(true);
+            rt.anchoredPosition = showT2 ? nodeHome[i1] : new Vector2(CenterAnchoredX(rt), nodeHome[i1].y);
         }
-        return string.Join("\n", parts);
+
+        if (arrows != null)
+            foreach (TMP_Text a in arrows)
+                if (a != null) a.gameObject.SetActive(showT2);
     }
+
+    // 부모 rect의 가로 중심에 pivot을 놓기 위한 anchoredPosition.x.
+    private static float CenterAnchoredX(RectTransform rt)
+    {
+        RectTransform parent = rt.parent as RectTransform;
+        if (parent == null) return rt.anchoredPosition.x;
+        Rect r = parent.rect;
+        float anchorX = r.xMin + r.width * rt.anchorMin.x;   // 앵커가 있는 부모 로컬 x
+        return r.center.x - anchorX;
+    }
+
+    // 한 칸 = 한 줄. 예전엔 1차 칸이 옛 티어 1·2를 이어 붙여 두 줄로 그렸는데,
+    // 2026-09-08에 그 두 번째 줄이 폐지돼 문구가 칸마다 하나씩만 있다.
+    private string RouteEffect(int route, int tier) => isPassiveMode
+        ? PlayerPassives.DescribePathEffect(currentPassive.Id, route, tier)
+        : PlayerSkills.DescribePathEffect(currentSkill.Id, route, tier);
 
     private void OnRouteClicked(int route)
     {

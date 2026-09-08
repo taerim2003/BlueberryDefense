@@ -41,6 +41,16 @@ public class SkillProgression : ScriptableObject
     public float baseCooldown = 1f;
     public float baseDamage = 6f;
 
+    // 🔴 아래 네 축은 **0이면 "이 스킬은 이 축을 안 쓴다"** 는 뜻이라 코드·프리팹 기본값을 그대로 둔다.
+    //    그래서 기존 에셋(값이 없는 상태)은 지금과 100% 같게 돈다 — 태리미가 값을 넣는 순간부터 에셋이 이긴다.
+    //    ⚠️ `baseDuration`은 **스킬의 주 지속시간 하나**만 가리킨다. 산탄처럼 지속이 둘인 스킬
+    //    (버프 7초 · 전탄발사 2초)은 **버프 쪽**만 여기서 정한다 — 한 값으로 둘을 움직이면 반대 방향 요구가 충돌한다.
+    [Header("시작값 — 축을 안 쓰면 0(코드 기본값 유지)")]
+    public float baseDuration = 0f;   // 지속시간(초): 회오리 소용돌이 수명 · 산탄 버프 · 낙뢰 폭풍
+    public int baseHits = 0;          // 한 캐스트가 때리는 횟수(0이면 기본공격=3, 그 외=1)
+    public int basePierce = 0;        // 관통 횟수 시작값
+    public int baseProjectiles = 0;   // 추가 투사체 시작값
+
     [Header("레벨업 커브 (levels[0]=1→2레벨, [1]=2→3레벨 … 범위 밖=기본 규칙 폴백)")]
     public LevelUpStep[] levels;
 

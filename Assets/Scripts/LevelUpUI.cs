@@ -23,10 +23,6 @@ public class LevelUpUI : MonoBehaviour
         // 진화 연쇄(레벨업 후 진화창)·보물상자 에스컬레이션이 대상 스킬/패시브를 식별하기 위한 정보
         public ActiveSkillId? SkillId;
         public PassiveSkillId? PassiveId;
-        public bool IsEssence;
-        // 갈림길의 진화 카드에만 채운다 — 카드 아래에 "무엇 + 무엇" 짝을 미리 보여준다.
-        // 바깥 리스트 = 스킬(화면의 한 줄), 안쪽 = 그 스킬의 열린 루트들.
-        public List<List<(Sprite target, Sprite prereq)>> ComboPreview;
     }
 
     [SerializeField] private GameObject panel;
@@ -123,8 +119,6 @@ public class LevelUpUI : MonoBehaviour
     private int pendingTreasures;
     private int pendingEvolutions;
 
-    private Button[] optionButtons;
-
     // 보물상자: 선택 없이 굴려서 나온 만큼 자동 레벨업(뱀서식). 보통 1개, 운 좋으면 3개, 더 좋으면 5개.
     private const float TreasureEscalateChance = 0.45f; // 1 → 3 → 5로 한 단계 더 올라갈 확률
     private const int TreasureMaxRolls = 5;
@@ -160,8 +154,6 @@ public class LevelUpUI : MonoBehaviour
 
         // 진화 가능 레벨업 강조용 노란 테(기본 꺼짐)
         optionGlows = new[] { MakeEvolveGlow(optionButtonA), MakeEvolveGlow(optionButtonB), MakeEvolveGlow(optionButtonC) };
-
-        optionButtons = new[] { optionButtonA, optionButtonB, optionButtonC };
     }
 
     // 카드 테두리 바깥으로 노란 테가 나오는 양(사방).
@@ -320,7 +312,6 @@ public class LevelUpUI : MonoBehaviour
         if (optionGlows != null && optionGlows[index] != null)
             optionGlows[index].SetActive(option != null && option.IsEvolution);
         if (option != null) SetRow(title, level, desc, icon, option);
-        SetComboPreview(desc, option?.ComboPreview);
     }
 
     // 갈림길에서 진화를 골라 들어왔을 때만 뜨는 되돌아가기(X).
@@ -347,141 +338,6 @@ public class LevelUpUI : MonoBehaviour
     {
         yield return new WaitWhile(() => panel.activeSelf);
         ShowTreasureChoice();
-    }
-
-    // ── 진화 카드 조합 미리보기 ──────────────────────────────────────────────
-    // 세로 카드의 **바닥에 박아 둔다**(설명 길이와 무관하게 늘 같은 자리 = 눈이 찾기 쉽다).
-    private const string ComboRowName = "ComboPreview";
-    private const float ComboIconSize = 46f;      // 아이콘 한 변 — 한 줄에 욱여넣지 않고 크게 보여준다
-    private const float ComboPlusWidth = 16f;     // 짝 사이 "+" 자리
-    private const float ComboEntryGap = 14f;      // 짝과 짝 사이(가로)
-    private const float ComboLineGap = 8f;        // 줄과 줄 사이(세로)
-    // 한 줄 최대 폭 — 카드(길쭉큰네모 900x210, 안쪽 849)의 설명 글자 폭(Label 704)에 맞춘다.
-    private const float ComboRowMaxWidth = 680f;
-    private const int ComboMaxPerLine = 2;        // 한 줄에 최대 두 짝 — 스킬 하나의 루트가 둘뿐이라 이걸로 딱 맞는다
-    private const int ComboMaxLines = 4;          // 이보다 많아지면 그때 전체를 줄인다
-    private const float ComboRowYOffset = 14f;    // 카드 바닥에서 띄우는 거리
-
-    private static float ComboEntryWidth(bool paired) =>
-        paired ? ComboIconSize * 2f + ComboPlusWidth : ComboIconSize;
-
-    // 스킬 묶음을 줄로 편다 — **한 스킬이 한 줄**을 차지한다(폭이 남아도 다음 스킬을 끌어올리지 않는다).
-    // 루트가 셋 이상인 스킬이 생기면 그때만 그 스킬 안에서 줄이 나뉜다.
-    private static List<List<(Sprite target, Sprite prereq)>> ComboLines(
-        List<List<(Sprite target, Sprite prereq)>> groups)
-    {
-        var lines = new List<List<(Sprite target, Sprite prereq)>>();
-        foreach (var g in groups)
-            for (int i = 0; i < g.Count; i += ComboMaxPerLine)
-                lines.Add(g.GetRange(i, Mathf.Min(ComboMaxPerLine, g.Count - i)));
-        return lines;
-    }
-
-    private void SetComboPreview(TMP_Text desc, List<List<(Sprite target, Sprite prereq)>> groups)
-    {
-        if (desc == null) return;
-        RectTransform card = desc.rectTransform.parent as RectTransform; // 설명의 부모 = 카드(버튼)
-        if (card == null) return;
-
-        // 같은 프레임에 다시 만들기 때문에 Destroy(지연 파괴)만으론 Find가 옛것을 잡는다 — 이름을 먼저 뗀다.
-        Transform old = card.Find(ComboRowName);
-        if (old != null) { old.name = ComboRowName + "_dead"; Destroy(old.gameObject); }
-
-        if (groups == null || groups.Count == 0) return;
-
-        // 줄 수는 스킬 수로 정해진다(폭과 무관). 줄이 너무 많을 때만 전체를 줄여 카드 안에 넣는다.
-        var lines = ComboLines(groups);
-        float scale = lines.Count > ComboMaxLines ? (float)ComboMaxLines / lines.Count : 1f;
-
-        float iconH = ComboIconSize * scale;
-        float totalH = lines.Count * iconH + (lines.Count - 1) * ComboLineGap * scale;
-
-        GameObject row = new GameObject(ComboRowName, typeof(RectTransform));
-        RectTransform rowRT = (RectTransform)row.transform;
-        // 카드 바닥 기준으로 앉힌다 — 설명이 몇 줄이든 미리보기 위치는 고정된다.
-        rowRT.SetParent(card, false);
-        rowRT.anchorMin = rowRT.anchorMax = rowRT.pivot = new Vector2(0.5f, 0f);
-        rowRT.anchoredPosition = new Vector2(0f, ComboRowYOffset);
-        rowRT.sizeDelta = new Vector2(ComboRowMaxWidth, totalH);
-
-        for (int li = 0; li < lines.Count; li++)
-        {
-            var line = lines[li];
-
-            // 줄마다 실제 폭을 재서 가운데 정렬한다(짝이 하나뿐인 줄도 치우치지 않게).
-            float lineW = 0f;
-            for (int k = 0; k < line.Count; k++)
-            {
-                lineW += ComboEntryWidth(line[k].prereq != null) * scale;
-                if (k > 0) lineW += ComboEntryGap * scale;
-            }
-
-            float x = -lineW * 0.5f;
-            float y = totalH * 0.5f - iconH * 0.5f - li * (iconH + ComboLineGap * scale);
-            float half = iconH * 0.5f;
-
-            for (int k = 0; k < line.Count; k++)
-            {
-                (Sprite target, Sprite prereq) c = line[k];
-                float w = ComboEntryWidth(c.prereq != null) * scale;
-                AddComboIcon(rowRT, c.target, new Vector2(x + half, y), scale);
-                if (c.prereq != null)
-                {
-                    AddComboPlus(rowRT, new Vector2(x + w * 0.5f, y), scale);
-                    AddComboIcon(rowRT, c.prereq, new Vector2(x + w - half, y), scale);
-                }
-                x += w + ComboEntryGap * scale;
-            }
-        }
-    }
-
-    private void AddComboIcon(RectTransform parent, Sprite sprite, Vector2 center, float scale)
-    {
-        RectTransform rt = NewComboChild(parent, "Icon", center);
-        rt.sizeDelta = Vector2.one * (ComboIconSize * scale);
-
-        // HUD 스킬 슬롯과 같은 틀을 깔아 준다 — 도트 아이콘이 어두운 카드 배경에 묻히지 않게.
-        Image frame = rt.gameObject.AddComponent<Image>();
-        frame.raycastTarget = false; // 카드 버튼의 클릭을 가리면 안 된다
-        frame.sprite = treasureIconFrame;
-        frame.enabled = treasureIconFrame != null;
-
-        RectTransform inner = NewComboChild(rt, "Fill", Vector2.zero);
-        inner.anchorMin = Vector2.zero; inner.anchorMax = Vector2.one;
-        float pad = ComboIconSize * scale * 0.14f;
-        inner.offsetMin = new Vector2(pad, pad);
-        inner.offsetMax = new Vector2(-pad, -pad);
-
-        Image img = inner.gameObject.AddComponent<Image>();
-        img.raycastTarget = false;
-        img.preserveAspect = true;
-        img.sprite = sprite;
-        img.enabled = sprite != null; // 아이콘이 아직 없는 스킬(휘두르기)은 빈 틀로 남는다
-    }
-
-    private static void AddComboPlus(RectTransform parent, Vector2 center, float scale)
-    {
-        RectTransform rt = NewComboChild(parent, "Plus", center);
-        rt.sizeDelta = new Vector2(ComboPlusWidth * scale, ComboIconSize * scale);
-
-        TMP_Text plus = rt.gameObject.AddComponent<TextMeshProUGUI>();
-        plus.text = "+";
-        plus.alignment = TextAlignmentOptions.Center;
-        plus.fontSize = 26f * scale;
-        plus.raycastTarget = false;
-        plus.color = EvolveTagColor; // 진화 강조와 같은 주황
-        plus.fontStyle = FontStyles.Bold;
-        UISkin.Text(plus, false);    // 카드 위 글자라 나머지와 같은 아웃라인을 입힌다
-    }
-
-    private static RectTransform NewComboChild(RectTransform parent, string name, Vector2 center)
-    {
-        GameObject go = new GameObject(name, typeof(RectTransform));
-        RectTransform rt = (RectTransform)go.transform;
-        rt.SetParent(parent, false);
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = center;
-        return rt;
     }
 
     private void UpdateRerollButton()
@@ -576,35 +432,7 @@ public class LevelUpUI : MonoBehaviour
             }
         }
 
-        foreach (EquippedSkill equipped in skills.EquippedSkills)
-        {
-            if (!skills.CanUpgradeSkill(equipped)) continue;
-            EquippedSkill captured = equipped;
-            candidates.Add(new Option
-            {
-                Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
-                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
-                Icon = GetActiveIcon(captured),
-                Apply = () => skills.UpgradeSkillLevel(captured.Id),
-                SkillId = captured.Id,
-            });
-        }
-
-        foreach (EquippedPassive equipped in passives.EquippedPassives)
-        {
-            if (!passives.CanUpgradePassive(equipped)) continue;
-            EquippedPassive captured = equipped;
-            candidates.Add(new Option
-            {
-                Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
-                LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
-                Icon = GetPassiveIcon(captured),
-                Apply = () => passives.UpgradePassiveLevel(captured.Id),
-                PassiveId = captured.Id,
-            });
-        }
+        AddLevelUpCandidates(candidates, skills, passives);
 
         Shuffle(candidates);
         List<Option> options = candidates.Take(3).ToList();
@@ -623,7 +451,6 @@ public class LevelUpUI : MonoBehaviour
         Title = Loc.T("ui.levelup.essenceTitle"),
         Description = Loc.F("ui.levelup.essenceDesc", EssenceReward),
         Apply = () => MetaRun.Collect(EssenceReward),
-        IsEssence = true,
     };
 
     // 보물상자 블루베리 보상. **진화 획득 경로는 이 상자 하나로 통합돼 있다**(볼x핏 방식).
@@ -705,55 +532,48 @@ public class LevelUpUI : MonoBehaviour
         return n;
     }
 
-    // 진화 카드에 미리 보여줄 조합 목록 — **루트 하나 = 항목 하나, 스킬 하나 = 묶음 하나**.
-    // 바깥 리스트가 스킬(=화면의 한 줄), 안쪽 리스트가 그 스킬의 열린 루트들이다.
-    // 두 루트가 다 열려 있으면 한 줄에 둘, 하나만 열려 있으면 그 줄엔 하나만 두고 다음 스킬은 새 줄로 간다
-    // — 줄이 곧 스킬의 경계라서 "어느 아이콘이 어느 스킬 것인지"가 눈에 바로 들어온다.
-    // 연계 조건이 없는 루트(회오리·낙뢰의 path0)는 prereq가 null이라 아이콘 하나로만 그려진다.
-    private List<List<(Sprite target, Sprite prereq)>> BuildComboPreview(PlayerSkills skills, PlayerPassives passives)
+    // ── 지식 강화(스킬트리 knowledge_EvoHint): 레벨업 카드에 진화 조건을 한 줄 덧붙인다 ──
+    // 조건은 둘이다 — 진화가 열리는 **레벨**과, 루트를 고르려면 **함께 들고 있어야 하는 것**(연계 대상).
+    // 이미 만렙 진화까지 끝난 스킬엔 붙이지 않는다(고를 게 없다).
+    private const string EvoHintColor = "#9BE86B";
+
+    private static string EvoHintText(List<string> prereqNames)
     {
-        var groups = new List<List<(Sprite, Sprite)>>();
-
-        if (skills != null)
-            foreach (EquippedSkill s in skills.EquippedSkills)
-            {
-                if (!skills.CanEvolve(s)) continue;
-                var g = new List<(Sprite, Sprite)>();
-                foreach (int r in PlayerSkills.SelectableRoutes(s))
-                    if (skills.IsRouteUnlocked(s.Id, r))
-                        // 타겟은 **진화 후** 그림 — 루트마다 달라서 "이 조합을 하면 뭐가 되는지"가 그림으로 보인다.
-                        g.Add((GetActiveEvoIcon(s.Id, r) ?? GetActiveIcon(s.Id), PrereqIcon(s.Id, r)));
-                if (g.Count > 0) groups.Add(g);
-            }
-
-        if (passives != null)
-            foreach (EquippedPassive p in passives.EquippedPassives)
-            {
-                if (!passives.CanEvolve(p)) continue;
-                var g = new List<(Sprite, Sprite)>();
-                foreach (int r in PlayerPassives.SelectableRoutes(p))
-                    if (passives.IsRouteUnlocked(p.Id, r))
-                        g.Add((GetPassiveEvoIcon(p.Id, r) ?? GetPassiveIcon(p.Id), PrereqIcon(p.Id, r)));
-                if (g.Count > 0) groups.Add(g);
-            }
-
-        return groups;
+        string names = prereqNames.Count > 0 ? string.Join(" / ", prereqNames) : Loc.T("ui.levelup.evoHintNone");
+        return "\n<size=78%><color=" + EvoHintColor + ">"
+             + Loc.F("ui.levelup.evoHint", EvolutionRoutes.RequiredLevel, names)
+             + "</color></size>";
     }
 
-    private Sprite PrereqIcon(ActiveSkillId id, int route)
+    private static string EvolutionHint(EquippedSkill s)
     {
-        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
-        if (p.HasValue) return GetPassiveIcon(p.Value);
-        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
-        return a.HasValue ? GetActiveIcon(a.Value) : null;
+        if (!PlayerPassives.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) return "";
+        var names = new List<string>();
+        // 2차를 앞둔 스킬은 조건이 "보유"가 아니라 **열쇠 진화체**다 — 그쪽 이름을 보여준다.
+        if (s.EvolutionStage >= 1)
+        {
+            string k = EvolutionRoutes.Stage2PrereqName(s.Id, s.Route);
+            if (!string.IsNullOrEmpty(k)) names.Add(k);
+            return EvoHintText(names);
+        }
+        foreach (int r in PlayerSkills.SelectableRoutes(s))
+        {
+            string n = EvolutionRoutes.RoutePrereqName(s.Id, r);
+            if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
+        }
+        return EvoHintText(names);
     }
 
-    private Sprite PrereqIcon(PassiveSkillId id, int route)
+    private static string EvolutionHint(EquippedPassive p)
     {
-        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
-        if (p.HasValue) return GetPassiveIcon(p.Value);
-        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
-        return a.HasValue ? GetActiveIcon(a.Value) : null;
+        if (!PlayerPassives.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStageFor(p.Id)) return "";
+        var names = new List<string>();
+        foreach (int r in PlayerPassives.SelectableRoutes(p))
+        {
+            string n = EvolutionRoutes.RoutePrereqName(p.Id, r);
+            if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
+        }
+        return EvoHintText(names);
     }
 
     // 갈림길에서 고른 뒤. 모달이 완전히 닫힌 다음에 다음 모달을 열어야 새 모달이 같이 꺼지지 않는다.
@@ -907,13 +727,10 @@ public class LevelUpUI : MonoBehaviour
         ClearTreasureIcons();
     }
 
-    // 지금 올릴 수 있는 것 중 하나를 무작위로. 전부 만렙이면 정수로 바꿔 준다(보상이 버려지지 않게).
-    private Option PickTreasureUpgrade()
+    // 가진 스킬·패시브의 "다음 레벨" 후보 — 레벨업 3지선다와 보물상자가 같은 목록을 쓴다.
+    // 만렙에 닿은 대상은 CanUpgrade*가 걸러내므로 여기 안 들어온다.
+    private void AddLevelUpCandidates(List<Option> candidates, PlayerSkills skills, PlayerPassives passives)
     {
-        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
-        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
-        List<Option> candidates = new List<Option>();
-
         foreach (EquippedSkill equipped in skills.EquippedSkills)
         {
             if (!skills.CanUpgradeSkill(equipped)) continue;
@@ -922,7 +739,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1) + EvolutionHint(captured),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
@@ -937,25 +754,25 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id) + EvolutionHint(captured),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,
             });
         }
+    }
+
+    // 지금 올릴 수 있는 것 중 하나를 무작위로. 전부 만렙이면 정수로 바꿔 준다(보상이 버려지지 않게).
+    private Option PickTreasureUpgrade()
+    {
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives passives = FindAnyObjectByType<PlayerPassives>();
+        List<Option> candidates = new List<Option>();
+
+        AddLevelUpCandidates(candidates, skills, passives);
 
         if (candidates.Count == 0) return EssenceOption();
         return candidates[Random.Range(0, candidates.Count)];
-    }
-
-    // ── 진화 아이템 보상 ────────────────────────────────────────────────────
-    // 벽 스테이지 엘리트가 떨군 진화 아이템을 먹으면 열린다. 진화 가능한 스킬/패시브 중
-    // 3개를 제시하고, 고르면 진화 트리(루트 선택)로 이어진다.
-    // 진화 가능한 게 하나도 없으면 대신 "고른 스킬 3레벨업"을 준다(아이템이 버려지지 않도록).
-    public void ShowEvolutionReward()
-    {
-        if (isOpen) { pendingEvolutions++; return; }
-        ShowEvolution();
     }
 
     // fromChoice = 갈림길("보물 상자 vs 진화")에서 진화를 골라 들어온 경우.

@@ -44,18 +44,14 @@ public static class LocHarvest
 
             Add("skill.desc." + id, LevelUpUI.GetActiveSkillDescription(id));
 
-            for (int path = 0; path <= 2; path++)
-                for (int tier = 1; tier <= 3; tier++)
-                {
-                    Add($"evo.active.desc.{id}.{path}.{tier}", PlayerSkills.DescribePathEffect(id, path, tier));
-                    Add($"evo.active.title.{id}.{path}.{tier}", PlayerSkills.GetPathTierTitle(id, path, tier));
-                }
-
+            // 🔴 좌표는 화면 그대로 — 루트 0/1 × 차수 1~MaxStage(2026-09-08 개편).
+            //    legacy path·tier(1~3)로 훑던 옛 루프는 화면에 안 뜨는 조합까지 84줄이나 뱉었다.
             for (int route = 0; route <= 1; route++)
-                for (int stage = 1; stage <= 2; stage++)
+                for (int tier = 1; tier <= EvolutionRoutes.MaxStageFor(id); tier++)
                 {
-                    string e = EvolutionRoutes.EvolvedName(id, route, stage);
-                    if (e != n) Add($"evo.name.{id}.{route}.{stage}", e);   // 원래 이름 그대로면 = 미정의(폴백)
+                    Add($"evo.active.desc.{id}.{route}.{tier}", PlayerSkills.DescribePathEffect(id, route, tier));
+                    string e = EvolutionRoutes.EvolvedName(id, route, tier);
+                    if (e != n) Add($"evo.name.{id}.{route}.{tier}", e);   // 원래 이름 그대로면 = 미정의(폴백)
                 }
         }
 
@@ -65,18 +61,13 @@ public static class LocHarvest
             string n = PlayerSkills.GetPassiveSkillName(id);
             if (n != id.ToString()) Add("passive.name." + id, n);
 
-            for (int path = 0; path <= 2; path++)
-                for (int tier = 1; tier <= 3; tier++)
-                {
-                    Add($"evo.passive.desc.{id}.{path}.{tier}", PlayerPassives.DescribePathEffect(id, path, tier));
-                    Add($"evo.passive.title.{id}.{path}.{tier}", PlayerPassives.GetPathTierTitle(id, path, tier));
-                }
-
+            // 패시브는 2차 진화가 없다 — MaxStageFor가 1을 준다(2026-09-08 사용자 결정).
             for (int route = 0; route <= 1; route++)
-                for (int stage = 1; stage <= 2; stage++)
+                for (int tier = 1; tier <= EvolutionRoutes.MaxStageFor(id); tier++)
                 {
-                    string e = EvolutionRoutes.EvolvedName(id, route, stage);
-                    if (e != n) Add($"evo.name.{id}.{route}.{stage}", e);
+                    Add($"evo.passive.desc.{id}.{route}.{tier}", PlayerPassives.DescribePathEffect(id, route, tier));
+                    string e = EvolutionRoutes.EvolvedName(id, route, tier);
+                    if (e != n) Add($"evo.name.{id}.{route}.{tier}", e);
                 }
         }
 

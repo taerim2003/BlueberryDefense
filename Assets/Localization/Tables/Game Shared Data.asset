@@ -27,48 +27,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.BasicAttack.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811911
-    m_Key: evo.active.title.BasicAttack.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811912
     m_Key: evo.active.desc.BasicAttack.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811913
-    m_Key: evo.active.title.BasicAttack.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811914
-    m_Key: evo.active.desc.BasicAttack.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811915
-    m_Key: evo.active.title.BasicAttack.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811916
-    m_Key: evo.active.desc.BasicAttack.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811917
-    m_Key: evo.active.title.BasicAttack.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811918
-    m_Key: evo.active.desc.BasicAttack.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811919
-    m_Key: evo.active.title.BasicAttack.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811920
-    m_Key: evo.active.desc.BasicAttack.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811921
-    m_Key: evo.active.title.BasicAttack.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090811922
@@ -99,48 +59,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Whirlwind.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811929
-    m_Key: evo.active.title.Whirlwind.0.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811930
     m_Key: evo.active.desc.Whirlwind.0.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811931
-    m_Key: evo.active.title.Whirlwind.0.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811932
-    m_Key: evo.active.desc.Whirlwind.0.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811933
-    m_Key: evo.active.title.Whirlwind.0.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811940
-    m_Key: evo.active.desc.Whirlwind.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811941
-    m_Key: evo.active.title.Whirlwind.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811942
-    m_Key: evo.active.desc.Whirlwind.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811943
-    m_Key: evo.active.title.Whirlwind.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811944
-    m_Key: evo.active.desc.Whirlwind.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811945
-    m_Key: evo.active.title.Whirlwind.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090811946
@@ -171,48 +91,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Orb.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811959
-    m_Key: evo.active.title.Orb.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811960
     m_Key: evo.active.desc.Orb.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811961
-    m_Key: evo.active.title.Orb.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811962
-    m_Key: evo.active.desc.Orb.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811963
-    m_Key: evo.active.title.Orb.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811964
-    m_Key: evo.active.desc.Orb.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811965
-    m_Key: evo.active.title.Orb.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811966
-    m_Key: evo.active.desc.Orb.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811967
-    m_Key: evo.active.title.Orb.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811968
-    m_Key: evo.active.desc.Orb.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811969
-    m_Key: evo.active.title.Orb.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090811970
@@ -243,48 +123,16 @@ MonoBehaviour:
     m_Key: evo.active.desc.Lightning.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811977
-    m_Key: evo.active.title.Lightning.0.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811978
     m_Key: evo.active.desc.Lightning.0.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811979
-    m_Key: evo.active.title.Lightning.0.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811980
-    m_Key: evo.active.desc.Lightning.0.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811981
-    m_Key: evo.active.title.Lightning.0.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090811982
     m_Key: evo.active.desc.Lightning.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090811983
-    m_Key: evo.active.title.Lightning.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090811984
     m_Key: evo.active.desc.Lightning.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811985
-    m_Key: evo.active.title.Lightning.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811986
-    m_Key: evo.active.desc.Lightning.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090811987
-    m_Key: evo.active.title.Lightning.1.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090811994
@@ -315,48 +163,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.EagleDrop.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090812007
-    m_Key: evo.active.title.EagleDrop.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090812008
     m_Key: evo.active.desc.EagleDrop.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812009
-    m_Key: evo.active.title.EagleDrop.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812010
-    m_Key: evo.active.desc.EagleDrop.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812011
-    m_Key: evo.active.title.EagleDrop.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812012
-    m_Key: evo.active.desc.EagleDrop.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812013
-    m_Key: evo.active.title.EagleDrop.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812014
-    m_Key: evo.active.desc.EagleDrop.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812015
-    m_Key: evo.active.title.EagleDrop.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812016
-    m_Key: evo.active.desc.EagleDrop.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812017
-    m_Key: evo.active.title.EagleDrop.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090812018
@@ -387,48 +195,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Sniping.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090812031
-    m_Key: evo.active.title.Sniping.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090812032
     m_Key: evo.active.desc.Sniping.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812033
-    m_Key: evo.active.title.Sniping.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812034
-    m_Key: evo.active.desc.Sniping.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812035
-    m_Key: evo.active.title.Sniping.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812036
-    m_Key: evo.active.desc.Sniping.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812037
-    m_Key: evo.active.title.Sniping.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812038
-    m_Key: evo.active.desc.Sniping.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812039
-    m_Key: evo.active.title.Sniping.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812040
-    m_Key: evo.active.desc.Sniping.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812041
-    m_Key: evo.active.title.Sniping.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090812042
@@ -459,48 +227,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Homing.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709090812055
-    m_Key: evo.active.title.Homing.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709090812056
     m_Key: evo.active.desc.Homing.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812057
-    m_Key: evo.active.title.Homing.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812058
-    m_Key: evo.active.desc.Homing.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812059
-    m_Key: evo.active.title.Homing.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812060
-    m_Key: evo.active.desc.Homing.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812061
-    m_Key: evo.active.title.Homing.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812062
-    m_Key: evo.active.desc.Homing.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812063
-    m_Key: evo.active.title.Homing.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812064
-    m_Key: evo.active.desc.Homing.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709090812065
-    m_Key: evo.active.title.Homing.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709090812066
@@ -531,48 +259,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Shotgun.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006215
-    m_Key: evo.active.title.Shotgun.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006216
     m_Key: evo.active.desc.Shotgun.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006217
-    m_Key: evo.active.title.Shotgun.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006218
-    m_Key: evo.active.desc.Shotgun.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006219
-    m_Key: evo.active.title.Shotgun.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006220
-    m_Key: evo.active.desc.Shotgun.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006221
-    m_Key: evo.active.title.Shotgun.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006222
-    m_Key: evo.active.desc.Shotgun.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006223
-    m_Key: evo.active.title.Shotgun.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006224
-    m_Key: evo.active.desc.Shotgun.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006225
-    m_Key: evo.active.title.Shotgun.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709095006226
@@ -603,48 +291,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Rewind.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006239
-    m_Key: evo.active.title.Rewind.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006240
     m_Key: evo.active.desc.Rewind.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006241
-    m_Key: evo.active.title.Rewind.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006242
-    m_Key: evo.active.desc.Rewind.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006243
-    m_Key: evo.active.title.Rewind.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006244
-    m_Key: evo.active.desc.Rewind.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006245
-    m_Key: evo.active.title.Rewind.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006246
-    m_Key: evo.active.desc.Rewind.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006247
-    m_Key: evo.active.title.Rewind.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006248
-    m_Key: evo.active.desc.Rewind.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006249
-    m_Key: evo.active.title.Rewind.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709095006250
@@ -675,48 +323,8 @@ MonoBehaviour:
     m_Key: evo.active.desc.Swing.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006257
-    m_Key: evo.active.title.Swing.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006258
     m_Key: evo.active.desc.Swing.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006259
-    m_Key: evo.active.title.Swing.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006260
-    m_Key: evo.active.desc.Swing.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006261
-    m_Key: evo.active.title.Swing.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006262
-    m_Key: evo.active.desc.Swing.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006263
-    m_Key: evo.active.title.Swing.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006264
-    m_Key: evo.active.desc.Swing.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006265
-    m_Key: evo.active.title.Swing.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006266
-    m_Key: evo.active.desc.Swing.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006267
-    m_Key: evo.active.title.Swing.2.3
     m_Metadata:
       m_Items: []
   - m_Id: 709095006268
@@ -743,64 +351,12 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Strength.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006280
-    m_Key: evo.passive.title.Strength.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006281
-    m_Key: evo.passive.desc.Strength.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006282
-    m_Key: evo.passive.title.Strength.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006283
-    m_Key: evo.passive.desc.Strength.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006284
-    m_Key: evo.passive.title.Strength.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006285
-    m_Key: evo.passive.desc.Strength.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006286
-    m_Key: evo.passive.title.Strength.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006287
-    m_Key: evo.passive.desc.Strength.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006288
-    m_Key: evo.passive.title.Strength.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006289
-    m_Key: evo.passive.desc.Strength.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006290
-    m_Key: evo.passive.title.Strength.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006291
     m_Key: evo.name.Strength.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006292
-    m_Key: evo.name.Strength.0.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006293
     m_Key: evo.name.Strength.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006294
-    m_Key: evo.name.Strength.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006295
@@ -811,64 +367,12 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Health.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006303
-    m_Key: evo.passive.title.Health.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006304
-    m_Key: evo.passive.desc.Health.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006305
-    m_Key: evo.passive.title.Health.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006306
-    m_Key: evo.passive.desc.Health.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006307
-    m_Key: evo.passive.title.Health.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006308
-    m_Key: evo.passive.desc.Health.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006309
-    m_Key: evo.passive.title.Health.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006310
-    m_Key: evo.passive.desc.Health.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006311
-    m_Key: evo.passive.title.Health.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006312
-    m_Key: evo.passive.desc.Health.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006313
-    m_Key: evo.passive.title.Health.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006314
     m_Key: evo.name.Health.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006315
-    m_Key: evo.name.Health.0.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006316
     m_Key: evo.name.Health.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006317
-    m_Key: evo.name.Health.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006318
@@ -879,64 +383,12 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Knowledge.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006326
-    m_Key: evo.passive.title.Knowledge.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006327
-    m_Key: evo.passive.desc.Knowledge.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006328
-    m_Key: evo.passive.title.Knowledge.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006329
-    m_Key: evo.passive.desc.Knowledge.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006330
-    m_Key: evo.passive.title.Knowledge.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006331
-    m_Key: evo.passive.desc.Knowledge.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006332
-    m_Key: evo.passive.title.Knowledge.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006333
-    m_Key: evo.passive.desc.Knowledge.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006334
-    m_Key: evo.passive.title.Knowledge.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006335
-    m_Key: evo.passive.desc.Knowledge.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006336
-    m_Key: evo.passive.title.Knowledge.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006337
     m_Key: evo.name.Knowledge.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006338
-    m_Key: evo.name.Knowledge.0.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006339
     m_Key: evo.name.Knowledge.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006340
-    m_Key: evo.name.Knowledge.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006341
@@ -947,132 +399,16 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Assassinate.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006349
-    m_Key: evo.passive.title.Assassinate.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006350
-    m_Key: evo.passive.desc.Assassinate.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006351
-    m_Key: evo.passive.title.Assassinate.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006352
-    m_Key: evo.passive.desc.Assassinate.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006353
-    m_Key: evo.passive.title.Assassinate.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006354
-    m_Key: evo.passive.desc.Assassinate.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006355
-    m_Key: evo.passive.title.Assassinate.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006356
-    m_Key: evo.passive.desc.Assassinate.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006357
-    m_Key: evo.passive.title.Assassinate.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006358
-    m_Key: evo.passive.desc.Assassinate.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006359
-    m_Key: evo.passive.title.Assassinate.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006360
     m_Key: evo.name.Assassinate.0.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006361
-    m_Key: evo.name.Assassinate.0.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006362
     m_Key: evo.name.Assassinate.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006363
-    m_Key: evo.name.Assassinate.1.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006364
     m_Key: passive.name.Refresh
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006371
-    m_Key: evo.passive.desc.Refresh.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006372
-    m_Key: evo.passive.title.Refresh.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006373
-    m_Key: evo.passive.desc.Refresh.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006374
-    m_Key: evo.passive.title.Refresh.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006375
-    m_Key: evo.passive.desc.Refresh.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006376
-    m_Key: evo.passive.title.Refresh.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006377
-    m_Key: evo.passive.desc.Refresh.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006378
-    m_Key: evo.passive.title.Refresh.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006379
-    m_Key: evo.passive.desc.Refresh.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006380
-    m_Key: evo.passive.title.Refresh.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006381
-    m_Key: evo.passive.desc.Refresh.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006382
-    m_Key: evo.passive.title.Refresh.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006383
-    m_Key: evo.name.Refresh.0.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006384
-    m_Key: evo.name.Refresh.0.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006385
-    m_Key: evo.name.Refresh.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006386
-    m_Key: evo.name.Refresh.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006387
@@ -1083,64 +419,12 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Defense.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006389
-    m_Key: evo.passive.title.Defense.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006390
-    m_Key: evo.passive.desc.Defense.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006391
-    m_Key: evo.passive.title.Defense.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006392
-    m_Key: evo.passive.desc.Defense.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006393
-    m_Key: evo.passive.title.Defense.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006394
-    m_Key: evo.passive.desc.Defense.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006395
-    m_Key: evo.passive.title.Defense.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006396
-    m_Key: evo.passive.desc.Defense.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006397
-    m_Key: evo.passive.title.Defense.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006398
-    m_Key: evo.passive.desc.Defense.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006399
-    m_Key: evo.passive.title.Defense.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006400
     m_Key: evo.name.Defense.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006401
-    m_Key: evo.name.Defense.0.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006402
     m_Key: evo.name.Defense.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006403
-    m_Key: evo.name.Defense.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006404
@@ -1151,64 +435,12 @@ MonoBehaviour:
     m_Key: evo.passive.desc.Accel.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006406
-    m_Key: evo.passive.title.Accel.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006407
-    m_Key: evo.passive.desc.Accel.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006408
-    m_Key: evo.passive.title.Accel.1.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006409
-    m_Key: evo.passive.desc.Accel.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006410
-    m_Key: evo.passive.title.Accel.1.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006411
-    m_Key: evo.passive.desc.Accel.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006412
-    m_Key: evo.passive.title.Accel.2.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006413
-    m_Key: evo.passive.desc.Accel.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006414
-    m_Key: evo.passive.title.Accel.2.2
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006415
-    m_Key: evo.passive.desc.Accel.2.3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006416
-    m_Key: evo.passive.title.Accel.2.3
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006417
     m_Key: evo.name.Accel.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 709095006418
-    m_Key: evo.name.Accel.0.2
-    m_Metadata:
-      m_Items: []
   - m_Id: 709095006419
     m_Key: evo.name.Accel.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 709095006420
-    m_Key: evo.name.Accel.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 709095006421
@@ -1635,10 +867,6 @@ MonoBehaviour:
     m_Key: passive.cur.Health.max
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873171
-    m_Key: passive.cur.Health.dmgPerHp
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873172
     m_Key: passive.cur.Health.heartDrop
     m_Metadata:
@@ -1651,20 +879,12 @@ MonoBehaviour:
     m_Key: passive.cur.Knowledge.treasure
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873175
-    m_Key: passive.cur.Knowledge.eagleXp
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873176
     m_Key: passive.cur.Assassinate.chance
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873177
     m_Key: passive.cur.Assassinate.mult
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873178
-    m_Key: passive.cur.Assassinate.slowCrit
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873179
@@ -2167,52 +1387,144 @@ MonoBehaviour:
     m_Key: evo.name.GrapeToss.1.2
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386437
-    m_Key: evo.active.title.GrapeToss.1.1
-    m_Metadata:
-      m_Items: []
   - m_Id: 7524160026386438
     m_Key: evo.active.desc.GrapeToss.1.1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 7524160026386439
-    m_Key: evo.active.title.GrapeToss.1.2
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386440
     m_Key: evo.active.desc.GrapeToss.1.2
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386441
-    m_Key: evo.active.title.GrapeToss.1.3
+  - m_Id: 9432851369631744
+    m_Key: ui.levelup.evoHint
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386442
-    m_Key: evo.active.desc.GrapeToss.1.3
+  - m_Id: 9432851445129216
+    m_Key: ui.levelup.evoHintNone
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386443
-    m_Key: evo.active.title.GrapeToss.2.1
+  - m_Id: 9432851445129217
+    m_Key: ui.evotree.sealed
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386444
-    m_Key: evo.active.desc.GrapeToss.2.1
+  - m_Id: 9432851445129218
+    m_Key: ui.evotree.sealedDesc
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386445
-    m_Key: evo.active.title.GrapeToss.2.2
+  - m_Id: 9649661696221184
+    m_Key: evo.active.desc.BasicAttack.0.1
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386446
-    m_Key: evo.active.desc.GrapeToss.2.2
+  - m_Id: 9649661712998400
+    m_Key: evo.active.desc.BasicAttack.0.2
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386447
-    m_Key: evo.active.title.GrapeToss.2.3
+  - m_Id: 9649661712998401
+    m_Key: evo.active.desc.Whirlwind.1.1
     m_Metadata:
       m_Items: []
-  - m_Id: 7524160026386448
-    m_Key: evo.active.desc.GrapeToss.2.3
+  - m_Id: 9649661712998402
+    m_Key: evo.active.desc.Whirlwind.1.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998403
+    m_Key: evo.active.desc.Orb.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998404
+    m_Key: evo.active.desc.Orb.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998405
+    m_Key: evo.active.desc.EagleDrop.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998406
+    m_Key: evo.active.desc.EagleDrop.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998407
+    m_Key: evo.active.desc.Sniping.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998408
+    m_Key: evo.active.desc.Sniping.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998409
+    m_Key: evo.active.desc.Homing.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998410
+    m_Key: evo.active.desc.Homing.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998411
+    m_Key: evo.active.desc.Shotgun.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998412
+    m_Key: evo.active.desc.Shotgun.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998413
+    m_Key: evo.active.desc.Rewind.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998414
+    m_Key: evo.active.desc.Rewind.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998415
+    m_Key: evo.active.desc.Swing.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998416
+    m_Key: evo.active.desc.Swing.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998417
+    m_Key: evo.active.desc.GrapeToss.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998418
+    m_Key: evo.active.desc.GrapeToss.0.2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998419
+    m_Key: evo.passive.desc.Strength.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998420
+    m_Key: evo.passive.desc.Health.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998421
+    m_Key: evo.passive.desc.Knowledge.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998422
+    m_Key: evo.passive.desc.Assassinate.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998423
+    m_Key: evo.passive.desc.Defense.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649661712998424
+    m_Key: evo.passive.desc.Accel.0.1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649662912569344
+    m_Key: passive.cur.Knowledge.homingXp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649662912569345
+    m_Key: passive.cur.Assassinate.critCap
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9649662912569346
+    m_Key: ui.evotree.lockedKey
     m_Metadata:
       m_Items: []
   m_Metadata:

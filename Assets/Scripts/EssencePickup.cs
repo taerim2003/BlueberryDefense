@@ -63,7 +63,7 @@ public class EssencePickup : MonoBehaviour
             SfxPlayer.Play(SfxId.EssencePickup);
 
             if (absorbVfxPrefab != null)
-                ObjectPool.Instance.Despawn(ObjectPool.Instance.Spawn(absorbVfxPrefab, targetPos, Quaternion.identity), 2f);
+                ObjectPool.Instance.SpawnTimed(absorbVfxPrefab, targetPos, 2f);
 
             Destroy(gameObject);
         }

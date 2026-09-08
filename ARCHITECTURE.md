@@ -39,7 +39,7 @@
 | 이름 | 책임 | 누구를 부르나 |
 |---|---|---|
 | **GameManager** (싱글톤) | 스테이지 진행(물량 소진+잔몹 전멸→전환 텀), 게임오버/클리어(`FinalStage`) 판정, `Time.timeScale` 종료 정지. Awake에서 `DamageMeter.Reset`·`DOTween` 전역설정 | `EnemySpawner.StageSpawnComplete`·`PlayerSkills.ResetAllCooldowns`, `Enemy` 수 폴링 |
-| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행률(SpawnRatio) 소유. **중간 소환**(화면 안 예고→부대 투입)도 여기서 관장 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers`·`Enemy.PopIn`, `AmbushMarker` |
+| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행 상태(SpawnedThisStage/SpawnTarget) 소유. **중간 소환**(화면 안 예고→부대 투입)도 여기서 관장 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers`·`Enemy.PopIn`, `AmbushMarker` |
 | **AmbushMarker** | 중간 소환 예고 링(런타임 생성, 씬 배선 없음). 커지며 점점 빠르게 깜빡이다 시간이 차면 콜백 호출 후 자멸 | `EnemySpawner`가 생성·소유 |
 | **PlayerSkills** | 액티브 4종(Q/W/E/R) 캐스트 로직, 스킬 레벨업/진화 트리, 전투 오브젝트 스폰(투사체·회오리·오브·독수리·설치기), 낙뢰 파라미터 설정 | `LightningStorm`, `BuffTracker`, `PlayerPassives`(연계 조건·static 보너스), 모든 전투 프리팹, `ObjectPool` |
 | **PlayerPassives** | 패시브 4종 보유/레벨업/진화, **연계 효과의 static 상태 필드**(치명타·반격·경험치 배율 등) 소유, 체력재생·반격·낙뢰연계 이벤트 처리 | `PlayerSkills`/`PlayerHealth`/`PlayerExperience`(스탯 반영), `LightningStorm.OnProc` 구독 |
@@ -72,7 +72,7 @@
 ```
 [GameManager.Awake] DamageMeter 리셋 · 하트프리팹 주입 · DOTween unscaled 설정
   → [EnemySpawner.Update] StageData.spawnCount 만큼 적 스폰하면 정지 (물량 기반, HP/속도 스텝 보정)
-                          · 스폰 진행률(SpawnRatio)로 보물상자 후반 등장·15라운드 마지막 물량=보스 판정
+                          · 스폰 진행 상태(SpawnedThisStage/SpawnTarget)로 보물상자 후반 등장·15라운드 마지막 물량=보스 판정
   → [Enemy.Update] 왼쪽으로 행진 · sortingOrder를 x좌표로 갱신(원근)
       ├─ 플레이어와 충돌 → PlayerHealth.TakeDamage → (체력0) GameManager.GameOver
       └─ 스킬 피격 → Enemy.TakeSkillHit(멀티히트: 총뎀 유지·N분할·서브히트별 크리/첫히트만 낙뢰)
