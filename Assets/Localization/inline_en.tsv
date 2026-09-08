@@ -143,3 +143,7 @@ ui.collection.hint	You have not met this skill yet
 ui.collection.route	Route {0}
 ui.collection.prereq	{0} Synergy
 ui.collection.notFound	This evolution is still unseen
+ui.levelup.evoHint	Evolves at Lv.{0} — needs {1}
+ui.levelup.evoHintNone	nothing
+ui.evotree.sealed	???
+ui.evotree.sealedDesc	[LOCKED — unlock in skill tree]

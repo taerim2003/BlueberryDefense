@@ -15,6 +15,10 @@ MonoBehaviour:
   skill: 0
   baseCooldown: 2
   baseDamage: 6
+  baseDuration: 0
+  baseHits: 3
+  basePierce: 0
+  baseProjectiles: 0
   levels:
   - stat: 4
     op: 0

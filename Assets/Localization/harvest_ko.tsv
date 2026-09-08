@@ -151,12 +151,12 @@ evo.active.desc.Rewind.1.2	훨씬 더 아프다
 evo.active.title.Rewind.1.2	훨씬 더
 evo.active.desc.Rewind.1.3	그 한 방이 판을 끝낸다
 evo.active.title.Rewind.1.3	판을 끝내는 한 방
-evo.active.desc.Rewind.2.1	되감는 것도 빨라진다
-evo.active.title.Rewind.2.1	빨라지는 되감기
-evo.active.desc.Rewind.2.2	더 빨라진다
-evo.active.title.Rewind.2.2	더 빨리
-evo.active.desc.Rewind.2.3	모든 것이 절반의 시간에 돌아온다
-evo.active.title.Rewind.2.3	절반의 시간
+evo.active.desc.Rewind.2.1	되감기가 판 전체의 속도를 끌어올린다
+evo.active.title.Rewind.2.1	판이 빨라진다
+evo.active.desc.Rewind.2.2	모든 스킬 사이의 틈이 절반으로 준다
+evo.active.title.Rewind.2.2	절반의 시간
+evo.active.desc.Rewind.2.3	(효과 미정)
+evo.active.title.Rewind.2.3	미정
 evo.name.Rewind.0.1	충전 되감기
 evo.name.Rewind.0.2	과부하 되감기
 evo.name.Rewind.1.1	가속 되감기

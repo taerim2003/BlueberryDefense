@@ -58,10 +58,21 @@ public class PlayerHealth : MonoBehaviour
         SfxPlayer.Play(SfxId.PlayerHit);
         if (CurrentHealth <= 0)
         {
+            // 스킬트리 "방어: 사망 시 1회 부활". 판당 한 번만이라 플래그를 **여기서 소비**한다
+            // (ReviveOnce는 판 시작에 PlayerPassives.ResetRunState가 내리고, 방어 패시브를 얻을 때 올라간다).
+            if (PlayerPassives.ReviveOnce)
+            {
+                PlayerPassives.ReviveOnce = false;
+                CurrentHealth = Mathf.Max(1, Mathf.RoundToInt(maxHealth * ReviveHealthRatio));
+                Overheal = 0;
+                return;
+            }
             CurrentHealth = 0;
             GameManager.Instance?.GameOver();
         }
     }
+
+    private const float ReviveHealthRatio = 0.5f; // 부활 시 회복되는 최대체력 비율
 
     public void Heal(int amount)
     {

@@ -88,6 +88,34 @@ public class SkillTreeUI : MonoBehaviour
     private string hoveredId;
     private bool built;
 
+    // 🔴 테두리 그림(`..._투명`)은 불투명 픽셀이 **전부 순수 검정**이다. UI 셰이더가 텍스처에 색을 곱하므로
+    //    `Image.color`를 무슨 색으로 줘도 검정 × 색 = 검정이 되어, 상태별 테두리색이 통째로 죽는다.
+    //    알파는 그대로 두고 RGB만 흰색으로 민 사본을 한 번 만들어 두면 그 뒤로는 색이 그대로 먹는다.
+    //    (원본 그림은 안 건드린다. 태리미가 테두리를 다시 그려도 이 사본이 자동으로 따라간다.)
+    private Sprite whiteRing;
+
+    // 노드 칸을 이만큼 키운다(2026-09-07 사용자 요청 "1.5배 가량"). 스케일 채널을 트윈들이 공유하므로
+    // **여기 한 곳만** 두고 pop-in·호버·펀치가 전부 이 값을 곱해 쓴다 — 안 그러면 트윈이 끝나며 1.0으로 되돌린다.
+    // 칸에 딱 맞는 원본 크기 그림이 나오면 그림을 키우고 이 값을 1로 되돌리는 게 맞다(CLAUDE.md §5-1).
+    private const float NodeScale = 1.5f;
+
+    private Sprite Whiten(Sprite src)
+    {
+        if (whiteRing != null || src == null) return whiteRing ?? src;
+        Texture2D srcTex = src.texture;
+        if (!srcTex.isReadable) return src;   // Read/Write가 꺼져 있으면 조용히 원본(=검정 테두리)으로 둔다
+
+        var tex = new Texture2D(srcTex.width, srcTex.height, TextureFormat.RGBA32, false)
+        { filterMode = srcTex.filterMode, wrapMode = srcTex.wrapMode };
+        Color32[] px = srcTex.GetPixels32();
+        for (int i = 0; i < px.Length; i++) { px[i].r = 255; px[i].g = 255; px[i].b = 255; }
+        tex.SetPixels32(px);
+        tex.Apply(false, true);
+
+        whiteRing = Sprite.Create(tex, src.rect, src.pivot / src.rect.size, src.pixelsPerUnit);
+        return whiteRing;
+    }
+
     // 자원 텍스트 펀치용 직전값(첫 갱신엔 펀치 생략)
     private int prevEssence = -1;
 
@@ -125,8 +153,8 @@ public class SkillTreeUI : MonoBehaviour
         {
             if (v.rt == null || !v.rt.gameObject.activeSelf) continue; // 안개에 가려진 노드는 건너뜀
             v.scaleTween?.Kill();
-            v.rt.localScale = Vector3.one * 0.4f;
-            v.scaleTween = v.rt.DOScale(1f, 0.2f).SetDelay(i * 0.01f).SetEase(Ease.OutBack).SetUpdate(true);
+            v.rt.localScale = Vector3.one * (0.4f * NodeScale);
+            v.scaleTween = v.rt.DOScale(NodeScale, 0.2f).SetDelay(i * 0.01f).SetEase(Ease.OutBack).SetUpdate(true);
             i++;
         }
     }
@@ -137,7 +165,7 @@ public class SkillTreeUI : MonoBehaviour
         {
             v.scaleTween?.Kill(); v.scaleTween = null;
             v.ringPulse?.Kill(); v.ringPulse = null;
-            if (v.rt != null) v.rt.localScale = Vector3.one;
+            if (v.rt != null) v.rt.localScale = Vector3.one * NodeScale;
             if (v.ring != null) { Color rc = v.ring.color; rc.a = 1f; v.ring.color = rc; }
         }
     }
@@ -165,6 +193,7 @@ public class SkillTreeUI : MonoBehaviour
             btn.gameObject.SetActive(true);
             var rt = btn.GetComponent<RectTransform>();
             rt.anchoredPosition = ToLocal(n.editorPos);
+            rt.localScale = Vector3.one * NodeScale;   // 안개에 가려 pop-in을 건너뛰는 노드도 크기는 맞춰 둔다
 
             // 노드 프리팹 구조: 루트(Image raycast) > Ring > BG > Label
             var view = new NodeView
@@ -175,6 +204,7 @@ public class SkillTreeUI : MonoBehaviour
                 ring = btn.transform.Find("Ring")?.GetComponent<Image>(),
                 label = btn.GetComponentInChildren<TMP_Text>(),
             };
+            if (view.ring != null) view.ring.sprite = Whiten(view.ring.sprite);
 
             var input = btn.gameObject.AddComponent<SkillNodeButton>();
             input.NodeId = n.id;
@@ -210,8 +240,8 @@ public class SkillTreeUI : MonoBehaviour
     {
         if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
         v.scaleTween?.Kill();
-        v.rt.localScale = Vector3.one;
-        v.scaleTween = v.rt.DOPunchScale(Vector3.one * strength, 0.28f, 10, 0.6f).SetUpdate(true);
+        v.rt.localScale = Vector3.one * NodeScale;
+        v.scaleTween = v.rt.DOPunchScale(Vector3.one * (strength * NodeScale), 0.28f, 10, 0.6f).SetUpdate(true);
     }
 
     private void OnNodeHoverEnter(string id) { hoveredId = id; RefreshTooltip(); AnimateHover(id, true); }
@@ -227,7 +257,7 @@ public class SkillTreeUI : MonoBehaviour
     {
         if (!views.TryGetValue(id, out NodeView v) || v.rt == null) return;
         v.scaleTween?.Kill();
-        v.scaleTween = v.rt.DOScale(entering ? JuicyTuning.HoverScale : 1f, JuicyTuning.HoverDuration).SetEase(Ease.OutBack).SetUpdate(true);
+        v.scaleTween = v.rt.DOScale((entering ? JuicyTuning.HoverScale : 1f) * NodeScale, JuicyTuning.HoverDuration).SetEase(Ease.OutBack).SetUpdate(true);
     }
 
     // ── 안개(공개 범위) ──

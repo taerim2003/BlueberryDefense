@@ -161,7 +161,14 @@ public class EvolutionTreeUI : MonoBehaviour
                 bool available = canEvolve && routeUnlocked && !routeAbandoned && stage == tier - 1;
                 bool locked = !owned && !available;
 
-                SetIcon(node.icon, RouteIcon(route) ?? GetIcon(pathIconSprites, route));
+                // 🔴 스킬트리의 "2차 진화 개방"(New_Evolution2)을 안 샀으면 2차 칸은 **내용을 감춘다** —
+                //    이름·효과 대신 자물쇠만 보인다(2026-09-07 사용자 결정). 무엇이 오는지 미리 다 보여주면
+                //    그 노드를 살 이유가 없어진다. 이미 얻은 칸(owned)은 그대로 보여준다.
+                //    ⚠️ **진화 트리거 자체는 `CanEvolve`가 이미 막는다** — 여기는 보여주기만 담당한다.
+                bool sealed2 = tier >= 2 && !owned && !MetaBonuses.Evolution2Unlocked;
+                if (sealed2) locked = true;
+
+                SetIcon(node.icon, sealed2 ? null : RouteIcon(route) ?? GetIcon(pathIconSprites, route));
                 if (node.frame != null)
                     node.frame.color = owned ? (tier == EvolutionRoutes.MaxStage ? GoldFrameColor : OwnedFrameColor)
                                              : (locked ? LockedFrameColor : BaseFrameColor);
@@ -170,7 +177,7 @@ public class EvolutionTreeUI : MonoBehaviour
 
                 if (node.title != null)
                 {
-                    node.title.text = RouteTitle(route, tier);
+                    node.title.text = sealed2 ? Loc.T("ui.evotree.sealed") : RouteTitle(route, tier);
                     node.title.color = locked ? LockedTextColor : Color.white;
                 }
 
@@ -178,7 +185,8 @@ public class EvolutionTreeUI : MonoBehaviour
                 if (node.description != null)
                 {
                     // 자물쇠 이모지는 Galmuri11 폰트에 글리프가 없어 □로 깨진다 — 텍스트 표기로 대체
-                    node.description.text = routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
+                    node.description.text = sealed2 ? Loc.T("ui.evotree.sealedDesc")   // 효과를 아예 안 붙인다
+                                          : routeAbandoned ? Loc.T("ui.evotree.abandoned") + " " + effect
                                           : !routeUnlocked ? Loc.F("ui.evotree.lockedPrereq", prereqName) + " " + effect
                                           : locked ? Loc.T("ui.evotree.locked") + " " + effect
                                           : effect;

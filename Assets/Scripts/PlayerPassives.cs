@@ -73,6 +73,14 @@ public class PlayerPassives : MonoBehaviour
     // 암살 연계 path2(스나이핑): 이 쿨타임 이상인 스킬은 치명타 확률 100%(상한 무시). 0=미보유.
     public static float AssassinateSlowSkillCritCooldown = 0f;
 
+    // ── 스킬트리 패시브 강화 중 **패시브 스탯 밖에서 동작하는 것** (2026-09-03 재설계) ──
+    // 트리 노드를 찍었어도 **그 패시브를 실제로 얻어야** 켜진다(액티브 강화가 그 스킬을 얻어야만
+    // 의미가 있는 것과 같은 원칙). 스위치는 AcquirePassive에서 올라간다.
+    public static bool HealItemDouble = false;   // 건강: 체력회복템 회복량 2배 — HeartPickup이 읽는다
+    public static bool ReviveOnce = false;       // 방어: 사망 시 1회 부활 — PlayerHealth가 읽고 소비한다
+    public static bool FullCritExtraHit = false; // 암살: 치명타 100% 스킬은 타수 +1 — Enemy.TakeSkillHit가 읽는다
+    public static bool ShowEvolutionHint = false;// 지식: 레벨업 카드에 진화 조건 표시 — LevelUpUI가 읽는다
+
     [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
 
     private static System.Collections.Generic.Dictionary<PassiveSkillId, PassiveProgression> progressionLookup;
@@ -126,6 +134,10 @@ public class PlayerPassives : MonoBehaviour
         AssassinateSlowSkillCritCooldown = 0f;
         FirstSlotDamageMultiplierBonus = 0f;
         EagleDropCastXpBonus = 0;
+        HealItemDouble = false;
+        ReviveOnce = false;
+        FullCritExtraHit = false;
+        ShowEvolutionHint = false;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격. 미포함 패시브는 조회 실패 → 코드 기본값 폴백.
@@ -140,10 +152,13 @@ public class PlayerPassives : MonoBehaviour
     private static PassiveProgression Prog(PassiveSkillId id) =>
         progressionLookup != null && progressionLookup.TryGetValue(id, out var p) ? p : null;
 
+    // 스킬트리 패시브 강화("기본 최대체력 +30" 등)는 **획득 시 값**에만 얹힌다 —
+    // 레벨업 상승값(PerLevelBonus)은 건드리지 않는다. 그래서 레벨이 올라도 보너스는 한 번만 들어간다.
     public static float BaseValue(PassiveSkillId id)
     {
         PassiveProgression p = Prog(id);
-        return p != null ? p.baseValue : PassiveProgression.DefaultBaseValue(id);
+        float b = p != null ? p.baseValue : PassiveProgression.DefaultBaseValue(id);
+        return b + MetaBonuses.PassiveBaseBonus(id);
     }
 
     public static float PerLevelBonus(PassiveSkillId id)
@@ -185,7 +200,9 @@ public class PlayerPassives : MonoBehaviour
     public static float ApplyCrit(float damage, float critChance, out bool isCrit)
     {
         isCrit = critChance > 0f && Random.value < critChance;
-        return isCrit ? damage * AssassinateCritMultiplier : damage;
+        // 스킬트리 "치명타 피해" 노드는 여기서 더한다 — AssassinateCritMultiplier 자체를 올리면
+        // ResetRunState가 판마다 3f로 되돌려 놓아서 적용 순서에 따라 사라진다.
+        return isCrit ? damage * (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus) : damage;
     }
 
     public void AcquirePassive(PassiveSkillId id)
@@ -194,7 +211,20 @@ public class PlayerPassives : MonoBehaviour
 
         equippedPassives.Add(new EquippedPassive { Id = id });
         ApplyPassiveValue(id, BaseValue(id)); // 획득 = 기본값 적용
+        ApplyTreeEnhancements(id);            // 스킬트리 패시브 강화 중 스탯 밖에서 도는 것들
         CollectionSave.DiscoverPassive(id);   // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
+    }
+
+    // 스킬트리 강화는 노드를 찍는 것만으론 안 켜진다 — 그 패시브를 얻는 순간 켜진다.
+    private static void ApplyTreeEnhancements(PassiveSkillId id)
+    {
+        switch (id)
+        {
+            case PassiveSkillId.Health: if (MetaBonuses.HealItemDouble) HealItemDouble = true; break;
+            case PassiveSkillId.Defense: if (MetaBonuses.DefenseRevive) ReviveOnce = true; break;
+            case PassiveSkillId.Assassinate: if (MetaBonuses.AssassinFullCritExtraHit) FullCritExtraHit = true; break;
+            case PassiveSkillId.Knowledge: if (MetaBonuses.ShowEvolutionHint) ShowEvolutionHint = true; break;
+        }
     }
 
     // 만렙(MaxSkillLevel)에 닿으면 레벨업 후보에서 빠진다 — 진화해야 Lv.1로 리셋되어 다시 큰다(액티브와 동일).
@@ -221,7 +251,7 @@ public class PlayerPassives : MonoBehaviour
         switch (id)
         {
             case PassiveSkillId.Strength:
-                skills.IncreaseDamageMultiplier(amount);
+                skills.IncreaseStrengthDamage(amount); // 힘의 몫은 따로 기억된다(스킬트리 "힘" 강화가 그 몫만 2배로 쓴다)
                 break;
             case PassiveSkillId.Health:
                 health.IncreaseMaxHealth(Mathf.RoundToInt(amount));
@@ -311,7 +341,7 @@ public class PlayerPassives : MonoBehaviour
 
             case PassiveSkillId.Assassinate:
                 lines.Add(Loc.F("passive.cur.Assassinate.chance", Pct(AssassinateCritChance)));
-                lines.Add(Loc.F("passive.cur.Assassinate.mult", AssassinateCritMultiplier.ToString("0.##")));
+                lines.Add(Loc.F("passive.cur.Assassinate.mult", (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus).ToString("0.##")));
                 if (AssassinateSlowSkillCritCooldown > 0f) lines.Add(Loc.F("passive.cur.Assassinate.slowCrit", AssassinateSlowSkillCritCooldown.ToString("0.#")));
                 if (AssassinateKillXpMultiplier > 1f) lines.Add(Loc.F("passive.cur.Assassinate.killXp", AssassinateKillXpMultiplier.ToString("0.##")));
                 break;
@@ -345,6 +375,8 @@ public class PlayerPassives : MonoBehaviour
     public bool CanEvolve(EquippedPassive passive)
     {
         if (passive == null || passive.EvolutionStage >= EvolutionRoutes.MaxStage) return false;
+        // 스킬트리 "진화 해금" / "2차 진화 해금". 트리에 그 노드가 없으면 둘 다 true라 게이팅이 없다.
+        if (!(passive.EvolutionStage == 0 ? MetaBonuses.EvolutionUnlocked : MetaBonuses.Evolution2Unlocked)) return false;
         if (passive.Level < EvolutionRoutes.RequiredLevel) return false;
         return SelectableRoutes(passive).Any(r => IsRouteUnlocked(passive.Id, r));
     }

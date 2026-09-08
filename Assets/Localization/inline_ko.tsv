@@ -143,3 +143,7 @@ ui.collection.hint	아직 만나지 못한 스킬입니다
 ui.collection.route	루트 {0}
 ui.collection.prereq	{0} 연계
 ui.collection.notFound	아직 이 진화를 본 적이 없다
+ui.levelup.evoHint	진화 조건 — Lv.{0} · 연계: {1}
+ui.levelup.evoHintNone	없음
+ui.evotree.sealed	???
+ui.evotree.sealedDesc	[잠김 — 스킬트리에서 개방]

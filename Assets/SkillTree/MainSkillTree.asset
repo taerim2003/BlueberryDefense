@@ -46,8 +46,8 @@ MonoBehaviour:
     skill: 0
     tier: 2
     hasEffect: 1
-    effect: 0
-    perLevel: 5
+    effect: 1
+    perLevel: 10
     maxLevel: 5
     prereqIds:
     - Root_Skilltree
@@ -59,8 +59,8 @@ MonoBehaviour:
     skill: 0
     tier: 6
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 1
+    perLevel: 15
     maxLevel: 5
     prereqIds:
     - atk_2
@@ -86,8 +86,8 @@ MonoBehaviour:
     skill: 0
     tier: 8
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 11
+    perLevel: 1
     maxLevel: 5
     prereqIds:
     - orb_BasicFly
@@ -99,8 +99,8 @@ MonoBehaviour:
     skill: 0
     tier: 3
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 7
+    perLevel: 3
     maxLevel: 5
     prereqIds:
     - arrow_StartLev
@@ -112,7 +112,7 @@ MonoBehaviour:
     skill: 0
     tier: 6
     hasEffect: 0
-    effect: 0
+    effect: 7
     perLevel: 5
     maxLevel: 5
     prereqIds:
@@ -125,7 +125,7 @@ MonoBehaviour:
     skill: 0
     tier: 3
     hasEffect: 0
-    effect: 0
+    effect: 5
     perLevel: 5
     maxLevel: 5
     prereqIds:
@@ -138,8 +138,8 @@ MonoBehaviour:
     skill: 0
     tier: 6
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 5
+    perLevel: 8
     maxLevel: 5
     prereqIds:
     - New_Shotgun
@@ -151,8 +151,8 @@ MonoBehaviour:
     skill: 0
     tier: 3
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 6
+    perLevel: 10
     maxLevel: 5
     prereqIds:
     - hp_1
@@ -164,8 +164,8 @@ MonoBehaviour:
     skill: 0
     tier: 4
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 6
+    perLevel: 15
     maxLevel: 5
     prereqIds:
     - atk_1
@@ -205,7 +205,7 @@ MonoBehaviour:
     skill: 0
     tier: 5
     hasEffect: 0
-    effect: 0
+    effect: 8
     perLevel: 5
     maxLevel: 5
     prereqIds:
@@ -232,8 +232,8 @@ MonoBehaviour:
     skill: 0
     tier: 7
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 8
+    perLevel: 10
     maxLevel: 5
     prereqIds:
     - atk_2
@@ -245,8 +245,8 @@ MonoBehaviour:
     skill: 0
     tier: 4
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 3
+    perLevel: 3
     maxLevel: 5
     prereqIds:
     - New_Orb
@@ -258,7 +258,7 @@ MonoBehaviour:
     skill: 0
     tier: 6
     hasEffect: 0
-    effect: 0
+    effect: 3
     perLevel: 5
     maxLevel: 5
     prereqIds:
@@ -300,7 +300,7 @@ MonoBehaviour:
     tier: 9
     hasEffect: 0
     effect: 0
-    perLevel: 5
+    perLevel: 10
     maxLevel: 5
     prereqIds:
     - New_Homing
@@ -312,8 +312,8 @@ MonoBehaviour:
     skill: 0
     tier: 9
     hasEffect: 0
-    effect: 0
-    perLevel: 5
+    effect: 6
+    perLevel: 25
     maxLevel: 5
     prereqIds:
     - New_Rewind
@@ -456,9 +456,9 @@ MonoBehaviour:
     - hp_2
     editorPos: {x: 975.80005, y: 539.4}
   - id: swing_StartLev
-    displayName: "휘두르기 숙련"
-    description: "(파인애플 선택 시) 휘두르기
-      3레벨로 시작"
+    displayName: "\uD718\uB450\uB974\uAE30 \uC219\uB828"
+    description: "(\uD30C\uC778\uC560\uD50C \uC120\uD0DD \uC2DC) \uD718\uB450\uB974\uAE30
+      3\uB808\uBCA8\uB85C \uC2DC\uC791"
     type: 2
     skill: 9
     tier: 2

@@ -983,27 +983,27 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006244
-    m_Localized: The rewinding itself gets faster
+    m_Localized: Rewinding speeds up the whole run
     m_Metadata:
       m_Items: []
   - m_Id: 709095006245
-    m_Localized: Faster Rewind
+    m_Localized: The Run Speeds Up
     m_Metadata:
       m_Items: []
   - m_Id: 709095006246
-    m_Localized: Faster still
+    m_Localized: The gap between every skill is halved
     m_Metadata:
       m_Items: []
   - m_Id: 709095006247
-    m_Localized: Faster Still
+    m_Localized: Half the Time
     m_Metadata:
       m_Items: []
   - m_Id: 709095006248
-    m_Localized: Everything comes back in half the time
+    m_Localized: (effect TBD)
     m_Metadata:
       m_Items: []
   - m_Id: 709095006249
-    m_Localized: Half the Time
+    m_Localized: TBD
     m_Metadata:
       m_Items: []
   - m_Id: 709095006250
@@ -2234,6 +2234,22 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 7524160026386448
     m_Localized: They lock up more often, and what unlocks is soft
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851369631744
+    m_Localized: "Evolves at Lv.{0} \u2014 needs {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129216
+    m_Localized: nothing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129217
+    m_Localized: ???
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129218
+    m_Localized: "[LOCKED \u2014 unlock in skill tree]"
     m_Metadata:
       m_Items: []
   references:

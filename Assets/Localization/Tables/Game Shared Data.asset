@@ -2215,6 +2215,22 @@ MonoBehaviour:
     m_Key: evo.active.desc.GrapeToss.2.3
     m_Metadata:
       m_Items: []
+  - m_Id: 9432851369631744
+    m_Key: ui.levelup.evoHint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129216
+    m_Key: ui.levelup.evoHintNone
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129217
+    m_Key: ui.evotree.sealed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9432851445129218
+    m_Key: ui.evotree.sealedDesc
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

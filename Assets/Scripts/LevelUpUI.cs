@@ -584,7 +584,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1) + EvolutionHint(captured),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
@@ -599,7 +599,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id) + EvolutionHint(captured),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,
@@ -738,6 +738,59 @@ public class LevelUpUI : MonoBehaviour
             }
 
         return groups;
+    }
+
+    // ── 지식 강화(스킬트리 knowledge_EvoHint): 레벨업 카드에 진화 조건을 한 줄 덧붙인다 ──
+    // 조건은 둘이다 — 진화가 열리는 **레벨**과, 루트를 고르려면 **함께 들고 있어야 하는 것**(연계 대상).
+    // 이미 만렙 진화까지 끝난 스킬엔 붙이지 않는다(고를 게 없다).
+    private const string EvoHintColor = "#9BE86B";
+
+    private static string EvoHintText(List<string> prereqNames)
+    {
+        string names = prereqNames.Count > 0 ? string.Join(" / ", prereqNames) : Loc.T("ui.levelup.evoHintNone");
+        return "\n<size=78%><color=" + EvoHintColor + ">"
+             + Loc.F("ui.levelup.evoHint", EvolutionRoutes.RequiredLevel, names)
+             + "</color></size>";
+    }
+
+    private static string PrereqName(ActiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue) return PlayerSkills.GetPassiveSkillName(p.Value);
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return a.HasValue ? PlayerSkills.GetActiveSkillName(a.Value) : null;
+    }
+
+    private static string PrereqName(PassiveSkillId id, int route)
+    {
+        PassiveSkillId? p = EvolutionRoutes.RoutePassivePrereq(id, route);
+        if (p.HasValue) return PlayerSkills.GetPassiveSkillName(p.Value);
+        ActiveSkillId? a = EvolutionRoutes.RouteActivePrereq(id, route);
+        return a.HasValue ? PlayerSkills.GetActiveSkillName(a.Value) : null;
+    }
+
+    private static string EvolutionHint(EquippedSkill s)
+    {
+        if (!PlayerPassives.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStage) return "";
+        var names = new List<string>();
+        foreach (int r in PlayerSkills.SelectableRoutes(s))
+        {
+            string n = PrereqName(s.Id, r);
+            if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
+        }
+        return EvoHintText(names);
+    }
+
+    private static string EvolutionHint(EquippedPassive p)
+    {
+        if (!PlayerPassives.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStage) return "";
+        var names = new List<string>();
+        foreach (int r in PlayerPassives.SelectableRoutes(p))
+        {
+            string n = PrereqName(p.Id, r);
+            if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
+        }
+        return EvoHintText(names);
     }
 
     private Sprite PrereqIcon(ActiveSkillId id, int route)
@@ -922,7 +975,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1) + EvolutionHint(captured),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
@@ -937,7 +990,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id) + EvolutionHint(captured),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,

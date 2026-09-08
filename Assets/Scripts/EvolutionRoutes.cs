@@ -24,7 +24,9 @@ public static class EvolutionRoutes
     // 진화 시 즉시 붙는 기본 스탯 도약. 레벨 표시가 1로 리셋되는 대신 이만큼 세져서
     // "약해진 게 아니라 다른 스킬이 됐다"가 눈에 보이게 한다.
     public const float EvolveDamageMult = 1.5f;
-    public const float EvolveCooldownMult = 0.9f;
+    // 🔴 진화는 **쿨을 줄이지 않는다**(2026-09-07 사용자 결정 — 진화 스킬 쿨이 전부 너무 짧았다).
+    //    도약은 피해(EvolveDamageMult)로만 준다. 1로 두는 이유는 이 값을 지우면 위 규칙이 안 보여서다.
+    public const float EvolveCooldownMult = 1f;
 
     // ── 루트 → 기존 path 매핑 ────────────────────────────────────────────────
     // 버린 path와 이유:

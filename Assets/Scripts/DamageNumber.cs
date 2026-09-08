@@ -1,15 +1,18 @@
 using UnityEngine;
 
-// 🔴 숫자는 **혼자 떠오르지 않는다** — 적이 들고 있는 큐(`Enemy`)가 매 프레임 자리를 정해 준다(2026-09-02 명세).
-//    새 숫자가 맨 아래에 뜨고 먼저 있던 것들이 위로 밀리는 메이플식 쌓기라, 자리를 아는 쪽은 적이어야 한다.
-//    떠오르며 사라지는 건 **물러날 때(`Retire`)뿐**이다 — 큐가 넘쳤거나 수명이 다했을 때.
+// 🔴 숫자는 **태어난 자리에 월드 고정**된다 — 적이 움직여도 따라가지 않고, 그 자리에서 위로 떠오르며 사라진다
+//    (2026-09-07 사용자 결정. 이전의 "적이 든 큐가 매 프레임 자리를 정해 준다"는 2026-09-02 명세를 뒤집은 것).
+//    "새 데미지는 아래, 기존은 위로"는 큐 없이도 유지된다 — 먼저 뜬 숫자가 이미 위로 올라가 있기 때문이다.
+// ⚠️ 큐를 되살리지 말 것. 풀에서 재사용된 숫자를 옛 주인과 새 주인이 동시에 잡아당겨
+//    숫자가 엉뚱한 적으로 튀는 버그가 거기서 났다.
 public class DamageNumber : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 1.2f;   // 물러날 때 위로 떠오르는 속도
-    [SerializeField] private float lifetime = 0.85f;   // 이만큼 큐에 머문 뒤 스스로 물러난다
+    // ⚠️ moveSpeed는 연타 간격을 정하는 값이기도 하다 — 앞 숫자가 `Enemy.DamageNumberStaggerDelay` 동안
+    //    올라간 거리가 곧 두 숫자 사이 간격이다(3.2 × 0.18 ≈ 0.58유닛. 글리프 높이가 0.62~1.0이라 이보다 좁히면 겹친다).
+    [SerializeField] private float moveSpeed = 3.2f;   // 위로 떠오르는 속도
+    [SerializeField] private float lifetime = 0.7f;    // 보이기 시작한 뒤 이만큼 살고 사라진다
 
-    private const float FadeOutTime = 0.35f;   // 물러나는 동안 페이드
-    private const float FollowSharpness = 18f; // 큐가 정해 준 자리로 따라붙는 빠르기(밀릴 때 툭 튀지 않게)
+    private const float FadeOutTime = 0.25f;   // 수명의 마지막 이만큼 동안 페이드아웃
 
     // 일반 데미지의 그라데이션은 프리팹에서 잡고, 치명타만 여기서 빨강으로 갈아끼운다.
     // 윗색까지 빨강 계열로 밀어야 구분된다 — 밝은 윗색을 쓰면 흰 테두리에 가려 일반과 안 갈린다.
@@ -45,32 +48,6 @@ public class DamageNumber : MonoBehaviour
     private Vector3 baseScale;
     private Vector3 endScale;  // 보잉이 끝난 뒤 눌러앉을 크기(피해량에 따른 차등이 여기 들어 있다)
     private float popAmount;
-    private float jitterX;    // 이 숫자만의 가로 흔들림. 큐가 주는 자리에 매번 더한다
-    private Vector3 target;   // 큐가 정해 준 자리
-    private bool hasTarget;
-    private bool retiring;
-    private float retireTimer;
-
-    // 큐(Enemy)가 보는 것들.
-    public bool IsVisible => timer >= 0f;   // 멀티히트 지연 중이면 아직 자리를 차지하지 않는다
-    public bool IsRetiring => retiring;
-
-    // 큐가 매 프레임 자리를 준다. 적을 따라다니므로 적이 움직이면 숫자도 같이 간다.
-    public void SetTarget(Vector3 worldPos)
-    {
-        if (retiring) return;
-        target = worldPos + Vector3.right * jitterX;
-        hasTarget = true;
-    }
-
-    // 큐에서 밀려났거나 수명이 다했을 때. 있던 자리에서 위로 떠오르며 사라진다.
-    public void Retire()
-    {
-        if (retiring) return;
-        retiring = true;
-        retireTimer = 0f;
-        hasTarget = false;
-    }
 
     private void Awake()
     {
@@ -79,7 +56,8 @@ public class DamageNumber : MonoBehaviour
         baseScale = transform.localScale; // 풀에서 재사용되므로 원본 스케일을 여기서 한 번만 잡아둔다
     }
 
-    // offset은 같은 공격의 서브히트를 쌓기 위한 오프셋(세로는 고정 간격, 가로는 Enemy가 흔들어 넘긴다).
+    // offset은 뜨는 자리(세로는 머리 위 높이, 가로는 Enemy가 흔들어 넘긴다).
+    // delay는 같은 공격의 서브히트를 시간차로 띄우기 위한 것 — 그동안 투명하게 제자리에서 기다린다.
     public void Init(float damage, bool isCrit = false, Vector3 offset = default, float delay = 0f)
     {
         text.text = Mathf.RoundToInt(damage) + (isCrit ? "!" : "");
@@ -92,11 +70,6 @@ public class DamageNumber : MonoBehaviour
         baseGradient = isCrit ? CritGradient : DeepenGradient(startGradient, t);
 
         timer = -delay;
-        // 🔴 풀에서 재사용되므로 상태를 여기서 전부 되돌린다 — Awake는 한 번밖에 안 돈다.
-        retiring = false;
-        retireTimer = 0f;
-        hasTarget = false;
-        jitterX = offset.x;
 
         // 첫 프레임을 Update에 맡기면 한 프레임 동안 최종 크기로 떠 보인다 — 여기서 0 지점을 직접 찍는다.
         // 딜레이가 걸려 있어도 같은 자리에서 시작한다 — 보잉은 숫자가 보이기 시작할 때 돈다.
@@ -125,30 +98,19 @@ public class DamageNumber : MonoBehaviour
     private void Update()
     {
         timer += Time.deltaTime;
-        float visible = Mathf.Max(0f, timer); // 딜레이 중엔 알파 0으로 대기
-        transform.localScale = endScale * PopScale(visible / PopTime); // 보잉도 딜레이가 끝나야 시작한다
+        if (timer < 0f) return;   // 서브히트 지연 중 — Init이 찍어 둔 자리·크기·투명 상태 그대로 대기
 
-        float a;
-        if (retiring)
-        {
-            retireTimer += Time.deltaTime;
-            transform.position += Vector3.up * (moveSpeed * Time.deltaTime);
-            a = Mathf.Lerp(1f, 0f, retireTimer / FadeOutTime);
-            if (retireTimer >= FadeOutTime) { ObjectPool.Instance.Despawn(gameObject); return; }
-        }
-        else
-        {
-            // 큐가 준 자리로 부드럽게 따라간다(밀릴 때 툭 튀지 않게). 프레임률에 안 흔들리는 지수 보간.
-            if (hasTarget)
-                transform.position = Vector3.Lerp(transform.position, target,
-                                                  1f - Mathf.Exp(-FollowSharpness * Time.deltaTime));
-            a = timer < 0f ? 0f : 1f;
-            if (timer >= lifetime) Retire();   // 수명이 다하면 스스로 물러난다
-        }
+        transform.localScale = endScale * PopScale(timer / PopTime);
+        transform.position += Vector3.up * (moveSpeed * Time.deltaTime);
+
+        // 수명의 마지막 FadeOutTime 동안만 흐려진다.
+        float a = Mathf.InverseLerp(lifetime, lifetime - FadeOutTime, timer);
 
         // 그라데이션을 쓰면 text.color로는 알파가 먹지 않아 네 꼭짓점을 직접 낮춘다.
         TMPro.VertexGradient g = baseGradient;
         g.topLeft.a = a; g.topRight.a = a; g.bottomLeft.a = a; g.bottomRight.a = a;
         text.colorGradient = g;
+
+        if (timer >= lifetime) ObjectPool.Instance.Despawn(gameObject);
     }
 }
