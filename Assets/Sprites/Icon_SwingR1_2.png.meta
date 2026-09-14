@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 9e1a48a0870a20a4882d477a30138c88
+guid: 1640ebdda62067643aef86fdb5a03bfd
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8920146538632307387
-    second: Icon_GrapeBombR1_2_0
+      213: 5107829404608757564
+    second: Icon_SwingR1_2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icon_GrapeBombR1_2_0
+      name: Icon_SwingR1_2_0
       rect:
         serializedVersion: 2
-        x: 2
-        y: 1
-        width: 30
-        height: 31
+        x: 1
+        y: 0
+        width: 31
+        height: 32
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb2eb93140abacb70800000000000000
-      internalID: 8920146538632307387
+      spriteID: c3ffff2f7c7a2e640800000000000000
+      internalID: 5107829404608757564
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Icon_GrapeBombR1_2_0: 8920146538632307387
+      Icon_SwingR1_2_0: 5107829404608757564
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -13250,6 +13250,8 @@ MonoBehaviour:
   - {fileID: -6428833263625462497, guid: 486b0e5eaa872ce47be9ee2a6b4e7162, type: 3}
   - {fileID: 4371512669360883427, guid: 8a7b9c5cbf71b8e4ea0fa12a260ca0b3, type: 3}
   - {fileID: 667092237682773013, guid: 931015ae3fb1f3e438b1d7072dcad5b5, type: 3}
+  - {fileID: -2648186992963206903, guid: 7fd8e52b39472bf469652acbdc7f8af5, type: 3}
+  - {fileID: -7459442298791321492, guid: c22ea127b1855a841a78651517bac31e, type: 3}
   passiveEvoIcons:
   - {fileID: -807837020044464902, guid: 607d13d1b038ddd4481e114e703b8569, type: 3}
   - {fileID: 6377393124181097937, guid: 8607bc711429ba747823d80e63da02be, type: 3}
@@ -13275,17 +13277,19 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 6dfb20f5c9160cd4d86009b75b7fe342, type: 3}
   - {fileID: 21300000, guid: 39c77d5fa9907924ab91743c8d460beb, type: 3}
   - {fileID: 21300000, guid: 289510b187e6db0438413ebf75abdb7a, type: 3}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 10d6eec7c2408b648bc428a143ce7500, type: 3}
   - {fileID: 21300000, guid: 3b8d38ba5d74cdd47b72e862b47f0a01, type: 3}
   - {fileID: 21300000, guid: 26918668eecf6844399bf7ceb7c32b02, type: 3}
   - {fileID: 0}
   - {fileID: 21300000, guid: ec5d2bc40f09e8547aef2de438ef0d6e, type: 3}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 010e2e59825701248b217b606ac199b7, type: 3}
   - {fileID: 21300000, guid: a61e97ae0b18f9242831f3971c5b11c1, type: 3}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 1deee3aabc898ed4bb3329bc1278573b, type: 3}
+  - {fileID: 21300000, guid: 8efc043d187106d4ead334401c96af1c, type: 3}
+  - {fileID: 21300000, guid: 1640ebdda62067643aef86fdb5a03bfd, type: 3}
+  - {fileID: 21300000, guid: 8d4a28854fe02ea409d38d3b0a577b61, type: 3}
+  - {fileID: 21300000, guid: 9e1a48a0870a20a4882d477a30138c88, type: 3}
+  - {fileID: 21300000, guid: 30ef921530e45064db25f89e213f38e9, type: 3}
   rerollButton: {fileID: 1230292640}
   rerollLabel: {fileID: 897104643}
   rerollLeftLabel: {fileID: 1444694253}

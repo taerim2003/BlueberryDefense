@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 9e1a48a0870a20a4882d477a30138c88
+guid: 7fd8e52b39472bf469652acbdc7f8af5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8920146538632307387
-    second: Icon_GrapeBombR1_2_0
+      213: -2648186992963206903
+    second: Icon_GrapeBombR1_1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,12 +100,12 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icon_GrapeBombR1_2_0
+      name: Icon_GrapeBombR1_1_0
       rect:
         serializedVersion: 2
-        x: 2
-        y: 1
-        width: 30
+        x: 1
+        y: 0
+        width: 31
         height: 31
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb2eb93140abacb70800000000000000
-      internalID: 8920146538632307387
+      spriteID: 9014e99e5ffbf3bd0800000000000000
+      internalID: -2648186992963206903
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Icon_GrapeBombR1_2_0: 8920146538632307387
+      Icon_GrapeBombR1_1_0: -2648186992963206903
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

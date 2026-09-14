@@ -27,6 +27,7 @@ public static class EvolutionIconWiring
         "Scatter",     // Shotgun
         "Rewind",
         "Swing",
+        "GrapeBomb",   // GrapeToss
     };
 
     // Refresh(인덱스 4)는 폐지돼 그림이 없다. 자리는 비운 채 세어야 뒤(Defense·Accel)가 안 밀린다.
@@ -71,8 +72,8 @@ public static class EvolutionIconWiring
 
         string wired = Wire(active, active2, passive, log);
 
-        log.Insert(0, $"[진화 아이콘] 임포트 정규화 {fixedCount}장 · 액티브 {active.Count(s => s != null)}/20 · " +
-                      $"액티브 2차 {active2.Count(s => s != null)}/20 · 패시브 {passive.Count(s => s != null)}/12 · {wired}\n");
+        log.Insert(0, $"[진화 아이콘] 임포트 정규화 {fixedCount}장 · 액티브 {active.Count(s => s != null)}/{active.Length} · " +
+                      $"액티브 2차 {active2.Count(s => s != null)}/{active2.Length} ·패시브 {passive.Count(s => s != null)}/12 · {wired}\n");
         return log.ToString();
     }
 
