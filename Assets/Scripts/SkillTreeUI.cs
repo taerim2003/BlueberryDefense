@@ -321,7 +321,7 @@ public class SkillTreeUI : MonoBehaviour
 
             bool isUnlocked = fog == Fog.Revealed;
             bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
-            int lv = SkillTreeSave.LevelOf(v.node.id);
+            int lv = SkillTreeSave.EffectiveLevel(v.node, SkillTreeSave.LevelOf(v.node.id));
             int max = SkillTreeSave.MaxLevelOf(v.node);
 
             // 미보유(힌트) 노드도 타입 색으로 내용을 공개하되, 아직 안 산 상태임을 어둡게 구분(구매 가능하면 살짝 밝게).
@@ -407,7 +407,7 @@ public class SkillTreeUI : MonoBehaviour
             if (tooltipDesc != null) tooltipDesc.text = n.Desc;
             if (tooltipCost != null)
             {
-                int lv = SkillTreeSave.LevelOf(hoveredId);
+                int lv = SkillTreeSave.EffectiveLevel(n, SkillTreeSave.LevelOf(hoveredId));
                 int max = SkillTreeSave.MaxLevelOf(n);
                 bool canUp = SkillTreeSave.CanUpgrade(tree, hoveredId);
                 int nextCost = SkillTreeSave.NextLevelCost(tree, n);

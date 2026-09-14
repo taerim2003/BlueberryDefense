@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 50
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 512be9ea22dec2b43afcc0ad6034f8e4, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3e4aba87f262c814d89e467baa734384, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -105,10 +105,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpriteFlipbook
   frames:
-  - {fileID: 21300000, guid: 512be9ea22dec2b43afcc0ad6034f8e4, type: 3}
-  - {fileID: 21300000, guid: 5852069e042b8f54ea82d6fa98e217f6, type: 3}
-  - {fileID: 21300000, guid: aacbb34875cfac1459dc1c4fa091ddd4, type: 3}
-  - {fileID: 21300000, guid: 4d9c54b42f619a3449a73639d640b14b, type: 3}
+  - {fileID: 21300000, guid: 3e4aba87f262c814d89e467baa734384, type: 3}
+  - {fileID: 21300000, guid: 7d6e4afc3b23fec41837924ddbef2177, type: 3}
+  - {fileID: 21300000, guid: 61b584c833e90c04994696ae9f74a44c, type: 3}
+  - {fileID: 21300000, guid: bc9190a7a1c941e418f64605f2ff1dbd, type: 3}
   fps: 10
   loop: 1
   despawnOnFinish: 0

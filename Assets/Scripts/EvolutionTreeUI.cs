@@ -189,7 +189,7 @@ public class EvolutionTreeUI : MonoBehaviour
                 bool sealed2 = tier >= 2 && !owned && !MetaBonuses.Evolution2Unlocked;
                 if (sealed2) locked = true;
 
-                SetIcon(node.icon, sealed2 ? null : RouteIcon(route) ?? GetIcon(pathIconSprites, route));
+                SetIcon(node.icon, sealed2 ? null : RouteIcon(route, tier) ?? GetIcon(pathIconSprites, route));
                 if (node.frame != null)
                     node.frame.color = owned ? (tier == maxTier ? GoldFrameColor : OwnedFrameColor)
                                              : (locked ? LockedFrameColor : BaseFrameColor);
@@ -234,6 +234,24 @@ public class EvolutionTreeUI : MonoBehaviour
         else panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
         isOpen = true;
+
+        // 칸 배치는 **행이 루트, 열이 티어**다(실측: R0T1·R0T2가 같은 y). 그래서 W·S가 루트를 바꾸고
+        // A·D가 티어 칸을 오간다 — 어느 티어 칸에서 확정하든 결과는 그 줄의 **루트**를 고르는 것이다.
+        // 잠기거나 꺼진 칸(패시브의 2차 등)은 UIFocusGroup이 알아서 건너뛴다.
+        var items = new List<Button>();
+        if (nodes != null)
+            foreach (var n in nodes)
+                if (n != null && n.button != null) items.Add(n.button);
+        if (backButton != null) items.Add(backButton);
+        focus.Open(items, 0);
+    }
+
+    // 키보드/패드 포커스. 노드 4칸에는 JuicyButton이 없어 **아웃라인만으로** 표시된다.
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
+    private void Update()
+    {
+        if (isOpen) focus.Tick();
     }
 
     // 노드 제목 = 진화 후 바뀔 이름. 옛 티어 제목("둔화 부여")보다 "대회오리"가 무엇이 되는지 훨씬 잘 보여준다.
@@ -339,6 +357,7 @@ public class EvolutionTreeUI : MonoBehaviour
     private void CloseInternal()
     {
         isOpen = false;
+        focus.Close();
         KillNodeTweens();
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
@@ -353,16 +372,16 @@ public class EvolutionTreeUI : MonoBehaviour
     {
         int stage = isPassiveMode ? currentPassive.EvolutionStage : currentSkill.EvolutionStage;
         int route = isPassiveMode ? currentPassive.Route : currentSkill.Route;
-        Sprite evo = stage > 0 && route >= 0 ? RouteIcon(route) : null;
+        Sprite evo = stage > 0 && route >= 0 ? RouteIcon(route, stage) : null;
         return evo ?? (isPassiveMode ? GetIcon(passiveIcons, (int)currentPassive.Id) : GetIcon(activeIcons, (int)currentSkill.Id));
     }
 
-    // 노드 아이콘 = 그 루트로 진화하면 되는 그림. 진화 아이콘 배열은 LevelUpUI가 단독 소유한다(HUD와 같은 이유).
-    private Sprite RouteIcon(int route)
+    // 노드 아이콘 = 그 루트·차수로 진화하면 되는 그림. 진화 아이콘 배열은 LevelUpUI가 단독 소유한다(HUD와 같은 이유).
+    private Sprite RouteIcon(int route, int stage)
     {
         LevelUpUI ui = LevelUpUI.Instance;
         if (ui == null) return null;
-        return isPassiveMode ? ui.GetPassiveEvoIcon(currentPassive.Id, route) : ui.GetActiveEvoIcon(currentSkill.Id, route);
+        return isPassiveMode ? ui.GetPassiveEvoIcon(currentPassive.Id, route) : ui.GetActiveEvoIcon(currentSkill.Id, route, stage);
     }
 
     private static void SetIcon(Image image, Sprite sprite)

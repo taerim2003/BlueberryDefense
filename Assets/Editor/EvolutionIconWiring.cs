@@ -5,11 +5,11 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-// 진화 아이콘(Icon_*R1/R2.png) 32장을 임포트 정규화하고 씬의 LevelUpUI에 배선한다.
+// 진화 아이콘(Icon_*R1/R2.png · 2차 Icon_*R1_2/R2_2.png)을 임포트 정규화하고 씬의 LevelUpUI에 배선한다.
 // Window > Blueberry Defense > 진화 아이콘 배선
 //
-// 아이콘 파일명 규칙: R1 = 루트0, R2 = 루트1 (1차/2차 티어는 같은 그림을 쓴다).
-// 배열 인덱스는 LevelUpUI와 같은 규칙 — (int)id * 2 + route.
+// 아이콘 파일명 규칙: R1 = 루트0, R2 = 루트1. 액티브 2차 전용 그림은 뒤에 `_2`가 붙는다.
+// 배열 인덱스는 LevelUpUI와 같은 규칙 — (int)id * 2 + route. 2차 그림이 없는 칸은 비워 두면 1차 그림으로 떨어진다.
 public static class EvolutionIconWiring
 {
     private const string SpriteDir = "Assets/Sprites";
@@ -41,6 +41,19 @@ public static class EvolutionIconWiring
         "Accel",
     };
 
+    // 규칙 파일명(Icon_{name}R{n}.png) 대신 **작가가 둔 자리 그대로** 쓰는 그림들. 폴더째 올라온 것이라 옮기지 않는다.
+    // 키 = (int)id * 2 + route.
+    private static readonly Dictionary<int, string> ActiveOverrides = new Dictionary<int, string>
+    {
+        { (int)ActiveSkillId.Lightning * 2 + 1, SpriteDir + "/LightningRod/Icon_Tesla.png" },   // 피뢰침(1차) 다시 그린 것
+    };
+
+    private static readonly Dictionary<int, string> ActiveStage2Overrides = new Dictionary<int, string>
+    {
+        { (int)ActiveSkillId.Lightning * 2 + 1, SpriteDir + "/LightningRod/Icon_Jeus.png" },    // 제우스의 은총
+        { (int)ActiveSkillId.Shotgun * 2 + 1,   SpriteDir + "/FIRE!!!/Icon_FullBurst.png" },    // 초강력 섬멸용 전탄발사
+    };
+
     [MenuItem("Window/Blueberry Defense/진화 아이콘 배선")]
     private static void Run() => Debug.Log(RunAndReport());
 
@@ -52,13 +65,14 @@ public static class EvolutionIconWiring
         int fixedCount = NormalizeImporters(log);
         AssetDatabase.Refresh();
 
-        Sprite[] active = Collect(ActiveFileNames, log);
-        Sprite[] passive = Collect(PassiveFileNames, log);
+        Sprite[] active = Collect(ActiveFileNames, 1, ActiveOverrides, log);
+        Sprite[] active2 = Collect(ActiveFileNames, 2, ActiveStage2Overrides, log);
+        Sprite[] passive = Collect(PassiveFileNames, 1, null, log);
 
-        string wired = Wire(active, passive, log);
+        string wired = Wire(active, active2, passive, log);
 
         log.Insert(0, $"[진화 아이콘] 임포트 정규화 {fixedCount}장 · 액티브 {active.Count(s => s != null)}/20 · " +
-                      $"패시브 {passive.Count(s => s != null)}/12 · {wired}\n");
+                      $"액티브 2차 {active2.Count(s => s != null)}/20 · 패시브 {passive.Count(s => s != null)}/12 · {wired}\n");
         return log.ToString();
     }
 
@@ -68,12 +82,24 @@ public static class EvolutionIconWiring
     {
         int changed = 0;
 
+        // 🔴 Single 전환은 **새로 들어온 그림에만** 한다. 기존 32장은 Multiple인 채로 씬에 배선돼 있어서
+        //    바꾸면 서브에셋 ID가 달라져 참조가 깨진다(그 32장은 조각이 하나뿐이라 Multiple이어도 무해했다).
+        var newArt = new HashSet<string>(ActiveOverrides.Values.Concat(ActiveStage2Overrides.Values));
+        foreach (string name in ActiveFileNames)
+            for (int r = 0; r < 2; r++) newArt.Add(PathFor(name, r, 2));
+
         foreach (string path in EveryIconPath())
         {
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) { log.AppendLine($"  ⚠ 임포터 없음: {path}"); continue; }
 
             bool dirty = false;
+
+            if (newArt.Contains(path) && importer.spriteImportMode != SpriteImportMode.Single)
+            {
+                importer.spriteImportMode = SpriteImportMode.Single;
+                dirty = true;
+            }
 
             if (importer.filterMode != FilterMode.Point) { importer.filterMode = FilterMode.Point; dirty = true; }
             if (importer.textureCompression != TextureImporterCompression.Uncompressed)
@@ -111,28 +137,31 @@ public static class EvolutionIconWiring
 
     private static IEnumerable<string> EveryIconPath()
     {
+        var paths = new List<string>();
         foreach (string name in ActiveFileNames)
             for (int r = 0; r < 2; r++)
             {
-                string p = PathFor(name, r);
-                if (System.IO.File.Exists(p)) yield return p;
+                paths.Add(PathFor(name, r, 1));
+                paths.Add(PathFor(name, r, 2));
             }
 
         foreach (string name in PassiveFileNames)
         {
             if (name == null) continue;
-            for (int r = 0; r < 2; r++)
-            {
-                string p = PathFor(name, r);
-                if (System.IO.File.Exists(p)) yield return p;
-            }
+            for (int r = 0; r < 2; r++) paths.Add(PathFor(name, r, 1));
         }
+
+        paths.AddRange(ActiveOverrides.Values);
+        paths.AddRange(ActiveStage2Overrides.Values);
+        return paths.Distinct().Where(System.IO.File.Exists);
     }
 
-    private static string PathFor(string name, int route) => $"{SpriteDir}/Icon_{name}R{route + 1}.png";
+    private static string PathFor(string name, int route, int stage) =>
+        $"{SpriteDir}/Icon_{name}R{route + 1}{(stage >= 2 ? "_2" : "")}.png";
 
-    // 인덱스 = enum값 * 2 + route. 빠진 그림은 null로 남겨 둔다(런타임이 원본 아이콘으로 떨어진다).
-    private static Sprite[] Collect(string[] fileNames, StringBuilder log)
+    // 인덱스 = enum값 * 2 + route. 빠진 그림은 null로 남겨 둔다(런타임이 원본·1차 아이콘으로 떨어진다).
+    // 2차는 아직 안 그린 칸이 많아서 "못 찾음"을 찍지 않는다 — 찍으면 진짜 누락이 묻힌다.
+    private static Sprite[] Collect(string[] fileNames, int stage, Dictionary<int, string> overrides, StringBuilder log)
     {
         var result = new Sprite[fileNames.Length * 2];
 
@@ -141,21 +170,22 @@ public static class EvolutionIconWiring
             if (fileNames[i] == null) continue;
             for (int r = 0; r < 2; r++)
             {
-                string path = PathFor(fileNames[i], r);
+                int index = i * 2 + r;
+                string path = overrides != null && overrides.TryGetValue(index, out string o) ? o : PathFor(fileNames[i], r, stage);
                 Sprite sprite = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().FirstOrDefault();
                 if (sprite == null)
                 {
-                    log.AppendLine($"  ⚠ 스프라이트를 못 찾음: {path}");
+                    if (stage < 2) log.AppendLine($"  ⚠ 스프라이트를 못 찾음: {path}");
                     continue;
                 }
-                result[i * 2 + r] = sprite;
+                result[index] = sprite;
             }
         }
 
         return result;
     }
 
-    private static string Wire(Sprite[] active, Sprite[] passive, StringBuilder log)
+    private static string Wire(Sprite[] active, Sprite[] active2, Sprite[] passive, StringBuilder log)
     {
         LevelUpUI ui = Object.FindAnyObjectByType<LevelUpUI>(FindObjectsInactive.Include);
         if (ui == null)
@@ -166,6 +196,7 @@ public static class EvolutionIconWiring
 
         var so = new SerializedObject(ui);
         Assign(so.FindProperty("activeEvoIcons"), active);
+        Assign(so.FindProperty("activeEvo2Icons"), active2);
         Assign(so.FindProperty("passiveEvoIcons"), passive);
         so.ApplyModifiedProperties();
         EditorUtility.SetDirty(ui);

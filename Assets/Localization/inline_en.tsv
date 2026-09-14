@@ -101,6 +101,11 @@ ui.pause.passiveHeader	PASSIVE
 ui.result.other	Other
 ui.result.earned	Essence earned: {0}
 ui.result.total	Total damage: {0}
+ui.result.gameOver	GAME OVER
+ui.result.gameClear	GAME CLEAR
+ui.hud.stage	Stage {0}/{1}
+ui.hud.stageBanner	STAGE {0}
+ui.hud.levelSuffix	{0} LV
 unlock.essence	Essence {0} / {1}
 unlock.clearMap	Clear {0} on {1}
 ui.levelup.header	Level Up!

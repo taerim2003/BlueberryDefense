@@ -5,7 +5,7 @@ using UnityEngine;
 public class Orb : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 6f;
-    [SerializeField] private float slowMultiplier = 0.65f;
+    [SerializeField] private float slowMultiplier = 0.8f; // 이동속도 배율(20% 감속). 실제 값은 Orb_Skill·BigOrb_Skill 프리팹
     [SerializeField] private float slowDuration = 2f;
     [SerializeField] private float lifetime = 5f;
     [SerializeField] private float tickInterval = 0.3f;
@@ -15,6 +15,9 @@ public class Orb : MonoBehaviour
     public bool ApplyGemVulnerable { get; set; }
     public float CritChance { get; set; } // 타격 기준: 틱마다 개별적으로 치명타를 굴린다
     public float FlyingDamageMultiplier { get; set; } = 1f;
+    // 🔴 기본 오브는 둔화를 **걸지 않는다** — 스킬트리 「끈적한 오브」(orb_BasicSlow)를 사야 켜진다(FireOrb가 세팅).
+    //    아래 두 보너스(진화 R0)는 둔화가 켜져 있을 때만 의미가 있다.
+    public bool SlowsEnemies { get; set; }
     public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
     public float SlowDurationBonus { get; set; } // 덧셈(초)
     // 이 오브가 **평생** 붙잡을 수 있는 적 수(레벨업 주 성장축). FireOrb가 세팅.
@@ -73,7 +76,8 @@ public class Orb : MonoBehaviour
 
             float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
             enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb);
-            enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
+            if (SlowsEnemies)
+                enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)

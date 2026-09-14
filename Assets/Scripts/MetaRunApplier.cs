@@ -70,7 +70,7 @@ public class MetaRunApplier : MonoBehaviour
         // ── 스킬 강화 노드(2026-09-03 재설계) ──
         MetaBonuses.ArrowExtraPierce = totals.ArrowPierce;
         MetaBonuses.SwingKnockbackMult = totals.SwingKnockbackMult;
-        MetaBonuses.OrbSlowBoost = totals.OrbSlowBoost;
+        MetaBonuses.OrbSlowUnlocked = totals.OrbSlowUnlocked;
         MetaBonuses.OrbExtraTargets = totals.OrbTargets;
         MetaBonuses.EagleExtraDrops = totals.EagleDrops;
         MetaBonuses.ThunderStackable = totals.ThunderStack;

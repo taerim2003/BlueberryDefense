@@ -223,6 +223,13 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         EndHover();
     }
 
+    // 키보드·패드로 다른 칸을 고르면 게임 쪽(UIFocusGroup)이 부른다.
+    // 커서가 가만히 있으면 Exit가 영영 안 와서, 창이 뜰 때 커서 밑에 깔린 버튼이 밝고 큰 채로 굳는다.
+    public void CancelHover()
+    {
+        if (_isHovering || _exitSuppressed) EndHover();
+    }
+
     private void EndHover()
     {
         _isHovering = false;

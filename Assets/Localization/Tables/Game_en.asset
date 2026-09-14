@@ -79,7 +79,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983042
-    m_Localized: All damage increased by 8%
+    m_Localized: All damage increased by 5%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983043
@@ -87,7 +87,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983044
-    m_Localized: Max health increased by 10
+    m_Localized: Max health increased by 8
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983045
@@ -95,7 +95,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983046
-    m_Localized: Max health increased by 15
+    m_Localized: Max health increased by 8
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983047
@@ -119,7 +119,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983052
-    m_Localized: Critical chance increased by 3%
+    m_Localized: Critical chance increased by 5%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983053
@@ -143,7 +143,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983058
-    m_Localized: Experience gain +8%
+    m_Localized: Experience gain +5%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983059
@@ -159,7 +159,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983062
-    m_Localized: Essence gain 15%
+    m_Localized: Essence gain +10%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983063
@@ -183,7 +183,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983068
-    m_Localized: Bonus damage to flying enemies +5%
+    m_Localized: Bonus damage to flying enemies +20%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983069
@@ -199,7 +199,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983072
-    m_Localized: Bonus damage to flying enemies +10%
+    m_Localized: Bonus damage to flying enemies +20%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983073
@@ -207,7 +207,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983074
-    m_Localized: All skill cooldowns -3%
+    m_Localized: All skill cooldowns -2%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983075
@@ -215,7 +215,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983076
-    m_Localized: All skill cooldowns -5%
+    m_Localized: All skill cooldowns -2%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983077
@@ -239,7 +239,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983082
-    m_Localized: All damage increased by 10%
+    m_Localized: All damage increased by 6%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983083
@@ -247,7 +247,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983084
-    m_Localized: Essence gain 25%
+    m_Localized: Essence gain +10%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983085
@@ -287,7 +287,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983094
-    m_Localized: <Buckshot Load> can now appear as a skill choice.
+    m_Localized: <Buckshot Blast> can now appear as a skill choice.
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983095
@@ -367,7 +367,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983112
-    m_Localized: Vast Field
+    m_Localized: Vast Space
     m_Metadata:
       m_Items: []
   - m_Id: 708985954304
@@ -375,61 +375,59 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709082423296
-    m_Localized: Fires an arrow at the nearest enemy. Leveling up adds arrows and
-      pierce
+    m_Localized: Fires arrows straight ahead.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811910
-    m_Localized: Draw the string and the sky goes dark
+    m_Localized: A rain of arrows falls.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811912
-    m_Localized: That rain does not know how to stop
+    m_Localized: Countless arrows blot out the sky.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811922
-    m_Localized: All in One Shot
+    m_Localized: Black Arrow
     m_Metadata:
       m_Items: []
   - m_Id: 709090811923
-    m_Localized: Follow-up Arrows
+    m_Localized: Blueberry Hunter
     m_Metadata:
       m_Items: []
   - m_Id: 709090811924
-    m_Localized: Darkening Sky
+    m_Localized: Arrow Rain
     m_Metadata:
       m_Items: []
   - m_Id: 709090811925
-    m_Localized: Rain Without End
+    m_Localized: Skyshredder
     m_Metadata:
       m_Items: []
   - m_Id: 709090811927
-    m_Localized: Summons a whirlwind that hunts enemies on its own (lasts 4s). Deals
-      damage over time on contact and slows while it damages
+    m_Localized: Summons a whirlwind that hunts enemies on its own.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811928
-    m_Localized: The whirlwind splits in two
+    m_Localized: More whirlwinds!
     m_Metadata:
       m_Items: []
   - m_Id: 709090811930
-    m_Localized: More are left behind, and every one turns fierce
+    m_Localized: Deploys a machine that spawns whirlwinds without end.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811946
-    m_Localized: Split in Two
+    m_Localized: Splitting Whirlwind
     m_Metadata:
       m_Items: []
   - m_Id: 709090811947
-    m_Localized: Fierce Swarm
+    m_Localized: Whirlwind Engine
     m_Metadata:
       m_Items: []
   - m_Id: 709090811948
-    m_Localized: Feet Stuck Fast
+    m_Localized: Great Whirlwind
     m_Metadata:
       m_Items: []
   - m_Id: 709090811949
-    m_Localized: Never Stands Again
+    m_Localized: Cry of the Sky
     m_Metadata:
       m_Items: []
   - m_Id: 709090811950
@@ -437,32 +435,31 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090811951
-    m_Localized: Summons an orb that pierces forward. Deals damage over time to every
-      enemy it touches and slows them
+    m_Localized: Hurls a magic orb straight ahead.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811958
-    m_Localized: Whatever it touches goes soft
+    m_Localized: Summons several small orbs that chase enemies.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811960
-    m_Localized: The pack swells and everything it grazes goes soft
+    m_Localized: Juggles a great many orbs with practiced ease.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811970
-    m_Localized: Swamp in Its Wake
+    m_Localized: Surging Magic
     m_Metadata:
       m_Items: []
   - m_Id: 709090811971
-    m_Localized: Deepening Swamp
+    m_Localized: Giant Orb
     m_Metadata:
       m_Items: []
   - m_Id: 709090811972
-    m_Localized: Softened Things
+    m_Localized: Seeking Orbs
     m_Metadata:
       m_Items: []
   - m_Id: 709090811973
-    m_Localized: Swollen Pack
+    m_Localized: Juggler
     m_Metadata:
       m_Items: []
   - m_Id: 709090811974
@@ -470,40 +467,39 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090811975
-    m_Localized: For 6 seconds, every enemy that takes attack damage has a 30% chance
-      to be struck by lightning
+    m_Localized: For a time, every hit you land has a chance to call down lightning.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811976
-    m_Localized: The clouds are slow to clear
+    m_Localized: The lightning buff can now stack.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811978
-    m_Localized: The more it gathers, the less you can handle
+    m_Localized: At 20 stacks of the lightning buff, a colossal bolt comes down.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811982
-    m_Localized: The storm takes a short breath
+    m_Localized: Plants a rod at the center of the field that calls down lightning.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811984
-    m_Localized: The rod pulls the sky down longer and wider
+    m_Localized: Every strike drags enemies toward the lightning rod.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811994
-    m_Localized: Clouds That Linger
+    m_Localized: Gathering Thunderclouds
     m_Metadata:
       m_Items: []
   - m_Id: 709090811995
-    m_Localized: Fiercer as It Gathers
+    m_Localized: Stormpeak Bolt
     m_Metadata:
       m_Items: []
   - m_Id: 709090811996
-    m_Localized: Short Breath
+    m_Localized: Lightning Rod
     m_Metadata:
       m_Items: []
   - m_Id: 709090811997
-    m_Localized: Pulls the Sky Down
+    m_Localized: Grace of Zeus
     m_Metadata:
       m_Items: []
   - m_Id: 709090811998
@@ -511,32 +507,31 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090811999
-    m_Localized: Drops eagles across the whole screen twice, one second apart, damaging
-      every enemy
+    m_Localized: Drops eagles across the whole screen several times.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812006
-    m_Localized: Fewer, but far more often
+    m_Localized: A small whirlwind rises where each eagle lands.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812008
-    m_Localized: The leftover wind grinds on and on
+    m_Localized: A rain of eagles falls without end.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812018
-    m_Localized: Stays a While
+    m_Localized: Bomber Eagle
     m_Metadata:
       m_Items: []
   - m_Id: 709090812019
-    m_Localized: Sky That Won't Clear
+    m_Localized: Super Dynamite Eagle
     m_Metadata:
       m_Items: []
   - m_Id: 709090812020
-    m_Localized: Fewer but Often
+    m_Localized: Whirlwind Bombing
     m_Metadata:
       m_Items: []
   - m_Id: 709090812021
-    m_Localized: Long-Lasting Wind
+    m_Localized: Eagle Rain
     m_Metadata:
       m_Items: []
   - m_Id: 709090812022
@@ -544,31 +539,31 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090812023
-    m_Localized: Snipes the enemy with the most health three times for heavy damage
+    m_Localized: Snipes the enemy with the most health for heavy damage.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812030
-    m_Localized: Reloading gets faster
+    m_Localized: Fires on its own, and no longer triggers the global cooldown.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812032
-    m_Localized: There is no time even to blink
+    m_Localized: Taking damage automatically sweeps away nearby enemies.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812042
-    m_Localized: Changed Weight
+    m_Localized: Eagle Shot
     m_Metadata:
       m_Items: []
   - m_Id: 709090812043
-    m_Localized: More Come Down
+    m_Localized: Eagle Squad Commander
     m_Metadata:
       m_Items: []
   - m_Id: 709090812044
-    m_Localized: Fast Reload
+    m_Localized: Auto-Defense System
     m_Metadata:
       m_Items: []
   - m_Id: 709090812045
-    m_Localized: Without a Blink
+    m_Localized: Cybernetic Bunker
     m_Metadata:
       m_Items: []
   - m_Id: 709090812046
@@ -576,16 +571,16 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090812047
-    m_Localized: Fires 3 missiles that chase enemies. Each level adds many more,
-      and it grows stronger the more you use it (this run only)
+    m_Localized: Fires a volley of missiles that chase enemies. The more you use
+      it, the more damage it deals.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812054
-    m_Localized: The rounds get lighter
+    m_Localized: Fires a swarm of mini missiles.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812056
-    m_Localized: You would not dare to count
+    m_Localized: Blankets the world in missiles beyond counting.
     m_Metadata:
       m_Items: []
   - m_Id: 709090812066
@@ -593,47 +588,47 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090812067
-    m_Localized: Wider Blaze
+    m_Localized: Ultra Super Rocket
     m_Metadata:
       m_Items: []
   - m_Id: 709090812068
-    m_Localized: Lighter Rounds
+    m_Localized: Mini Missile Swarm
     m_Metadata:
       m_Items: []
   - m_Id: 709090812069
-    m_Localized: Dare Not Count
+    m_Localized: Like Stars in the Sky
     m_Metadata:
       m_Items: []
   - m_Id: 709090812070
-    m_Localized: Buckshot Load
+    m_Localized: Buckshot Blast
     m_Metadata:
       m_Items: []
   - m_Id: 709090812071
-    m_Localized: Sprays buckshot forward in a fan
+    m_Localized: Sprays buckshot forward in a fan.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006214
-    m_Localized: It keeps pouring instead of stopping at one burst
+    m_Localized: Unloads volley after volley straight ahead.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006216
-    m_Localized: That stream grows far thicker
+    m_Localized: Erases every enemy ahead. Every shot lands as a critical hit.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006226
-    m_Localized: Lingering Heat
+    m_Localized: Bonus Rounds Loaded
     m_Metadata:
       m_Items: []
   - m_Id: 709095006227
-    m_Localized: One Too Much to Take
+    m_Localized: Follow My Lead!
     m_Metadata:
       m_Items: []
   - m_Id: 709095006228
-    m_Localized: Never Stops
+    m_Localized: Mecha Buster
     m_Metadata:
       m_Items: []
   - m_Id: 709095006229
-    m_Localized: Thicker Stream
+    m_Localized: Annihilation Barrage
     m_Metadata:
       m_Items: []
   - m_Id: 709095006230
@@ -641,32 +636,31 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006231
-    m_Localized: Pulls every other skill's cooldown forward by 1 second. Rewinds
-      further with each level
+    m_Localized: Pulls every other skill's cooldown forward by 1 second.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006238
-    m_Localized: The rewinding itself gets faster
+    m_Localized: Rewinds further, and the global cooldown is halved.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006240
-    m_Localized: Everything comes back in half the time
+    m_Localized: Every skill's cooldown drops, and the global cooldown vanishes.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006250
-    m_Localized: A Harder Blow
+    m_Localized: Charged Rewind
     m_Metadata:
       m_Items: []
   - m_Id: 709095006251
-    m_Localized: Blow That Ends It
+    m_Localized: Overcharge
     m_Metadata:
       m_Items: []
   - m_Id: 709095006252
-    m_Localized: Faster Rewind
+    m_Localized: Accelerated Rewind
     m_Metadata:
       m_Items: []
   - m_Id: 709095006253
-    m_Localized: Half the Time
+    m_Localized: Hour of Blueberry Extinction
     m_Metadata:
       m_Items: []
   - m_Id: 709095006254
@@ -674,32 +668,32 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006255
-    m_Localized: Strikes all around you, damaging every enemy in reach and knocking
-      them back
+    m_Localized: Slams a hammer, damaging every enemy in reach and knocking them
+      back.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006256
-    m_Localized: The impact spreads out through the ground
+    m_Localized: The impact travels out through the ground.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006258
-    m_Localized: The running shock turns far fiercer
+    m_Localized: The seismic wave grows, and enemies caught in it take more damage.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006268
-    m_Localized: Wider Swing
+    m_Localized: Sweeping Blow
     m_Metadata:
       m_Items: []
   - m_Id: 709095006269
-    m_Localized: Cannot Rise
+    m_Localized: Royal Paladin's Hammer
     m_Metadata:
       m_Items: []
   - m_Id: 709095006270
-    m_Localized: Shock Through the Ground
+    m_Localized: Seismic Wave
     m_Metadata:
       m_Items: []
   - m_Id: 709095006271
-    m_Localized: Fierce Tremor
+    m_Localized: Great Tidal Wave
     m_Metadata:
       m_Items: []
   - m_Id: 709095006272
@@ -707,15 +701,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006279
-    m_Localized: The first thing you picked up fits your hand
+    m_Localized: Your Q skill grows stronger.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006291
-    m_Localized: Lands Deep
+    m_Localized: Burning Muscle
     m_Metadata:
       m_Items: []
   - m_Id: 709095006293
-    m_Localized: First in Hand
+    m_Localized: Everyday Muscle
     m_Metadata:
       m_Items: []
   - m_Id: 709095006295
@@ -723,15 +717,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006302
-    m_Localized: Something to eat is left where they fall
+    m_Localized: Health pickups appear three times as often.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006314
-    m_Localized: Stronger as You Endure
+    m_Localized: Sturdiness
     m_Metadata:
       m_Items: []
   - m_Id: 709095006316
-    m_Localized: Something Left to Eat
+    m_Localized: Abundance
     m_Metadata:
       m_Items: []
   - m_Id: 709095006318
@@ -739,15 +733,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006325
-    m_Localized: When the eagles fly, something is left behind
+    m_Localized: Enemies killed by Homing Missile leave extra experience.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006337
-    m_Localized: The One With a Chest
+    m_Localized: Treasure Sense
     m_Metadata:
       m_Items: []
   - m_Id: 709095006339
-    m_Localized: What Eagles Leave
+    m_Localized: Combat Insight
     m_Metadata:
       m_Items: []
   - m_Id: 709095006341
@@ -755,15 +749,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006348
-    m_Localized: The heavier the strike, the surer the weak spot
+    m_Localized: The critical chance cap rises to 100%.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006360
-    m_Localized: Clean Payoff
+    m_Localized: Bounty
     m_Metadata:
       m_Items: []
   - m_Id: 709095006362
-    m_Localized: Heavy Weak Point
+    m_Localized: Certain Kill
     m_Metadata:
       m_Items: []
   - m_Id: 709095006364
@@ -775,15 +769,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006388
-    m_Localized: Your whole frame swells up
+    m_Localized: Taking damage sends that damage back.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006400
-    m_Localized: Body Reacts First
+    m_Localized: Hammer Riposte
     m_Metadata:
       m_Items: []
   - m_Id: 709095006402
-    m_Localized: Swells Whole
+    m_Localized: Thorn Armor
     m_Metadata:
       m_Items: []
   - m_Id: 709095006404
@@ -791,15 +785,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006405
-    m_Localized: The more you are hit, the faster your hands
+    m_Localized: Each time you are hit, cooldowns move forward a little.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006417
-    m_Localized: Ready Again
+    m_Localized: Refresh
     m_Metadata:
       m_Items: []
   - m_Id: 709095006419
-    m_Localized: Faster as You're Hit
+    m_Localized: Pain Acceleration
     m_Metadata:
       m_Items: []
   - m_Id: 709095006421
@@ -1387,32 +1381,33 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386432
-    m_Localized: Lobs toxic grapes where enemies gather. Each burst leaves a poison
-      cloud that infects anyone inside, dealing damage over time
+    m_Localized: Lobs toxic grapes. Each burst leaves a poison cloud that infects
+      enemies inside.
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386433
-    m_Localized: Thicker Fog
+    m_Localized: Biochem Grapes
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386434
-    m_Localized: They Burst
+    m_Localized: Cataclysmic Plague
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386435
-    m_Localized: One More Handful
+    m_Localized: Crackling Grapes
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386436
-    m_Localized: They Seize
+    m_Localized: Medusa's Snack
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386438
-    m_Localized: More go out at once
+    m_Localized: Throws more grapes at once, and enemies entering the cloud are briefly
+      stunned.
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386440
-    m_Localized: They lock up more often, and what unlocks is soft
+    m_Localized: Poisoned enemies are stunned again and again, and take more damage.
     m_Metadata:
       m_Items: []
   - m_Id: 9432851369631744
@@ -1432,107 +1427,110 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 9649661696221184
-    m_Localized: Many shots packed into one
+    m_Localized: One large, sharp arrow skewers everything in its path.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998400
-    m_Localized: More arrows follow, and the string never rests
+    m_Localized: Countless chasing arrows follow alongside the great arrow.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998401
-    m_Localized: Feet stick to the ground where it passed
+    m_Localized: Summons one colossal vortex.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998402
-    m_Localized: What has been ground never stands again
+    m_Localized: Enemies struck by the whirlwind take more damage from everything
+      else.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998403
-    m_Localized: Where it passes turns to swamp
+    m_Localized: The orb of magic grows far larger.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998404
-    m_Localized: The swamp deepens and the hand quickens
+    m_Localized: Summons a giant orb that pierces all and drags nearby enemies in.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998405
-    m_Localized: One of them stays a long while
+    m_Localized: Each eagle bursts where it lands.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998406
-    m_Localized: The buried sky is slow to clear
+    m_Localized: One huge dynamite eagle comes down.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998407
-    m_Localized: One shot carries a different weight
+    m_Localized: An eagle drops where the bullet lands.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998408
-    m_Localized: Far more of them come down
+    m_Localized: Marks the strongest enemy and calls in the eagle commando squad.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998409
-    m_Localized: The warhead grows heavy
+    m_Localized: Each missile bursts where it hits.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998410
-    m_Localized: The blast reaches far wider
+    m_Localized: Launches one enormous rocket at the strongest enemy for a massive
+      blast.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998411
-    m_Localized: The heat lingers
+    m_Localized: Grants a buff that adds extra hits to every attack.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998412
-    m_Localized: That one is more than anything can take
+    m_Localized: Grants a massive bonus-hit buff instead of attacking.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998413
-    m_Localized: The next blow after a rewind hurts more
+    m_Localized: The next attack after a rewind hits harder.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998414
-    m_Localized: That one blow ends the round
+    m_Localized: The attack after a rewind costs double cooldown, but hits devastatingly
+      hard.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998415
-    m_Localized: The arm swings wider
+    m_Localized: Reaches even wider, and drains health from the enemies it hits.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998416
-    m_Localized: What gets knocked back cannot rise for a while
+    m_Localized: Enemies you strike are stunned for a long time.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998417
-    m_Localized: The cloud spreads wider
+    m_Localized: The cloud spreads wider, and the toxin grows stronger.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998418
-    m_Localized: Whatever falls poisoned bursts, staining those beside it
+    m_Localized: Enemies that fall poisoned pass the toxin to those around them.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998419
-    m_Localized: A clean hit lands deeper
+    m_Localized: Critical damage increases.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998420
-    m_Localized: The more you endure, the stronger you get
+    m_Localized: Max health grows even faster.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998421
-    m_Localized: Now and then one of them carries a chest
+    m_Localized: Blueberries sometimes appear as treasure chest blueberries.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998422
-    m_Localized: A clean finish pays
+    m_Localized: Enemies killed by a critical hit leave extra experience.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998423
-    m_Localized: When you are hit, the body reacts first
+    m_Localized: Taking damage sets off a Swing.
     m_Metadata:
       m_Items: []
   - m_Id: 9649661712998424
-    m_Localized: Now and then what you just used is ready again
+    m_Localized: Using a skill has a small chance to reset its cooldown.
     m_Metadata:
       m_Items: []
   - m_Id: 9649662912569344
@@ -1545,6 +1543,448 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 9649662912569346
     m_Localized: "[LOCKED \u2014 evolve '{0}' first]"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10496316301582336
+    m_Localized: GAME OVER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10496316351913984
+    m_Localized: GAME CLEAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10496316351913985
+    m_Localized: Stage {0}/{1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10496316351913986
+    m_Localized: STAGE {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10496316351913987
+    m_Localized: '{0} LV'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173623205888
+    m_Localized: Whirlwind Anti-Air
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594496
+    m_Localized: Whirlwind's bonus damage to flying enemies +30%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594497
+    m_Localized: Cooldown III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594498
+    m_Localized: All skill cooldowns -2%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594499
+    m_Localized: Cooldown IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594500
+    m_Localized: All skill cooldowns -2%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594501
+    m_Localized: Cooldown V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594502
+    m_Localized: All skill cooldowns -2%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594503
+    m_Localized: Haste Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594504
+    m_Localized: <Haste> starts with +5% cooldown reduction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594505
+    m_Localized: Quick Hands
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594506
+    m_Localized: While you have <Haste>, skills with a cooldown of 4s or less deal
+      +30% damage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594507
+    m_Localized: Crit Damage I
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594508
+    m_Localized: Critical damage +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594509
+    m_Localized: Crit Damage II
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594510
+    m_Localized: Critical damage +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594511
+    m_Localized: Crit Damage III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594512
+    m_Localized: Critical damage +15%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594513
+    m_Localized: Assassination Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594514
+    m_Localized: <Assassination> starts with +10% critical chance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594515
+    m_Localized: Double Tap
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594516
+    m_Localized: While you have <Assassination>, skills with 100% critical chance
+      hit 1 extra time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594517
+    m_Localized: Reroll II
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594518
+    m_Localized: +1 reroll per run
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594519
+    m_Localized: Reroll III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594520
+    m_Localized: +1 reroll per run
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594521
+    m_Localized: Reroll IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594522
+    m_Localized: +1 reroll per run
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594523
+    m_Localized: Sticky Orb
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594524
+    m_Localized: Orb hits slow enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594525
+    m_Localized: Orb Pierce
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594526
+    m_Localized: Orb holds 3 more enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594527
+    m_Localized: Eagle Squadron
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594528
+    m_Localized: Eagle Drop drops 1 more time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594529
+    m_Localized: Extra Load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594530
+    m_Localized: "Buckshot Blast evolved into \u300CBonus Rounds Loaded\u300D grants
+      +1 more hit"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594531
+    m_Localized: Vital Buckshot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594532
+    m_Localized: Buckshot Blast critical chance +30%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594533
+    m_Localized: Experience III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594534
+    m_Localized: Experience gain +5%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594535
+    m_Localized: Experience IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594536
+    m_Localized: Experience gain +5%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594537
+    m_Localized: Experience V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594538
+    m_Localized: Experience gain +5%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594539
+    m_Localized: Knowledge Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594540
+    m_Localized: <Knowledge> starts with +10% experience gain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594541
+    m_Localized: Evolution Insight
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594542
+    m_Localized: While you have <Knowledge>, level-up choices show the evolution
+      requirements of your skills
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594543
+    m_Localized: Unlock Evolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594544
+    m_Localized: Skills can now make their first evolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594545
+    m_Localized: Piercing Arrow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594546
+    m_Localized: Arrow Shot pierces 1 more enemy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594547
+    m_Localized: Heavy Swing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594548
+    m_Localized: Swing knocks enemies back 1.5x farther
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594549
+    m_Localized: Wealth IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594550
+    m_Localized: Essence gain +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594551
+    m_Localized: Wealth V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594552
+    m_Localized: Essence gain +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594553
+    m_Localized: Seamless Rewind
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594554
+    m_Localized: Rewind no longer triggers the global cooldown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594555
+    m_Localized: Charge Up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594556
+    m_Localized: Lightning's buff stacks, dealing more damage per stack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594557
+    m_Localized: Health III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594558
+    m_Localized: Max health increased by 8
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594559
+    m_Localized: Health IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594560
+    m_Localized: Max health increased by 8
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594561
+    m_Localized: Vital Shot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594562
+    m_Localized: Sniping critical chance +30%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594563
+    m_Localized: Vitality Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594564
+    m_Localized: <Vitality> starts with +30 max health
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594565
+    m_Localized: Nutritious
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594566
+    m_Localized: While you have <Vitality>, healing items restore twice as much
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594567
+    m_Localized: Health V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594568
+    m_Localized: Max health increased by 9
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594569
+    m_Localized: Defense Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594570
+    m_Localized: <Defense> starts with +10% damage reduction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594571
+    m_Localized: Undying
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594572
+    m_Localized: While you have <Defense>, revive once with half your max health
+      when you die
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594573
+    m_Localized: Health VI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594574
+    m_Localized: Max health increased by 9
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594575
+    m_Localized: Quick Reload
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594576
+    m_Localized: Homing Missile's base cooldown -1s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594577
+    m_Localized: Attack IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594578
+    m_Localized: All damage increased by 6%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594579
+    m_Localized: Attack V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594580
+    m_Localized: All damage increased by 7%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594581
+    m_Localized: Strength Training
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594582
+    m_Localized: <Strength> starts with +5% damage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594583
+    m_Localized: Heavy Hitter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594584
+    m_Localized: <Strength>'s damage bonus is doubled for skills with a cooldown
+      of 5s or more
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594585
+    m_Localized: Unlock 2nd Evolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594586
+    m_Localized: Skills can now make their second evolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594587
+    m_Localized: Attack VI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594588
+    m_Localized: All damage increased by 8%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594589
+    m_Localized: Boss Hunter I
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594590
+    m_Localized: Damage to bosses +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173631594591
+    m_Localized: Boss Hunter II
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788800
+    m_Localized: Damage to bosses +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788801
+    m_Localized: Boss Hunter III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788802
+    m_Localized: Damage to bosses +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788803
+    m_Localized: Boss Hunter IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788804
+    m_Localized: Damage to bosses +10%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788805
+    m_Localized: Boss Hunter V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11636173635788806
+    m_Localized: Damage to bosses +10%
     m_Metadata:
       m_Items: []
   references:

@@ -61,7 +61,7 @@ public static class MetaBonuses
     // 액티브
     public static int ArrowExtraPierce = 0;         // 화살: 기본 관통 +N
     public static float SwingKnockbackMult = 1f;    // 휘두르기: 넉백 배율
-    public static bool OrbSlowBoost = false;        // 오브: 기본 둔화 강화(감속률·지속 둘 다)
+    public static bool OrbSlowUnlocked = false;     // 오브: 둔화 개방 — 기본 오브는 둔화를 안 건다
     public static int OrbExtraTargets = 0;          // 오브: 붙잡는 적 수 +N("관통 +3")
     public static int EagleExtraDrops = 0;          // 독수리 투하: 투하 횟수 +N
     public static bool ThunderStackable = false;    // 번개: 낙뢰 버프 중첩(스택당 피해 증가) 개방
@@ -130,7 +130,7 @@ public static class MetaBonuses
 
         ArrowExtraPierce = 0;
         SwingKnockbackMult = 1f;
-        OrbSlowBoost = false;
+        OrbSlowUnlocked = false;
         OrbExtraTargets = 0;
         EagleExtraDrops = 0;
         ThunderStackable = false;
@@ -233,7 +233,7 @@ public static class SkillEffects
 
         public int ArrowPierce;          // 화살 기본 관통 +N
         public float SwingKnockbackMult; // 휘두르기 넉백 배율(1=기본)
-        public bool OrbSlowBoost;        // 오브 기본 둔화 강화
+        public bool OrbSlowUnlocked;     // 오브 둔화 개방
         public int OrbTargets;           // 오브 붙잡는 적 수 +N
         public int EagleDrops;           // 독수리 투하 횟수 +N
         public bool ThunderStack;        // 낙뢰 버프 중첩 개방
@@ -285,7 +285,7 @@ public static class SkillEffects
             // ① 일반 노드 — 축과 크기를 에셋이 들고 있다. 코드는 축을 스탯에 꽂아 주기만 한다.
             if (node != null && node.type == SkillNodeType.Normal)
             {
-                AddNormal(ref t, node.effect, node.perLevel * lv);
+                AddNormal(ref t, node.effect, node.perLevel * SkillTreeSave.EffectiveLevel(node, lv));
                 continue;
             }
 
@@ -307,9 +307,8 @@ public static class SkillEffects
                 case "swing_Knockback": t.SwingKnockbackMult = 1.5f; break;
 
                 // ── 오브 ──
-                // ⚠️ 기본 오브는 **이미 둔화를 건다**(Orb.cs slowMultiplier 0.65 / 2초). 그래서 이 노드는
-                //    "둔화를 켠다"가 아니라 **둔화를 강화**한다(지식 루트 T1과 같은 크기: 감속 +0.1, 지속 +0.5초).
-                case "orb_BasicSlow": t.OrbSlowBoost = true; break;
+                // 🔴 기본 오브는 둔화를 **안 건다**. 이 노드가 둔화를 켠다(오브 프리팹 slowMultiplier 0.8 / 2초).
+                case "orb_BasicSlow": t.OrbSlowUnlocked = true; break;
                 case "orb_Pierce": t.OrbTargets += 3; break;
                 case "orb_BasicFly": t.OrbFly = true; break; // 구 트리 노드 — 재설계 목록엔 없지만 살려 둔다
 

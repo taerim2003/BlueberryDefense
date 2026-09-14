@@ -101,6 +101,11 @@ ui.pause.passiveHeader	패시브
 ui.result.other	기타
 ui.result.earned	획득 정수: {0}
 ui.result.total	총 피해량: {0}
+ui.result.gameOver	게임 오버
+ui.result.gameClear	게임 클리어
+ui.hud.stage	스테이지 {0}/{1}
+ui.hud.stageBanner	스테이지 {0}
+ui.hud.levelSuffix	{0} 레벨
 unlock.essence	정수 {0} / {1}
 unlock.clearMap	{0} {1} 클리어
 ui.levelup.header	레벨 업!

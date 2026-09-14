@@ -48,6 +48,8 @@ public class LevelUpUI : MonoBehaviour
     // (폐지된 Refresh 자리도 비운 채 세어야 뒤가 안 밀린다). 배선은 Tools > 진화 아이콘 배선 메뉴가 한다.
     [SerializeField] private Sprite[] activeEvoIcons;
     [SerializeField] private Sprite[] passiveEvoIcons;
+    // 액티브 2차 진화 전용 그림 — 인덱스 규칙은 위와 같다. 빈 칸이면 1차 그림으로 떨어진다. 패시브는 2차가 없어 배열도 없다.
+    [SerializeField] private Sprite[] activeEvo2Icons;
     [SerializeField] private Button rerollButton;   // 스킬트리 리롤 해금 시 노출
     [SerializeField] private TMP_Text rerollLabel;      // 버튼 이름("다시 뽑기")
     [SerializeField] private TMP_Text rerollLeftLabel;  // 남은 횟수("3회 남음") — 씬의 RerollButton/LeftText
@@ -154,6 +156,19 @@ public class LevelUpUI : MonoBehaviour
 
         // 진화 가능 레벨업 강조용 노란 테(기본 꺼짐)
         optionGlows = new[] { MakeEvolveGlow(optionButtonA), MakeEvolveGlow(optionButtonB), MakeEvolveGlow(optionButtonC) };
+    }
+
+    // 키보드/패드 포커스. 3지선다와 갈림길은 동시에 뜨지 않지만 그룹을 따로 둔다 —
+    // 한 그룹을 돌려쓰면 갈림길이 열릴 때 3지선다의 커서 표시가 남는다.
+    // ⚠️ `optionGlows`는 **진화 가능 표시**라 이것과 다른 물건이다(이름도 SelectGlow가 아니라 겹치지 않는다).
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+    private readonly UIFocusGroup choiceFocus = new UIFocusGroup();
+
+    private void Update()
+    {
+        // 스택 맨 위 그룹만 실제로 입력을 먹는다(UIFocusGroup이 판정) — 둘 다 불러도 안전하다.
+        if (isOpen) focus.Tick();
+        if (choiceOpen) choiceFocus.Tick();
     }
 
     // 카드 테두리 바깥으로 노란 테가 나오는 양(사방).
@@ -300,6 +315,9 @@ public class LevelUpUI : MonoBehaviour
         else panel.SetActive(true);
         if (!alreadyOpen) ModalPause.Push();
         isOpen = true;
+
+        // 세로 3장 + 오른쪽에 리롤. 배치는 좌표로 판정하므로 목록 순서는 상관없다(D를 누르면 리롤로 간다).
+        focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton }, 0);
     }
 
     private void SetSlot(int index, Button button, TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)
@@ -503,6 +521,9 @@ public class LevelUpUI : MonoBehaviour
         else choicePanel.SetActive(true);
         if (!choiceOpen) ModalPause.Push();
         choiceOpen = true;
+
+        // 보물(왼) · 진화(오른) 두 카드 + 위쪽의 되돌아가기 X. 왼쪽에서 시작한다.
+        choiceFocus.Open(new[] { choiceTreasureButton, choiceEvolveButton, choiceBackButton }, 0);
     }
 
     // 갈림길 카드 클릭. 두 카드가 이 하나로 들어온다(evolve=false 보물, true 진화).
@@ -517,6 +538,7 @@ public class LevelUpUI : MonoBehaviour
     {
         if (!choiceOpen) return;
         choiceOpen = false;
+        choiceFocus.Close();
         ModalPause.Pop();
         if (choicePanelTransition != null) choicePanelTransition.Hide();
         else choicePanel.SetActive(false);
@@ -721,6 +743,7 @@ public class LevelUpUI : MonoBehaviour
     private void CloseTreasure()
     {
         isOpen = false;
+        focus.Close();
         ModalPause.Pop();
         SetTreasureDecor(false);
         if (treasurePanel != null) treasurePanel.SetActive(false);
@@ -957,15 +980,20 @@ public class LevelUpUI : MonoBehaviour
     public Sprite GetPassiveIcon(PassiveSkillId id) => GetIcon(passiveIcons, (int)id);
 
     // ── 진화 아이콘 ─────────────────────────────────────────────────────────
-    // 루트마다 그림이 다르다(파일명 R1=루트0 / R2=루트1). 1차·2차는 같은 그림을 쓴다.
+    // 루트마다 그림이 다르다(파일명 R1=루트0 / R2=루트1). 액티브는 2차 전용 그림이 따로 있고(activeEvo2Icons),
+    // 아직 안 그린 2차는 1차 그림을 그대로 쓴다.
     // 진화 아이콘 배열은 **여기 하나만** 배선한다 — HUD·진화 트리는 LevelUpUI.Instance에서 빌려 간다.
     // (원본 아이콘처럼 3곳에 중복 배선하면 32칸짜리 배열이 3벌이 되어 서로 어긋난다.)
-    public Sprite GetActiveEvoIcon(ActiveSkillId id, int route) => GetIcon(activeEvoIcons, (int)id * 2 + route);
+    public Sprite GetActiveEvoIcon(ActiveSkillId id, int route, int stage = 1)
+    {
+        Sprite stage2 = stage >= 2 ? GetIcon(activeEvo2Icons, (int)id * 2 + route) : null;
+        return stage2 != null ? stage2 : GetIcon(activeEvoIcons, (int)id * 2 + route);
+    }
     public Sprite GetPassiveEvoIcon(PassiveSkillId id, int route) => GetIcon(passiveEvoIcons, (int)id * 2 + route);
 
-    // "지금 이 스킬의 아이콘" — 진화했으면 고른 루트의 진화 아이콘, 아니면 원본. 그림이 비면 원본으로 떨어진다.
+    // "지금 이 스킬의 아이콘" — 진화했으면 고른 루트·차수의 진화 아이콘, 아니면 원본. 그림이 비면 원본으로 떨어진다.
     public Sprite GetActiveIcon(EquippedSkill s) =>
-        (s.EvolutionStage > 0 && s.Route >= 0 ? GetActiveEvoIcon(s.Id, s.Route) : null) ?? GetActiveIcon(s.Id);
+        (s.EvolutionStage > 0 && s.Route >= 0 ? GetActiveEvoIcon(s.Id, s.Route, s.EvolutionStage) : null) ?? GetActiveIcon(s.Id);
 
     public Sprite GetPassiveIcon(EquippedPassive p) =>
         (p.EvolutionStage > 0 && p.Route >= 0 ? GetPassiveEvoIcon(p.Id, p.Route) : null) ?? GetPassiveIcon(p.Id);
@@ -1005,6 +1033,7 @@ public class LevelUpUI : MonoBehaviour
     private void Close()
     {
         isOpen = false;
+        focus.Close();
         ModalPause.Pop();
         if (panelTransition != null) panelTransition.Hide();
         else panel.SetActive(false);

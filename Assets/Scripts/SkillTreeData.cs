@@ -96,6 +96,10 @@ public static class SkillTreeSave
     public static int MaxLevelOf(SkillNode n) =>
         n.type == SkillNodeType.Normal ? Mathf.Max(1, n.maxLevel) : 1;
 
+    // 저장된 레벨이 에셋 만렙보다 높으면 만렙으로 본다 — 에셋에서 만렙을 줄인 뒤 남은 옛 세이브용.
+    // 효과·표시·지불액이 전부 이 값을 쓴다. 그래서 넘친 레벨에 냈던 정수는 Spent가 안 세어 **자동으로 돌려준다.**
+    public static int EffectiveLevel(SkillNode n, int savedLevel) => Mathf.Min(savedLevel, MaxLevelOf(n));
+
     // ── 스킬 해금 게이팅 ──
     // 트리에 SkillUnlock 노드로 등록된 스킬(=게이팅 대상). 여기 없는 스킬은 게이팅 안 함(캐릭터 풀 그대로).
     public static HashSet<ActiveSkillId> GatedSkills(SkillTreeData tree)
@@ -150,7 +154,7 @@ public static class SkillTreeSave
             SkillNode n = tree.Find(kv.Key);
             if (n == null) continue;
             int baseCost = CostOf(n);
-            for (int L = 0; L < kv.Value; L++)
+            for (int L = 0; L < EffectiveLevel(n, kv.Value); L++)
                 sum += Mathf.RoundToInt(baseCost * Mathf.Pow(LevelCostGrowth, L));
         }
         return sum;

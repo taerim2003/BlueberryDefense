@@ -91,7 +91,7 @@ public class HUDController : MonoBehaviour
         {
             int stage = GameManager.Instance.CurrentStage;
             // 판 길이가 승천마다 달라졌으므로(15/20/25) 총 스테이지 수를 같이 보여준다 — 안 그러면 얼마나 남았는지 알 수 없다.
-            stageText.text = $"Stage {stage}/{GameManager.Instance.FinalStage}";
+            stageText.text = Loc.F("ui.hud.stage", stage, GameManager.Instance.FinalStage);
 
             if (lastSeenStage == -1) lastSeenStage = stage;
             else if (stage != lastSeenStage)
@@ -111,7 +111,7 @@ public class HUDController : MonoBehaviour
 
         if (PlayerExperience.Instance != null)
         {
-            levelText.text = $"{PlayerExperience.Instance.Level} LV";
+            levelText.text = Loc.F("ui.hud.levelSuffix", PlayerExperience.Instance.Level);
             expLevelText.text = $"Lv.{PlayerExperience.Instance.Level}";
             UpdateExpFill();
         }
@@ -287,7 +287,7 @@ public class HUDController : MonoBehaviour
     {
         if (stageBannerGroup == null || stageBannerText == null) return;
 
-        stageBannerText.text = $"STAGE {stage}";
+        stageBannerText.text = Loc.F("ui.hud.stageBanner", stage);
 
         RectTransform rt = stageBannerGroup.GetComponent<RectTransform>();
         stageBannerSeq?.Kill();
@@ -383,7 +383,7 @@ public class HUDController : MonoBehaviour
     // 진화 아이콘은 LevelUpUI가 단독으로 배선해 두고 여기선 빌려 쓴다(같은 32칸 배열을 두 벌 두지 않으려고).
     // 미진화이거나 그림이 비어 있으면 null → 호출부가 원본 아이콘으로 떨어진다.
     private static Sprite EvoIcon(EquippedSkill s) => LevelUpUI.Instance != null && s.EvolutionStage > 0 && s.Route >= 0
-        ? LevelUpUI.Instance.GetActiveEvoIcon(s.Id, s.Route) : null;
+        ? LevelUpUI.Instance.GetActiveEvoIcon(s.Id, s.Route, s.EvolutionStage) : null;
 
     private static Sprite EvoIcon(EquippedPassive p) => LevelUpUI.Instance != null && p.EvolutionStage > 0 && p.Route >= 0
         ? LevelUpUI.Instance.GetPassiveEvoIcon(p.Id, p.Route) : null;

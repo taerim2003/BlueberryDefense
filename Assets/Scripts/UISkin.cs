@@ -33,6 +33,11 @@ public class UISkin : ScriptableObject
     public Color dim = new Color(0.031f, 0.020f, 0.051f, 0.8f);     // #08050D
     public Color highlight = new Color(1f, 0.878f, 0.302f, 1f);     // #FFE04D
 
+    // 선택 테를 그리는 머티리얼(UI/SelectOutline). 맵 선택 카드의 `SelectGlow`가 쓰던 것과 **같은 에셋**이고,
+    // UIFocusGroup이 키보드 포커스 테를 만들 때 여기서 가져간다 — 화면마다 배선하지 않으려고 강조색 옆에 뒀다.
+    // 비어 있으면 테 없이 JuicyButton의 선택 연출만 나간다(진화 창 노드는 Juicy가 없어 표시가 사라진다).
+    public Material selectOutline;
+
     [Header("글자")]
     public TMP_FontAsset pixelFont;   // 제목·버튼·수치
     public TMP_FontAsset bodyFont;    // 설명문
@@ -62,6 +67,9 @@ public class UISkin : ScriptableObject
 
     // Highlight의 짝 — 꺼진 상태. 오브젝트를 껐다 켜는 대신 알파만 0으로 두면 레이아웃이 안 흔들린다.
     public static readonly Color Transparent = new Color(1f, 1f, 1f, 0f);
+
+    // 키보드/패드 포커스 테의 머티리얼. UIFocusGroup이 SelectGlow를 만들 때 쓴다.
+    public static Material SelectOutline => Instance != null ? Instance.selectOutline : null;
 
     public static void Text(TMP_Text t, bool body)
     {

@@ -20,6 +20,10 @@ public class DamageMeterUI : MonoBehaviour
 
     private bool shown;
 
+    // 키보드/패드 포커스. 화면 배치는 왼쪽부터 다시하기 · 업그레이드 · 타이틀로(실측)이고 왼쪽에서 시작한다.
+    // ⚠️ 이 화면은 다른 모달과 달리 ModalPause를 쓰지 않는다(GameManager가 직접 timeScale을 0으로 만든다).
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
     private void Awake()
     {
         if (panelRoot != null) panelRoot.SetActive(false);
@@ -33,7 +37,12 @@ public class DamageMeterUI : MonoBehaviour
 
     private void Update()
     {
-        if (shown || GameManager.Instance == null) return;
+        if (shown)
+        {
+            focus.Tick();
+            return;
+        }
+        if (GameManager.Instance == null) return;
         if (!GameManager.Instance.IsGameOver && !GameManager.Instance.IsGameClear) return;
 
         shown = true;
@@ -46,10 +55,15 @@ public class DamageMeterUI : MonoBehaviour
         else if (panelRoot != null) panelRoot.SetActive(true);
         if (titleText != null)
         {
-            titleText.text = isClear ? "GAME CLEAR" : "GAME OVER";
+            titleText.text = Loc.T(isClear ? "ui.result.gameClear" : "ui.result.gameOver");
             titleText.color = isClear ? GameClearColor : GameOverColor;
         }
         if (earnedText != null) earnedText.text = Loc.F("ui.result.earned", MetaRun.RunCurrency);
+
+        // 🔴 아래 `bodyText == null` 조기 반환보다 **앞에서** 연다 — 뒤에 두면 딜미터 본문이 비어 있는
+        //    프리팹에서 키보드 조작만 조용히 죽는다(화면은 멀쩡해서 원인을 못 찾는다).
+        focus.Open(new[] { retryButton, upgradeButton, returnToTitleButton }, 0);
+
         if (bodyText == null) return;
 
         var breakdown = DamageMeter.GetBreakdown();

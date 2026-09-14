@@ -103,6 +103,9 @@ public static class LocHarvest
     // 여기서 뽑는다. 키는 노드 id / **에셋 파일 이름**에서 파생 — 에셋이 늘면 키도 저절로 는다.
     // ⚠️ 조회 쪽(SkillNode.Name/Desc·CharacterDefinition.Name/Desc·MapDefinition.Name/Desc)이
     //    Loc.TOr 폴백이라, 표에 없어도 에셋의 값이 그대로 나온다. 여기 빠져도 화면이 비지는 않는다.
+    // 🔴 이 수확은 `assets_ko.tsv`를 **에셋 값으로 통째로 다시 쓴다.** 누가 TSV(또는 노션 왕복)로 문구를 먼저 고쳐 뒀으면
+    //    그 줄이 에셋의 옛 문구로 조용히 되돌아간다(2026-09-14에 8줄). 돌리기 전에 파일을 떠 두고 **지워진 줄**을 diff로 볼 것 —
+    //    남은 게 있으면 그 문구를 에셋에 먼저 옮기고 다시 돌린다.
     public const string AssetOutPath = "Assets/Localization/assets_ko.tsv";
 
     [MenuItem("Window/Blueberry Defense/번역 - 에셋 표시문구 수확")]

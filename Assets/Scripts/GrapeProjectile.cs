@@ -15,8 +15,14 @@ public class GrapeProjectile : MonoBehaviour
     private float spinSpeed;
     private System.Action<Vector3> onLand;
 
+    // Init을 받기 전까지는 아무것도 하지 않는다. 적이 없어 **전방에 떠서 기다리는** 알이 이 상태로 머문다
+    // (PlayerSkills.HoldGrapesUntilEnemy가 적이 나오면 Init을 준다). 회전도 안 시킨다 — 멈춘 것으로 보여야 한다.
+    // ⚠️ 이 가드가 없으면 flightTime이 0이라 t가 곧장 1이 되어 **소환되자마자 (0,0)에 착탄**한다.
+    private bool waiting = true;
+
     public void Init(Vector3 target, float flightTime, float arcHeight, System.Action<Vector3> onLand)
     {
+        waiting = false;
         start = transform.position;
         this.target = target;
         this.flightTime = Mathf.Max(0.05f, flightTime);
@@ -28,6 +34,8 @@ public class GrapeProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (waiting) return;
+
         elapsed += Time.deltaTime;
         float t = Mathf.Clamp01(elapsed / flightTime);
 

@@ -11,9 +11,12 @@ public class DangerVignette : MonoBehaviour
 {
     public const float DangerRatio = 0.3f;   // 최대 체력 대비 이 아래로 떨어지면 켜진다
 
-    private const float PulseMinAlpha = 0.12f;
-    private const float PulseMaxAlpha = 0.5f;
-    private const float PulseHalfCycle = 0.55f;
+    // 2026-09-14 사용자 요청: 너무 세서 눈이 아프다 → 가장자리에만 약하게, 느리게.
+    // (예전 값: 알파 0.12~0.5 · 반주기 0.55초 · 화면 중심에서 55% 지점부터 붉어짐)
+    private const float PulseMinAlpha = 0.05f;
+    private const float PulseMaxAlpha = 0.22f;
+    private const float PulseHalfCycle = 0.9f;
+    private const float BandHeightRatio = 0.1f; // 붉은 띠 두께 = 화면 높이의 10%(1080p에서 108px). 네 변 모두 같은 두께
 
     private static readonly Color DangerColor = new Color(0.85f, 0.05f, 0.08f);
 
@@ -62,33 +65,32 @@ public class DangerVignette : MonoBehaviour
 
     private void OnDestroy() => pulse?.Kill();
 
-    // 중앙은 완전히 투명하고 **네 변 전체**가 짙어지는 한 장.
-    // ⚠️ 원형 거리(√(dx²+dy²)/√2)로 구우면 알파 1.0에 닿는 건 네 귀퉁이뿐이고 변 한가운데는 0.45에서 멈춘다
-    //    — "가장자리 점멸"이 아니라 "귀퉁이 점멸"이 된다(실제로 그렇게 구웠다가 알파를 재서 잡았다).
-    //    그래서 초타원(p=4) 거리를 쓴다: 변 한가운데에서 정확히 1이 되고 모서리는 넘겨서 클램프된다.
+    // 중앙은 완전히 투명하고 **네 변에서 같은 두께**만큼만 짙어지는 한 장.
+    // 🔴 정사각형으로 구워 화면에 늘리면 좌우 띠가 위아래보다 16/9배 두꺼워진다 — 그래서 화면 비율대로 굽고,
+    //    거리는 "가장 가까운 변까지의 픽셀 거리 ÷ 높이"로 잰다(좌우·상하가 같은 자로 재진다).
+    // ⚠️ 원형·초타원 거리로 굽던 옛 방식은 띠가 화면 안쪽 45%까지 들어와 플레이 영역을 덮었다.
     private static Sprite bakedVignette;
     private static Sprite Baked()
     {
         if (bakedVignette != null) return bakedVignette;
 
-        const int size = 128;
-        const float inner = 0.55f; // 여기까지는 완전 투명 — 화면 한가운데(플레이 영역)를 가리면 안 된다
-        const float power = 4f;    // 클수록 사각형에 가깝다(2면 원, ∞면 정사각)
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-        var px = new Color[size * size];
-        for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
+        const int width = 256;
+        float aspect = Screen.height > 0 ? (float)Screen.width / Screen.height : 16f / 9f;
+        int height = Mathf.Max(16, Mathf.RoundToInt(width / aspect));
+        var tex = new Texture2D(width, height, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        var px = new Color[width * height];
+        float band = BandHeightRatio * height;
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
             {
-                // 중심(0) → 각 변(1)으로 정규화한 거리
-                float dx = Mathf.Abs(x / (size - 1f) * 2f - 1f);
-                float dy = Mathf.Abs(y / (size - 1f) * 2f - 1f);
-                float d = Mathf.Pow(Mathf.Pow(dx, power) + Mathf.Pow(dy, power), 1f / power);
-                px[y * size + x] = new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(inner, 1f, d)));
+                float edge = Mathf.Min(Mathf.Min(x, width - 1 - x), Mathf.Min(y, height - 1 - y)); // 가장 가까운 변까지(px)
+                float t = 1f - Mathf.Clamp01(edge / band);   // 변 = 1, 띠 안쪽 끝 = 0
+                px[y * width + x] = new Color(1f, 1f, 1f, t * t); // 제곱 — 안쪽으로 갈수록 빨리 옅어진다
             }
         tex.SetPixels(px);
         tex.Apply();
 
-        bakedVignette = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        bakedVignette = Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f);
         return bakedVignette;
     }
 }

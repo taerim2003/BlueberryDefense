@@ -184,7 +184,8 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private float evolvedArrowFps = 12f;
     [SerializeField] private GameObject whirlwindPrefab;
     [SerializeField] private GameObject miniWhirlwindPrefab; // 미니 회오리 전용 그림(Effect_MiniTornado). 미배선이면 본체를 축소해 쓴다(도트가 뭉개짐)
-    [SerializeField] private GameObject lightningRodPrefab;  // 피뢰침 기둥(Effect_LightningRod). 미배선이면 임시 프리미티브로 폴백
+    [SerializeField] private GameObject lightningRodPrefab;  // 피뢰침 기둥(Effect_LightningRod — 테슬라 코일). 미배선이면 임시 프리미티브로 폴백
+    [SerializeField] private GameObject zeusStatuePrefab;    // 2차 「제우스의 은총」의 제우스상(Effect_ZeusStatue). 미배선이면 1차 기둥을 키워 쓴다
     [SerializeField] private GameObject bigThunderVfxPrefab; // 피뢰침이 유도하는 큰 낙뢰(Effect_BigThunder) — 틱마다 기둥 꼭대기에 내리친다
     // 되감기 표식 — 시전할 때 머리 위에 한 번 떴다 사라진다.
     [SerializeField] private GameObject rewindVfxPrefab;       // 진화 전 기본(Effect_Rewind)
@@ -1318,7 +1319,7 @@ public class PlayerSkills : MonoBehaviour
         {
             float spread = count > 1 ? Mathf.Lerp(-60f, 60f, i / (float)(count - 1)) : 0f;
             spread += Random.Range(-spreadJitter, spreadJitter);
-            Vector2 dir = Quaternion.Euler(0f, 0f, spread) * Vector2.right; // 적 방향(오른쪽) 부채꼴
+            Vector2 dir = Quaternion.Euler(0f, 0f, spread) * Vector2.left; // 전방(-x) 부채꼴 — 적이 오는 쪽
             GameObject obj = Instantiate(homingMissilePrefab, transform.position + Vector3.up * 0.2f, Quaternion.identity);
             obj.transform.localScale *= missileScale;
             HomingMissile m = obj.GetComponent<HomingMissile>();
@@ -1454,6 +1455,23 @@ public class PlayerSkills : MonoBehaviour
         GrapeStunEveryNPoisonTicks = skill.PathTier[2] >= 3 ? 2 : (skill.PathTier[2] >= 2 ? 3 : 0);
         GrapeStunAppliesVulnerable = skill.PathTier[2] >= 3; // 찌릿찌릿 2차
 
+        // 적이 하나도 없으면 **던지지 않는다** — 전방에 알을 띄워 두고 적이 나올 때까지 기다렸다가 그때 날린다
+        // (사용자 결정 2026-09-10). 예전엔 허공에 던져서 안개가 빈 자리에 깔리고 쿨만 날아갔다.
+        if (!AnyLivingEnemy())
+        {
+            List<GrapeProjectile> held = new List<GrapeProjectile>();
+            for (int i = 0; i < balls; i++)
+            {
+                GameObject ball = SpawnGrapeBall(GrapeHoldSpot(i, balls));
+                if (ball == null) break;   // 그림을 못 만드는 상황이면 대기시킬 것도 없다
+                GrapeProjectile gp = ball.GetComponent<GrapeProjectile>();
+                if (gp == null) gp = ball.AddComponent<GrapeProjectile>();
+                held.Add(gp);
+            }
+            if (held.Count > 0) StartCoroutine(HoldGrapesUntilEnemy(held, radius, damage, interval));
+            return;
+        }
+
         foreach (Vector3 spot in PickGrapeSpots(balls, radius))
         {
             GameObject ball = SpawnGrapeBall(transform.position + Vector3.up * 0.4f);
@@ -1463,6 +1481,40 @@ public class PlayerSkills : MonoBehaviour
             if (gp == null) gp = ball.AddComponent<GrapeProjectile>();
             Vector3 target = spot;
             gp.Init(target, GrapeFlightTime, GrapeArcHeight, landed => LandGrape(landed, radius, damage, interval));
+        }
+    }
+
+    private bool AnyLivingEnemy()
+    {
+        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            if (e != null && e.IsAlive) return true;
+        return false;
+    }
+
+    // 대기 중인 알이 설 자리 — 플레이어 **전방**(-x)에 조금씩 벌려 세운다. 겹쳐 두면 한 알처럼 보인다.
+    private Vector3 GrapeHoldSpot(int index, int total)
+    {
+        float spread = total > 1 ? Mathf.Lerp(-0.6f, 0.6f, index / (float)(total - 1)) : 0f;
+        return transform.position + Vector3.left * (2f + index * 0.55f) + Vector3.up * (0.9f + spread);
+    }
+
+    // 적이 나올 때까지 알을 띄워 두었다가, 나오는 순간 평소의 조준(PickGrapeSpots)으로 날린다.
+    // 매 프레임 전수 검색은 비싸서 0.1초 간격으로 본다 — 대기 중엔 급할 게 없다.
+    private IEnumerator HoldGrapesUntilEnemy(List<GrapeProjectile> held, float radius, float damage, float interval)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(0.1f);
+
+            held.RemoveAll(g => g == null);      // 판이 끝나 정리된 알은 빠진다
+            if (held.Count == 0) yield break;
+            if (!AnyLivingEnemy()) continue;
+
+            List<Vector3> spots = PickGrapeSpots(held.Count, radius);
+            for (int i = 0; i < held.Count; i++)
+                held[i].Init(spots[i], GrapeFlightTime, GrapeArcHeight,
+                             landed => LandGrape(landed, radius, damage, interval));
+            yield break;
         }
     }
 
@@ -1505,8 +1557,9 @@ public class PlayerSkills : MonoBehaviour
     }
 
     // 적이 모인 자리를 고른다 — **무리의 앞줄**(플레이어에 가까운 쪽)부터. 안개끼리 겹치면 넓이가 낭비되므로
-    // 이미 고른 지점과는 떨어뜨린다. 적이 하나도 없으면 전방 허공에라도 던진다 —
-    // 키를 눌렀는데 아무것도 안 나가면 고장난 것처럼 느껴진다.
+    // 이미 고른 지점과는 떨어뜨린다.
+    // ⚠️ 적이 없을 때의 폴백(아래 전방 허공)은 **평소엔 안 쓰인다** — FireGrapeToss가 그 경우를 대기로 가로챈다.
+    //    대기 코루틴이 적을 확인한 뒤 부르므로 여기 오면 적이 있다. 다른 경로가 생길 때를 위해 남겨 둔 안전망이다.
     private List<Vector3> PickGrapeSpots(int count, float radius)
     {
         List<Vector3> spots = new List<Vector3>();
@@ -1524,7 +1577,7 @@ public class PlayerSkills : MonoBehaviour
         {
             if (alive.Count == 0)
             {
-                spots.Add(transform.position + new Vector3(Random.Range(2f, 7f), Random.Range(-1.5f, 1.5f), 0f));
+                spots.Add(transform.position + new Vector3(Random.Range(-7f, -2f), Random.Range(-1.5f, 1.5f), 0f));
                 continue;
             }
 
@@ -1953,14 +2006,16 @@ public class PlayerSkills : MonoBehaviour
         // 오브는 진화로 공중 추가 피해를 얻지 않는다 — 비행 타격은 스킬트리(MetaBonuses.OrbCanHitFlying)로만 열린다.
         orb.FlyingDamageMultiplier = 1f;
 
-        // 지식 연계 path: 슬로우 강화 (T1, T3에서 각각)
+        // 🔴 스킬트리 「끈적한 오브」(orb_BasicSlow)를 사야 오브가 둔화를 건다(프리팹 0.8배=20% 감속·2초). 기본 오브엔 둔화가 없다
+        //    (사용자 결정 — 노션 「스킬트리 재설계」의 "오브: 기본 둔화"). 예전엔 기본 둔화를 **강화**하는 노드였다.
+        orb.SlowsEnemies = MetaBonuses.OrbSlowUnlocked;
+
+        // 지식 연계 path: 슬로우 강화 (T1, T3에서 각각) — 위 노드로 둔화가 켜져 있을 때만 체감된다.
+        // 감속 폭은 기본 둔화와 함께 절반으로 줄였다(2026-09-14 사용자 결정: 둔화율이 너무 높다). 지속 보너스는 그대로.
         float slowMultBonus = 0f;
         float slowDurBonus = 0f;
-        if (skill.PathTier[1] >= 1) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
-        if (skill.PathTier[1] >= 3) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
-        // 스킬트리 "오브 기본 둔화". ⚠️ 기본 오브는 **이미 둔화를 건다**(Orb.cs 0.65배·2초) —
-        //    이 노드는 그걸 켜는 게 아니라 지식 루트 T1과 같은 크기로 **강화**한다.
-        if (MetaBonuses.OrbSlowBoost) { slowMultBonus += 0.1f; slowDurBonus += 0.5f; }
+        if (skill.PathTier[1] >= 1) { slowMultBonus += 0.05f; slowDurBonus += 0.5f; }
+        if (skill.PathTier[1] >= 3) { slowMultBonus += 0.05f; slowDurBonus += 0.5f; }
         orb.SlowMultiplierBonus = slowMultBonus;
         orb.SlowDurationBonus = slowDurBonus;
         // 레벨업 주 성장축: 사라지기 전까지 붙잡는 총 적 수.
@@ -2151,13 +2206,30 @@ public class PlayerSkills : MonoBehaviour
     private static readonly Color LightningRodTipColor = new Color(1f, 0.95f, 0.45f, 1f); // 끝에 노란 촉
     private static Sprite lightningRodSprite;
 
+    // 2차는 제우스상이 따로 그려져 있어 **키우지 않는다**. 제우스상이 없을 때만 예전처럼 1차 기둥을 1.25배로.
+    private GameObject RodPrefab(bool empowered) =>
+        empowered && zeusStatuePrefab != null ? zeusStatuePrefab : lightningRodPrefab;
+
+    private float RodScaleMult(bool empowered) =>
+        empowered && zeusStatuePrefab == null ? 1.25f : 1f;
+
+    // 기둥 그림의 월드 높이 — 그림을 다시 그려도 상수를 안 고치게 스프라이트에서 잰다(프리팹 1.5배 포함).
+    private float RodHeight(bool empowered)
+    {
+        GameObject prefab = RodPrefab(empowered);
+        SpriteRenderer sr = prefab != null ? prefab.GetComponent<SpriteRenderer>() : null;
+        if (sr == null || sr.sprite == null) return LightningRodHeight * RodScaleMult(empowered);
+        return sr.sprite.bounds.size.y * prefab.transform.localScale.y * RodScaleMult(empowered);
+    }
+
     private GameObject SpawnLightningRod(Vector3 rodCenter, bool empowered)
     {
         // 전용 도트가 배선돼 있으면 그쪽. 프리팹이 이미 1.5배(다른 이펙트와 같은 픽셀 배율)라 여기서 더 곱하지 않는다.
-        if (lightningRodPrefab != null)
+        GameObject prefab = RodPrefab(empowered);
+        if (prefab != null)
         {
-            GameObject go = Instantiate(lightningRodPrefab, rodCenter, Quaternion.identity);
-            if (empowered) go.transform.localScale *= 1.25f;
+            GameObject go = Instantiate(prefab, rodCenter, Quaternion.identity);
+            go.transform.localScale *= RodScaleMult(empowered);
             return go;
         }
 
@@ -2210,7 +2282,7 @@ public class PlayerSkills : MonoBehaviour
     private const int LightningRodBoltsPerStrike = 3;
     private const float LightningRodBoltSpreadRatio = 0.7f; // 반경의 몇 %까지 흩뿌리나
     private const float LightningRodBoltScale = 1.5f;       // 프리팹(1.5배) 위에 더 키운다 — 화면을 채우는 크기
-    private const float LightningRodSpriteHeight = 4.875f;  // Effect_LightningRod 104px ÷ PPU32 × scale1.5
+    private const float ZeusChargeDelay = 0.5f;             // Effect_ZeusStatue 6프레임 × fps6 = 1초. 내리치는 4프레임째가 0.5초
     private const float LightningRodGroundOffset = 2.025f;  // 기둥 밑동이 서는 자리(카메라 중심 기준). 예전 3.25유닛 기둥의 밑동 그대로
 
     private IEnumerator LightningRodRoutine(float damage, float critChance, bool empowered)
@@ -2222,10 +2294,13 @@ public class PlayerSkills : MonoBehaviour
         center.z = 0f;
 
         // 🔴 기둥을 키울 땐 **밑동을 고정하고 위로** 키운다 — 중심을 고정하면 커진 만큼 땅에 파묻힌다.
-        float rodHeight = (lightningRodPrefab != null ? LightningRodSpriteHeight : LightningRodHeight)
-                          * (empowered ? 1.25f : 1f);
+        float rodHeight = RodHeight(empowered);
         float groundY = center.y - LightningRodGroundOffset;
         GameObject rod = SpawnLightningRod(new Vector3(center.x, groundY + rodHeight * 0.5f, 0f), empowered);
+
+        // 제우스상은 번개를 **모았다가(1~3프레임) 내리친다(4~6프레임)** — 1초 한 바퀴라 첫 타격을 모으는 반 바퀴만큼 늦춰
+        // 이후 매 타격이 내리치는 프레임과 겹치게 한다. 타격 횟수·간격은 그대로다.
+        if (empowered && zeusStatuePrefab != null) yield return new WaitForSeconds(ZeusChargeDelay);
 
         // 번개 아래끝도 같은 바닥선에 맞춘다(그림 pivot이 중앙이라 반높이만큼 올린다).
         float boltCenterY = groundY + BigThunderHalfHeight * LightningRodBoltScale;

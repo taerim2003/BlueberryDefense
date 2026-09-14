@@ -39,6 +39,9 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button giveUpButton;
 
+    // 키보드/패드 포커스. 왼쪽(설정)에서 시작해 A·D로 오간다.
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
     // 셸(제목·버튼·힌트)의 글자. 언어는 이 창 위에 뜬 설정 패널에서 바뀌므로 잡아두고 다시 채운다
     // (열 내용은 열 때마다 새로 짓는다).
     [Header("언어가 바뀌면 다시 채우는 글자")]
@@ -87,6 +90,10 @@ public class PauseMenu : MonoBehaviour
 
     private void Update()
     {
+        // 설정 패널이 위에 떠 있으면 그쪽이 입력을 갖는다 — 뒤에 깔린 이 창의 커서가 같이 움직이면 안 된다.
+        bool settingsOnTop = OptionsMenu.Instance != null && OptionsMenu.Instance.IsOpen;
+        if (paused && !settingsOnTop) focus.Tick();
+
         var kb = Keyboard.current;
         if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
 
@@ -115,6 +122,7 @@ public class PauseMenu : MonoBehaviour
         ApplyShellText();
         PopulateColumns();
         panel.SetActive(true);
+        focus.Open(new[] { settingsButton, giveUpButton }, 0);
 
         // 🔴 중첩 레이아웃(열 → 항목 → 글자칸) 안의 TMP는 **폭이 확정되기 전 조판으로 높이를 보고한다.**
         //    그대로 두면 긴 설명 칸이 실제보다 낮게 잡혀(실측 117 vs 필요 143) 마지막 줄이 **다음 항목 위로 넘친다.**
@@ -138,6 +146,7 @@ public class PauseMenu : MonoBehaviour
     private void Resume()
     {
         paused = false;
+        focus.Close();
         showTween?.Kill();
         panel.SetActive(false);
         ModalPause.Pop();
