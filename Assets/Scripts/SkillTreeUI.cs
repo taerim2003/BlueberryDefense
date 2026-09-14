@@ -224,7 +224,7 @@ public class SkillTreeUI : MonoBehaviour
         built = true;
     }
 
-    // 노드 아이콘. 그림이 없는 노드(비행·보스)는 null(칸만 보인다).
+    // 노드 아이콘. 그림이 없는 노드는 null(칸만 보인다).
     // 스탯 노드는 같은 뜻의 기존 그림을 빌려 쓴다(사용자 지정 2026-09-14). 단계(I·II…)는 나중에 숫자 그림을 겹친다.
     // 패시브 연계 강화 노드는 `skill` 필드가 기본값(BasicAttack)으로 남아 있어서 id 접두사로 패시브를 가른다.
     private static Sprite IconOf(SkillNode n)
@@ -238,6 +238,8 @@ public class SkillTreeUI : MonoBehaviour
             MetaUpgradeId.Wealth => SkillIconLibrary.Essence(),
             MetaUpgradeId.Crit => SkillIconLibrary.Passive(PassiveSkillId.Assassinate),
             MetaUpgradeId.CritDamage => SkillIconLibrary.CritDamage(),
+            MetaUpgradeId.FlyDamage => SkillIconLibrary.Fly(),
+            MetaUpgradeId.BossDamage => SkillIconLibrary.Boss(),
             MetaUpgradeId.Reroll => SkillIconLibrary.Reroll(),
             _ => null,
         };

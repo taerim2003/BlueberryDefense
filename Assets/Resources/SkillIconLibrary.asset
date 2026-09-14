@@ -72,6 +72,8 @@ MonoBehaviour:
   - {fileID: -9128270300683857632, guid: 743ca3a75f9df7047ba3ad635b4ba03f, type: 3}
   essence: {fileID: 3770654697997499138, guid: 7d90965165ffb7046839d75b1f212a4a, type: 3}
   critDamage: {fileID: 21300000, guid: 0a1a9b2f412a52447a749dbbd4d20efb, type: 3}
+  fly: {fileID: 21300000, guid: 1a199e3cdbfb36747a38d13ee4a959a0, type: 3}
+  boss: {fileID: 21300000, guid: 66fad793fd3537a4cb239a8c48c542dc, type: 3}
   skilltree: {fileID: 21300000, guid: 2b6c3265a976ae4458bad6fd85532602, type: 3}
   reroll: {fileID: 21300000, guid: f8611657830303841b562c891d96f9fe, type: 3}
   evolution:

@@ -43,17 +43,18 @@ public class HomingMissile : MonoBehaviour
         // 반납된(또는 재활용된) 적을 계속 쫓으며 재타겟을 영영 안 한다.
         if (target == null || !target.IsAlive) target = AcquireTarget();
 
-        // 노릴 적이 없으면 **그 자리에 멈춰 기다린다**(사용자 결정 2026-09-10). 예전엔 초기 방향으로
-        // 계속 날아가 화면 밖으로 사라졌다. 대기 중에는 이동·회전을 모두 멈추고 **수명도 깎지 않는다** —
-        // 수명을 깎으면 스테이지 사이의 빈 시간에 기다리다 그냥 없어져서 기다린 의미가 사라진다.
-        if (target == null) return;
-
         life -= Time.deltaTime;
         if (life <= 0f) { Destroy(gameObject); return; }
 
-        Vector2 desired = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
-        float maxRad = turnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
-        dir = ((Vector2)Vector3.RotateTowards(dir, desired, maxRad, 0f)).normalized;
+        // 🔴 미사일은 **어떤 상황에서도 멈추지 않는다**(사용자 결정 2026-09-14 — 09-10의 "제자리 대기"를 폐지).
+        // 노릴 적이 없으면 회전만 건너뛰고 지금 방향으로 직진한다: 소환 직후면 Init이 준 발사 방향,
+        // 날아가던 중 대상이 죽었으면 직전까지 향하던 방향. 새 적이 나타나면 위 재타겟이 다시 잡는다.
+        if (target != null)
+        {
+            Vector2 desired = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+            float maxRad = turnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
+            dir = ((Vector2)Vector3.RotateTowards(dir, desired, maxRad, 0f)).normalized;
+        }
         FaceDir();
         transform.Translate(dir * moveSpeed * Time.deltaTime, Space.World);
     }

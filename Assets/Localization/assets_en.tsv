@@ -20,9 +20,9 @@ tree.desc.exp_1	Experience gain +7%
 tree.name.exp_2	Experience II
 tree.desc.exp_2	Experience gain +10%
 tree.name.gold_1	Wealth I
-tree.desc.gold_1	Essence gain +20%
+tree.desc.gold_1	Essence gain +40%
 tree.name.gold_2	Wealth II
-tree.desc.gold_2	Essence gain +26%
+tree.desc.gold_2	Essence gain +90%
 tree.name.arrow_StartLev	Arrow Mastery
 tree.desc.arrow_StartLev	(With Strawberry) Start Arrow Shot at level 3
 tree.name.orb_BasicFly	Orb Hits Flyers
@@ -44,7 +44,7 @@ tree.desc.thunder_Cooldown	Every lightning strike cuts Lightning's cooldown by 0
 tree.name.atk_3	Attack III
 tree.desc.atk_3	All damage increased by 9%
 tree.name.gold_3	Wealth III
-tree.desc.gold_3	Essence gain +33%
+tree.desc.gold_3	Essence gain +180%
 tree.name.Root_Skilltree	Skill Tree Unlocked!
 tree.desc.Root_Skilltree	Unlocks the skill tree!
 tree.name.New_Orb	Unlock Orb
@@ -128,9 +128,9 @@ tree.desc.arrow_Pierce	Arrow Shot pierces 1 more enemy
 tree.name.swing_Knockback	Heavy Swing
 tree.desc.swing_Knockback	Swing knocks enemies back 1.5x farther
 tree.name.gold_4	Wealth IV
-tree.desc.gold_4	Essence gain +40%
+tree.desc.gold_4	Essence gain +360%
 tree.name.gold_5	Wealth V
-tree.desc.gold_5	Essence gain +47%
+tree.desc.gold_5	Essence gain +720%
 tree.name.rewind_NoGcd	Seamless Rewind
 tree.desc.rewind_NoGcd	Rewind no longer triggers the global cooldown
 tree.name.thunder_Stack	Charge Up

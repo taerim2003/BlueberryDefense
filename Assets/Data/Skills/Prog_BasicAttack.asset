@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Prog_BasicAttack
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 0
-  baseCooldown: 2
-  baseDamage: 6
+  baseCooldown: 3
+  baseDamage: 8
   baseDuration: 0
-  baseHits: 3
-  basePierce: 0
+  baseHits: 1
+  basePierce: 1
   baseProjectiles: 0
   levels:
   - stat: 4

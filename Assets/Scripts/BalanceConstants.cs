@@ -24,8 +24,8 @@ public static class BalanceConstants
     // 8/24 플레이스루: 기본 오브 관통력이 낮다 → 4에서 6으로(레벨업 만렙 도달치도 7→9로 같이 오른다).
     public const int OrbBaseTargets = 6;
     public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
-    public const int EagleBaseDrops = 3;      // 독수리 투하 횟수. 3→2로 내렸다가 8/24 플레이스루 후 다시 3
-    public const int ShotgunBasePellets = 3;      // 산탄 알 수(신규)
+    public const int EagleBaseDrops = 5;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3)
+    public const int ShotgunBasePellets = 6;      // 산탄 알 수. 9/14 3→6
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
 
     // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──

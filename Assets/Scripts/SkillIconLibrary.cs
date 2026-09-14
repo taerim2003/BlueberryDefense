@@ -14,6 +14,8 @@ public class SkillIconLibrary : ScriptableObject
     public Sprite[] passiveEvo;   // index = (int)PassiveSkillId * 2 + route
     public Sprite essence;        // 정수 픽업 그림 — 스킬트리 「부유」 노드
     public Sprite critDamage;     // 스킬트리 「치명타 피해」 노드
+    public Sprite fly;            // 스킬트리 「비행」 노드(비행 적 추가 피해)
+    public Sprite boss;           // 스킬트리 「보스 사냥」 노드(보스 추가 피해)
     public Sprite skilltree;      // 스킬트리 루트 「스킬트리 해금!」 노드
     public Sprite reroll;         // 스킬트리 「리롤 해금」·「리롤」 노드
     public Sprite[] evolution;    // 스킬트리 진화 해금 노드 — 0 = 1차, 1 = 2차
@@ -43,6 +45,8 @@ public class SkillIconLibrary : ScriptableObject
 
     public static Sprite Essence() => Instance != null ? Instance.essence : null;
     public static Sprite CritDamage() => Instance != null ? Instance.critDamage : null;
+    public static Sprite Fly() => Instance != null ? Instance.fly : null;
+    public static Sprite Boss() => Instance != null ? Instance.boss : null;
     public static Sprite Skilltree() => Instance != null ? Instance.skilltree : null;
     public static Sprite Reroll() => Instance != null ? Instance.reroll : null;
     public static Sprite Evolution(int order) => Pick(Instance != null ? Instance.evolution : null, order - 1);

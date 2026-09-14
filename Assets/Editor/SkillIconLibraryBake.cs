@@ -83,9 +83,11 @@ public static class SkillIconLibraryBake
         // 스킬트리 「부유」 노드용 — 정수 픽업 그림을 그대로 쓴다. Multiple로 잘려 있어 첫 조각을 집는다.
         lib.essence = FirstSprite("태양정수", missing);
         lib.critDamage = FirstSprite("Icon_CritDMG", missing);
+        lib.fly = FirstSprite("Icon_Fly", missing);
+        lib.boss = FirstSprite("Icon_Boss", missing);
         lib.skilltree = FirstSprite("Icon_Skilltree", missing);
         lib.reroll = FirstSprite("Icon_Reroll", missing);
-        filled += (lib.essence != null ? 1 : 0) + (lib.critDamage != null ? 1 : 0) + (lib.skilltree != null ? 1 : 0) + (lib.reroll != null ? 1 : 0);
+        filled += (lib.essence != null ? 1 : 0) + (lib.critDamage != null ? 1 : 0) + (lib.fly != null ? 1 : 0) + (lib.boss != null ? 1 : 0) + (lib.skilltree != null ? 1 : 0) + (lib.reroll != null ? 1 : 0);
 
         // 진화 해금 1차·2차. ⚠️ Icon_Evolution2는 1차와 같은 그림(복사본)이라 2차는 Icon_Evolution3이다.
         lib.evolution = new Sprite[2];
@@ -112,10 +114,10 @@ public static class SkillIconLibraryBake
         int rereadFilled = 0;
         foreach (var arr in new[] { reread.active, reread.passive, reread.activeEvo, reread.passiveEvo, reread.level, reread.upgrade, reread.evolution })
             foreach (var s in arr) if (s != null) rereadFilled++;
-        rereadFilled += (reread.essence != null ? 1 : 0) + (reread.critDamage != null ? 1 : 0) + (reread.skilltree != null ? 1 : 0) + (reread.reroll != null ? 1 : 0);
+        rereadFilled += (reread.essence != null ? 1 : 0) + (reread.critDamage != null ? 1 : 0) + (reread.fly != null ? 1 : 0) + (reread.boss != null ? 1 : 0) + (reread.skilltree != null ? 1 : 0) + (reread.reroll != null ? 1 : 0);
 
         return $"SkillIconLibrary {(created ? "생성" : "갱신")}: {AssetPath}\n" +
-               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.passiveEvo.Length + lib.level.Length + lib.upgrade.Length + lib.evolution.Length + 4}개 중 " +
+               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.passiveEvo.Length + lib.level.Length + lib.upgrade.Length + lib.evolution.Length + 6}개 중 " +
                $"채움 {filled}개 (되읽기 {rereadFilled}개)\n" +
                (missing.Length == 0 ? "  빈 칸 없음" : "  빈 칸:\n" + missing);
     }

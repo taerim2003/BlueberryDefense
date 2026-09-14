@@ -20,9 +20,9 @@ tree.desc.exp_1	경험치 획득량 +7%
 tree.name.exp_2	경험 II
 tree.desc.exp_2	경험치 획득량 +10%
 tree.name.gold_1	부유 I
-tree.desc.gold_1	정수 획득량 +20%
+tree.desc.gold_1	정수 획득량 +40%
 tree.name.gold_2	부유 II
-tree.desc.gold_2	정수 획득량 +26%
+tree.desc.gold_2	정수 획득량 +90%
 tree.name.arrow_StartLev	화살 숙련
 tree.desc.arrow_StartLev	(딸기 선택 시) 화살 3레벨로 시작
 tree.name.orb_BasicFly	오브 비행 타격 가능
@@ -44,7 +44,7 @@ tree.desc.thunder_Cooldown	낙뢰가 칠 때마다 낙뢰 쿨타임 -0.01초
 tree.name.atk_3	공격력 III
 tree.desc.atk_3	모든 피해가 9% 증가
 tree.name.gold_3	부유 III
-tree.desc.gold_3	정수 획득량 +33%
+tree.desc.gold_3	정수 획득량 +180%
 tree.name.Root_Skilltree	스킬트리 해금!
 tree.desc.Root_Skilltree	스킬트리를 해금합니다!
 tree.name.New_Orb	오브 해금
@@ -122,9 +122,9 @@ tree.desc.arrow_Pierce	화살 사격의 기본 관통 +1
 tree.name.swing_Knockback	묵직한 휘두르기
 tree.desc.swing_Knockback	휘두르기의 넉백 1.5배
 tree.name.gold_4	부유 IV
-tree.desc.gold_4	정수 획득량 +40%
+tree.desc.gold_4	정수 획득량 +360%
 tree.name.gold_5	부유 V
-tree.desc.gold_5	정수 획득량 +47%
+tree.desc.gold_5	정수 획득량 +720%
 tree.name.rewind_NoGcd	틈새 되감기
 tree.desc.rewind_NoGcd	되감기가 글로벌 쿨타임을 걸지 않는다
 tree.name.thunder_Stack	축전

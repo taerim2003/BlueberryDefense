@@ -211,8 +211,8 @@ public class SkillTreeEditorWindow : EditorWindow
         n.displayName = EditorGUILayout.TextField("이름", n.displayName);
         n.type = (SkillNodeType)EditorGUILayout.EnumPopup("타입", n.type);
 
-        // 비용 등급(0,1,2…). 0=1정수 고정. 인게임 정수 비용은 SkillTreeSave.TierCost가 등급→비용으로 계산.
-        n.tier = Mathf.Max(0, EditorGUILayout.IntField($"등급 (={SkillTreeSave.TierCost(Mathf.Max(0, n.tier))} 정수)", n.tier));
+        // 비용 대역(0=루트, 1~6 = 일반 노드 이름의 I~VI). 인게임 정수 비용은 SkillTreeSave.CostOf가 계산(스킬·기타 해금 노드는 일반 노드 가격의 60%).
+        n.tier = Mathf.Max(0, EditorGUILayout.IntField($"대역 (={SkillTreeSave.CostOf(n)} 정수)", n.tier));
 
         // 스킬 해금/강화 노드는 대상 스킬을 지정(해금 노드는 이 스킬이 인게임 카드 풀에 등장).
         // ⚠️ 강화 노드에선 **표시용**이다 — 실제 효과는 id로 정해진다(SkillEffects의 스위치).

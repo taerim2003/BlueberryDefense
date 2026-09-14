@@ -26,8 +26,8 @@ public class SkillNode
     // SkillUnlock: 이 스킬을 레벨업 카드 풀에 해금. SkillEnhance: 어느 스킬 강화인지(표시용, 효과는 id 레지스트리).
     public ActiveSkillId skill = ActiveSkillId.BasicAttack;
 
-    // 노드 비용 "등급"(1,2,3…). 노드마다 정수 비용을 직접 치지 않고 등급만 지정한다.
-    // 실제 정수 비용은 SkillTreeSave.TierCost가 등급→비용 선형변환으로 계산(공식 상수만 바꾸면 전체 밸런싱).
+    // 노드 비용 "대역"(0=루트, 1~6). 노드마다 정수 비용을 직접 치지 않고 대역만 지정한다.
+    // 실제 정수 비용은 SkillTreeSave.CostOf가 계산(대역마다 곱으로 오름 — 공식 상수만 바꾸면 전체 밸런싱).
     // 인게임엔 계산된 정수만 보이고 등급은 노출 안 함.
     public int tier = 1;
 
@@ -124,16 +124,25 @@ public static class SkillTreeSave
         return set;
     }
 
-    // ── 노드 비용(정수) ── 등급(tier) 기반 선형변환.
-    //   tier 0 = 1정수 고정(극초반 해금용). tier 1 = TierCostBase, 이후 등급마다 +TierCostStep (등속).
-    //   예) base 15·step 5 → 0=1, 1=15, 2=20, 3=25 … 밸런싱은 이 두 상수만 조정하면 전체 등급에 반영된다.
-    public const int TierCostBase = 15;
-    public const int TierCostStep = 5;
+    // ── 노드 비용(정수) ── tier = **대역(1~6)**. 일반 노드 이름의 숫자 I~VI와 같다(사용자 결정 2026-09-14).
+    //   비용은 대역마다 **곱으로** 오른다: 20 · 80 · 320 · 1280 · 5120 · 20480. tier 0(루트) = 1정수.
+    //   🔴 곱셈인 이유: 선형이면 옆 대역과 1.x배 차이라 해금 순서가 안 잡힌다. 곱으로 올리고 그 벽은
+    //      「부유」(정수 획득) 노드로 넘게 해서, 선행으로 묶지 않아도 "지금 찍을 수 있는 노드"가 한 대역에 모인다.
+    //   수치는 시뮬레이터로 골랐다(k대역이 열릴 때 k+1대역 ≈ 판 1회, k+2대역 ≈ 판 3~5회). 전체 길이는 Base, 대역 간 벽 높이는 Ratio.
+    public const int TierCostBase = 20;
+    public const float TierCostRatio = 4f;
 
-    public static int TierCost(int tier) => tier <= 0 ? 1 : TierCostBase + (tier - 1) * TierCostStep;
+    public static int TierCost(int tier) => tier <= 0 ? 1 : Mathf.RoundToInt(TierCostBase * Mathf.Pow(TierCostRatio, tier - 1));
 
-    // 노드의 기본(1레벨) 비용 = 등급 비용.
-    public static int CostOf(SkillNode n) => TierCost(n.tier);
+    // 해금 노드(스킬 해금 + 리롤·진화 같은 기타 해금)는 같은 대역 일반 노드 가격의 60% —
+    // 해금은 즉시 강해지지 않아서, 싸게 둬 빨리 찍게 유도한다(사용자 결정 2026-09-14). 루트(tier 0)는 1정수 그대로.
+    public const float UnlockCostMult = 0.6f;
+
+    // 노드의 기본(1레벨) 비용 = 대역 비용(해금 노드는 그 60%).
+    public static int CostOf(SkillNode n) =>
+        (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SpecialUnlock) && n.tier > 0
+            ? Mathf.Max(1, Mathf.RoundToInt(TierCost(n.tier) * UnlockCostMult))
+            : TierCost(n.tier);
 
     // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐 — 레벨제 Normal 노드용)
     private const float LevelCostGrowth = 1.5f;
