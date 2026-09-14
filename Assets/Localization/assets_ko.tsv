@@ -2,7 +2,7 @@
 tree.name.atk_1	공격력 I
 tree.desc.atk_1	모든 피해가 5% 증가
 tree.name.atk_2	공격력 II
-tree.desc.atk_2	모든 피해가 5% 증가
+tree.desc.atk_2	모든 피해가 7% 증가
 tree.name.hp_1	체력 I
 tree.desc.hp_1	최대 체력이 8 증가
 tree.name.hp_2	체력 II
@@ -16,13 +16,13 @@ tree.desc.crit_1	치명타 확률 5% 증가
 tree.name.crit_2	치명 II
 tree.desc.crit_2	치명타 확률 5% 증가
 tree.name.exp_1	경험 I
-tree.desc.exp_1	경험치 획득량 +5%
+tree.desc.exp_1	경험치 획득량 +7%
 tree.name.exp_2	경험 II
-tree.desc.exp_2	경험치 획득량 +5%
+tree.desc.exp_2	경험치 획득량 +10%
 tree.name.gold_1	부유 I
-tree.desc.gold_1	정수 획득량 +10%
+tree.desc.gold_1	정수 획득량 +20%
 tree.name.gold_2	부유 II
-tree.desc.gold_2	정수 획득량 +10%
+tree.desc.gold_2	정수 획득량 +26%
 tree.name.arrow_StartLev	화살 숙련
 tree.desc.arrow_StartLev	(딸기 선택 시) 화살 3레벨로 시작
 tree.name.orb_BasicFly	오브 비행 타격 가능
@@ -42,9 +42,9 @@ tree.desc.tornado_CoolDownBonus	회오리는 모든 쿨타임 감소 효과를 1
 tree.name.thunder_Cooldown	낙뢰 쿨타임 감소
 tree.desc.thunder_Cooldown	낙뢰가 칠 때마다 낙뢰 쿨타임 -0.01초
 tree.name.atk_3	공격력 III
-tree.desc.atk_3	모든 피해가 6% 증가
+tree.desc.atk_3	모든 피해가 9% 증가
 tree.name.gold_3	부유 III
-tree.desc.gold_3	정수 획득량 +10%
+tree.desc.gold_3	정수 획득량 +33%
 tree.name.Root_Skilltree	스킬트리 해금!
 tree.desc.Root_Skilltree	스킬트리를 해금합니다!
 tree.name.New_Orb	오브 해금
@@ -106,11 +106,11 @@ tree.desc.shotgun_BonusHit	「보너스 탄환 장착」으로 진화한 산탄 
 tree.name.shotgun_Crit	급소 산탄
 tree.desc.shotgun_Crit	산탄 발사의 치명타 확률 +30%
 tree.name.exp_3	경험 III
-tree.desc.exp_3	경험치 획득량 +5%
+tree.desc.exp_3	경험치 획득량 +13%
 tree.name.exp_4	경험 IV
-tree.desc.exp_4	경험치 획득량 +5%
+tree.desc.exp_4	경험치 획득량 +16%
 tree.name.exp_5	경험 V
-tree.desc.exp_5	경험치 획득량 +5%
+tree.desc.exp_5	경험치 획득량 +20%
 tree.name.knowledge_BaseXp	지식 단련
 tree.desc.knowledge_BaseXp	<지식> 획득 시 기본 경험치 증가 +10%
 tree.name.knowledge_EvoHint	진화의 예감
@@ -122,9 +122,9 @@ tree.desc.arrow_Pierce	화살 사격의 기본 관통 +1
 tree.name.swing_Knockback	묵직한 휘두르기
 tree.desc.swing_Knockback	휘두르기의 넉백 1.5배
 tree.name.gold_4	부유 IV
-tree.desc.gold_4	정수 획득량 +10%
+tree.desc.gold_4	정수 획득량 +40%
 tree.name.gold_5	부유 V
-tree.desc.gold_5	정수 획득량 +10%
+tree.desc.gold_5	정수 획득량 +47%
 tree.name.rewind_NoGcd	틈새 되감기
 tree.desc.rewind_NoGcd	되감기가 글로벌 쿨타임을 걸지 않는다
 tree.name.thunder_Stack	축전
@@ -150,9 +150,9 @@ tree.desc.hp_6	최대 체력이 9 증가
 tree.name.homing_Cooldown	빠른 재장전
 tree.desc.homing_Cooldown	호밍 미사일의 기본 쿨타임 -1초
 tree.name.atk_4	공격력 IV
-tree.desc.atk_4	모든 피해가 6% 증가
+tree.desc.atk_4	모든 피해가 11% 증가
 tree.name.atk_5	공격력 V
-tree.desc.atk_5	모든 피해가 7% 증가
+tree.desc.atk_5	모든 피해가 13% 증가
 tree.name.strength_BaseDmg	힘 단련
 tree.desc.strength_BaseDmg	<힘> 획득 시 기본 피해 증가 +5%
 tree.name.strength_SlowSkill	한 방의 힘
@@ -160,7 +160,7 @@ tree.desc.strength_SlowSkill	<힘>의 피해 증가가 쿨타임 5초 이상 스
 tree.name.New_Evolution2	2차 진화 해금
 tree.desc.New_Evolution2	스킬 2차 진화를 할 수 있게 된다
 tree.name.atk_6	공격력 VI
-tree.desc.atk_6	모든 피해가 8% 증가
+tree.desc.atk_6	모든 피해가 15% 증가
 tree.name.boss_1	보스 사냥 I
 tree.desc.boss_1	보스에게 주는 피해 +10%
 tree.name.boss_2	보스 사냥 II

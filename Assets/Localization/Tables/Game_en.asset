@@ -79,7 +79,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983042
-    m_Localized: All damage increased by 5%
+    m_Localized: All damage increased by 7%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983043
@@ -135,7 +135,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983056
-    m_Localized: Experience gain +5%
+    m_Localized: Experience gain +7%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983057
@@ -143,7 +143,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983058
-    m_Localized: Experience gain +5%
+    m_Localized: Experience gain +10%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983059
@@ -151,7 +151,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983060
-    m_Localized: Essence gain +10%
+    m_Localized: Essence gain +20%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983061
@@ -159,7 +159,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983062
-    m_Localized: Essence gain +10%
+    m_Localized: Essence gain +26%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983063
@@ -239,7 +239,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983082
-    m_Localized: All damage increased by 6%
+    m_Localized: All damage increased by 9%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983083
@@ -247,7 +247,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983084
-    m_Localized: Essence gain +10%
+    m_Localized: Essence gain +33%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983085
@@ -1725,7 +1725,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594534
-    m_Localized: Experience gain +5%
+    m_Localized: Experience gain +13%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594535
@@ -1733,7 +1733,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594536
-    m_Localized: Experience gain +5%
+    m_Localized: Experience gain +16%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594537
@@ -1741,7 +1741,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594538
-    m_Localized: Experience gain +5%
+    m_Localized: Experience gain +20%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594539
@@ -1790,7 +1790,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594550
-    m_Localized: Essence gain +10%
+    m_Localized: Essence gain +40%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594551
@@ -1798,7 +1798,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594552
-    m_Localized: Essence gain +10%
+    m_Localized: Essence gain +47%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594553
@@ -1903,7 +1903,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594578
-    m_Localized: All damage increased by 6%
+    m_Localized: All damage increased by 11%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594579
@@ -1911,7 +1911,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594580
-    m_Localized: All damage increased by 7%
+    m_Localized: All damage increased by 13%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594581
@@ -1944,7 +1944,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594588
-    m_Localized: All damage increased by 8%
+    m_Localized: All damage increased by 15%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594589

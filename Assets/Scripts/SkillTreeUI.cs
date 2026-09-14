@@ -76,6 +76,8 @@ public class SkillTreeUI : MonoBehaviour
     private class NodeView
     {
         public SkillNode node; public RectTransform rt; public Image bg; public Image ring; public TMP_Text label;
+        public Image icon;        // 그림이 있는 노드만 — 없으면 null
+        public Image stage;       // 우측 하단 겹침 — 단계 숫자(I~VI) 또는 강화 별. 둘 다 아니면 null
         public Tween scaleTween;  // 호버/구매/pop-in — 한 번에 하나(교체 전 Kill)
         public Tween ringPulse;   // 구매 가능 대기 강조(링 알파 yoyo) — 스케일과 별도 채널
     }
@@ -203,6 +205,12 @@ public class SkillTreeUI : MonoBehaviour
                 label = btn.GetComponentInChildren<TMP_Text>(),
             };
             if (view.ring != null) view.ring.sprite = Whiten(view.ring.sprite);
+            view.icon = CreateIcon(view.bg, IconOf(n));
+            // 우측 하단 겹침: 스탯 노드는 단계 숫자, 강화 노드는 은별/금별. 아이콘보다 뒤에 만들어 위에 그려진다
+            Sprite stageSprite = SkillIconLibrary.Level(StageOf(n));
+            view.stage = stageSprite != null
+                ? CreateIcon(view.bg, stageSprite, StageGrow)
+                : CreateIcon(view.bg, SkillIconLibrary.Upgrade(UpgradeRankOf(n)));
 
             var input = btn.gameObject.AddComponent<SkillNodeButton>();
             input.NodeId = n.id;
@@ -214,6 +222,98 @@ public class SkillTreeUI : MonoBehaviour
         }
 
         built = true;
+    }
+
+    // 노드 아이콘. 그림이 없는 노드(비행·보스)는 null(칸만 보인다).
+    // 스탯 노드는 같은 뜻의 기존 그림을 빌려 쓴다(사용자 지정 2026-09-14). 단계(I·II…)는 나중에 숫자 그림을 겹친다.
+    // 패시브 연계 강화 노드는 `skill` 필드가 기본값(BasicAttack)으로 남아 있어서 id 접두사로 패시브를 가른다.
+    private static Sprite IconOf(SkillNode n)
+    {
+        if (n.type == SkillNodeType.Normal) return n.effect switch
+        {
+            MetaUpgradeId.Attack => SkillIconLibrary.Passive(PassiveSkillId.Strength),
+            MetaUpgradeId.Health => SkillIconLibrary.Passive(PassiveSkillId.Health),
+            MetaUpgradeId.Cooldown => SkillIconLibrary.Passive(PassiveSkillId.Accel),
+            MetaUpgradeId.Xp => SkillIconLibrary.Passive(PassiveSkillId.Knowledge),
+            MetaUpgradeId.Wealth => SkillIconLibrary.Essence(),
+            MetaUpgradeId.Crit => SkillIconLibrary.Passive(PassiveSkillId.Assassinate),
+            MetaUpgradeId.CritDamage => SkillIconLibrary.CritDamage(),
+            MetaUpgradeId.Reroll => SkillIconLibrary.Reroll(),
+            _ => null,
+        };
+        if (n.type == SkillNodeType.SpecialUnlock) return n.id switch
+        {
+            "Root_Skilltree" => SkillIconLibrary.Skilltree(),
+            "New_Reroll" => SkillIconLibrary.Reroll(),
+            "New_Evolution" => SkillIconLibrary.Evolution(1),
+            "New_Evolution2" => SkillIconLibrary.Evolution(2),
+            _ => null,
+        };
+        if (n.type == SkillNodeType.SkillUnlock) return SkillIconLibrary.Active(n.skill);
+        if (n.type != SkillNodeType.SkillEnhance) return null;
+
+        string id = n.id;
+        if (id.StartsWith("accel_")) return SkillIconLibrary.Passive(PassiveSkillId.Accel);
+        if (id.StartsWith("assassin_")) return SkillIconLibrary.Passive(PassiveSkillId.Assassinate);
+        if (id.StartsWith("knowledge_")) return SkillIconLibrary.Passive(PassiveSkillId.Knowledge);
+        if (id.StartsWith("health_")) return SkillIconLibrary.Passive(PassiveSkillId.Health);
+        if (id.StartsWith("defense_")) return SkillIconLibrary.Passive(PassiveSkillId.Defense);
+        if (id.StartsWith("strength_")) return SkillIconLibrary.Passive(PassiveSkillId.Strength);
+        return SkillIconLibrary.Active(n.skill);
+    }
+
+    // 단계 번호 = 에셋에 적힌 노드 이름 끝의 로마자("공격력 III" → 3). id 번호는 못 믿는다(리롤 I = reroll_2).
+    // 로마자가 없으면 0 → SkillIconLibrary.Level이 null을 돌려줘 숫자를 안 붙인다.
+    private static int StageOf(SkillNode n)
+    {
+        string name = n.displayName.TrimEnd();
+        int space = name.LastIndexOf(' ');
+        return System.Array.IndexOf(new[] { "I", "II", "III", "IV", "V", "VI" }, name.Substring(space + 1)) + 1;
+    }
+
+    // 강화 별 등급: 선행을 거슬러 올라가 같은 스킬(= 같은 아이콘)의 강화 노드가 없으면 0(은별), 있으면 1(금별).
+    // 강화 노드가 아니면 -1(별 없음). 해금 노드는 아이콘만 둔다(사용자 지정 2026-09-14).
+    private int UpgradeRankOf(SkillNode n)
+    {
+        if (n.type != SkillNodeType.SkillEnhance) return -1;
+        Sprite icon = IconOf(n);
+        var seen = new HashSet<string>();
+        var stack = new Stack<string>(n.prereqIds);
+        while (stack.Count > 0)
+        {
+            string id = stack.Pop();
+            if (!seen.Add(id)) continue;
+            SkillNode p = tree.Find(id);
+            if (p == null) continue;
+            if (p.type == SkillNodeType.SkillEnhance && IconOf(p) == icon) return 1;
+            foreach (string pre in p.prereqIds) stack.Push(pre);
+        }
+        return 0;
+    }
+
+    // 숫자 그림은 사용자 요청(2026-09-14 "너무 안 보인다")으로 아이콘보다 크게 겹친다. 흰 테두리를 넣은 뒤 2 → 1.5로 줄였다.
+    private const float StageGrow = 1.5f;
+
+    // BG 자식으로 붙여 BG의 축소 배율을 그대로 따른다(형제 순서상 테두리·레벨 글자 아래에 그려진다).
+    // 크기는 BG 그림 픽셀 기준: 테두리 안쪽이 93×85이고 아래 그림자 띠 때문에 중심이 2.5px 위라서, 아이콘을 원본 픽셀의 2.5배로 올려 앉힌다
+    // (32px 아이콘 → 80. 원본이 작은 그림도 같은 픽셀 밀도로 보이게 고정 칸이 아니라 원본 크기에 곱한다).
+    // grow > 1이면 32px 캔버스의 우측 하단 모서리(x30 · 아래에서 y3 — 숫자·별이 그려진 자리)를 고정점으로 키운다.
+    // grow = 1이면 피벗을 어디 두든 가운데 정렬과 같은 칸이 된다.
+    private static Image CreateIcon(Image bg, Sprite sprite, float grow = 1f)
+    {
+        if (bg == null || sprite == null) return null;
+        var go = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+        var rt = (RectTransform)go.transform;
+        rt.SetParent(bg.transform, false);
+        Vector2 baseSize = sprite.rect.size * 2.5f;
+        rt.pivot = new Vector2(30f / 32f, 3f / 32f);
+        rt.sizeDelta = baseSize * grow;
+        rt.anchoredPosition = new Vector2(0f, 2.5f) + Vector2.Scale(rt.pivot - new Vector2(0.5f, 0.5f), baseSize);
+        var img = go.GetComponent<Image>();
+        img.sprite = sprite;
+        img.preserveAspect = true;
+        img.raycastTarget = false;
+        return img;
     }
 
     private Vector2 ToLocal(Vector2 editorPos) => new Vector2(editorPos.x, -editorPos.y) * posScale;
@@ -328,6 +428,10 @@ public class SkillTreeUI : MonoBehaviour
             Color c = isUnlocked ? BaseColor(v.node.type) : BaseColor(v.node.type) * (buyable ? 0.7f : 0.5f);
             c.a = 1f;
             if (v.bg != null) v.bg.color = c;
+            // 아이콘은 타입 색을 입히지 않고 밝기만 칸과 같이 낮춘다(미보유 = 어둡게)
+            Color iconTint = isUnlocked ? Color.white : new Color(buyable ? 0.7f : 0.5f, buyable ? 0.7f : 0.5f, buyable ? 0.7f : 0.5f, 1f);
+            if (v.icon != null) v.icon.color = iconTint;
+            if (v.stage != null) v.stage.color = iconTint;
 
             if (v.label != null)
             {

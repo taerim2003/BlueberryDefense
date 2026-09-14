@@ -12,6 +12,13 @@ public class SkillIconLibrary : ScriptableObject
     public Sprite[] passive;      // index = (int)PassiveSkillId
     public Sprite[] activeEvo;    // index = (int)ActiveSkillId * 2 + route
     public Sprite[] passiveEvo;   // index = (int)PassiveSkillId * 2 + route
+    public Sprite essence;        // 정수 픽업 그림 — 스킬트리 「부유」 노드
+    public Sprite critDamage;     // 스킬트리 「치명타 피해」 노드
+    public Sprite skilltree;      // 스킬트리 루트 「스킬트리 해금!」 노드
+    public Sprite reroll;         // 스킬트리 「리롤 해금」·「리롤」 노드
+    public Sprite[] evolution;    // 스킬트리 진화 해금 노드 — 0 = 1차, 1 = 2차
+    public Sprite[] level;        // 스킬트리 단계 숫자(32×32 우측 하단) — index 0 = I
+    public Sprite[] upgrade;      // 스킬트리 강화 별(32×32 우측 하단) — 0 = 은별(첫 강화), 1 = 금별(다음 강화)
 
     private static SkillIconLibrary cached;
     private static bool searched;
@@ -33,6 +40,14 @@ public class SkillIconLibrary : ScriptableObject
     public static Sprite Passive(PassiveSkillId id) => Pick(Instance != null ? Instance.passive : null, (int)id);
     public static Sprite ActiveEvo(ActiveSkillId id, int route) => Pick(Instance != null ? Instance.activeEvo : null, (int)id * 2 + route);
     public static Sprite PassiveEvo(PassiveSkillId id, int route) => Pick(Instance != null ? Instance.passiveEvo : null, (int)id * 2 + route);
+
+    public static Sprite Essence() => Instance != null ? Instance.essence : null;
+    public static Sprite CritDamage() => Instance != null ? Instance.critDamage : null;
+    public static Sprite Skilltree() => Instance != null ? Instance.skilltree : null;
+    public static Sprite Reroll() => Instance != null ? Instance.reroll : null;
+    public static Sprite Evolution(int order) => Pick(Instance != null ? Instance.evolution : null, order - 1);
+    public static Sprite Level(int stage) => Pick(Instance != null ? Instance.level : null, stage - 1);
+    public static Sprite Upgrade(int rank) => Pick(Instance != null ? Instance.upgrade : null, rank);
 
     private static Sprite Pick(Sprite[] arr, int i) => arr != null && i >= 0 && i < arr.Length ? arr[i] : null;
 }

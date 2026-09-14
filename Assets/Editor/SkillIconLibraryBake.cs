@@ -12,6 +12,7 @@ public static class SkillIconLibraryBake
 {
     private const string AssetPath = "Assets/Resources/SkillIconLibrary.asset";
     private const string SpriteDir = "Assets/Sprites/";
+    private const int LevelCount = 6;
 
     // 원본 아이콘 파일명. 진화 아이콘은 여기에 R1(루트0)·R2(루트1)를 붙인 이름이다.
     private static string ActiveBase(ActiveSkillId id) => id switch
@@ -26,7 +27,7 @@ public static class SkillIconLibraryBake
         ActiveSkillId.Shotgun => "Icon_Scatter",
         ActiveSkillId.Rewind => "Icon_Rewind",
         ActiveSkillId.Swing => "Icon_Swing",
-        ActiveSkillId.GrapeToss => "Icon_GrapeBomb", // 포도 독성 포도알 — 진화 아이콘(R1/R2)은 아직 없다
+        ActiveSkillId.GrapeToss => "Icon_GrapeBomb", // 포도 독성 포도알 — 진화 아이콘은 R1/R2
         _ => null,
     };
 
@@ -79,6 +80,28 @@ public static class SkillIconLibraryBake
                 filled += Assign(lib.passiveEvo, (int)id * 2 + route, Suffix(PassiveBase(id), route), missing);
         }
 
+        // 스킬트리 「부유」 노드용 — 정수 픽업 그림을 그대로 쓴다. Multiple로 잘려 있어 첫 조각을 집는다.
+        lib.essence = FirstSprite("태양정수", missing);
+        lib.critDamage = FirstSprite("Icon_CritDMG", missing);
+        lib.skilltree = FirstSprite("Icon_Skilltree", missing);
+        lib.reroll = FirstSprite("Icon_Reroll", missing);
+        filled += (lib.essence != null ? 1 : 0) + (lib.critDamage != null ? 1 : 0) + (lib.skilltree != null ? 1 : 0) + (lib.reroll != null ? 1 : 0);
+
+        // 진화 해금 1차·2차. ⚠️ Icon_Evolution2는 1차와 같은 그림(복사본)이라 2차는 Icon_Evolution3이다.
+        lib.evolution = new Sprite[2];
+        filled += Assign(lib.evolution, 0, "Icon_Evolution", missing);
+        filled += Assign(lib.evolution, 1, "Icon_Evolution3", missing);
+
+        // 스킬트리 단계 숫자 I~VI — Icon_Level1~6 (Level7은 V와 같은 그림이라 안 쓴다)
+        lib.level = new Sprite[LevelCount];
+        for (int i = 0; i < LevelCount; i++)
+            filled += Assign(lib.level, i, "Icon_Level" + (i + 1), missing);
+
+        // 스킬트리 강화 별 — Icon_SkillUpgrade1(은) · 2(금)
+        lib.upgrade = new Sprite[2];
+        for (int i = 0; i < 2; i++)
+            filled += Assign(lib.upgrade, i, "Icon_SkillUpgrade" + (i + 1), missing);
+
         if (created) AssetDatabase.CreateAsset(lib, AssetPath);
         EditorUtility.SetDirty(lib);
         AssetDatabase.SaveAssets();
@@ -87,13 +110,22 @@ public static class SkillIconLibraryBake
         // 되읽어서 확인 — 코드로 만든 에셋의 스프라이트 대입이 조용히 무시된 전례가 있다.
         var reread = AssetDatabase.LoadAssetAtPath<SkillIconLibrary>(AssetPath);
         int rereadFilled = 0;
-        foreach (var arr in new[] { reread.active, reread.passive, reread.activeEvo, reread.passiveEvo })
+        foreach (var arr in new[] { reread.active, reread.passive, reread.activeEvo, reread.passiveEvo, reread.level, reread.upgrade, reread.evolution })
             foreach (var s in arr) if (s != null) rereadFilled++;
+        rereadFilled += (reread.essence != null ? 1 : 0) + (reread.critDamage != null ? 1 : 0) + (reread.skilltree != null ? 1 : 0) + (reread.reroll != null ? 1 : 0);
 
         return $"SkillIconLibrary {(created ? "생성" : "갱신")}: {AssetPath}\n" +
-               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.passiveEvo.Length}개 중 " +
+               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.passiveEvo.Length + lib.level.Length + lib.upgrade.Length + lib.evolution.Length + 4}개 중 " +
                $"채움 {filled}개 (되읽기 {rereadFilled}개)\n" +
                (missing.Length == 0 ? "  빈 칸 없음" : "  빈 칸:\n" + missing);
+    }
+
+    private static Sprite FirstSprite(string fileName, StringBuilder missing)
+    {
+        foreach (var o in AssetDatabase.LoadAllAssetsAtPath(SpriteDir + fileName + ".png"))
+            if (o is Sprite s) return s;
+        missing.AppendLine($"    [{fileName}] 스프라이트 없음");
+        return null;
     }
 
     private static string Suffix(string base_, int route) =>

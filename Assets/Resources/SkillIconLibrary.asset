@@ -70,3 +70,20 @@ MonoBehaviour:
   - {fileID: -458414950560150146, guid: 889479d7129ad0e48893a292dc1a30fe, type: 3}
   - {fileID: 241351469665752151, guid: 3e763c0f6c9bcb14e816898d2ba0f983, type: 3}
   - {fileID: -9128270300683857632, guid: 743ca3a75f9df7047ba3ad635b4ba03f, type: 3}
+  essence: {fileID: 3770654697997499138, guid: 7d90965165ffb7046839d75b1f212a4a, type: 3}
+  critDamage: {fileID: 21300000, guid: 0a1a9b2f412a52447a749dbbd4d20efb, type: 3}
+  skilltree: {fileID: 21300000, guid: 2b6c3265a976ae4458bad6fd85532602, type: 3}
+  reroll: {fileID: 21300000, guid: f8611657830303841b562c891d96f9fe, type: 3}
+  evolution:
+  - {fileID: 21300000, guid: 4c2b7c33c2d2e1f4f8ddcd3413801b66, type: 3}
+  - {fileID: 21300000, guid: 74e57474c8b2407418d6082766108db1, type: 3}
+  level:
+  - {fileID: 21300000, guid: cb348a573a7cdcc47ae7c8e4303062f9, type: 3}
+  - {fileID: 21300000, guid: 251c381f29038b046bf159c562d11dde, type: 3}
+  - {fileID: 21300000, guid: 16d146ca53423684ab3f9a3f7a344025, type: 3}
+  - {fileID: 21300000, guid: 6eaf9350b7c4ad844b1aa1ad3c37cbb2, type: 3}
+  - {fileID: 21300000, guid: e70c08364cc03ca4abaabd126176e558, type: 3}
+  - {fileID: 21300000, guid: 3ee9fda5d672bb5409ae1a30909bf703, type: 3}
+  upgrade:
+  - {fileID: 21300000, guid: 2dbb2ccd5ebfecb459a88dcf744daec6, type: 3}
+  - {fileID: 21300000, guid: 898a825fa34b7aa4686a88ce93ee7c64, type: 3}
