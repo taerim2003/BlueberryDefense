@@ -7,14 +7,15 @@ description: 노션 연동 + 칸반보드 "POC 할일" 조회·상태변경 절�
 
 ## 노션(Notion) 연동
 
-이 프로젝트의 원본 기획은 Notion에도 있음 — GDD.md/SESSION_ZERO.md는 여기서 옮겨 적은 것.
+이 프로젝트의 원본 기획은 Notion에도 있음 — GDD.md는 여기서 옮겨 적은 것(SESSION_ZERO.md는 7/6 기록일 뿐).
 
 - **허브: "블루베리 디펜스 POC 문서"** — https://app.notion.com/p/34a6394cd983801991e3cb457c798a0a (`34a6394c-d983-8019-91e3-cb457c798a0a`)
   일정·칸반보드·기획 문서 링크가 전부 여기 달려 있다. **노션에서 뭘 찾든 여기서 출발할 것.**
 - 기획 페이지: "🍓 블루베리 디펜스" (위 허브의 "프로토타이핑 문서" 링크) — https://app.notion.com/p/3956394cd98380aba9abf02072b96d6c
 - 🔴 **툴은 `mcp__notion__API-*` 하나뿐이다.** `mcp__claude_ai_Notion__*`(=`notion-search`/`notion-fetch`)는 **이 프로젝트에 없다** —
   claude.ai 커넥터 쪽은 별도 OAuth가 필요해 비대화형 세션에서 인증할 수 없다. 이름을 착각해 호출하면 첫 단계에서 막힌다.
-- GDD.md와 내용이 어긋나면 — 원본은 Notion이지만, 코딩 중 결정 사항은 GDD.md/SESSION_ZERO.md를 우선 신뢰할 것 (Notion은 초기 기획, 로컬 문서가 최신 결정 반영).
+- 노션·로컬 문서가 서로 어긋나면 **둘 다 낡았을 수 있다** — 정답은 분야별로: 수치는 **에셋**(`Prog_*`·`Evo_*`·`StageTable_*`), 진화 조건·열쇠는 **`EvolutionRoutes.cs`**,
+  이름·설명은 노션 **「UI 문구 편집」**(→ `harvest_ko.tsv`), 할 일은 **칸반**. 노션 「스킬 · 진화 피쳐 기획서」·「스킬 데이터 시트」의 서술부는 갱신이 늦다.
 
 ---
 
