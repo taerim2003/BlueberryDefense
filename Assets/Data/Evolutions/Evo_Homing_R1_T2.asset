@@ -21,4 +21,31 @@ MonoBehaviour:
   baseHits: 0
   basePierce: 0
   baseProjectiles: 0
-  levels: []
+  levels:
+  - stat: 0
+    op: 1
+    amount: 1.1
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 1
+    op: 1
+    amount: 0.95
+  - stat: 1
+    op: 1
+    amount: 0.88
+  - stat: 0
+    op: 1
+    amount: 1.1
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 1
+    op: 1
+    amount: 0.95
+  - stat: 1
+    op: 1
+    amount: 0.85
+  - stat: 0
+    op: 1
+    amount: 1.1

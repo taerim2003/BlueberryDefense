@@ -1987,6 +1987,46 @@ MonoBehaviour:
     m_Localized: Damage to bosses +10%
     m_Metadata:
       m_Items: []
+  - m_Id: 13070686563803136
+    m_Localized: Seeking orbs +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13070686651883520
+    m_Localized: Shots per target +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13070686651883521
+    m_Localized: Drops +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13070686651883522
+    m_Localized: Drop interval {0}% shorter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13070686651883523
+    m_Localized: Duration +{0}s (applies after evolving)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13073513478561792
+    m_Localized: Cloud size +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13073513495339008
+    m_Localized: Cloud & explosion size +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13073513495339009
+    m_Localized: Explosion radius +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13073513495339010
+    m_Localized: Eagle size +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866304
+    m_Localized: Lightning rod radius +{0}%
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

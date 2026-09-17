@@ -1,0 +1,571 @@
+<title>블루베리 밸런스 랩</title>
+<meta name="description" content="봇 플레이테스트 루프의 목표 달성 현황·이터레이션별 가설과 판정·스킬·캐릭터·난이도 지표">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f5f6fa;
+  --surface: #fcfcfd;
+  --surface-2: #eef0f6;
+  --ink: #16172c;
+  --ink-2: #4b4d6a;
+  --muted: #85879e;
+  --hair: #e0e2ec;
+  --axis: #c3c5d4;
+  --accent: #3e45b5;
+  --accent-wash: rgba(62, 69, 181, 0.08);
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warning: #fab219;
+  --warning-ink: #8a5a00;
+  --serious: #ec835a;
+  --serious-ink: #a8431c;
+  --critical: #d03b3b;
+  --critical-ink: #b12a2a;
+  --seq-0: #f0f1f6;
+  --seq-1: #cde2fb;
+  --seq-2: #9ec5f4;
+  --seq-3: #6da7ec;
+  --seq-4: #3987e5;
+  --seq-5: #256abf;
+  --seq-6: #184f95;
+  --div-lo: #2a78d6;
+  --div-mid: #f0efec;
+  --div-hi: #e34948;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --band: rgba(12, 163, 12, 0.10);
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0e0f1c;
+    --surface: #16172a;
+    --surface-2: #1f2136;
+    --ink: #f2f2fa;
+    --ink-2: #c1c2d8;
+    --muted: #8a8ca6;
+    --hair: #2a2c43;
+    --axis: #3a3c56;
+    --accent: #9096f2;
+    --accent-wash: rgba(144, 150, 242, 0.12);
+    --good-ink: #3fcf3f;
+    --warning-ink: #fab219;
+    --serious-ink: #ec835a;
+    --critical-ink: #ef6b6b;
+    --seq-0: #1f2136;
+    --seq-1: #104281;
+    --seq-2: #184f95;
+    --seq-3: #256abf;
+    --seq-4: #3987e5;
+    --seq-5: #6da7ec;
+    --seq-6: #b7d3f6;
+    --div-lo: #3987e5;
+    --div-mid: #383835;
+    --div-hi: #e66767;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --band: rgba(12, 163, 12, 0.16);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0e0f1c;
+  --surface: #16172a;
+  --surface-2: #1f2136;
+  --ink: #f2f2fa;
+  --ink-2: #c1c2d8;
+  --muted: #8a8ca6;
+  --hair: #2a2c43;
+  --axis: #3a3c56;
+  --accent: #9096f2;
+  --accent-wash: rgba(144, 150, 242, 0.12);
+  --good-ink: #3fcf3f;
+  --warning-ink: #fab219;
+  --serious-ink: #ec835a;
+  --critical-ink: #ef6b6b;
+  --seq-0: #1f2136;
+  --seq-1: #104281;
+  --seq-2: #184f95;
+  --seq-3: #256abf;
+  --seq-4: #3987e5;
+  --seq-5: #6da7ec;
+  --seq-6: #b7d3f6;
+  --div-lo: #3987e5;
+  --div-mid: #383835;
+  --div-hi: #e66767;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --band: rgba(12, 163, 12, 0.16);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 400 14px/1.6 var(--sans);
+  padding-inline: 16px;
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: 30px; line-height: 1.2; font-weight: 700; }
+h2 { font-size: 20px; line-height: 1.3; }
+h3 { font-size: 15px; line-height: 1.4; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+.eyebrow { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.ink2 { color: var(--ink-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; }
+header.top .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; color: var(--ink-2); font-size: 13px; }
+select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--hair); border-radius: 6px; padding: 4px 8px; }
+select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+section { display: grid; gap: 14px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; border-bottom: 1px solid var(--hair); padding-bottom: 8px; }
+.section-head p { color: var(--muted); font-size: 13px; }
+
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; line-height: 1; padding: 4px 8px 4px 6px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.chip.pass { color: var(--good-ink); } .chip.pass::before { background: var(--good); }
+.chip.fail { color: var(--critical-ink); } .chip.fail::before { background: var(--critical); }
+.chip.warn { color: var(--warning-ink); } .chip.warn::before { background: var(--warning); }
+.chip.info { color: var(--accent); } .chip.info::before { background: var(--accent); }
+
+/* 스코어보드 */
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: 10px; overflow: hidden; }
+.tile { background: var(--surface); padding: 14px 16px 12px; display: grid; gap: 6px; align-content: start; min-height: 132px; }
+.tile .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tile .code { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.tile .label { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.tile .value { font-size: 28px; font-weight: 600; line-height: 1.1; }
+.tile .target { font-size: 12px; color: var(--muted); }
+.tile svg { display: block; }
+@media (max-width: 860px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .board { grid-template-columns: 1fr; } }
+
+/* 표 */
+.scroll { overflow-x: auto; border: 1px solid var(--hair); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 12px; background: var(--surface-2); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+td.num, td.r { font-variant-numeric: tabular-nums; }
+td.cell { text-align: center; font-variant-numeric: tabular-nums; min-width: 44px; padding: 6px 4px; }
+
+/* 이터레이션 타임라인 */
+.iter { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px 20px; display: grid; gap: 14px; }
+.iter.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.iter-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.iter-head h3 { font-size: 17px; }
+.kv { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 14px; }
+.kv dt { color: var(--muted); font-size: 12.5px; padding-top: 1px; }
+.kv dd { margin: 0; }
+.hypo { font-size: 15px; font-weight: 500; max-width: 70ch; }
+.axis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.axis { border: 1px solid var(--hair); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; align-content: start; }
+.axis.chosen { border-color: var(--accent); background: var(--accent-wash); }
+.axis .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.axis .name { font-weight: 600; font-size: 13px; }
+.score { display: inline-flex; gap: 2px; }
+.score i { width: 8px; height: 8px; border-radius: 2px; background: var(--hair); display: block; }
+.score i.on { background: var(--accent); }
+.axis p { font-size: 12.5px; color: var(--ink-2); }
+.changes code { white-space: nowrap; }
+.arrow { color: var(--muted); padding-inline: 4px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+/* 난이도 사다리 */
+.ladder { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 12px 16px; }
+.rung { display: grid; grid-template-columns: 7.5em 1fr 4.5em; gap: 12px; align-items: center; min-height: 30px; }
+.rung .bar { height: 10px; background: var(--seq-0); border-radius: 0 4px 4px 0; position: relative; }
+.rung .bar span { position: absolute; inset: 0 auto 0 0; background: var(--series-1); border-radius: 0 4px 4px 0; }
+.rel { display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; font-size: 12px; min-height: 20px; align-items: center; }
+.rel .op { font-family: var(--mono); color: var(--ink-2); padding-left: 2.2em; }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); align-items: center; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.empty { padding: 18px; color: var(--muted); background: var(--surface); border: 1px dashed var(--axis); border-radius: 10px; font-size: 13px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: 13px; border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--page); border-color: var(--ink); }
+.chart { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 12px; }
+.chart svg { width: 100%; height: auto; display: block; }
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--page); font-size: 12px; padding: 6px 9px; border-radius: 6px; max-width: 280px; line-height: 1.45; }
+@media (prefers-reduced-motion: no-preference) { .tabs button { transition: background .12s ease; } }
+</style>
+
+<div class="wrap" id="app"></div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+// ───── 이름표 ─────
+const SKILL = { BasicAttack: '화살', Swing: '휘두르기', GrapeToss: '포도', Whirlwind: '회오리', Orb: '오브', Lightning: '낙뢰', EagleDrop: '독수리', Sniping: '스나이핑', Homing: '호밍', Shotgun: '산탄', Rewind: '되감기', Other: '기타' };
+const CHAR = { Char_Strawberry: '딸기', Char_Pineapple: '파인애플', Char_Slot3: '포도' };
+const ENEMY = { Blueberry: '블루베리', Regent: '엘리트', PaperPlane: '종이비행기', Ufo: 'UFO', Shield: '방패', Rider: '라이더', Hopper: '콩콩이', Surfer: '서핑', Airship: '비행선', Boss: '보스', Treasure: '보물' };
+const AXIS = { A: '맵', B: '스킬 파워', C: '스킬트리 파워', D: '경제·진행 속도', E: '캐릭터' };
+const VERDICT = { confirmed: ['확인', 'pass'], refuted: ['반박', 'fail'], inconclusive: ['불확실', 'warn'], pending: ['검증 대기', 'info'] };
+const enemyName = k => ENEMY[(k || '').replace('EnemyDef_', '')] || k;
+const skillName = k => SKILL[k] || k;
+const charName = k => CHAR[k] || k;
+
+// ───── DOM 도우미 ─────
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+const svg = (tag, attrs) => { const el = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v); return el; };
+const fmt = (v, d = 2) => v == null || Number.isNaN(v) ? '—' : (typeof v === 'number' ? (Math.abs(v) >= 100 ? v.toLocaleString('ko-KR', { maximumFractionDigits: 0 }) : v.toLocaleString('ko-KR', { maximumFractionDigits: d })) : v);
+const pct = v => v == null ? '—' : Math.round(v * 100) + '%';
+const chip = (state, text) => h('span', { class: 'chip ' + state }, text);
+const passChip = (m) => m == null || m.value == null || (typeof m.value === 'string' && /^0\/0/.test(m.value)) ? chip('', '측정 전') : m.pass ? chip('pass', '통과') : chip('fail', '미달');
+
+const tip = document.getElementById('tip');
+function hover(el, text) {
+  el.addEventListener('mousemove', e => { tip.hidden = false; tip.textContent = text; tip.style.left = Math.min(e.clientX + 12, innerWidth - 290) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; });
+  el.addEventListener('mouseleave', () => { tip.hidden = true; });
+}
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function seqColor(v) { // 0..1 → 한 색조 7단
+  if (v == null) return 'transparent';
+  const i = Math.max(0, Math.min(6, Math.round(v * 6)));
+  return `var(--seq-${i})`;
+}
+function inkOn(v) { return v != null && v > 0.55 ? '#ffffff' : 'var(--ink)'; }
+
+// ───── 렌더 ─────
+function render(idx) {
+  const app = document.getElementById('app');
+  app.replaceChildren();
+  if (!DATA || !DATA.iterations || !DATA.iterations.length) {
+    app.append(h('header', { class: 'top' }, h('h1', {}, '블루베리 밸런스 랩')), h('div', { class: 'empty' }, '아직 기록된 봇 세션이 없습니다. BotRuns/request.json으로 세션을 요청한 뒤 analyze.js를 다시 돌리세요.'));
+    return;
+  }
+  const iters = DATA.iterations;
+  const it = iters[idx];
+  const final = DATA.loop && DATA.loop.final;
+
+  // 헤더
+  const sel = h('select', { id: 'iter-select', 'aria-label': '볼 이터레이션', onchange: e => render(+e.target.value) },
+    iters.map((x, i) => h('option', { value: i, selected: i === idx ? 'selected' : null }, `이터레이션 ${x.iteration}${i === iters.length - 1 ? ' (최신)' : ''}`)));
+  app.append(h('header', { class: 'top' },
+    h('div', {}, h('div', { class: 'eyebrow' }, '블루베리 디펜스 · 봇 플레이테스트'), h('h1', {}, '블루베리 밸런스 랩')),
+    h('div', { class: 'meta' },
+      final ? chip('pass', '루프 종료 · 최종') : chip('info', '루프 진행 중'),
+      h('span', { class: 'num' }, `세션 ${DATA.sessions.length}개 · 판 ${DATA.sessions.reduce((a, s) => a + s.runs, 0).toLocaleString('ko-KR')}개`),
+      h('span', { class: 'muted num' }, '갱신 ' + new Date(DATA.generatedUtc).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })),
+      sel)));
+
+  app.append(scoreboard(iters, idx));
+  app.append(timeline(iters, idx));
+  app.append(goalsSection(it));
+  app.append(characterSection(it));
+  app.append(skillSection(it));
+  app.append(cooldownSection(it));
+  app.append(progressSection(it));
+  app.append(deathSection(it));
+}
+
+function sectionHead(title, note) {
+  return h('div', { class: 'section-head' }, h('h2', {}, title), note ? h('p', {}, note) : null);
+}
+
+// 스코어보드
+function scoreboard(iters, idx) {
+  const T = DATA.targets;
+  const defs = [
+    ['G1', '총 플레이타임', m => m.value == null ? '—' : fmt(m.value, 0) + '분', `목표 ${T.playtimeMinutes[0]}–${T.playtimeMinutes[1]}분 · 전 노드 + 우주 어려움`, m => m.value],
+    ['G2', '난이도 서열', m => m.measured ? m.value : '—', '관계 8개 · 농장1 < … < 우주3', m => m.measured ? +String(m.value).split('/')[0] : null],
+    ['G3', '목표별 판수 균일', m => fmt(m.value, 2), `변동계수 ≤ ${T.attemptsCvMax}`, m => m.value],
+    ['G4', '풀트리 우주 어려움', m => m.value == null ? '—' : pct(m.value), `캐릭터별 클리어율 ≥ ${pct(T.fullTreeClearRateMin)}`, m => m.value],
+    ['G5', '스킬 밸런스', m => m.value, '지배 없음 · 장점 1개 이상 · 종합 0.7–1.4', null],
+    ['G6', '캐릭터 편차', m => fmt(m.value, 2), `같은 목표에서 난이도 차 ≤ ${T.characterSpreadMax}`, m => m.value],
+    ['C1', '쿨 15초 초과', m => m.value == null ? '—' : m.value + '건', '하드 제약 · 0건이어야 함', m => m.value],
+    ['C2', '진화 쿨 원칙 미충족', m => m.value == null ? '—' : m.value + '건', '진화하면 쿨이 길어져야 함', m => m.value],
+  ];
+  const board = h('div', { class: 'board' });
+  for (const [code, label, show, target, series] of defs) {
+    const m = iters[idx].scoreboard[code] || {};
+    const tile = h('div', { class: 'tile' },
+      h('div', { class: 'row' }, h('span', { class: 'code' }, code), passChip(m)),
+      h('div', { class: 'label' }, label),
+      h('div', { class: 'value num' }, show(m)),
+      h('div', { class: 'target' }, code === 'C2' && m.shorter ? `${target} · 오히려 짧아짐 ${m.shorter}건` : target));
+    if (series) {
+      const vals = iters.slice(0, idx + 1).map(x => series(x.scoreboard[code] || {}));
+      if (vals.filter(v => v != null).length >= 2) tile.append(sparkline(vals));
+    }
+    board.append(tile);
+  }
+  return h('section', {}, sectionHead('목표 달성 현황', '선택한 이터레이션 기준. 아래 작은 선은 이터레이션별 추이'), board);
+}
+
+function sparkline(vals) {
+  const W = 160, H = 28, pad = 4;
+  const pts = vals.map((v, i) => [i, v]).filter(p => p[1] != null);
+  const lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1]));
+  const x = i => pad + (i / Math.max(1, vals.length - 1)) * (W - pad * 2);
+  const y = v => hi === lo ? H / 2 : H - pad - ((v - lo) / (hi - lo)) * (H - pad * 2);
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, 'aria-hidden': 'true' });
+  s.append(svg('polyline', { points: pts.map(p => `${x(p[0])},${y(p[1])}`).join(' '), fill: 'none', stroke: 'var(--muted)', 'stroke-width': 1.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  const last = pts[pts.length - 1];
+  s.append(svg('circle', { cx: x(last[0]), cy: y(last[1]), r: 3, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 1.5 }));
+  return s;
+}
+
+// 이터레이션 타임라인
+function timeline(iters, idx) {
+  const sec = h('section', {}, sectionHead('이터레이션 기록', '루프마다 겨냥한 목표 → 손잡이 선택 분석 → 변경 → 다음 루프의 판정'));
+  const list = h('div', { style: 'display:grid;gap:12px' });
+  for (let i = iters.length - 1; i >= 0; i--) {
+    const it = iters[i], p = it.plan;
+    const v = p && p.verdict ? VERDICT[p.verdict] || [p.verdict, 'info'] : null;
+    const card = h('article', { class: 'iter' + (i === idx ? ' current' : '') },
+      h('div', { class: 'iter-head' },
+        h('h3', {}, `이터레이션 ${it.iteration}`),
+        v ? chip(v[1], '판정: ' + v[0]) : it.iteration === 0 || it.synthetic ? chip('', '기준선') : chip('info', '검증 대기'),
+        h('span', { class: 'muted num' }, `판 ${it.runCount}개 · 클리어 ${it.results.clear} · 사망 ${it.results.dead}` + (it.results.stuck ? ` · 멈춤 ${it.results.stuck}` : ''))));
+    if (!p || !p.hypothesis) {
+      card.append(h('p', { class: 'ink2' }, it.synthetic ? '변경 없이 측정만 한 세션입니다.' : '이 이터레이션에는 밸런스 변경이 기록되지 않았습니다.'));
+    } else {
+      card.append(h('dl', { class: 'kv' },
+        h('dt', {}, '겨냥한 목표'), h('dd', {}, p.target || '—'),
+        h('dt', {}, '증상'), h('dd', {}, p.symptom || '—'),
+        h('dt', {}, '가설'), h('dd', { class: 'hypo' }, p.hypothesis)));
+      if (p.axisAnalysis && p.axisAnalysis.length) {
+        const grid = h('div', { class: 'axis-grid' });
+        for (const a of p.axisAnalysis) {
+          const chosen = a.axis === p.chosenAxis;
+          const rej = (p.rejected || []).find(r => r.axis === a.axis);
+          grid.append(h('div', { class: 'axis' + (chosen ? ' chosen' : '') },
+            h('div', { class: 'top' }, h('span', { class: 'name' }, `${a.axis} ${AXIS[a.axis] || ''}`),
+              h('span', { class: 'score', 'aria-label': `증거 점수 ${a.score}/5` }, [1, 2, 3, 4, 5].map(k => h('i', { class: k <= a.score ? 'on' : '' })))),
+            h('p', {}, a.evidence || ''),
+            chosen ? h('p', { style: 'color:var(--accent);font-weight:600' }, '선택') : rej ? h('p', { class: 'muted' }, '버린 이유: ' + rej.reason) : null));
+        }
+        card.append(h('div', {}, h('div', { class: 'eyebrow', style: 'margin-bottom:6px' }, '손잡이 선택 분석'), grid));
+      }
+      if (p.changes && p.changes.length) {
+        card.append(h('div', { class: 'scroll changes' }, h('table', {},
+          h('thead', {}, h('tr', {}, h('th', {}, '파일'), h('th', {}, '필드'), h('th', { class: 'r' }, '변경'))),
+          h('tbody', {}, p.changes.map(c => h('tr', {}, h('td', {}, h('code', {}, c.file)), h('td', {}, h('code', {}, c.field)),
+            h('td', { class: 'r num' }, fmt(c.before, 3), h('span', { class: 'arrow' }, '→'), h('strong', {}, fmt(c.after, 3)))))))));
+      }
+      const extra = h('dl', { class: 'kv' });
+      if (p.prediction && p.prediction.length) extra.append(h('dt', {}, '예측'), h('dd', {}, h('ul', { class: 'plain' }, p.prediction.map(x => h('li', {}, typeof x === 'string' ? x : `${x.metric}: ${x.direction === 'down' ? '감소' : x.direction === 'up' ? '증가' : x.direction} ${x.expectedDelta != null ? '(' + x.expectedDelta + ')' : ''}`)))));
+      if (p.passCriterion) extra.append(h('dt', {}, '통과 기준'), h('dd', {}, p.passCriterion));
+      if (p.verdictNote) extra.append(h('dt', {}, '판정 근거'), h('dd', {}, p.verdictNote));
+      if (p.nextToVerify) extra.append(h('dt', {}, '다음에 검증'), h('dd', {}, p.nextToVerify));
+      if (p.codeSuggestions && p.codeSuggestions.length) extra.append(h('dt', {}, '코드 변경 제안'), h('dd', {}, h('ul', { class: 'plain' }, p.codeSuggestions.map(s => h('li', {}, s)))));
+      if (extra.childNodes.length) card.append(extra);
+    }
+    if (it.changedFiles && it.changedFiles.length)
+      card.append(h('details', {}, h('summary', { class: 'muted' }, `직전 이터레이션 대비 바뀐 밸런스 파일 ${it.changedFiles.length}개`),
+        h('ul', { class: 'plain', style: 'margin-top:6px' }, it.changedFiles.map(f => h('li', {}, h('code', {}, f))))));
+    list.append(card);
+  }
+  sec.append(list);
+  return sec;
+}
+
+// 9개 목표
+function goalsSection(it) {
+  const sec = h('section', {}, sectionHead('9개 목표', '판수·시간은 정주행, 난이도 점수 D는 고정 트리 측정(0 = 전부 클리어, 1 = 첫 스테이지에서 전멸)'));
+  const probe = it.probe.perGoal, camp = it.campaign.perGoal;
+  const hasD = probe.some(g => g.D != null);
+  const ladder = h('div', { class: 'ladder', role: 'list', 'aria-label': '난이도 서열' });
+  probe.forEach((g, i) => {
+    const bar = h('div', { class: 'bar' }, h('span', { style: `width:${g.D == null ? 0 : Math.round(g.D * 100)}%` }));
+    const row = h('div', { class: 'rung', role: 'listitem' }, h('span', {}, g.name), bar, h('span', { class: 'r num' }, g.D == null ? '—' : fmt(g.D, 3)));
+    hover(row, `${g.name} · D ${fmt(g.D, 3)} · 클리어율 ${pct(g.clearRate)} · ${g.n}판`);
+    ladder.append(row);
+    const rel = it.probe.relations[i];
+    if (rel) ladder.append(h('div', { class: 'rel' }, h('span', { class: 'op' }, rel.op),
+      h('span', {}, rel.gap == null ? h('span', { class: 'muted' }, '측정 전') : [chip(rel.pass ? 'pass' : 'fail', rel.pass ? '서열 맞음' : '서열 어긋남'), h('span', { class: 'muted num', style: 'margin-left:8px' }, `D차 ${fmt(rel.gap, 3)} (필요 ≥ ${rel.need})`)])));
+  });
+  const table = h('div', { class: 'scroll' }, h('table', {},
+    h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, '평균 판수'), h('th', { class: 'r' }, '판수 편차'), h('th', { class: 'r' }, '클리어 판 길이'), h('th', { class: 'r' }, '클리어한 캠페인'))),
+    h('tbody', {}, camp.map(g => h('tr', {}, h('td', {}, g.name), h('td', { class: 'r' }, fmt(g.meanAttempts, 1)), h('td', { class: 'r' }, fmt(g.attemptsStd, 1)),
+      h('td', { class: 'r' }, g.clearRunGameMinutes == null ? '—' : fmt(g.clearRunGameMinutes, 1) + '분'), h('td', { class: 'r' }, `${g.clearedCampaigns}/${g.campaigns}`))))));
+  sec.append(h('div', { class: 'two' }, hasD ? ladder : h('div', { class: 'empty' }, '난이도 측정(probe) 세션이 아직 없습니다.'), table));
+  return sec;
+}
+
+// 캐릭터
+function characterSection(it) {
+  const sec = h('section', {}, sectionHead('캐릭터', '같은 목표·같은 트리에서 캐릭터별 난이도 점수 D. 진할수록 어렵다'));
+  const chars = [...new Set(it.probe.perGoal.flatMap(g => Object.keys(g.byCharacter)))];
+  if (!chars.length) { sec.append(h('div', { class: 'empty' }, '캐릭터 비교는 난이도 측정(probe) 세션에서 나옵니다.')); return sec; }
+  const table = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '목표'), chars.map(c => h('th', { class: 'r' }, charName(c))), h('th', { class: 'r' }, '편차'))),
+    h('tbody', {}, it.probe.perGoal.map(g => h('tr', {}, h('td', {}, g.name),
+      chars.map(c => { const v = g.byCharacter[c]; const td = h('td', { class: 'cell', style: `background:${seqColor(v)};color:${inkOn(v)}` }, v == null ? '—' : fmt(v, 2)); hover(td, `${g.name} · ${charName(c)} · D ${fmt(v, 3)}`); return td; }),
+      h('td', { class: 'r num' }, g.charSpread == null ? '—' : fmt(g.charSpread, 2))))));
+  const full = it.probe.G4.byCharacter || {};
+  const fullTable = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '캐릭터'), h('th', { class: 'r' }, '풀트리 우주 어려움'), h('th', { class: 'r' }, '판'), h('th', { class: 'r' }, '평균 D'))),
+    h('tbody', {}, chars.map(c => h('tr', {}, h('td', {}, charName(c)), h('td', { class: 'r' }, full[c] ? [pct(full[c].rate), ' ', chip(full[c].rate >= DATA.targets.fullTreeClearRateMin ? 'pass' : 'fail', full[c].rate >= DATA.targets.fullTreeClearRateMin ? '안정' : '불안정')] : '—'),
+      h('td', { class: 'r num' }, full[c] ? full[c].n : '—'), h('td', { class: 'r num' }, fmt((it.probe.G6.characterMeanD || {})[c], 3))))));
+  sec.append(h('div', { class: 'two' }, h('div', { class: 'scroll' }, table), h('div', { class: 'scroll' }, fullTable)));
+  return sec;
+}
+
+// 스킬
+function skillSection(it) {
+  const sec = h('section', {}, sectionHead('스킬 밸런스', '같은 진화 단계끼리 비교. 칸 값은 그룹 중앙값 = 1로 나눈 배율(파랑 낮음 · 회색 중앙 · 빨강 높음)'));
+  const rows = it.skills.rows.filter(r => r.skill !== 'Other');
+  if (!rows.length) { sec.append(h('div', { class: 'empty' }, '스킬 기록이 없습니다.')); return sec; }
+  const cols = [['power', '딜 몫'], ['dps', '보유 중 DPS'], ['antiAir', '대공'], ['boss', '보스·엘리트'], ['shield', '방패'], ['contactPerMin', '근접 처치'], ['early', '초반']];
+  const body = h('div', {});
+  const tabs = h('div', { class: 'tabs', role: 'tablist' });
+  const groupNames = ['진화 전', '1차 진화', '2차 진화'];
+  const show = g => {
+    tabs.querySelectorAll('button').forEach((b, i) => b.setAttribute('aria-selected', i === g ? 'true' : 'false'));
+    const grp = it.skills.groups[g] || {};
+    const members = rows.filter(r => r.evoStage === g).sort((a, b) => (b.norm && b.norm.power || 0) - (a.norm && a.norm.power || 0));
+    body.replaceChildren();
+    const status = h('div', { class: 'legend', style: 'margin-bottom:8px' },
+      grp.members >= 3 ? (grp.pass ? chip('pass', '판정 통과') : chip('fail', '판정 미달')) : chip('', `표본 부족(판정은 스킬 3종 이상 · 스킬당 ${DATA.targets.noiseMinSamples}판 이상)`),
+      (grp.dominance || []).length ? h('span', {}, '다른 스킬을 전부 앞섬: ' + grp.dominance.map(d => `${label(d.dominant)} > ${label(d.dominated)}`).join(', ')) : null,
+      (grp.noStrength || []).length ? h('span', {}, '장점이 없음: ' + grp.noStrength.map(label).join(', ')) : null,
+      (grp.outOfBand || []).length ? h('span', {}, '종합 범위 밖: ' + grp.outOfBand.map(o => `${label(o.state)} ${o.power}`).join(', ')) : null);
+    body.append(status);
+    if (!members.length) { body.append(h('div', { class: 'empty' }, `${groupNames[g]} 상태의 기록이 아직 없습니다. 2차 진화는 무작위 봇에서 드물어 시험장 측정이 필요합니다.`)); return; }
+    body.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', { class: 'r' }, '판'), cols.map(c => h('th', { class: 'r' }, c[1])), h('th', { class: 'r' }, '오버킬'), h('th', { class: 'r' }, '신규 제시→선택'))),
+      h('tbody', {}, members.map(m => h('tr', {},
+        h('td', {}, skillName(m.skill), m.route >= 0 ? h('span', { class: 'muted' }, ` R${m.route}`) : null),
+        h('td', { class: 'r num' }, m.n),
+        cols.map(([k, t]) => {
+          const nv = m.norm ? m.norm[k] : null;
+          const td = h('td', { class: 'cell', style: divStyle(nv) }, nv == null ? (m[k] == null ? '—' : fmt(m[k], 1)) : fmt(nv, 2));
+          hover(td, `${skillName(m.skill)}${m.route >= 0 ? ' R' + m.route : ''} · ${t} ${fmt(m[k], 2)}${nv != null ? ' (중앙값 대비 ×' + nv + ')' : ''}`);
+          return td;
+        }),
+        h('td', { class: 'r num' }, pct(m.overkill)),
+        h('td', { class: 'r num' }, m.offeredNew ? `${m.offeredNew}→${m.pickedNew}` : '—')))))));
+  };
+  const label = s => { const [id, r] = String(s).split('/'); return skillName(id) + (r !== '-1' && r != null ? ' R' + r : ''); };
+  groupNames.forEach((n, g) => tabs.append(h('button', { type: 'button', role: 'tab', id: 'skill-tab-' + g, onclick: () => show(g) }, n)));
+  sec.append(tabs, body);
+  show(0);
+  return sec;
+}
+function divStyle(v) {
+  if (v == null) return '';
+  const t = Math.max(-1, Math.min(1, Math.log2(v) / 1.2)); // ×0.5 ~ ×2.0 → -0.83 ~ 0.83
+  const pole = t < 0 ? 'var(--div-lo)' : 'var(--div-hi)';
+  const a = Math.round(Math.abs(t) * 100);
+  return `background:color-mix(in oklab, ${pole} ${a}%, var(--div-mid));color:${Math.abs(t) > 0.55 ? '#ffffff' : 'var(--ink)'}`;
+}
+
+// 쿨 감사
+function cooldownSection(it) {
+  const cd = it.cooldowns;
+  const sec = h('section', {}, sectionHead('진화 쿨타임 감사', '맨몸 쿨(스킬트리·패시브 감소 전). 칸 = Lv1 → Lv10 초'));
+  if (!cd.rows || !cd.rows.length) { sec.append(h('div', { class: 'empty' }, '쿨 감사표가 없습니다(세션 설정 runAudit).')); return sec; }
+  const skills = [...new Set(cd.rows.map(r => r.skill))];
+  const cols = [[-1, 0, '진화 전'], [0, 1, 'R0 1차'], [0, 2, 'R0 2차'], [1, 1, 'R1 1차'], [1, 2, 'R1 2차']];
+  const viol = (s, route, tier) => cd.violations.filter(v => v.skill === s && v.route === route && v.tier === tier);
+  const table = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '스킬'), cols.map(c => h('th', { class: 'r' }, c[2])))),
+    h('tbody', {}, skills.map(s => h('tr', {}, h('td', {}, skillName(s)), cols.map(([route, tier]) => {
+      const r = cd.rows.find(x => x.skill === s && x.route === route && x.tier === tier);
+      if (!r) return h('td', { class: 'r muted' }, '—');
+      const v = viol(s, route, tier);
+      const c1 = v.find(x => x.rule === 'C1'), c2 = v.find(x => x.rule === 'C2');
+      const td = h('td', { class: 'r num' }, `${fmt(r.lv1, 2)} → ${fmt(r.lv10, 2)}`,
+        c1 ? h('div', {}, chip('fail', '15초 초과')) : null,
+        c2 ? h('div', {}, chip(c2.severity === 'shorter' ? 'fail' : 'warn', c2.severity === 'shorter' ? '진화 후 짧아짐' : '진화 후 그대로')) : null);
+      if (c2) hover(td, `진화 전 단계 Lv10 ${fmt(c2.prevLv10, 2)}초 → 이 단계 Lv1 ${fmt(c2.lv1, 2)}초`);
+      return td;
+    })))));
+  sec.append(h('div', { class: 'scroll' }, table));
+  return sec;
+}
+
+// 진행 곡선
+function progressSection(it) {
+  const sec = h('section', {}, sectionHead('정주행 진행 곡선', '가로 = 추정 플레이 시간(게임 시간 + 선택당·판 사이 여유), 세로 = 해금한 노드 비율. 초록 띠 = 목표 4–5시간'));
+  const curves = (it.campaign.curves || []).filter(c => c.points.length);
+  if (!curves.length) { sec.append(h('div', { class: 'empty' }, '정주행(campaign) 기록이 없습니다.')); return sec; }
+  const W = 760, H = 300, L = 44, R = 16, T = 12, B = 34;
+  const T0 = DATA.targets.playtimeMinutes;
+  const maxX = Math.max(T0[1] * 1.1, ...curves.flatMap(c => c.points.map(p => p.minutes)));
+  const x = v => L + (v / maxX) * (W - L - R), y = v => T + (1 - v) * (H - T - B);
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': '정주행 진행 곡선' });
+  s.append(svg('rect', { x: x(T0[0]), y: T, width: x(T0[1]) - x(T0[0]), height: H - T - B, fill: 'var(--band)' }));
+  for (let g = 0; g <= 1.0001; g += 0.25) {
+    s.append(svg('line', { x1: L, x2: W - R, y1: y(g), y2: y(g), stroke: 'var(--hair)', 'stroke-width': 1 }));
+    const t = svg('text', { x: L - 6, y: y(g) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)' }); t.textContent = Math.round(g * 100) + '%'; s.append(t);
+  }
+  const stepX = maxX > 400 ? 120 : 60;
+  for (let m = 0; m <= maxX; m += stepX) {
+    const t = svg('text', { x: x(m), y: H - B + 18, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)' }); t.textContent = (m / 60).toFixed(m % 60 ? 1 : 0) + '시간'; s.append(t);
+  }
+  s.append(svg('line', { x1: L, x2: W - R, y1: y(0), y2: y(0), stroke: 'var(--axis)', 'stroke-width': 1 }));
+  const colors = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)'];
+  curves.slice(0, 3).forEach((c, ci) => {
+    const pts = [[0, 0], ...c.points.map(p => [p.minutes, p.nodes || 0])];
+    s.append(svg('polyline', { points: pts.map(p => `${x(p[0])},${y(p[1])}`).join(' '), fill: 'none', stroke: colors[ci], 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    for (const p of c.points.filter(p => p.clear)) {
+      const dot = svg('circle', { cx: x(p.minutes), cy: y(p.nodes || 0), r: 4.5, fill: colors[ci], stroke: 'var(--surface)', 'stroke-width': 2 });
+      hover(dot, `캠페인 ${ci + 1} · ${p.clear} 첫 클리어 · ${fmt(p.minutes / 60, 2)}시간 · 노드 ${pct(p.nodes)}`);
+      s.append(dot);
+    }
+  });
+  const legend = h('div', { class: 'legend' }, curves.slice(0, 3).map((c, ci) => h('span', {}, h('span', { class: 'swatch', style: `background:${colors[ci]}` }), `캠페인 ${ci + 1}`)),
+    h('span', {}, '점 = 목표 첫 클리어'), curves.length > 3 ? h('span', { class: 'muted' }, `외 ${curves.length - 3}개 캠페인은 표에만`) : null);
+  const rows = it.campaign.campaigns;
+  const table = h('div', { class: 'scroll' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '캠페인'), h('th', {}, '결과'), h('th', { class: 'r' }, '판'), h('th', { class: 'r' }, '추정 플레이'), h('th', { class: 'r' }, '우주 어려움 첫 클리어'), h('th', { class: 'r' }, '전 노드 해금'), h('th', { class: 'r' }, '노드'))),
+    h('tbody', {}, rows.map((c, i) => h('tr', {}, h('td', {}, `캠페인 ${i + 1}`), h('td', {}, chip(c.outcome === 'complete' ? 'pass' : 'fail', { complete: '완주', stuckGoal: '목표에서 막힘', runCap: '판수 상한' }[c.outcome] || c.outcome)),
+      h('td', { class: 'r num' }, c.runs), h('td', { class: 'r num' }, c.playMinutes == null ? '—' : fmt(c.playMinutes / 60, 2) + '시간'),
+      h('td', { class: 'r num' }, c.s3ClearMinutes == null ? '—' : fmt(c.s3ClearMinutes / 60, 2) + '시간'), h('td', { class: 'r num' }, c.allNodesMinutes == null ? '—' : fmt(c.allNodesMinutes / 60, 2) + '시간'),
+      h('td', { class: 'r num' }, c.nodesTotal ? `${c.nodesOwnedEnd}/${c.nodesTotal}` : '—'))))));
+  sec.append(h('div', { class: 'chart' }, s, legend), table);
+  return sec;
+}
+
+// 사망
+function deathSection(it) {
+  const sec = h('section', {}, sectionHead('어디서 죽나', '칸 = 그 스테이지에 도달한 판 중 거기서 죽은 비율. 오른쪽은 막타를 친 적'));
+  const goals = it.deaths.filter(g => g.runs > 0);
+  if (!goals.length) { sec.append(h('div', { class: 'empty' }, '사망 기록이 없습니다.')); return sec; }
+  const maxStage = Math.max(...goals.map(g => g.finalStage || 15));
+  const stages = Array.from({ length: maxStage }, (_, i) => i + 1);
+  const table = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '목표'), stages.map(s => h('th', { class: 'r' }, s)), h('th', {}, '막타 상위'))),
+    h('tbody', {}, goals.map(g => h('tr', {}, h('td', { style: 'white-space:nowrap' }, g.name, h('div', { class: 'muted num', style: 'font-size:11.5px' }, `${g.runs}판`)),
+      stages.map(s => {
+        const reached = g.reached[s] || 0, rate = g.deathRate[s];
+        if (s > (g.finalStage || 15)) return h('td', { class: 'cell', style: 'background:var(--surface-2)' }, '');
+        const td = h('td', { class: 'cell', style: `background:${reached ? seqColor(rate) : 'transparent'};color:${inkOn(rate)}` }, reached && rate ? Math.round(rate * 100) : '');
+        hover(td, `${g.name} · ${s}스테이지 · 도달 ${reached}판 · 사망 ${g.deaths[s] || 0}판`);
+        return td;
+      }),
+      h('td', { style: 'white-space:nowrap' }, Object.entries(g.causes).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([e, n]) => `${enemyName(e)} ${n}`).join(' · ') || '—')))));
+  sec.append(h('div', { class: 'scroll' }, table));
+  return sec;
+}
+
+render(DATA && DATA.iterations ? DATA.iterations.length - 1 : 0);
+</script>

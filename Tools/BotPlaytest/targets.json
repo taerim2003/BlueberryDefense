@@ -1,0 +1,31 @@
+{
+  "_note": "밸런스 목표 수치. 의미·출처는 .claude/skills/balance/SKILL.md. 사용자 지정 항목(goalOrder, playtimeMinutes, cooldownCap)과 Claude가 제안하고 사용자가 확인한 허용폭(나머지, 2026-09-18). 루프는 이 파일을 바꾸지 않는다.",
+  "goalOrder": [
+    { "map": "Map_BlueberryField", "ascension": 1, "name": "농장 쉬움" },
+    { "map": "Map_BlueberryField", "ascension": 2, "name": "농장 보통" },
+    { "map": "Map_Wide15", "ascension": 1, "name": "해변 쉬움" },
+    { "map": "Map_Wide15", "ascension": 2, "name": "해변 보통" },
+    { "map": "Map_Wide20", "ascension": 1, "name": "우주 쉬움" },
+    { "map": "Map_BlueberryField", "ascension": 3, "name": "농장 어려움" },
+    { "map": "Map_Wide20", "ascension": 2, "name": "우주 보통" },
+    { "map": "Map_Wide15", "ascension": 3, "name": "해변 어려움" },
+    { "map": "Map_Wide20", "ascension": 3, "name": "우주 어려움" }
+  ],
+  "orderRelations": ["<", "<=", "<", "<=", "<", "<=", "<", "<"],
+  "orderStrictGap": 0.05,
+  "orderLooseGap": -0.02,
+
+  "playtimeMinutes": [240, 300],
+  "secondsPerPick": 3,
+  "secondsBetweenRuns": 30,
+
+  "attemptsCvMax": 0.3,
+  "fullTreeClearRateMin": 0.8,
+  "characterSpreadMax": 0.08,
+
+  "skillPowerBand": [0.7, 1.4],
+  "skillTopThird": true,
+
+  "cooldownCap": 15,
+  "noiseMinSamples": 2
+}

@@ -168,7 +168,7 @@ MonoBehaviour:
     ambushCount: 2
     paperPlaneChance: 0
     ufoChance: 0
-    shieldChance: 0.7
+    shieldChance: 0.5
     riderChance: 0
     hopperChance: 0.5
     surferChance: 0
@@ -438,7 +438,7 @@ MonoBehaviour:
     ambushCount: 6
     paperPlaneChance: 0
     ufoChance: 0
-    shieldChance: 0.7
+    shieldChance: 0.5
     riderChance: 0
     hopperChance: 0.5
     surferChance: 0

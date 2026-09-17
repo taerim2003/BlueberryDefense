@@ -49,6 +49,16 @@ step.RewindAmount	되감기 시간 {0}초 증가
 step.TickRate	타격 주기 {0}% 빨라짐
 step.MaxTargets.orb	관통 대상 +{0}
 step.MaxTargets	동시 대상 +{0}
+step.MaxTargets.homingOrb	추적 오브 +{0}개
+step.ProjectileCount.sniping	연사 +{0}회
+step.ProjectileCount.eagle	투하 횟수 +{0}
+step.TickRate.eagle	투하 간격 {0}% 단축
+step.Duration.deferred	지속시간 {0}초 증가 (진화 후 적용)
+step.Scale.cloud	안개 크기 {0}% 증가
+step.Scale.cloudExplosion	안개·폭발 범위 {0}% 증가
+step.Scale.explosion	폭발 범위 {0}% 증가
+step.Scale.eagleRain	독수리 크기 {0}% 증가
+step.Scale.lightningRod	피뢰침 범위 {0}% 증가
 ui.badge.active	액티브
 ui.badge.passive	패시브
 ui.levelup.evoHeader	진화!

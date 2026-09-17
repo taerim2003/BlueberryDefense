@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 7
   baseCooldown: 14
-  baseDamage: 10
+  baseDamage: 12
   baseDuration: 7
   baseHits: 1
   basePierce: 0

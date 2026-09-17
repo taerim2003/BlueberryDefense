@@ -99,10 +99,8 @@ public class LevelUpUI : MonoBehaviour
     private static readonly Color LevelTagColor = new Color(0.75f, 0.85f, 1f, 1f);
     private static readonly Color EvolveTagColor = new Color(1f, 0.55f, 0.1f, 1f); // 진화 가능 강조(주황)
 
-    // 진화 선택지 강조 — 카드 **바깥쪽**에 노란 테를 두른다. 켜고 끄는 대상은 이 루트 오브젝트다.
+    // 진화 선택지 강조 — 카드 **바깥쪽**에 주황 테를 두른다. 켜고 끄는 대상은 이 루트 오브젝트다.
     private GameObject[] optionGlows;
-    // 속 빈 선화(`가로길쭉이_투명` 같은 `_투명` 계열). 마스크로만 쓰므로 그림 색은 상관없다.
-    [SerializeField] private Sprite evolveGlowSprite;
 
     private const int EssenceReward = 10; // 레벨업할 게 없을 때 대체로 지급하는 정수량
 
@@ -171,17 +169,17 @@ public class LevelUpUI : MonoBehaviour
         if (choiceOpen) choiceFocus.Tick();
     }
 
-    // 카드 테두리 바깥으로 노란 테가 나오는 양(사방).
-    private const float EvolveGlowOutset = 9f;
     private const string EvolveGlowName = "EvolveGlow";
 
     // 🔴 uGUI `Outline`을 쓰지 않는다. 그건 **스프라이트 메쉬를 4방향으로 복제해 effectColor를 곱하는** 방식이라,
     //    판 그림처럼 테두리가 검고 속이 흰 그림에 걸면 **바깥에 테가 생기는 게 아니라 원래의 검은 테두리가 물든다**
     //    (HUD 스킬 아이콘도 같은 이유로 이미 `CreateShotgunFrame`으로 갈아탔다).
-    //    → 대신 속 빈 선화(`_투명`)를 **마스크**로 쓰고 그 안을 노란 단색으로 채운다(맵·캐릭터 카드의 `SelectGlow`와 같은 장치).
-    //      카드보다 사방 EvolveGlowOutset만큼 크게 잡아서 선이 카드 **바깥쪽**에 그려지게 한다.
-    //    ⚠️ 카드는 `Dialog/Layout`(VerticalLayoutGroup) 소속이라 형제로 뒤에 깔 수가 없다(형제가 곧 레이아웃 항목이 된다).
-    //      그래서 자식으로 두되, 마스크가 **선 굵기만** 남기므로 카드 그림을 덮지 않는다.
+    // 🔴 속 빈 선화(`_투명`)를 마스크로 늘려 까는 방식도 쓰지 않는다 — 카드(`길쭉큰네모_색칠` 900×210)와 짝이 맞는
+    //    선화가 없어 `가로길쭉이_투명`(361×103)을 늘려 썼더니 선이 두 배 넘게 뭉개져 **카드 몸통 위에 주황 얼룩**으로 보였다
+    //    (자식은 부모 위에 그려지므로 카드를 덮는다).
+    //    → 포커스 테(`UIFocusGroup.EnsureGlow`)와 **같은 장치**: 카드 자신의 판 그림을 `UI/SelectOutline`으로 한 장 더 그린다.
+    //      셰이더가 실루엣 안쪽은 버리고 판 그림의 투명 여백에만 테를 그리므로 자식으로 겹쳐도 카드를 안 가린다.
+    //    ⚠️ 카드는 `Dialog/Layout`(VerticalLayoutGroup) 소속이라 형제로 뒤에 깔지 않고 자식으로 둔다.
     private GameObject MakeEvolveGlow(Button btn)
     {
         if (btn == null) return null;
@@ -193,37 +191,31 @@ public class LevelUpUI : MonoBehaviour
         Outline legacy = btn.GetComponent<Outline>();
         if (legacy != null) Destroy(legacy);
 
-        var go = new GameObject(EvolveGlowName, typeof(RectTransform), typeof(Image), typeof(Mask));
+        Image src = btn.GetComponent<Image>();
+        Material mat = UISkin.SelectOutline;
+        // 머티리얼이 없으면 판 그림이 그대로 한 장 더 그려져 **주황 판**이 된다 — 그럴 땐 아예 만들지 않는다.
+        if (src == null || src.sprite == null || mat == null) return null;
+
+        var go = new GameObject(EvolveGlowName, typeof(RectTransform), typeof(Image));
         var rt = (RectTransform)go.transform;
         rt.SetParent(btn.transform, false);
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
-        rt.offsetMin = new Vector2(-EvolveGlowOutset, -EvolveGlowOutset);
-        rt.offsetMax = new Vector2(EvolveGlowOutset, EvolveGlowOutset);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
 
-        var maskImg = go.GetComponent<Image>();
-        maskImg.sprite = evolveGlowSprite;
-        maskImg.type = Image.Type.Simple;
-        maskImg.raycastTarget = false;
-        go.GetComponent<Mask>().showMaskGraphic = false; // 선화 자체(검정)는 안 그리고 모양만 쓴다
+        var img = go.GetComponent<Image>();
+        img.sprite = src.sprite;
+        img.type = Image.Type.Simple;         // §5-1: 늘리지 않는다
+        img.preserveAspect = src.preserveAspect;
+        img.raycastTarget = false;            // 켜면 버튼이 자기 테에 가려 클릭을 잃는다
+        img.material = mat;
+        img.color = EvolveTagColor;
 
-        var fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
-        var frt = (RectTransform)fillGo.transform;
-        frt.SetParent(rt, false);
-        frt.anchorMin = Vector2.zero;
-        frt.anchorMax = Vector2.one;
-        frt.offsetMin = frt.offsetMax = Vector2.zero;
-        var fill = fillGo.GetComponent<Image>();
-        fill.color = EvolveTagColor;
-        fill.raycastTarget = false;
-
-        // 🔴 맨 앞 형제로 보낸다 — 자식은 부모보다 **뒤에** 그려지므로, 그냥 두면 마지막 형제가 되어
-        //    카드의 제목·레벨표시(`LevelTag`) 위를 테가 덮는다("진화! 1개 가능"이 잘려 보였다).
+        // 맨 앞 형제 — 제목·레벨표시(`LevelTag`)보다 먼저 그려져 글자를 안 덮는다.
+        // 포커스 테(`SelectGlow`)와의 순서는 ShowOptions가 매번 다시 맞춘다.
         rt.SetAsFirstSibling();
 
         go.SetActive(false);
-        // 선화가 없으면 마스크가 통째로 통과해 **노란 판**이 된다 — 그림이 없으면 아예 만들지 않는다.
-        if (evolveGlowSprite == null) { Destroy(go); return null; }
         return go;
     }
 
@@ -318,6 +310,12 @@ public class LevelUpUI : MonoBehaviour
 
         // 세로 3장 + 오른쪽에 리롤. 배치는 좌표로 판정하므로 목록 순서는 상관없다(D를 누르면 리롤로 간다).
         focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton }, 0);
+
+        // 진화 테(주황)와 포커스 테(노랑)는 같은 자리에 같은 두께로 그려진다 — 포커스가 보이도록 진화 테를 맨 밑에 깐다.
+        // focus.Open이 SelectGlow를 처음 만들 때 맨 앞 형제로 끼어들므로 그 **뒤에서** 맞춘다.
+        if (optionGlows != null)
+            foreach (GameObject glow in optionGlows)
+                if (glow != null) glow.transform.SetAsFirstSibling();
     }
 
     private void SetSlot(int index, Button button, TMP_Text title, TMP_Text level, TMP_Text desc, Image icon, Option option)

@@ -24,8 +24,8 @@ public static class BalanceConstants
     // 8/24 플레이스루: 기본 오브 관통력이 낮다 → 4에서 6으로(레벨업 만렙 도달치도 7→9로 같이 오른다).
     public const int OrbBaseTargets = 6;
     public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
-    public const int EagleBaseDrops = 5;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3)
-    public const int ShotgunBasePellets = 6;      // 산탄 알 수. 9/14 3→6
+    public const int EagleBaseDrops = 5;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3, 9/17 버프로 5)
+    public const int ShotgunBasePellets = 12;     // 산탄 알 수. 9/14 3→6, 9/17 12
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
 
     // ── 적 접촉 모델: "닿으면 한 방 주고 자폭" → "플레이어 앞에 줄 서서 계속 박치기" ──
@@ -50,10 +50,11 @@ public static class BalanceConstants
     // 적이 화면 왼쪽 등장 지점(x=-9)에서 다 죽어 x=-5~+6.5가 빈 땅이 되는 문제의 해법.
     // 화면 안 빈 구간에 예고 마커를 띄우고, 시간이 차면 그 자리에서 부대가 튀어나온다(전투를 플레이어 쪽으로 당김).
     public const float AmbushWarnDuration = 2.5f;     // 마커가 떠 있는 시간 — 예고 없이 튀어나오면 대응 불가라 반드시 필요
-    public const float AmbushBandMinX = -3f;          // 소환 x 구간 하한(빈 땅 한가운데)
+    // 9/17 "캐릭터에 너무 가깝다"로 구간 전체를 1.5유닛 뒤(왼쪽)로 물렸다(−3~3.8 → −4.5~2.3, 폭은 그대로).
+    public const float AmbushBandMinX = -4.5f;        // 소환 x 구간 하한(빈 땅 한가운데)
     // 상한. ⚠️ **ContactStopDistance와 한 세트** — 박치기선(플레이어 7.91 − 2.55 = 약 5.36)보다
     // 최소 1.5유닛 앞이어야 소환된 부대에 대응할 틈이 남는다. 접촉 거리를 만지면 여기도 같이 내릴 것.
-    public const float AmbushBandMaxX = 3.8f;
+    public const float AmbushBandMaxX = 2.3f;
     public const int AmbushSquadMin = 4;
     public const int AmbushSquadMax = 6;
     public const float AmbushSquadSpreadX = 1.1f;     // 부대원이 마커 중심에서 좌우로 흩어지는 폭

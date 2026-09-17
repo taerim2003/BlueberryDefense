@@ -49,6 +49,16 @@ step.RewindAmount	Rewind time +{0}s
 step.TickRate	Hit interval {0}% faster
 step.MaxTargets.orb	Pierce targets +{0}
 step.MaxTargets	Simultaneous targets +{0}
+step.MaxTargets.homingOrb	Seeking orbs +{0}
+step.ProjectileCount.sniping	Shots per target +{0}
+step.ProjectileCount.eagle	Drops +{0}
+step.TickRate.eagle	Drop interval {0}% shorter
+step.Duration.deferred	Duration +{0}s (applies after evolving)
+step.Scale.cloud	Cloud size +{0}%
+step.Scale.cloudExplosion	Cloud & explosion size +{0}%
+step.Scale.explosion	Explosion radius +{0}%
+step.Scale.eagleRain	Eagle size +{0}%
+step.Scale.lightningRod	Lightning rod radius +{0}%
 ui.badge.active	ACTIVE
 ui.badge.passive	PASSIVE
 ui.levelup.evoHeader	Evolve!

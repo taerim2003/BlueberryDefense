@@ -117,3 +117,6 @@ InitTestScene*.unity*
 # → 고른 클립만 Assets/Audio/로 복사해 커밋할 것 (SfxLibrary 재배선 필요).
 /Assets/Sound/
 /Assets/Sound.meta
+
+# 봇 플레이테스트 산출물(판 기록·보고서) — 원본 데이터는 로컬에만. 루프 절차는 .claude/skills/balance-loop
+/BotRuns/

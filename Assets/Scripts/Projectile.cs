@@ -47,7 +47,7 @@ public class Projectile : MonoBehaviour
         if (Homing) Steer();
         if (Acceleration != 0f) SpeedMultiplier += Acceleration * Time.deltaTime;
         transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
-        if (IsFarOffscreen(transform.position)) Consume();
+        if (IsFarOffscreen(transform.position, -transform.right)) Consume(); // 로컬 left로 날아간다
     }
 
     private void Steer()
@@ -83,14 +83,17 @@ public class Projectile : MonoBehaviour
         return best;
     }
 
-    private static bool IsFarOffscreen(Vector3 position)
+    // 🔴 **멀어지는 축만** 지운다. 화살비는 캐릭터 앞까지 닿으려고 화면 오른쪽 한참 바깥(맵 배율에 따라 x≈14~18)에서도
+    //    생기는데, 그건 화면 **쪽으로 날아오는** 화살이다. 거리만 보면 여백을 아무리 늘려도 맵·화면비에 따라 태어나자마자 지워진다.
+    //    날아가는 방향이 늘 한 축 이상은 화면 밖으로 향하므로, 결국 그 축에서 멀어지며 지워진다.
+    private static bool IsFarOffscreen(Vector3 position, Vector2 heading)
     {
         Camera cam = Camera.main;
         if (cam == null) return false; // 카메라를 못 찾으면 지우지 않는다(멀쩡한 화살을 날리는 것보다 낫다)
 
         Vector3 d = position - cam.transform.position;
-        return Mathf.Abs(d.y) > cam.orthographicSize + OffscreenMargin
-            || Mathf.Abs(d.x) > cam.orthographicSize * cam.aspect + OffscreenMargin;
+        return (Mathf.Abs(d.y) > cam.orthographicSize + OffscreenMargin && d.y * heading.y >= 0f)
+            || (Mathf.Abs(d.x) > cam.orthographicSize * cam.aspect + OffscreenMargin && d.x * heading.x >= 0f);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

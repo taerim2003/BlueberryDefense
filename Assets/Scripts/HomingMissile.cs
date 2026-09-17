@@ -17,6 +17,7 @@ public class HomingMissile : MonoBehaviour
     public float CritChance { get; set; }
     public bool Explode { get; set; }
     public float ExplodeRadius { get; set; } = 1.5f;
+    public float ExplodeVfxMult { get; set; } = 1f; // 레벨업 "폭발 범위" 몫 — 폭발 그림을 반경과 같은 비율로 키운다
     public float ExplodeRatio { get; set; } = 0.4f;
     // 노릴 적의 순번. FireHoming이 발사 순서대로 0,1,2…를 준다 — 전부 같은 적으로 몰리는 걸 막는 장치다.
     public int TargetRank { get; set; }
@@ -107,7 +108,7 @@ public class HomingMissile : MonoBehaviour
             if (explodeVfxPrefab != null)
             {
                 GameObject vfx = ObjectPool.Instance.Spawn(explodeVfxPrefab, pos, Quaternion.identity);
-                vfx.transform.localScale = Vector3.one * explodeVfxScale;
+                vfx.transform.localScale = Vector3.one * explodeVfxScale * ExplodeVfxMult;
                 // Effect_Explosion은 4프레임 16fps(0.25초)에 `despawnOnFinish`가 꺼져 있다 —
                 // 반환을 늦추면 **마지막 연기 프레임이 그대로 얼어붙어** 남는다. 재생 길이 바로 뒤에 회수한다.
                 ObjectPool.Instance.Despawn(vfx, 0.3f);

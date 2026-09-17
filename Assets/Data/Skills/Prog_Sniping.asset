@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Prog_Sniping
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 5
-  baseCooldown: 5
+  baseCooldown: 4.5
   baseDamage: 10
   baseDuration: 0
   baseHits: 1

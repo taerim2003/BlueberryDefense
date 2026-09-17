@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 낙뢰 버프는 "스택형" 지속시간 버프다. 평소엔 지속시간이 쿨타임보다 짧아 한 번에 하나만 존재하지만,
-// 회오리 연계(path2 T2)로 지속시간이 계속 연장되면 다음 낙뢰 재시전 시점까지 살아남을 수 있다.
-// 이 경우 기존 버프를 지우고 새로 덮어쓰는 게 아니라, 각자 자기 지속시간을 갖는 별도 스택으로 쌓인다.
+// 낙뢰 버프는 지속시간 버프다. 🔴 **스택은 R0 진화(되감기 연계)를 올려야만 쌓인다**(사용자 결정 2026-09-17).
+// 진화 전엔 다시 쓰면 기존 버프를 지우고 지속시간만 새로 시작한다 — 쿨감으로 쿨이 지속시간보다 짧아져도 안 겹친다.
+// 진화 후엔 기존 버프를 지우지 않고 각자 자기 지속시간을 갖는 별도 스택으로 쌓인다.
 // 그래서 타격 한 번에 발동 확률을 스택 수만큼 독립적으로 굴린다(스택 2개면 최대 2번 발동 가능).
 public static class LightningStorm
 {
     private static readonly List<float> stackEndTimes = new List<float>();
+
+    // 스택이 쌓이는가. 낙뢰 시전 시 PlayerSkills가 AddStack **앞에서** 갱신한다. 꺼져 있으면 HUD에 스택 숫자도 안 뜬다.
+    public static bool StackingEnabled;
 
     // 레벨업 주 성장축이라 시작값을 낮게 잡는다(60%였을 땐 헤드룸이 40%뿐이라 +3%p가 전혀 안 보였음).
     // 25%에서 시작해 레벨업마다 +6%p → 10레벨 55%. 초반엔 가끔 터지고 후반엔 쫙쫙 떨어진다.
@@ -61,6 +64,7 @@ public static class LightningStorm
     public static void ResetRunState()
     {
         stackEndTimes.Clear();
+        StackingEnabled = false;
         ProcChance = BaseProcChance;
         ProcDamage = BaseProcDamage;
         RecursiveProcEnabled = false;
@@ -71,10 +75,11 @@ public static class LightningStorm
         StackDamageBonusPerStack = BaseStackDamageBonus;
     }
 
-    // 낙뢰 시전: 기존 스택을 지우지 않고 새 스택을 추가한다(평소엔 이전 스택이 이미 만료된 상태라 사실상 1개).
+    // 낙뢰 시전: 스택이 켜져 있으면 기존 스택 위에 새 스택을 추가하고, 꺼져 있으면 기존 것을 갈아끼운다.
     public static void AddStack(float duration)
     {
         Prune();
+        if (!StackingEnabled) stackEndTimes.Clear();
         stackEndTimes.Add(Time.time + duration);
     }
 

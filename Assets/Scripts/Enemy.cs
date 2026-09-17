@@ -147,6 +147,11 @@ public class Enemy : MonoBehaviour
     public bool IsCarrier => isCarrier;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
+    // 봇 플레이테스트 기록용 읽기 전용 창구(적 종류·보스·보물·등장 중 무적 여부로 딜·사망을 가른다).
+    public string DefinitionName => definition != null ? definition.name : gameObject.name;
+    public bool IsBoss => isBoss;
+    public bool IsTreasure => isTreasure;
+    public bool IsPopping => popping;
     public float SpawnYOffset => spawnYOffset; // 이 종류가 서는 자연 높이(레인 y=0 기준). 분출 팝콘의 착지 높이로 사용
 
     // definition에서 복사한 런타임 스탯 — 스테이지 배율(ApplyStageMultipliers)이 여기에만 곱해져 공유 SO를 오염시키지 않음.
@@ -601,6 +606,7 @@ public class Enemy : MonoBehaviour
             lungeDamageDone = true;
             int hit = Mathf.Max(1, Mathf.RoundToInt(damage * BalanceConstants.HeadbuttDamageScale));
             player.TakeDamage(hit);
+            BotInput.OnPlayerHit?.Invoke(this, hit); // 봇 플레이테스트 관측(평소 null)
 
             if (playerCollisionVfxPrefab != null)
                 ObjectPool.Instance.SpawnTimed(playerCollisionVfxPrefab, transform.position, 2f);
@@ -679,7 +685,7 @@ public class Enemy : MonoBehaviour
                 break;
             case CarrierPhase.Ascend:
                 p.y += carrierAscendSpeed * slowMultiplier * Time.deltaTime;
-                if (p.y >= carrierTopY) { Despawn(); return; }
+                if (p.y >= carrierTopY) { BotInput.OnEnemyEscaped?.Invoke(this); Despawn(); return; }
                 break;
         }
         transform.position = p;
@@ -717,6 +723,7 @@ public class Enemy : MonoBehaviour
         // 보스는 **감속의 세기**만 절반으로 받는다(지속시간은 그대로). 세기를 깎는 쪽이라
         // 기절(multiplier 0)조차 "느려짐"으로 바뀌어 보스가 계속 전진한다 — 무한 스톨링을 끊는 지점이 여기다.
         if (isBoss) multiplier = 1f - (1f - multiplier) * BossCrowdControlScale;
+        BotInput.OnSlow?.Invoke(this, multiplier, duration);
 
         slowMultiplier = multiplier;
         slowTimer = duration;
@@ -730,6 +737,7 @@ public class Enemy : MonoBehaviour
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
         if (isBoss) distance *= BossCrowdControlScale; // 보스는 절반만 밀린다
+        BotInput.OnKnockback?.Invoke(this, distance);
         // 밀리는 도중에 또 맞으면 **끊고 처음부터 다시** 튕긴다. 남은 거리에 더하기만 하면
         // 이징이 이미 감속 구간에 들어가 있어서 두 번째 타격이 "씹힌" 것처럼 보인다.
         knockbackDistance = distance;
@@ -811,7 +819,7 @@ public class Enemy : MonoBehaviour
     // 폭발이 옮긴 중독은 다시 폭발하지 않는다(poisonFromExplosion) — 안 막으면 한 무리가 통째로 연쇄한다.
     private void ExplodePoison()
     {
-        float radius = PlayerSkills.GrapeExplodeRadius;
+        float radius = PlayerSkills.GrapeExplodeRadius * PlayerSkills.GrapeExplodeRadiusMult;
         float damage = maxHealth * PlayerSkills.GrapeExplodeDamageRatio;
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
         {
@@ -849,6 +857,7 @@ public class Enemy : MonoBehaviour
         if (isBoss) actualDamage *= 1f + MetaBonuses.BossDamageBonus;
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
+        BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
         SpawnHitParticles(actualDamage);
         SfxPlayer.Play(SfxId.EnemyHit); // 광역기로 여러 마리를 동시에 때려도 AudioThrottle이 프레임당 한 번으로 묶는다
@@ -885,6 +894,7 @@ public class Enemy : MonoBehaviour
         if (currentHealth <= 0f && !isDead)
         {
             isDead = true;
+            BotInput.OnEnemyKilled?.Invoke(this); // 봇 플레이테스트 관측(평소 null)
             SfxPlayer.Play(SfxId.EnemyDeath);
 
             // 생화학 루트 2차 — 중독된 채 죽으면 터진다. isDead를 세운 뒤라 이 적은 다시 안 죽는다.

@@ -16,9 +16,36 @@ MonoBehaviour:
   route: 1
   stage: 2
   baseDamage: 0
-  baseCooldown: 0
+  baseCooldown: 15
   baseDuration: 0
   baseHits: 0
   basePierce: 0
   baseProjectiles: 0
-  levels: []
+  levels:
+  - stat: 1
+    op: 1
+    amount: 0.95
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 7
+    op: 0
+    amount: 0.15
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 1
+    op: 1
+    amount: 0.95
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 7
+    op: 0
+    amount: 0.15
+  - stat: 0
+    op: 1
+    amount: 1.3
+  - stat: 1
+    op: 1
+    amount: 0.95
