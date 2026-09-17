@@ -453,7 +453,7 @@ function skillSection(it) {
     body.append(status);
     if (!members.length) { body.append(h('div', { class: 'empty' }, `${groupNames[g]} 상태의 기록이 아직 없습니다. 2차 진화는 무작위 봇에서 드물어 시험장 측정이 필요합니다.`)); return; }
     body.append(h('div', { class: 'scroll' }, h('table', {},
-      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', { class: 'r' }, '판'), cols.map(c => h('th', { class: 'r' }, c[1])), h('th', { class: 'r' }, '오버킬'), h('th', { class: 'r' }, '신규 제시→선택'))),
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', { class: 'r' }, '판'), cols.map(c => h('th', { class: 'r' }, c[1])), h('th', { class: 'r' }, '오버킬'), h('th', { class: 'r', title: '실제 발동 ÷ 쿨만 보면 가능했던 발동' }, '발동률'), h('th', { class: 'r' }, '신규 제시→선택'))),
       h('tbody', {}, members.map(m => h('tr', {},
         h('td', {}, skillName(m.skill), m.route >= 0 ? h('span', { class: 'muted' }, ` R${m.route}`) : null),
         h('td', { class: 'r num' }, m.n),
@@ -464,6 +464,7 @@ function skillSection(it) {
           return td;
         }),
         h('td', { class: 'r num' }, pct(m.overkill)),
+        h('td', { class: 'r num', style: m.castRatio != null && m.castRatio < 0.5 ? 'color:var(--critical-ink);font-weight:600' : '' }, m.castRatio == null ? '—' : pct(m.castRatio)),
         h('td', { class: 'r num' }, m.offeredNew ? `${m.offeredNew}→${m.pickedNew}` : '—')))))));
   };
   const label = s => { const [id, r] = String(s).split('/'); return skillName(id) + (r !== '-1' && r != null ? ' R' + r : ''); };

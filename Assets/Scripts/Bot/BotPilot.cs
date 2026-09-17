@@ -13,8 +13,9 @@ using UnityEngine.UI;
 // 봇 플레이테스트 본체. `BotRuns/active/session.json`이 있을 때만 플레이모드 시작에 생성된다(BotLauncher가 만든다).
 //
 // 정책(사용자 지정 — 바꾸면 이전 측정과 비교할 수 없게 되므로 `balance` 스킬부터 볼 것):
-//   · QWER 꾹(BotInput.HoldSkills) · 레벨업 카드는 균등 무작위, 리롤 안 씀
-//   · 진화할 수 있으면 무조건 진화(보물 갈림길 → 진화), 무엇을·어느 루트로는 무작위
+//   · QWER 꾹(BotInput.HoldSkills) · 레벨업 카드는 우선순위(2차 열쇠 → 1차 열쇠 → 보유 스킬 레벨업 → 아무거나,
+//     `LevelUpPriorityPool`), 같은 단계 안에서는 무작위 · 리롤 안 씀
+//   · 진화할 수 있으면 무조건 진화(보물 갈림길 → 진화). 대상·루트는 2차 열쇠로 필요한 것 우선(`NeededKeyRoutes`), 없으면 무작위
 //   · 판이 끝나면 살 수 있는 노드를 싼 것부터 전부 구매 · 캐릭터는 해금된 것을 판마다 순환
 //
 // 🔴 판 진입은 **타이틀의 정상 흐름**(플레이 → 캐릭터 → 맵·난이도 → 시작)으로 한다. RunConfig를 손으로 채우고
@@ -119,15 +120,20 @@ public class BotPilot : MonoBehaviour
     private IEnumerator Campaigns()
     {
         BotGoal[] goals = cfg.Goals;
-        for (int c = 0; c < cfg.campaigns; c++)
+        BotResumeState st = LoadResume("campaign");
+        for (; st.campaign < cfg.campaigns; st.campaign++, st.campaignStarted = false)
         {
-            BotTree.ResetSave();
-            int[] attempts = new int[goals.Length];
-            var firstClear = new Dictionary<int, Dictionary<string, object>>();
-            Dictionary<string, object> allNodesAt = null;
-            int runs = 0, cumPicks = 0;
-            float cumGame = 0f;
-            string lastChar = null;
+            if (!st.campaignStarted)
+            {
+                BotTree.ResetSave();
+                st.attempts = new int[goals.Length];
+                st.runs = 0; st.cumPicks = 0; st.cumGame = 0f; st.lastChar = null;
+                st.firstClears.Clear();
+                st.allNodesReached = false;
+                st.campaignStarted = true;
+                SaveResume(st);
+            }
+            string campaignKey = st.campaignKeyPrefix + "#" + st.campaign;
             string outcome;
 
             while (true)
@@ -135,67 +141,131 @@ public class BotPilot : MonoBehaviour
                 int gi = Array.FindIndex(goals, g => !MapClearSave.HasCleared(g.map, g.ascension));
                 bool allNodes = BotTree.AllMaxed();
                 if (gi < 0 && allNodes) { outcome = "complete"; break; }
-                if (gi >= 0 && attempts[gi] >= cfg.maxAttemptsPerGoal) { outcome = "stuckGoal"; break; }
-                if (runs >= cfg.maxRunsPerCampaign) { outcome = "runCap"; break; }
+                if (gi >= 0 && st.attempts[gi] >= cfg.maxAttemptsPerGoal) { outcome = "stuckGoal"; break; }
+                if (st.runs >= cfg.maxRunsPerCampaign) { outcome = "runCap"; break; }
+                if (YieldRequested()) { Yield(st); yield break; } // 판 경계 — 여기서 비키면 잃는 게 없다
 
+                // 이번 판 값은 지역 변수로만 들고 있다가 판이 **끝나야** st에 반영한다(판 중간 양보 시 되감기 불필요).
                 int target = gi >= 0 ? gi : goals.Length - 1; // 전부 깼으면 남은 노드를 위해 마지막 목표 반복
-                if (gi >= 0) attempts[gi]++;
-                CharacterDefinition ch = NextCharacter(ref lastChar);
+                int attempt = gi >= 0 ? st.attempts[gi] + 1 : 0;
+                string charName = st.lastChar;
+                CharacterDefinition ch = NextCharacter(ref charName);
 
                 var header = BotJson.Obj();
-                header["mode"] = "campaign"; header["label"] = cfg.label; header["campaign"] = c; header["run"] = runs;
+                header["mode"] = "campaign"; header["label"] = cfg.label; header["campaign"] = st.campaign; header["campaignKey"] = campaignKey;
+                header["run"] = st.runs;
                 header["goalIndex"] = target; header["map"] = goals[target].map; header["ascension"] = goals[target].ascension;
-                header["character"] = ch.name; header["attempt"] = gi >= 0 ? attempts[gi] : 0; header["farming"] = gi < 0;
+                header["character"] = ch.name; header["attempt"] = attempt; header["farming"] = gi < 0;
                 header["nodesOwnedBefore"] = BotTree.OwnedLevels(); header["nodesTotal"] = BotTree.TotalLevels();
                 header["spentBefore"] = BotTree.Spent(); header["treeTotalCost"] = BotTree.TotalCost();
                 header["essenceEarnedBefore"] = SkillTreeSave.EssenceEarned;
 
-                SetProgress(c, runs, goals[target], ch.name);
+                SetProgress(st.campaign, st.runs, goals[target], ch.name);
                 yield return EnterRun(goals[target], ch);
                 Dictionary<string, object> run = null;
                 yield return PlayBattle(header, r => run = r);
+                if ((string)run["result"] == "yielded") { Yield(st); yield break; } // 판을 버리고 마지막 저장 지점으로
 
+                if (gi >= 0) st.attempts[gi] = attempt;
+                st.lastChar = charName;
                 run["purchases"] = BotTree.BuyCheapestFirst(rng);
                 run["nodesOwnedAfter"] = BotTree.OwnedLevels();
                 run["spentAfter"] = BotTree.Spent();
-                cumGame += (float)run["gameTime"];
-                cumPicks += ((List<object>)run["picks"]).Count;
-                run["cumGameTime"] = cumGame;
-                run["cumPicks"] = cumPicks;
-                runs++;
-                run["cumRuns"] = runs;
+                st.cumGame += (float)run["gameTime"];
+                st.cumPicks += ((List<object>)run["picks"]).Count;
+                st.runs++;
+                run["cumGameTime"] = st.cumGame;
+                run["cumPicks"] = st.cumPicks;
+                run["cumRuns"] = st.runs;
 
-                if ((string)run["result"] == "clear" && gi >= 0 && !firstClear.ContainsKey(gi))
+                if ((string)run["result"] == "clear" && gi >= 0 && !st.firstClears.Any(f => f.goal == gi))
+                    st.firstClears.Add(new BotFirstClear { goal = gi, attempts = attempt, cumRuns = st.runs, cumGameTime = st.cumGame, cumPicks = st.cumPicks, nodesOwned = BotTree.OwnedLevels() });
+                if (!st.allNodesReached && BotTree.AllMaxed())
                 {
-                    var fc = BotJson.Obj();
-                    fc["attempts"] = attempts[gi]; fc["cumRuns"] = runs; fc["cumGameTime"] = cumGame; fc["cumPicks"] = cumPicks;
-                    fc["nodesOwned"] = BotTree.OwnedLevels();
-                    firstClear[gi] = fc;
-                }
-                if (allNodesAt == null && BotTree.AllMaxed())
-                {
-                    allNodesAt = BotJson.Obj();
-                    allNodesAt["cumRuns"] = runs; allNodesAt["cumGameTime"] = cumGame; allNodesAt["cumPicks"] = cumPicks;
+                    st.allNodesReached = true;
+                    st.allNodesRuns = st.runs; st.allNodesGame = st.cumGame; st.allNodesPicks = st.cumPicks;
                 }
                 recorder.WriteRun(run);
+                SaveResume(st);
                 if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png와 runs.jsonl 마지막 줄 참고");
             }
 
             var summary = BotJson.Obj();
-            summary["label"] = cfg.label; summary["campaign"] = c; summary["outcome"] = outcome;
-            summary["runs"] = runs; summary["cumGameTime"] = cumGame; summary["cumPicks"] = cumPicks;
-            summary["allNodesAt"] = allNodesAt;
+            summary["label"] = cfg.label; summary["campaign"] = st.campaign; summary["campaignKey"] = campaignKey; summary["outcome"] = outcome;
+            summary["runs"] = st.runs; summary["cumGameTime"] = st.cumGame; summary["cumPicks"] = st.cumPicks;
+            if (st.allNodesReached)
+            {
+                var at = BotJson.Obj();
+                at["cumRuns"] = st.allNodesRuns; at["cumGameTime"] = st.allNodesGame; at["cumPicks"] = st.allNodesPicks;
+                summary["allNodesAt"] = at;
+            }
+            else summary["allNodesAt"] = null;
             var goalRows = new List<object>();
             for (int i = 0; i < goals.Length; i++)
             {
                 var row = BotJson.Obj();
-                row["map"] = goals[i].map; row["ascension"] = goals[i].ascension; row["attempts"] = attempts[i];
-                row["firstClear"] = firstClear.TryGetValue(i, out var fc) ? fc : null;
+                row["map"] = goals[i].map; row["ascension"] = goals[i].ascension; row["attempts"] = st.attempts[i];
+                BotFirstClear f = st.firstClears.FirstOrDefault(x => x.goal == i);
+                if (f != null)
+                {
+                    var fc = BotJson.Obj();
+                    fc["attempts"] = f.attempts; fc["cumRuns"] = f.cumRuns; fc["cumGameTime"] = f.cumGameTime; fc["cumPicks"] = f.cumPicks; fc["nodesOwned"] = f.nodesOwned;
+                    row["firstClear"] = fc;
+                }
+                else row["firstClear"] = null;
                 goalRows.Add(row);
             }
             summary["goals"] = goalRows;
             File.AppendAllText(Path.Combine(cfg.sessionDir, "campaigns.jsonl"), BotJson.Write(summary) + "\n");
+            // 저장은 다음 캠페인 시작 시점에 한다 — 여기서 저장하면 재개가 끝난 캠페인을 다시 열어 요약이 두 번 적힌다.
         }
+    }
+
+    // ───────────────────────── 양보 · 재개 ─────────────────────────
+    private string SessionId => Path.GetFileName(cfg.sessionDir);
+    private float nextYieldCheckReal;
+    private bool yieldNowCached;
+
+    private static bool YieldRequested() => File.Exists(BotConfig.YieldPath);
+
+    // 판 중간 즉시 양보: yield 파일 내용에 "now"가 있을 때만. 파일 읽기는 실시간 2초마다.
+    private bool YieldNow()
+    {
+        float now = Time.realtimeSinceStartup;
+        if (now < nextYieldCheckReal) return yieldNowCached;
+        nextYieldCheckReal = now + 2f;
+        try { yieldNowCached = File.Exists(BotConfig.YieldPath) && File.ReadAllText(BotConfig.YieldPath).Contains("now"); }
+        catch (Exception) { yieldNowCached = false; }
+        return yieldNowCached;
+    }
+
+    private BotResumeState LoadResume(string mode)
+    {
+        if (!string.IsNullOrEmpty(cfg.resumeFrom))
+        {
+            string path = Path.Combine(BotConfig.RunsRoot, cfg.resumeFrom, "resume.json");
+            if (!File.Exists(path)) Fail("재개할 상태 파일이 없다: " + path);
+            BotResumeState st = JsonUtility.FromJson<BotResumeState>(File.ReadAllText(path));
+            if (st == null || st.mode != mode) Fail("재개 상태의 mode가 다르다: " + path);
+            if (string.IsNullOrEmpty(st.campaignKeyPrefix)) st.campaignKeyPrefix = cfg.resumeFrom;
+            Set("resumedFrom", cfg.resumeFrom);
+            SaveResume(st);
+            return st;
+        }
+        return new BotResumeState { mode = mode, campaignKeyPrefix = SessionId };
+    }
+
+    private void SaveResume(BotResumeState st) =>
+        File.WriteAllText(Path.Combine(cfg.sessionDir, "resume.json"), JsonUtility.ToJson(st, true));
+
+    private void Yield(BotResumeState st)
+    {
+        SaveResume(st);
+        string who = "";
+        try { who = File.ReadAllText(BotConfig.YieldPath).Trim(); } catch (Exception) { }
+        Set("yieldedFor", who);
+        Set("resumeWith", "{\"label\":\"" + cfg.label + "-r\",\"resumeFrom\":\"" + SessionId + "\"}");
+        Finish("yielded", null);
     }
 
     private IEnumerator Probe()
@@ -214,8 +284,10 @@ public class BotPilot : MonoBehaviour
         foreach (string ch in cfg.characters)
             for (int rep = 0; rep < cfg.fullTreeRuns; rep++) cells.Add((1f, hardest, ch, rep));
 
-        for (int i = 0; i < cells.Count; i++)
+        BotResumeState st = LoadResume("probe");
+        for (int i = st.nextProbeIndex; i < cells.Count; i++)
         {
+            if (YieldRequested()) { st.nextProbeIndex = i; Yield(st); yield break; }
             var cell = cells[i];
             BotTree.BuildReferenceSave(cell.ratio, mapNames);
             CharacterDefinition ch = BotTree.LoadByName<CharacterDefinition>(cell.ch);
@@ -232,7 +304,10 @@ public class BotPilot : MonoBehaviour
             yield return EnterRun(cell.goal, ch);
             Dictionary<string, object> run = null;
             yield return PlayBattle(header, r => run = r);
+            if ((string)run["result"] == "yielded") { st.nextProbeIndex = i; Yield(st); yield break; }
             recorder.WriteRun(run);
+            st.nextProbeIndex = i + 1;
+            SaveResume(st);
             if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png 참고");
         }
     }
@@ -316,6 +391,7 @@ public class BotPilot : MonoBehaviour
             if (gm == null) { result = "error"; lastException = "전투 중 GameManager가 사라짐"; break; }
             if (gm.IsGameClear) { result = "clear"; break; }
             if (gm.IsGameOver) { result = "dead"; break; }
+            if (YieldNow()) { result = "yielded"; break; } // 다른 세션이 급히 Unity를 요청 — 이 판은 기록하지 않고 버린다
 
             BotInput.HoldSkills = true;
             recorder.Tick();
@@ -372,11 +448,24 @@ public class BotPilot : MonoBehaviour
                 bool evoMode = Get<bool>(lu, "evolutionMode");
 
                 var pool = Enumerable.Range(0, opts.Length).ToList();
+                string rule = "random";
                 if (evoMode)
                 {
                     var evoIdx = pool.Where(i => OptField<bool>(opts.GetValue(i), "IsEvolution")).ToList();
-                    if (evoIdx.Count > 0) pool = evoIdx;
+                    if (evoIdx.Count > 0) { pool = evoIdx; rule = "evolution"; }
+                    // 2차 열쇠로 필요한(아직 진화 전인) 스킬을 먼저 진화시킨다 — 사용자 지정 2026-09-18.
+                    NeededKeyRoutes(out var keyA, out var keyP);
+                    var keyIdx = pool.Where(i =>
+                    {
+                        object o = opts.GetValue(i);
+                        var sid = OptField<ActiveSkillId?>(o, "SkillId");
+                        var pid = OptField<PassiveSkillId?>(o, "PassiveId");
+                        return OptField<bool>(o, "IsEvolution")
+                            && ((sid.HasValue && keyA.ContainsKey(sid.Value)) || (pid.HasValue && keyP.ContainsKey(pid.Value)));
+                    }).ToList();
+                    if (keyIdx.Count > 0) { pool = keyIdx; rule = "stage2KeyEvolve"; }
                 }
+                else pool = LevelUpPriorityPool(opts, out rule);
                 int oi = pool[rng.Next(pool.Count)];
                 int slot = opts.Length == 1 ? 1 : oi; // LevelUpUI.SlotForOption과 같은 규칙
                 Button b = Get<Button>(lu, slot == 0 ? "optionButtonA" : slot == 1 ? "optionButtonB" : "optionButtonC");
@@ -385,7 +474,7 @@ public class BotPilot : MonoBehaviour
                 var offered = new List<object>();
                 for (int i = 0; i < opts.Length; i++) offered.Add(DescribeOption(opts.GetValue(i)));
                 RecordPick(evoMode ? "evolutionTarget" : "levelUp", offered, DescribeOption(opts.GetValue(oi)),
-                    OptField<bool>(opts.GetValue(oi), "IsEvolution"));
+                    OptField<bool>(opts.GetValue(oi), "IsEvolution"), rule);
                 b.onClick.Invoke();
                 return Acted();
             }
@@ -404,11 +493,17 @@ public class BotPilot : MonoBehaviour
                 if (Usable(nb)) usable.Add((i / 2, nb)); // index = route*2 + (tier-1)
             }
             if (usable.Count == 0) return false;
-            var pick = usable[rng.Next(usable.Count)];
             EquippedSkill s = Get<EquippedSkill>(et, "currentSkill");
             EquippedPassive p = Get<EquippedPassive>(et, "currentPassive");
+            // 이 스킬이 다른 스킬의 2차 열쇠면 **열쇠가 요구하는 루트**로 진화시킨다(열쇠는 루트까지 맞아야 한다).
+            NeededKeyRoutes(out var keyA, out var keyP);
+            int wantRoute = s != null && keyA.TryGetValue(s.Id, out int ra) ? ra
+                          : p != null && keyP.TryGetValue(p.Id, out int rp) ? rp : -1;
+            var keyed = usable.Where(u => u.route == wantRoute).ToList();
+            var pick = keyed.Count > 0 ? keyed[rng.Next(keyed.Count)] : usable[rng.Next(usable.Count)];
             RecordPick("evolutionRoute", usable.Select(u => (object)u.route).Distinct().ToList(),
-                (s != null ? s.Id.ToString() : p != null ? "P:" + p.Id : "?") + ":R" + pick.route, true);
+                (s != null ? s.Id.ToString() : p != null ? "P:" + p.Id : "?") + ":R" + pick.route, true,
+                keyed.Count > 0 ? "keyRoute" : "random");
             pick.button.onClick.Invoke();
             return Acted();
         }
@@ -435,11 +530,106 @@ public class BotPilot : MonoBehaviour
         return d;
     }
 
-    private void RecordPick(string screen, IEnumerable<object> offered, object picked, bool wasEvolution)
+    // 레벨업 3택 우선순위(사용자 지정 2026-09-18 — 무작위만으로는 2차 진화가 거의 안 만들어져서):
+    //   ① 보유한 **1차 진화 스킬**의 2차 열쇠(`EvolutionRoutes.Stage2Prereq`) 중 아직 없는 것의 획득 카드
+    //   ② 보유한 **진화 전 스킬**(액티브·패시브)의 1차 루트 조건(`RoutePrereq`, 두 루트 모두) 중 아직 없는 것의 획득 카드
+    //   ③ 보유한 스킬의 레벨업 카드   ④ 아무 카드
+    // 같은 단계에 여러 장이면 그중 무작위. 반환 = 그 단계의 카드 인덱스들, rule = 기록용 단계 이름.
+    private List<int> LevelUpPriorityPool(Array opts, out string rule)
+    {
+        PlayerSkills ps = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives pp = FindAnyObjectByType<PlayerPassives>();
+        var keyActive1 = new HashSet<ActiveSkillId>(); var keyPassive1 = new HashSet<PassiveSkillId>();
+        var keyActive2 = new HashSet<ActiveSkillId>(); var keyPassive2 = new HashSet<PassiveSkillId>();
+        bool Owns(PassiveSkillId? p, ActiveSkillId? a) =>
+            (p.HasValue && pp != null && pp.HasPassive(p.Value)) || (a.HasValue && ps != null && ps.HasSkill(a.Value));
+        void AddMissing(PassiveSkillId? p, ActiveSkillId? a, HashSet<PassiveSkillId> ps_, HashSet<ActiveSkillId> as_)
+        {
+            if (p.HasValue && !Owns(p, null)) ps_.Add(p.Value);
+            if (a.HasValue && !Owns(null, a)) as_.Add(a.Value);
+        }
+
+        if (ps != null)
+            foreach (EquippedSkill s in ps.EquippedSkills)
+            {
+                if (s.EvolutionStage == 1 && s.EvolutionStage < EvolutionRoutes.MaxStageFor(s.Id))
+                {
+                    var k = EvolutionRoutes.Stage2Prereq(s.Id, s.Route);
+                    AddMissing(k.Passive, k.Active, keyPassive1, keyActive1);
+                }
+                else if (s.EvolutionStage == 0)
+                    for (int route = 0; route < 2; route++)
+                    {
+                        var k = EvolutionRoutes.RoutePrereq(s.Id, route);
+                        AddMissing(k.Passive, k.Active, keyPassive2, keyActive2);
+                    }
+            }
+        if (pp != null)
+            foreach (EquippedPassive p in pp.EquippedPassives)
+                if (p.EvolutionStage == 0)
+                    for (int route = 0; route < 2; route++)
+                    {
+                        var k = EvolutionRoutes.RoutePrereq(p.Id, route);
+                        AddMissing(k.Passive, k.Active, keyPassive2, keyActive2);
+                    }
+
+        var all = Enumerable.Range(0, opts.Length).ToList();
+        List<int> Match(HashSet<ActiveSkillId> actives, HashSet<PassiveSkillId> passives) => all.Where(i =>
+        {
+            object o = opts.GetValue(i);
+            if (!OptField<bool>(o, "IsNew")) return false;
+            var sid = OptField<ActiveSkillId?>(o, "SkillId");
+            var pid = OptField<PassiveSkillId?>(o, "PassiveId");
+            return (sid.HasValue && actives.Contains(sid.Value)) || (pid.HasValue && passives.Contains(pid.Value));
+        }).ToList();
+
+        List<int> pool = Match(keyActive1, keyPassive1);
+        if (pool.Count > 0) { rule = "stage2Key"; return pool; }
+        pool = Match(keyActive2, keyPassive2);
+        if (pool.Count > 0) { rule = "stage1Key"; return pool; }
+        pool = all.Where(i =>
+        {
+            object o = opts.GetValue(i);
+            return !OptField<bool>(o, "IsNew")
+                && (OptField<ActiveSkillId?>(o, "SkillId").HasValue || OptField<PassiveSkillId?>(o, "PassiveId").HasValue);
+        }).ToList();
+        if (pool.Count > 0) { rule = "levelUp"; return pool; }
+        rule = "random";
+        return all;
+    }
+
+    // 보유한 1차 진화 액티브의 2차 열쇠 중 **보유는 했지만 아직 진화 전**인 것 → 요구 루트. 진화 대상·루트 선택이 우선한다.
+    // (이미 다른 루트로 진화했으면 되돌릴 수 없어 뺀다. 아예 없는 열쇠는 레벨업 우선순위 ①이 챙긴다.)
+    private void NeededKeyRoutes(out Dictionary<ActiveSkillId, int> actives, out Dictionary<PassiveSkillId, int> passives)
+    {
+        actives = new Dictionary<ActiveSkillId, int>();
+        passives = new Dictionary<PassiveSkillId, int>();
+        PlayerSkills ps = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives pp = FindAnyObjectByType<PlayerPassives>();
+        if (ps == null) return;
+        foreach (EquippedSkill s in ps.EquippedSkills)
+        {
+            if (s.EvolutionStage != 1 || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) continue;
+            var k = EvolutionRoutes.Stage2Prereq(s.Id, s.Route);
+            if (k.Active.HasValue)
+            {
+                EquippedSkill ks = ps.EquippedSkills.FirstOrDefault(x => x.Id == k.Active.Value);
+                if (ks != null && ks.EvolutionStage == 0) actives[k.Active.Value] = k.Route;
+            }
+            if (k.Passive.HasValue && pp != null)
+            {
+                EquippedPassive kp = pp.GetPassive(k.Passive.Value);
+                if (kp != null && kp.EvolutionStage == 0) passives[k.Passive.Value] = k.Route;
+            }
+        }
+    }
+
+    private void RecordPick(string screen, IEnumerable<object> offered, object picked, bool wasEvolution, string rule = null)
     {
         if (recorder.Picks == null) return;
         var d = BotJson.Obj();
         d["screen"] = screen;
+        if (rule != null) d["rule"] = rule;
         d["offered"] = offered.ToList();
         d["picked"] = picked;
         d["wasEvolution"] = wasEvolution;

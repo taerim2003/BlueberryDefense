@@ -39,6 +39,7 @@ public static class BotLauncher
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
         if (!File.Exists(BotConfig.RequestPath)) { refreshWaitPolls = -1; return; }
         if (File.Exists(BotConfig.ActivePath)) return; // 이전 세션 정리 전
+        if (File.Exists(BotConfig.YieldPath)) return;  // 다른 세션이 Unity를 쓰는 중(양보 요청) — 파일이 지워질 때까지 시작하지 않는다
 
         // ① 에셋·코드 변경을 먼저 반영한다. Refresh가 컴파일을 걸면 도메인 리로드 뒤 이 폴링이 다시 돈다.
         if (refreshWaitPolls < 0)
@@ -63,6 +64,23 @@ public static class BotLauncher
             Debug.LogError("[BotLauncher] request.json 파싱 실패 — 파일을 BotRuns/request.bad.json 으로 옮김: " + e.Message);
             MoveOver(BotConfig.RequestPath, Path.Combine(BotConfig.RunsRoot, "request.bad.json"));
             return;
+        }
+
+        // 양보로 멈춘 세션 이어 돌리기: 원래 세션의 config를 그대로 쓰고 label·resumeFrom만 요청 값으로 바꾼다.
+        if (!string.IsNullOrEmpty(cfg.resumeFrom))
+        {
+            string origPath = Path.Combine(BotConfig.RunsRoot, cfg.resumeFrom, "config.json");
+            if (!File.Exists(origPath))
+            {
+                Debug.LogError("[BotLauncher] 재개할 세션이 없다: " + origPath + " — 요청을 request.bad.json 으로 옮김");
+                MoveOver(BotConfig.RequestPath, Path.Combine(BotConfig.RunsRoot, "request.bad.json"));
+                return;
+            }
+            BotConfig orig = JsonUtility.FromJson<BotConfig>(File.ReadAllText(origPath));
+            orig.resumeFrom = cfg.resumeFrom;
+            orig.runAudit = false;
+            if (!string.IsNullOrEmpty(cfg.label)) orig.label = cfg.label;
+            cfg = orig;
         }
 
         string label = string.IsNullOrEmpty(cfg.label) ? "run" : cfg.label;
@@ -121,7 +139,7 @@ public static class BotLauncher
         string statusPath = Path.Combine(cfg.sessionDir, "status.json");
         string text = File.Exists(statusPath) ? File.ReadAllText(statusPath) : "";
         // 봇이 done/error를 못 쓰고 끝났으면(사람이 플레이를 끔, 크래시) 중단으로 표시해 루프가 기다리지 않게 한다.
-        if (!text.Contains("\"state\":\"done\"") && !text.Contains("\"state\":\"error\""))
+        if (!text.Contains("\"state\":\"done\"") && !text.Contains("\"state\":\"error\"") && !text.Contains("\"state\":\"yielded\""))
             File.WriteAllText(statusPath, "{\"state\":\"aborted\",\"note\":\"플레이모드가 봇 종료 처리 없이 끝났다\",\"heartbeatUtc\":\""
                 + DateTime.UtcNow.ToString("o") + "\"}");
         Debug.Log("[BotLauncher] 봇 세션 종료: " + cfg.sessionDir);

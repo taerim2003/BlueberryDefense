@@ -205,11 +205,13 @@ function skillMetrics(runs, enemyTypes) {
     const n = owned.length || 1;
     for (const s of owned) {
       const key = `${s.id}|${s.evoStage}|${s.evoStage > 0 ? s.route : -1}`;
-      const st = (states[key] ||= { skill: s.id, evoStage: s.evoStage, route: s.evoStage > 0 ? s.route : -1, n: 0, power: [], dps: [], antiAir: [], boss: [], shield: [], contactPerMin: [], overkill: [], early: [], progress: [] });
+      const st = (states[key] ||= { skill: s.id, evoStage: s.evoStage, route: s.evoStage > 0 ? s.route : -1, n: 0, power: [], dps: [], antiAir: [], boss: [], shield: [], contactPerMin: [], overkill: [], early: [], progress: [], castRatio: [] });
       const t = Math.max(1, s.ownedTime);
       st.n++;
       st.power.push(s.share * n);
       st.dps.push(s.effDamage / t);
+      // 발동률 = 실제 발동 / 쿨만 보면 가능했던 발동(전역 쿨 0.4초 하한). 1보다 한참 낮으면 슬롯 굶주림·대상 없음 의심.
+      if (s.casts > 0 && s.baseCdLast != null) st.castRatio.push(s.casts / (t / Math.max(0.4, s.baseCdLast * (s.cdMultLast || 1))));
       let air = 0, boss = 0, shield = 0;
       for (const [e, v] of Object.entries(s.effByEnemy || {})) {
         const ty = enemyTypes[e] || {};
@@ -235,7 +237,7 @@ function skillMetrics(runs, enemyTypes) {
 
   const AXES = ['power', 'dps', 'antiAir', 'boss', 'shield', 'contactPerMin', 'early'];
   const rows = Object.values(states).map(s => {
-    const o = { skill: s.skill, evoStage: s.evoStage, route: s.route, n: s.n, meanProgress: round(mean(s.progress)), overkill: round(mean(s.overkill)) };
+    const o = { skill: s.skill, evoStage: s.evoStage, route: s.route, n: s.n, meanProgress: round(mean(s.progress)), overkill: round(mean(s.overkill)), castRatio: round(mean(s.castRatio)) };
     for (const a of AXES) o[a] = round(mean(s[a]));
     o.offeredNew = offered[s.skill] || 0; o.pickedNew = picked[s.skill] || 0;
     return o;
@@ -322,8 +324,8 @@ function analyze() {
   for (const it of iterations) {
     const ss = (it.sessions || []).map(id => byId[id]).filter(Boolean);
     const runs = ss.flatMap(s => s.runs);
-    const campaigns = ss.flatMap(s => s.campaigns.map(c => ({ ...c, campaign: `${s.id}#${c.campaign}` })));
-    runs.forEach(r => { if (r.mode === 'campaign') { const s = ss.find(x => x.runs.includes(r)); r.campaign = `${s.id}#${r.campaign}`; } });
+    const campaigns = ss.flatMap(s => s.campaigns.map(c => ({ ...c, campaign: c.campaignKey || `${s.id}#${c.campaign}` })));
+    runs.forEach(r => { if (r.mode === 'campaign') { const s = ss.find(x => x.runs.includes(r)); r.campaign = r.campaignKey || `${s.id}#${r.campaign}`; } }); // campaignKey = 양보·재개로 여러 세션에 걸친 캠페인을 하나로 묶는 키
     const enemyTypes = Object.assign({}, ...runs.map(r => r.enemyTypes || {}));
     const cd = ss.map(s => s.cooldowns).filter(Boolean).slice(-1)[0];
     const fp = ss.map(s => s.fingerprint).filter(f => f && Object.keys(f).length).slice(-1)[0] || null;

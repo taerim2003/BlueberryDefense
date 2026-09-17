@@ -75,14 +75,27 @@ public static class BotTree
         SaveStore.Save();
     }
 
-    // probe용 합성 세이브: 총 비용의 ratio만큼 정수를 주고 싼 것부터 산 트리 + 맵·캐릭터 전부 해금.
+    // probe용 합성 세이브: **보유 노드 레벨 비율**이 ratio에 닿을 때까지 싼 것부터 산 트리 + 맵·캐릭터 전부 해금.
+    // 🔴 비용 비율로 정하지 말 것 — 가격이 대역마다 4배라 "비용 30%"가 노드 레벨 89%였다(2026-09-18 실측).
     // 같은 ratio면 같은 트리가 나오도록 고정 시드로 산다(정주행의 운과 무관한 기준점).
     public static void BuildReferenceSave(float ratio, string[] mapNames)
     {
         ResetSave();
-        int budget = ratio >= 1f ? TotalCost() : Mathf.RoundToInt(TotalCost() * ratio);
-        SkillTreeSave.AddEssence(Mathf.Max(1, budget));
-        BuyCheapestFirst(new System.Random(7));
+        SkillTreeSave.AddEssence(TotalCost());
+        if (ratio >= 1f) BuyCheapestFirst(new System.Random(7));
+        else
+        {
+            int target = Mathf.CeilToInt(TotalLevels() * ratio);
+            var rng = new System.Random(7);
+            while (OwnedLevels() < target)
+            {
+                List<SkillNode> buyable = Tree.nodes.Where(n => SkillTreeSave.CanUpgrade(Tree, n.id)).ToList();
+                if (buyable.Count == 0) break;
+                int min = buyable.Min(n => SkillTreeSave.NextLevelCost(Tree, n));
+                List<SkillNode> cheapest = buyable.Where(n => SkillTreeSave.NextLevelCost(Tree, n) == min).ToList();
+                if (!SkillTreeSave.TryUpgrade(Tree, cheapest[rng.Next(cheapest.Count)].id)) break;
+            }
+        }
         // 캐릭터 해금 조건(누적 정수)만 채운다 — 남은 정수는 probe에서 안 쓰므로 트리에 영향 없음.
         int earned = SkillTreeSave.EssenceEarned;
         if (earned < 2000) SkillTreeSave.AddEssence(2000 - earned);
