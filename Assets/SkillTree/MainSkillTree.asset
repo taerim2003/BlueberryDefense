@@ -15,24 +15,24 @@ MonoBehaviour:
   nodes:
   - id: atk_1
     displayName: "\uACF5\uACA9\uB825 I"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 5% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 1
     effect: 0
-    perLevel: 5
+    perLevel: 10
     maxLevel: 4
     prereqIds:
     - Root_Skilltree
     editorPos: {x: 380, y: -270}
   - id: atk_2
     displayName: "\uACF5\uACA9\uB825 II"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 7% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 2
     effect: 0
-    perLevel: 7
+    perLevel: 10
     maxLevel: 4
     prereqIds:
     - orb_BasicSlow
@@ -47,8 +47,8 @@ MonoBehaviour:
     perLevel: 8
     maxLevel: 4
     prereqIds:
-    - reroll_2
-    editorPos: {x: 60, y: -810}
+    - New_Lightning
+    editorPos: {x: 380, y: -810}
   - id: hp_2
     displayName: "\uCCB4\uB825 II"
     description: "\uCD5C\uB300 \uCCB4\uB825\uC774 8 \uC99D\uAC00"
@@ -59,8 +59,8 @@ MonoBehaviour:
     perLevel: 8
     maxLevel: 4
     prereqIds:
-    - New_Shotgun
-    editorPos: {x: -260, y: 270}
+    - hp_1
+    editorPos: {x: 60, y: -810}
   - id: New_Reroll
     displayName: "\uB9AC\uB864 \uD574\uAE08"
     description: "\uB808\uBCA8 \uC5C5 \uC120\uD0DD\uC9C0\uB97C \uAC8C\uC784\uB2F9
@@ -72,8 +72,8 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 1
     prereqIds:
-    - fly_1
-    editorPos: {x: 1340, y: 270}
+    - Root_Skilltree
+    editorPos: {x: 60, y: 0}
   - id: reroll_2
     displayName: "\uB9AC\uB864 I"
     description: "\uAC8C\uC784\uB2F9 \uB9AC\uB864 +1"
@@ -84,8 +84,8 @@ MonoBehaviour:
     perLevel: 1
     maxLevel: 1
     prereqIds:
-    - New_Lightning
-    editorPos: {x: 380, y: -810}
+    - New_Reroll
+    editorPos: {x: 60, y: 270}
   - id: crit_1
     displayName: "\uCE58\uBA85 I"
     description: "\uCE58\uBA85\uD0C0 \uD655\uB960 5% \uC99D\uAC00"
@@ -96,8 +96,8 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 2
     prereqIds:
-    - New_Orb
-    editorPos: {x: 700, y: 540}
+    - gold_1
+    editorPos: {x: 380, y: 540}
   - id: crit_2
     displayName: "\uCE58\uBA85 II"
     description: "\uCE58\uBA85\uD0C0 \uD655\uB960 5% \uC99D\uAC00"
@@ -112,24 +112,24 @@ MonoBehaviour:
     editorPos: {x: 700, y: -1080}
   - id: exp_1
     displayName: "\uACBD\uD5D8 I"
-    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +7%"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +13%"
     type: 0
     skill: 0
     tier: 1
     effect: 5
-    perLevel: 7
+    perLevel: 13
     maxLevel: 3
     prereqIds:
-    - Root_Skilltree
-    editorPos: {x: 60, y: 0}
+    - fly_1
+    editorPos: {x: 1340, y: 270}
   - id: exp_2
     displayName: "\uACBD\uD5D8 II"
-    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +10%"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +13%"
     type: 0
     skill: 0
     tier: 2
     effect: 5
-    perLevel: 10
+    perLevel: 13
     maxLevel: 3
     prereqIds:
     - thunder_Stack
@@ -219,7 +219,7 @@ MonoBehaviour:
     maxLevel: 4
     prereqIds:
     - critdmg_1
-    editorPos: {x: 60, y: -270}
+    editorPos: {x: -260, y: -270}
   - id: cool_2
     displayName: "\uCFE8\uB2E4\uC6B4 II"
     description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -2%"
@@ -230,8 +230,8 @@ MonoBehaviour:
     perLevel: 2
     maxLevel: 4
     prereqIds:
-    - Homing_MissileNum
-    editorPos: {x: -260, y: 810}
+    - New_Orb
+    editorPos: {x: 700, y: 540}
   - id: tornado_CoolDownBonus
     displayName: "\uC2E0\uC18D\uD55C \uD68C\uC624\uB9AC"
     description: "\uD68C\uC624\uB9AC\uB294 \uBAA8\uB4E0 \uCFE8\uD0C0\uC784 \uAC10\uC18C
@@ -260,16 +260,16 @@ MonoBehaviour:
     editorPos: {x: 1340, y: -1350}
   - id: atk_3
     displayName: "\uACF5\uACA9\uB825 III"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 9% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 3
     effect: 0
-    perLevel: 9
+    perLevel: 10
     maxLevel: 4
     prereqIds:
-    - New_Shotgun
-    editorPos: {x: 60, y: 540}
+    - New_Homing
+    editorPos: {x: -260, y: 810}
   - id: gold_3
     displayName: "\uBD80\uC720 III"
     description: "\uC815\uC218 \uD68D\uB4DD\uB7C9 +180%"
@@ -323,39 +323,39 @@ MonoBehaviour:
       \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     type: 1
     skill: 6
-    tier: 1
+    tier: 2
     effect: 0
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - gold_1
-    editorPos: {x: 380, y: 540}
+    - critdmg_2
+    editorPos: {x: 60, y: 810}
   - id: New_Shotgun
     displayName: "\uC0B0\uD0C4 \uD574\uAE08"
     description: "<\uC0B0\uD0C4 \uBC1C\uC0AC> \uC2A4\uD0AC\uC774 \uB4F1\uC7A5\uD560
       \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     type: 1
     skill: 7
-    tier: 1
+    tier: 2
     effect: 0
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - exp_1
-    editorPos: {x: 60, y: 270}
+    - reroll_2
+    editorPos: {x: -260, y: 270}
   - id: New_Rewind
     displayName: "\uB418\uAC10\uAE30 \uD574\uAE08"
     description: "<\uB418\uAC10\uAE30> \uC2A4\uD0AC\uC774 \uB4F1\uC7A5\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
     type: 1
     skill: 8
-    tier: 1
+    tier: 3
     effect: 0
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - exp_1
-    editorPos: {x: -260, y: 0}
+    - cool_1
+    editorPos: {x: -260, y: -540}
   - id: Rewind_Slow
     displayName: "\uBE14\uB8E8\uBCA0\uB9AC \uB454\uD654"
     description: "\uB418\uAC10\uAE30 \uC0AC\uC6A9 \uC2DC \uBE14\uB8E8\uBCA0\uB9AC\uC758
@@ -382,8 +382,8 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - critdmg_2
-    editorPos: {x: 60, y: 810}
+    - New_Homing
+    editorPos: {x: 60, y: 1080}
   - id: Sniping_TwoTarget
     displayName: "\uD55C \uBC1C\uC5D0 \uB450 \uB188"
     description: "\uC2A4\uB098\uC774\uD551\uC774 \uD55C \uB188\uC744 \uCD94\uAC00\uB85C
@@ -395,7 +395,7 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - reroll_3
+    - boss_2
     editorPos: {x: 1020, y: 1080}
   - id: swing_StartLev
     displayName: "\uD718\uB450\uB974\uAE30 \uC219\uB828"
@@ -408,7 +408,7 @@ MonoBehaviour:
     perLevel: 5
     maxLevel: 5
     prereqIds:
-    - hp_3
+    - rewind_NoGcd
     editorPos: {x: -580, y: -810}
   - id: tornado_Fly
     displayName: "\uD68C\uC624\uB9AC \uB300\uACF5"
@@ -445,8 +445,8 @@ MonoBehaviour:
     perLevel: 2
     maxLevel: 4
     prereqIds:
-    - rewind_NoGcd
-    editorPos: {x: -260, y: -810}
+    - cool_1
+    editorPos: {x: 60, y: -270}
   - id: cool_5
     displayName: "\uCFE8\uB2E4\uC6B4 V"
     description: "\uBAA8\uB4E0 \uC2A4\uD0AC \uCFE8\uD0C0\uC784 -2%"
@@ -487,36 +487,36 @@ MonoBehaviour:
     editorPos: {x: -1220, y: 270}
   - id: critdmg_1
     displayName: "\uCE58\uBA85\uD0C0 \uD53C\uD574 I"
-    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +10%"
+    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +12%"
     type: 0
     skill: 0
     tier: 1
     effect: 9
-    perLevel: 10
+    perLevel: 12
     maxLevel: 2
     prereqIds:
-    - New_Rewind
-    editorPos: {x: -260, y: -270}
+    - New_Reroll
+    editorPos: {x: -260, y: 0}
   - id: critdmg_2
     displayName: "\uCE58\uBA85\uD0C0 \uD53C\uD574 II"
-    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +10%"
+    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +12%"
     type: 0
     skill: 0
     tier: 2
     effect: 9
-    perLevel: 10
+    perLevel: 12
     maxLevel: 2
     prereqIds:
-    - New_Homing
+    - crit_1
     editorPos: {x: 380, y: 810}
   - id: critdmg_3
     displayName: "\uCE58\uBA85\uD0C0 \uD53C\uD574 III"
-    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +15%"
+    description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 +12%"
     type: 0
     skill: 0
     tier: 3
     effect: 9
-    perLevel: 15
+    perLevel: 12
     maxLevel: 2
     prereqIds:
     - knowledge_BaseXp
@@ -532,7 +532,7 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - reroll_4
+    - Homing_MissileNum
     editorPos: {x: 60, y: 1350}
   - id: assassin_FullCritHit
     displayName: "\uD655\uC778 \uC0AC\uC0B4"
@@ -557,8 +557,8 @@ MonoBehaviour:
     perLevel: 1
     maxLevel: 1
     prereqIds:
-    - orb_BasicSlow
-    editorPos: {x: 1020, y: 810}
+    - shotgun_BonusHit
+    editorPos: {x: -580, y: 540}
   - id: reroll_4
     displayName: "\uB9AC\uB864 III"
     description: "\uAC8C\uC784\uB2F9 \uB9AC\uB864 +1"
@@ -569,8 +569,8 @@ MonoBehaviour:
     perLevel: 1
     maxLevel: 1
     prereqIds:
-    - Homing_MissileNum
-    editorPos: {x: 60, y: 1080}
+    - reroll_2
+    editorPos: {x: 60, y: 540}
   - id: reroll_5
     displayName: "\uB9AC\uB864 IV"
     description: "\uAC8C\uC784\uB2F9 \uB9AC\uB864 +1"
@@ -617,7 +617,7 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - reroll_2
+    - hp_1
     editorPos: {x: 380, y: -1080}
   - id: shotgun_BonusHit
     displayName: "\uCD94\uAC00 \uC7A5\uC804"
@@ -631,7 +631,7 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - hp_2
+    - New_Shotgun
     editorPos: {x: -580, y: 270}
   - id: shotgun_Crit
     displayName: "\uAE09\uC18C \uC0B0\uD0C4"
@@ -644,7 +644,7 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - boss_2
+    - reroll_3
     editorPos: {x: -580, y: 810}
   - id: exp_3
     displayName: "\uACBD\uD5D8 III"
@@ -660,24 +660,24 @@ MonoBehaviour:
     editorPos: {x: -900, y: -270}
   - id: exp_4
     displayName: "\uACBD\uD5D8 IV"
-    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +16%"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +13%"
     type: 0
     skill: 0
     tier: 4
     effect: 5
-    perLevel: 16
+    perLevel: 13
     maxLevel: 3
     prereqIds:
-    - hp_2
+    - New_Shotgun
     editorPos: {x: -260, y: 540}
   - id: exp_5
     displayName: "\uACBD\uD5D8 V"
-    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +20%"
+    description: "\uACBD\uD5D8\uCE58 \uD68D\uB4DD\uB7C9 +13%"
     type: 0
     skill: 0
     tier: 5
     effect: 5
-    perLevel: 20
+    perLevel: 13
     maxLevel: 3
     prereqIds:
     - strength_BaseDmg
@@ -780,8 +780,8 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - critdmg_1
-    editorPos: {x: -260, y: -540}
+    - New_Rewind
+    editorPos: {x: -580, y: -540}
   - id: thunder_Stack
     displayName: "\uCD95\uC804"
     description: "\uB099\uB8B0 \uBC84\uD504\uAC00 \uC911\uCCA9\uB418\uC5B4 \uC313\uC77C\uC218\uB85D
@@ -805,8 +805,8 @@ MonoBehaviour:
     perLevel: 8
     maxLevel: 4
     prereqIds:
-    - rewind_NoGcd
-    editorPos: {x: -580, y: -540}
+    - New_Rewind
+    editorPos: {x: -260, y: -810}
   - id: hp_4
     displayName: "\uCCB4\uB825 IV"
     description: "\uCD5C\uB300 \uCCB4\uB825\uC774 8 \uC99D\uAC00"
@@ -817,7 +817,7 @@ MonoBehaviour:
     perLevel: 8
     maxLevel: 4
     prereqIds:
-    - reroll_3
+    - boss_2
     editorPos: {x: 700, y: 810}
   - id: sniping_Crit
     displayName: "\uAE09\uC18C \uC800\uACA9"
@@ -843,7 +843,7 @@ MonoBehaviour:
     perLevel: 0
     maxLevel: 1
     prereqIds:
-    - hp_3
+    - rewind_NoGcd
     editorPos: {x: -900, y: -540}
   - id: health_HealItem
     displayName: "\uC601\uC591 \uB9CC\uC810"
@@ -860,12 +860,12 @@ MonoBehaviour:
     editorPos: {x: -1540, y: 0}
   - id: hp_5
     displayName: "\uCCB4\uB825 V"
-    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 9 \uC99D\uAC00"
+    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 8 \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 5
     effect: 1
-    perLevel: 9
+    perLevel: 8
     maxLevel: 4
     prereqIds:
     - strength_BaseDmg
@@ -898,12 +898,12 @@ MonoBehaviour:
     editorPos: {x: -580, y: -1350}
   - id: hp_6
     displayName: "\uCCB4\uB825 VI"
-    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 9 \uC99D\uAC00"
+    description: "\uCD5C\uB300 \uCCB4\uB825\uC774 8 \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 6
     effect: 1
-    perLevel: 9
+    perLevel: 8
     maxLevel: 4
     prereqIds:
     - knowledge_BaseXp
@@ -923,24 +923,24 @@ MonoBehaviour:
     editorPos: {x: -260, y: 1620}
   - id: atk_4
     displayName: "\uACF5\uACA9\uB825 IV"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 11% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 4
     effect: 0
-    perLevel: 11
+    perLevel: 10
     maxLevel: 4
     prereqIds:
     - tornado_CoolDownBonus
     editorPos: {x: 1660, y: 0}
   - id: atk_5
     displayName: "\uACF5\uACA9\uB825 V"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 13% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 5
     effect: 0
-    perLevel: 13
+    perLevel: 10
     maxLevel: 4
     prereqIds:
     - assassin_BaseCrit
@@ -986,12 +986,12 @@ MonoBehaviour:
     editorPos: {x: -900, y: 0}
   - id: atk_6
     displayName: "\uACF5\uACA9\uB825 VI"
-    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 15% \uC99D\uAC00"
+    description: "\uBAA8\uB4E0 \uD53C\uD574\uAC00 10% \uC99D\uAC00"
     type: 0
     skill: 0
     tier: 6
     effect: 0
-    perLevel: 15
+    perLevel: 10
     maxLevel: 4
     prereqIds:
     - defense_BaseReduce
@@ -1018,8 +1018,8 @@ MonoBehaviour:
     perLevel: 10
     maxLevel: 1
     prereqIds:
-    - shotgun_BonusHit
-    editorPos: {x: -580, y: 540}
+    - orb_BasicSlow
+    editorPos: {x: 1020, y: 810}
   - id: boss_3
     displayName: "\uBCF4\uC2A4 \uC0AC\uB0E5 III"
     description: "\uBCF4\uC2A4\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574 +10%"

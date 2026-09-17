@@ -1,8 +1,8 @@
 KEY	EN
 tree.name.atk_1	Attack I
-tree.desc.atk_1	All damage increased by 5%
+tree.desc.atk_1	All damage increased by 10%
 tree.name.atk_2	Attack II
-tree.desc.atk_2	All damage increased by 7%
+tree.desc.atk_2	All damage increased by 10%
 tree.name.hp_1	Health I
 tree.desc.hp_1	Max health increased by 8
 tree.name.hp_2	Health II
@@ -16,9 +16,9 @@ tree.desc.crit_1	Critical chance increased by 5%
 tree.name.crit_2	Crit II
 tree.desc.crit_2	Critical chance increased by 5%
 tree.name.exp_1	Experience I
-tree.desc.exp_1	Experience gain +7%
+tree.desc.exp_1	Experience gain +13%
 tree.name.exp_2	Experience II
-tree.desc.exp_2	Experience gain +10%
+tree.desc.exp_2	Experience gain +13%
 tree.name.gold_1	Wealth I
 tree.desc.gold_1	Essence gain +40%
 tree.name.gold_2	Wealth II
@@ -42,7 +42,7 @@ tree.desc.tornado_CoolDownBonus	Whirlwind receives 1.5x the effect of all cooldo
 tree.name.thunder_Cooldown	Lightning Cooldown
 tree.desc.thunder_Cooldown	Every lightning strike cuts Lightning's cooldown by 0.01s
 tree.name.atk_3	Attack III
-tree.desc.atk_3	All damage increased by 9%
+tree.desc.atk_3	All damage increased by 10%
 tree.name.gold_3	Wealth III
 tree.desc.gold_3	Essence gain +180%
 tree.name.Root_Skilltree	Skill Tree Unlocked!
@@ -86,11 +86,11 @@ tree.desc.accel_BaseCool	<Haste> starts with +5% cooldown reduction
 tree.name.accel_FastSkillDmg	Quick Hands
 tree.desc.accel_FastSkillDmg	While you have <Haste>, skills with a cooldown of 4s or less deal +30% damage
 tree.name.critdmg_1	Crit Damage I
-tree.desc.critdmg_1	Critical damage +10%
+tree.desc.critdmg_1	Critical damage +12%
 tree.name.critdmg_2	Crit Damage II
-tree.desc.critdmg_2	Critical damage +10%
+tree.desc.critdmg_2	Critical damage +12%
 tree.name.critdmg_3	Crit Damage III
-tree.desc.critdmg_3	Critical damage +15%
+tree.desc.critdmg_3	Critical damage +12%
 tree.name.assassin_BaseCrit	Assassination Training
 tree.desc.assassin_BaseCrit	<Assassination> starts with +10% critical chance
 tree.name.assassin_FullCritHit	Double Tap
@@ -114,9 +114,9 @@ tree.desc.shotgun_Crit	Buckshot Blast critical chance +30%
 tree.name.exp_3	Experience III
 tree.desc.exp_3	Experience gain +13%
 tree.name.exp_4	Experience IV
-tree.desc.exp_4	Experience gain +16%
+tree.desc.exp_4	Experience gain +13%
 tree.name.exp_5	Experience V
-tree.desc.exp_5	Experience gain +20%
+tree.desc.exp_5	Experience gain +13%
 tree.name.knowledge_BaseXp	Knowledge Training
 tree.desc.knowledge_BaseXp	<Knowledge> starts with +10% experience gain
 tree.name.knowledge_EvoHint	Evolution Insight
@@ -146,19 +146,19 @@ tree.desc.health_BaseHp	<Vitality> starts with +30 max health
 tree.name.health_HealItem	Nutritious
 tree.desc.health_HealItem	While you have <Vitality>, healing items restore twice as much
 tree.name.hp_5	Health V
-tree.desc.hp_5	Max health increased by 9
+tree.desc.hp_5	Max health increased by 8
 tree.name.defense_BaseReduce	Defense Training
 tree.desc.defense_BaseReduce	<Defense> starts with +10% damage reduction
 tree.name.defense_Revive	Undying
 tree.desc.defense_Revive	While you have <Defense>, revive once with half your max health when you die
 tree.name.hp_6	Health VI
-tree.desc.hp_6	Max health increased by 9
+tree.desc.hp_6	Max health increased by 8
 tree.name.homing_Cooldown	Quick Reload
 tree.desc.homing_Cooldown	Homing Missile's base cooldown -1s
 tree.name.atk_4	Attack IV
-tree.desc.atk_4	All damage increased by 11%
+tree.desc.atk_4	All damage increased by 10%
 tree.name.atk_5	Attack V
-tree.desc.atk_5	All damage increased by 13%
+tree.desc.atk_5	All damage increased by 10%
 tree.name.strength_BaseDmg	Strength Training
 tree.desc.strength_BaseDmg	<Strength> starts with +5% damage
 tree.name.strength_SlowSkill	Heavy Hitter
@@ -166,7 +166,7 @@ tree.desc.strength_SlowSkill	<Strength>'s damage bonus is doubled for skills wit
 tree.name.New_Evolution2	Unlock 2nd Evolution
 tree.desc.New_Evolution2	Skills can now make their second evolution
 tree.name.atk_6	Attack VI
-tree.desc.atk_6	All damage increased by 15%
+tree.desc.atk_6	All damage increased by 10%
 tree.name.boss_1	Boss Hunter I
 tree.desc.boss_1	Damage to bosses +10%
 tree.name.boss_2	Boss Hunter II
