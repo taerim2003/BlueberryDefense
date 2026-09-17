@@ -12,4 +12,7 @@ public class EnemyDefinition : ScriptableObject
     public int xpValue = 5;
     public float essenceDropChance = 0.15f; // 처치 시 정수 드랍 확률(보물은 확률 무시·확정)
     public int essenceDropAmount = 2;        // 드랍 시 지급 정수량
+    // 군중제어 저항(0 = 그대로 받음, 1 = 면역). 감속·기절의 **세기**와 밀치기 **거리**에 (1 − 저항)을 곱한다.
+    // 보스는 종류가 아니라 스폰 슬롯으로 정해지므로 Enemy.BossCrowdControlScale이 따로 걸린다(둘 중 강한 쪽).
+    [Range(0f, 1f)] public float crowdControlResistance = 0f;
 }

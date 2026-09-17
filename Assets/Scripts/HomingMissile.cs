@@ -25,10 +25,44 @@ public class HomingMissile : MonoBehaviour
     // 재타겟은 미사일마다 자주 일어난다. 후보 리스트를 매번 새로 만들지 않으려고 공용 버퍼를 쓴다.
     private static readonly List<Enemy> candidates = new();
 
+    // 비행 유닛 우선: 비행 후보가 하나라도 있으면 지상보다 항상 먼저 노린다. 같은 부류 안에선 가까운 순.
+    // 비교 함수를 정적으로 둔다 — 위치를 캡처하는 람다는 재타겟마다 할당되는데, 노리던 적이 죽는 프레임엔
+    // 그 적에게 몰렸던 미사일(2차 진화면 수십 발)이 한꺼번에 재타겟한다.
+    private static Vector2 sortOrigin;
+    private static readonly System.Comparison<Enemy> ByPriority = (a, b) =>
+    {
+        if (a.IsFlying != b.IsFlying) return a.IsFlying ? -1 : 1;
+        float sa = ((Vector2)a.transform.position - sortOrigin).sqrMagnitude;
+        float sb = ((Vector2)b.transform.position - sortOrigin).sqrMagnitude;
+        return sa.CompareTo(sb);
+    };
+
     private Enemy target;
     private Vector2 dir = Vector2.left; // 전방 = 적이 오는 쪽(-x). 이 프로젝트의 전 스킬 공통 관례다.
     private bool hit;
     private float life;
+    private Vector3 baseScale;
+
+    private void Awake() => baseScale = transform.localScale;
+
+    // ObjectPool에서 꺼낼 때마다 도는 초기화 — FireHoming은 이 뒤에 값을 채우고 Init을 부른다.
+    // ⚠️ 풀 재사용엔 Awake·Start가 다시 안 돈다. 런타임에 바뀌는 필드를 추가하면 여기서도 되돌릴 것.
+    //    크기를 되돌려 두므로 호출부의 `localScale *=`가 누적되지 않는다.
+    private void OnEnable()
+    {
+        transform.localScale = baseScale;
+        target = null;
+        dir = Vector2.left;
+        hit = false;
+        life = lifetime;
+        Damage = 0f;
+        CritChance = 0f;
+        Explode = false;
+        ExplodeRadius = 1.5f;
+        ExplodeVfxMult = 1f;
+        ExplodeRatio = 0.4f;
+        TargetRank = 0;
+    }
 
     public void Init(Vector2 initialDir)
     {
@@ -36,7 +70,14 @@ public class HomingMissile : MonoBehaviour
         FaceDir();
     }
 
-    private void Start() => life = lifetime;
+    // 풀 반납. 꼬리(PixelTrail의 파티클)를 비우고 멈춰 둔다 — 안 그러면 다음에 꺼낼 때
+    // 거리 기반 방출이 반납 자리에서 새 발사 자리까지 점선을 한 줄 그을 수 있다(재생은 ObjectPool.Spawn이 다시 건다).
+    private void Despawn()
+    {
+        if (TryGetComponent(out ParticleSystem trail))
+            trail.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        ObjectPool.Instance.Despawn(gameObject);
+    }
 
     private void Update()
     {
@@ -45,7 +86,7 @@ public class HomingMissile : MonoBehaviour
         if (target == null || !target.IsAlive) target = AcquireTarget();
 
         life -= Time.deltaTime;
-        if (life <= 0f) { Destroy(gameObject); return; }
+        if (life <= 0f) { Despawn(); return; }
 
         // 🔴 미사일은 **어떤 상황에서도 멈추지 않는다**(사용자 결정 2026-09-14 — 09-10의 "제자리 대기"를 폐지).
         // 노릴 적이 없으면 회전만 건너뛰고 지금 방향으로 직진한다: 소환 직후면 Init이 준 발사 방향,
@@ -69,19 +110,12 @@ public class HomingMissile : MonoBehaviour
     private Enemy AcquireTarget()
     {
         candidates.Clear();
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active) // 표적 없는 미사일은 매 프레임 여기 온다 — FindObjectsByType을 쓰면 안 된다(Enemy.Active 주석)
             if (e != null && e.IsAlive) candidates.Add(e);
         if (candidates.Count == 0) return null;
 
-        Vector2 self = transform.position;
-        // 비행 유닛 우선: 비행 후보가 하나라도 있으면 지상보다 항상 먼저 노린다. 같은 부류 안에선 가까운 순.
-        candidates.Sort((a, b) =>
-        {
-            if (a.IsFlying != b.IsFlying) return a.IsFlying ? -1 : 1;
-            float sa = ((Vector2)a.transform.position - self).sqrMagnitude;
-            float sb = ((Vector2)b.transform.position - self).sqrMagnitude;
-            return sa.CompareTo(sb);
-        });
+        sortOrigin = transform.position;
+        candidates.Sort(ByPriority);
         // 미사일이 적보다 많으면 순번이 한 바퀴 돌아 겹친다 — 그건 그대로 둔다(적이 적을 땐 몰리는 게 맞다).
         return candidates[TargetRank % candidates.Count];
     }
@@ -113,13 +147,14 @@ public class HomingMissile : MonoBehaviour
                 // 반환을 늦추면 **마지막 연기 프레임이 그대로 얼어붙어** 남는다. 재생 길이 바로 뒤에 회수한다.
                 ObjectPool.Instance.Despawn(vfx, 0.3f);
             }
-            foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            {
-                if (o == null || o == e) continue;
-                if (Vector2.Distance(pos, o.transform.position) <= ExplodeRadius)
-                    o.TakeSkillHit(Damage * ExplodeRatio, CritChance, ActiveSkillId.Homing);
-            }
+            using (Enemy.GetSnapshot(out List<Enemy> enemies))
+                foreach (Enemy o in enemies)
+                {
+                    if (o == null || o == e) continue;
+                    if (Vector2.Distance(pos, o.transform.position) <= ExplodeRadius)
+                        o.TakeSkillHit(Damage * ExplodeRatio, CritChance, ActiveSkillId.Homing);
+                }
         }
-        Destroy(gameObject);
+        Despawn();
     }
 }

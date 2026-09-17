@@ -57,7 +57,7 @@ public class PixelTrail : MonoBehaviour
 
         var rend = ps.GetComponent<ParticleSystemRenderer>();
         rend.renderMode   = ParticleSystemRenderMode.Billboard;
-        rend.material     = MakeDotMaterial();
+        rend.sharedMaterial = DotMaterial();
         rend.sortingOrder = 399; // 미사일 스프라이트(400) 바로 아래
 
         ps.Play();
@@ -84,8 +84,15 @@ public class PixelTrail : MonoBehaviour
         return g;
     }
 
-    private static Material MakeDotMaterial()
+    // 전 인스턴스가 한 재질을 공유한다. 예전엔 Awake마다 Shader.Find + 텍스처 + 재질을 새로 만들었는데,
+    // 호밍 미사일은 한 번에 수십 발이 Instantiate되고 **파괴돼도 재질·텍스처는 안 지워져** 판 내내 쌓였다.
+    // 재질이 제각각이라 꼬리끼리 배칭도 안 됐다. 색은 파티클 colorOverLifetime이 정하므로 공유해도 그림이 같다.
+    private static Material dotMaterial;
+
+    private static Material DotMaterial()
     {
+        if (dotMaterial != null) return dotMaterial; // 씬 전환의 UnloadUnusedAssets가 지웠으면 다시 만든다
+
         // 1×1 흰색 픽셀 + Point 필터 → 화면에서 선명한 정사각형 도트
         var tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
         tex.filterMode = FilterMode.Point;
@@ -96,7 +103,7 @@ public class PixelTrail : MonoBehaviour
                      ?? Shader.Find("Particles/Standard Unlit")
                      ?? Shader.Find("Sprites/Default");
 
-        var mat = new Material(shader) { mainTexture = tex };
-        return mat;
+        dotMaterial = new Material(shader) { mainTexture = tex };
+        return dotMaterial;
     }
 }

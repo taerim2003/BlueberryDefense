@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -87,7 +86,7 @@ public class ObjectPool : MonoBehaviour
 
         if (delay > 0f)
         {
-            StartCoroutine(DespawnRoutine(obj, delay));
+            pendingDespawns.Add(new PendingDespawn { obj = obj, at = Time.time + delay });
             return;
         }
 
@@ -102,10 +101,30 @@ public class ObjectPool : MonoBehaviour
         pools[pooled.SourcePrefab].Enqueue(obj);
     }
 
-    private IEnumerator DespawnRoutine(GameObject obj, float delay)
+    // 지연 반납 대기열. 예전엔 호출마다 코루틴 + WaitForSeconds를 만들었는데, 피격 이펙트마다 불려서
+    // 후반엔 그 할당이 프레임마다 쌓였다. Time.time(스케일 적용)이라 WaitForSeconds처럼 일시정지 중엔 안 흐른다.
+    private struct PendingDespawn
     {
-        yield return new WaitForSeconds(delay);
-        Despawn(obj, 0f);
+        public GameObject obj;
+        public float at;
+    }
+
+    private readonly List<PendingDespawn> pendingDespawns = new List<PendingDespawn>();
+
+    private void Update()
+    {
+        float now = Time.time;
+        // 뒤에서부터 돌며 끝난 항목을 맨 뒤 항목과 바꿔 지운다(이미 확인한 항목이 앞으로 온다).
+        // 반납 중 OnDisable이 새 지연 반납을 걸면 맨 뒤에 붙어 이번 프레임엔 안 본다.
+        for (int i = pendingDespawns.Count - 1; i >= 0; i--)
+        {
+            if (now < pendingDespawns[i].at) continue;
+            GameObject obj = pendingDespawns[i].obj;
+            int last = pendingDespawns.Count - 1;
+            pendingDespawns[i] = pendingDespawns[last];
+            pendingDespawns.RemoveAt(last);
+            Despawn(obj, 0f);
+        }
     }
 }
 

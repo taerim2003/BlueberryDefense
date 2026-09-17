@@ -110,12 +110,13 @@ public class PoisonCloud : MonoBehaviour
         nextApply = ReapplyInterval;
 
         // 안개 안에 있는 동안 계속 다시 걸어 준다 — 나가면 남은 지속시간만큼만 아프다.
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (e == null || !e.IsAlive) continue;
-            if (Vector2.Distance(e.transform.position, transform.position) > radius) continue;
-            e.ApplyPoison(poisonDamage, poisonDuration, poisonInterval);
-        }
+        using (Enemy.GetSnapshot(out List<Enemy> enemies))
+            foreach (Enemy e in enemies)
+            {
+                if (e == null || !e.IsAlive) continue;
+                if (Vector2.Distance(e.transform.position, transform.position) > radius) continue;
+                e.ApplyPoison(poisonDamage, poisonDuration, poisonInterval);
+            }
     }
 
     // 하드 엣지 원. 안티앨리어싱을 넣으면 도트 이펙트들과 재질이 안 맞는다.

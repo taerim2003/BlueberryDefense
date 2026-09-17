@@ -64,7 +64,7 @@ public class SmallOrb : MonoBehaviour
     private Enemy AcquireTarget()
     {
         candidates.Clear();
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active)
             if (e != null && e.IsAlive && !hitEnemies.Contains(e)) candidates.Add(e);
         if (candidates.Count == 0) return null;
 

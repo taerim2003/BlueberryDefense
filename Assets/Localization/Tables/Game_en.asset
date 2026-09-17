@@ -324,7 +324,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983102
-    m_Localized: 'Every 10 uses of Homing Missile
+    m_Localized: 'Every 20 uses of Homing Missile
 
       adds one more missile per
       volley.'

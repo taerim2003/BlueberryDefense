@@ -42,6 +42,48 @@ public class Projectile : MonoBehaviour
     //    적은 화면 밖 x=-9에서 걸어 나온다. 여백이 그보다 좁으면 살아 있어야 할 화살이 태어나자마자 지워진다.
     private const float OffscreenMargin = 3f;
 
+    private Vector3 baseScale;
+    private SpriteRenderer sr;
+    private Sprite baseSprite;
+
+    private void Awake()
+    {
+        baseScale = transform.localScale;
+        sr = GetComponentInChildren<SpriteRenderer>();
+        baseSprite = sr != null ? sr.sprite : null;
+    }
+
+    // ObjectPool에서 꺼낼 때마다 도는 초기화 — 호출부(PlayerSkills)는 이 뒤에 값을 채운다.
+    // ⚠️ 풀 재사용엔 Awake가 다시 안 돈다. 런타임에 바뀌는 필드를 추가하면 여기서도 되돌릴 것.
+    //    크기를 되돌려 두므로 호출부의 `localScale *=`가 누적되지 않는다.
+    private void OnEnable()
+    {
+        transform.localScale = baseScale;
+        Damage = 0f;
+        ApplyGemSlow = false;
+        ApplyGemVulnerable = false;
+        CritChance = 0f;
+        SpeedMultiplier = 1f;
+        Acceleration = 0f;
+        PierceRemaining = 0;
+        CanHitFlying = false;
+        OnHitBonus = null;
+        Homing = false;
+        HomingTarget = null;
+        TurnDegPerSec = 540f;
+        hitEnemies.Clear();
+        consumed = false;
+        if (TryGetComponent(out Collider2D col)) col.enabled = true;
+
+        // 진화 화살은 그림을 갈아 끼우고 플립북을 붙인 채 반납된다(PlayerSkills.ApplyEvolvedArrowSprite) —
+        // 그대로 두면 화살비·일반 화살이 진화 그림으로 나온다.
+        if (sr != null)
+        {
+            if (sr.TryGetComponent(out SpriteFlipbook fb)) fb.enabled = false;
+            sr.sprite = baseSprite;
+        }
+    }
+
     private void Update()
     {
         if (Homing) Steer();
@@ -72,7 +114,7 @@ public class Projectile : MonoBehaviour
     {
         Enemy best = null;
         float bestSqr = float.MaxValue;
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active)
         {
             if (e == null || !e.IsAlive) continue;
             if (e.RequiresAntiAir && !canHitFlying) continue;
@@ -129,12 +171,12 @@ public class Projectile : MonoBehaviour
         Consume();
     }
 
-    // 이번 프레임의 남은 충돌 콜백까지 확실히 차단하고 소멸시킨다.
-    // 플래그만으로 같은 스텝의 콜백은 막히고, 콜라이더를 끄면 소멸 전 다음 스텝까지 안전하다.
+    // 이번 프레임의 남은 충돌 콜백까지 확실히 차단하고 풀에 반납한다.
+    // 플래그만으로 같은 스텝의 콜백은 막히고, 콜라이더를 끄면 다음 스텝까지 안전하다(재사용 시 OnEnable이 되돌린다).
     private void Consume()
     {
         consumed = true;
         if (TryGetComponent(out Collider2D col)) col.enabled = false;
-        Destroy(gameObject);
+        ObjectPool.Instance.Despawn(gameObject);
     }
 }

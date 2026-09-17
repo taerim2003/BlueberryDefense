@@ -50,7 +50,7 @@
 | **EvolutionTreeUI** (싱글톤) | 진화 모달(노드 `Node_R{루트}T{차수}` 4칸 + `Arrow_R*` 2개, 패시브는 1차 칸만), 루트/차수 표시·클릭 시 진화 적용 | `PlayerSkills.EvolveSkill`/`PlayerPassives.EvolvePassive`, `EvolutionRoutes`, `ModalPause` |
 | **HUDController** | 체력바·경험치바·스테이지·스킬슬롯 쿨다운·패시브·버프 표시(매 프레임 폴링, DOTween 연출) | `Player*` 조회, `BuffTracker.GetActive` |
 | **DamageMeterUI** | 게임오버/클리어 시 스킬별 딜량 패널 | `DamageMeter.GetBreakdown` |
-| **ObjectPool** (지연생성 싱글톤) | VFX·파티클·데미지숫자 풀링, 스폰 시 파티클/오디오 자동 재생 + `SfxLimiter`·`AudioThrottle` 적용 | `SfxLimiter`, `AudioThrottle` |
+| **ObjectPool** (지연생성 싱글톤) | VFX·파티클·데미지숫자·적·화살(`Projectile`)·호밍 미사일 풀링, 스폰 시 파티클/오디오 자동 재생 + `SfxLimiter`·`AudioThrottle` 적용, 지연 반납은 코루틴 없이 `Update` 대기열 | `SfxLimiter`, `AudioThrottle` |
 
 **static 상태 홀더 (씬 오브젝트 아님, 플레이어 1명 전제로 전역 상태 보관):**
 
@@ -126,7 +126,8 @@
 - **진화 후 레벨업 커브는 `Evo_*.levels`가 있으면 그게 이기고, 비어 있으면 `Prog_*` 커브**를 탄다(`PlayerSkills.StepFor`). `Prog(id)` 조회맵은 `PlayerSkills.Awake`에서만 만들어져 **에디트모드에선 null** — SO 관련 측정은 Battle 씬 플레이모드에서.
 - **모달 일시정지는 참조카운트.** 레벨업+진화 패널이 겹쳐 뜰 수 있어 `ModalPause.Push/Pop`으로만 `timeScale`을 만진다. timeScale=0 중에도 DOTween 연출이 돌도록 `GameManager.Awake`에서 `DOTween.defaultTimeScaleIndependent=true`.
 - **적은 풀링된다 — 죽은 적은 `null`이 아니다.** `EnemySpawner`·UFO 투하·사망 분출은 전부 `Enemy.Spawn`(→`ObjectPool`)을 거치고, 사망/캐리어 퇴장은 `Destroy` 대신 풀에 반납한다. 여기서 나오는 두 가지 함정:
-  1. **적 참조를 프레임 넘어 들고 있으면 반드시 `Enemy.IsAlive`를 봐야 한다.** 예전엔 `Destroy`가 만든 가짜 null 덕에 `== null`만으로 정리됐지만, 풀은 비활성화만 하므로 참조가 살아남고 **재활용되면 엉뚱한 새 적을 가리킨다.** 현재 소비처는 `Orb`(overlapping·claimed)·`Whirlwind`(overlapping)·`HomingMissile`(target). 새 스킬이 적을 기억한다면 여기 합류할 것. (한 프레임 안에서만 쓰는 `FindObjectsByType`은 기본이 "비활성 제외"라 안전 — `GameManager`의 "잔몹 0" 판정도 이쪽이다.)
+  1. **적 참조를 프레임 넘어 들고 있으면 반드시 `Enemy.IsAlive`를 봐야 한다.** 예전엔 `Destroy`가 만든 가짜 null 덕에 `== null`만으로 정리됐지만, 풀은 비활성화만 하므로 참조가 살아남고 **재활용되면 엉뚱한 새 적을 가리킨다.** 현재 소비처는 `Orb`(overlapping·claimed)·`Whirlwind`(overlapping)·`HomingMissile`(target). 새 스킬이 적을 기억한다면 여기 합류할 것.
+  - 🔴 **적을 찾을 땐 `FindObjectsByType<Enemy>`를 쓰지 않는다 — `Enemy.Active`(읽기) / `Enemy.GetSnapshot`(피해 주는 순회)을 쓴다.** 그 호출은 풀의 비활성 적까지 훑어 후반엔 1회 1ms 가까이 든다. 활성 목록은 `OnEnable/OnDisable`로 관리되고 "비활성 제외" 집합과 같다. `GameManager`의 "잔몹 0" 판정도 이 목록이다. 이유와 실측은 `Enemy.Active` 주석.
   2. **`Awake`는 재사용 시 다시 안 돈다.** 런타임에 변하는 필드는 전부 `Enemy.InitializeSpawn`에서 되돌린다. **`Enemy`에 런타임 상태 필드를 추가하면 거기도 같이 고칠 것** — 빠뜨리면 "소환되자마자 죽어 있는 적"처럼 간헐적으로만 재현되는 버그가 된다.
 - **`Enemy.TakeDamage`는 같은 프레임 재진입에 안전해야 한다.** `Destroy`는 프레임 끝에 실행되므로 낙뢰 재귀/체인이 같은 프레임에 사망 처리를 두 번 돌 수 있어 `isDead` 가드가 두 군데 있다. 낙뢰/체인 판정은 사망 처리보다 **앞**에 있어야 한다(한 방 킬 타격도 낙뢰를 굴릴 기회를 갖도록).
 - **호핑 적(`isHopper`)은 y를 매 프레임 덮어쓴다.** `UpdateHop`이 `hopBaseY + 포물선`을 **절대값으로** 대입한다(가산이 아님) — 박치기 돌진·기절처럼 x만 만지는 로직과 섞여도 높이가 어긋나 쌓이지 않는다. 부작용 두 가지가 **의도된 것**이다: ① 떠 있는 동안 지상 스킬 히트박스를 흘려보낸다(=이 적의 정체성), ② `BlockedAhead`의 레인 허용치(`EnemyLaneTolerance` 0.6)를 벗어나 **지상 무리를 뛰어넘는다**. `hopBaseY`는 스폰 시 확정되고, 팝인(중간 소환)으로 나온 개체는 착지 지점을 기준으로 갱신된다.

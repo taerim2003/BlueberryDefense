@@ -48,6 +48,7 @@ public class DamageNumber : MonoBehaviour
     private Vector3 baseScale;
     private Vector3 endScale;  // 보잉이 끝난 뒤 눌러앉을 크기(피해량에 따른 차등이 여기 들어 있다)
     private float popAmount;
+    private float appliedAlpha; // 지금 colorGradient에 들어가 있는 알파
 
     private void Awake()
     {
@@ -60,7 +61,8 @@ public class DamageNumber : MonoBehaviour
     // delay는 같은 공격의 서브히트를 시간차로 띄우기 위한 것 — 그동안 투명하게 제자리에서 기다린다.
     public void Init(float damage, bool isCrit = false, Vector3 offset = default, float delay = 0f)
     {
-        text.text = Mathf.RoundToInt(damage) + (isCrit ? "!" : "");
+        // SetText는 문자열을 만들지 않는다 — 타격마다 뜨는 숫자라 `int + "!"` 조합이 그대로 GC로 쌓였다.
+        text.SetText(isCrit ? "{0}!" : "{0}", Mathf.RoundToInt(damage));
 
         float t = Mathf.InverseLerp(Mathf.Log(DamageAtMinSize), Mathf.Log(DamageAtMaxSize),
                                     Mathf.Log(Mathf.Max(damage, 1f)));
@@ -77,6 +79,7 @@ public class DamageNumber : MonoBehaviour
         transform.position += offset;
         // 딜레이 중엔 투명하게 대기
         TMPro.VertexGradient g = baseGradient;
+        appliedAlpha = delay > 0f ? 0f : 1f;
         if (delay > 0f) { g.topLeft.a = 0f; g.topRight.a = 0f; g.bottomLeft.a = 0f; g.bottomRight.a = 0f; }
         text.colorGradient = g;
     }
@@ -107,9 +110,15 @@ public class DamageNumber : MonoBehaviour
         float a = Mathf.InverseLerp(lifetime, lifetime - FadeOutTime, timer);
 
         // 그라데이션을 쓰면 text.color로는 알파가 먹지 않아 네 꼭짓점을 직접 낮춘다.
-        TMPro.VertexGradient g = baseGradient;
-        g.topLeft.a = a; g.topRight.a = a; g.bottomLeft.a = a; g.bottomRight.a = a;
-        text.colorGradient = g;
+        // ⚠️ colorGradient 대입은 TMP 메시를 통째로 다시 만든다 — 알파가 실제로 바뀔 때만 넣는다
+        //    (수명의 앞쪽 대부분은 알파 1 그대로다. 후반엔 숫자가 수백 개 동시에 떠 있다).
+        if (a != appliedAlpha)
+        {
+            appliedAlpha = a;
+            TMPro.VertexGradient g = baseGradient;
+            g.topLeft.a = a; g.topRight.a = a; g.bottomLeft.a = a; g.bottomRight.a = a;
+            text.colorGradient = g;
+        }
 
         if (timer >= lifetime) ObjectPool.Instance.Despawn(gameObject);
     }

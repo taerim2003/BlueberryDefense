@@ -178,8 +178,9 @@ public class PlayerPassives : MonoBehaviour
         if (HealthRetaliationMultiplier > 0f)
         {
             float damage = amount * HealthRetaliationMultiplier;
-            foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-                enemy.TakeDamage(damage);
+            using (Enemy.GetSnapshot(out List<Enemy> enemies))
+                foreach (Enemy enemy in enemies)
+                    enemy.TakeDamage(damage);
         }
 
         // 가속 path2(방어 연계): 맞을 때마다 모든 스킬이 그만큼 빨리 돌아온다.

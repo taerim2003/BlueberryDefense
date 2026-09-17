@@ -30,6 +30,7 @@ public class EquippedSkill
     public float Cooldown;
     public float Damage;
     public float CooldownTimer;
+    public float ReadySince = -1f; // 쿨이 끝나 발동 대기에 들어간 게임 시각(-1 = 쿨 도는 중). 발동 순서 공정성에 쓴다
     public int Level = 1;
     public float Scale = 1f;
     public float ProjectileSpeedMultiplier = 1f;
@@ -340,21 +341,38 @@ public class PlayerSkills : MonoBehaviour
         foreach (EquippedSkill skill in equippedSkills)
         {
             skill.CooldownTimer -= Time.deltaTime;
+            if (skill.CooldownTimer <= 0f && skill.ReadySince < 0f) skill.ReadySince = Time.time;
 
             // 스나이핑 path2(Route3) T2+: 수동 사용 불가, 쿨타임마다 자동 시전
-            if (IsAutoCastOnly(skill))
-            {
-                if (skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f)
-                    TryUseSkill(skill);
-                continue;
-            }
-
-            // 꾹 누르고 있어도 쿨이 끝나면 재발동(TryUseSkill이 쿨 통과 여부를 판정)
-            // BotInput.HoldSkills: 봇 플레이테스트의 "QWER 꾹" — 평소엔 false라 키 입력만 본다.
-            if (BotInput.HoldSkills || Keyboard.current[skill.Key].isPressed)
+            if (IsAutoCastOnly(skill) && skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f)
                 TryUseSkill(skill);
         }
+
+        // 🔴 발동 순서 = **오래 기다린 스킬 먼저**(사용자 결정 2026-09-18). 예전엔 슬롯 순서(Q→R)라,
+        //    쿨이 전역 쿨(0.4초)보다 짧아진 스킬이 매 창을 가져가 뒤 슬롯이 거의 안 나갔다
+        //    (풀트리 파인애플: 휘두르기 0.33초 → 독수리·회오리·산탄이 가능 횟수의 약 10%만 발동).
+        //    동시에 준비됐으면(같은 ReadySince) 목록 순서 = 슬롯 순서로 갈린다.
+        if (globalCooldownTimer > 0f) return;
+        castQueue.Clear();
+        foreach (EquippedSkill skill in equippedSkills)
+        {
+            if (IsAutoCastOnly(skill) || skill.CooldownTimer > 0f) continue;
+            // 꾹 누르고 있어도 쿨이 끝나면 재발동. BotInput.HoldSkills = 봇 플레이테스트의 "QWER 꾹"(평소 false).
+            if (BotInput.HoldSkills || Keyboard.current[skill.Key].isPressed) castQueue.Add(skill);
+        }
+        while (castQueue.Count > 0)
+        {
+            int pick = 0;
+            for (int i = 1; i < castQueue.Count; i++)
+                if (castQueue[i].ReadySince < castQueue[pick].ReadySince) pick = i;
+            EquippedSkill next = castQueue[pick];
+            castQueue.RemoveAt(pick);
+            TryUseSkill(next); // 대상이 없어 실패하면(스나이핑 등) 전역 쿨이 안 걸려 다음 후보로 넘어간다
+            if (globalCooldownTimer > 0f) break; // 전역 쿨을 거는 스킬이 나갔으면 이번 프레임은 끝(되감기 무전역쿨은 이어서 쏜다)
+        }
     }
+
+    private readonly List<EquippedSkill> castQueue = new List<EquippedSkill>(4);
 
     // 수동 시전이 막히고 자동으로만 나가는 스킬(스나이핑 Route3 T2+). HUD가 쿨타임 마스크를 계속 씌워 표시한다.
     public static bool IsAutoCastOnly(EquippedSkill skill) =>
@@ -903,6 +921,7 @@ public class PlayerSkills : MonoBehaviour
         // 되감기 R1 2차 「블루베리 절멸의 시간」 — 모든 스킬의 쿨타임이 감소한다(진화 쿨감 금지의 유일한 예외).
         cdMult *= RewindEndTimesCooldownScale();
         skill.CooldownTimer = baseCd * cdMult;
+        skill.ReadySince = -1f; // 발동했으니 대기열에서 빠진다(리프레쉬로 쿨이 0이 되면 다음 프레임에 "지금"부터 다시 기다린다)
         BotInput.OnCast?.Invoke(skill, baseCd, cdMult); // 봇 플레이테스트 관측(평소 null)
 
         // 쿨타임 초기화. 리프레쉬는 폐지됐지만 **가속 진화 path1**이 RefreshChance를 물려받아 켠다 —
@@ -1092,7 +1111,7 @@ public class PlayerSkills : MonoBehaviour
                 float x = Mathf.Lerp(leftX, rightX, Mathf.Clamp01(t));
                 Vector3 spawn = new Vector3(x, topY + Random.Range(0.5f, ArrowRainMaxSpawnLift), 0f);
 
-                GameObject obj = Instantiate(basicAttackProjectilePrefab, spawn, Quaternion.Euler(0f, 0f, ArrowRainAngle));
+                GameObject obj = ObjectPool.Instance.Spawn(basicAttackProjectilePrefab, spawn, Quaternion.Euler(0f, 0f, ArrowRainAngle));
                 obj.transform.localScale *= skill.Scale;
                 Projectile p = obj.GetComponent<Projectile>();
                 if (p == null) continue;
@@ -1131,7 +1150,7 @@ public class PlayerSkills : MonoBehaviour
     private void SpawnBasicAttackProjectile(EquippedSkill skill, float damage, float critChance, int pierce, float verticalOffset, bool allowBonusShot)
     {
         // 정면 화살은 비행 적을 때리지 못한다. 비행 타격은 화살비(위에서 떨어짐)와 추적 화살(대상 지정)이 맡는다.
-        GameObject obj = Instantiate(basicAttackProjectilePrefab, transform.position + Vector3.left * 0.6f + Vector3.down * 0.25f + Vector3.up * verticalOffset, Quaternion.identity);
+        GameObject obj = ObjectPool.Instance.Spawn(basicAttackProjectilePrefab, transform.position + Vector3.left * 0.6f + Vector3.down * 0.25f + Vector3.up * verticalOffset, Quaternion.identity);
         obj.transform.localScale *= skill.Scale;
         Projectile projectile = obj.GetComponent<Projectile>();
         projectile.Damage = damage;
@@ -1172,10 +1191,11 @@ public class PlayerSkills : MonoBehaviour
         sr.sprite = frames[0];
         if (frames.Length < 2) return; // 한 장뿐이면 굳이 플립북을 안 붙인다
 
-        // 화살은 명중하거나 화면 밖으로 나가서 사라지므로 **루프**로 돌린다
-        // (비루프면 SpriteFlipbook이 다 재생한 뒤 풀에 반납하려 드는데, 이건 Instantiate로 만든 오브젝트다).
+        // 화살은 명중하거나 화면 밖으로 나가서 반납되므로 **루프**로 돌린다
+        // (비루프면 SpriteFlipbook이 다 재생한 순간 날아가던 화살을 풀에 반납해 버린다).
         SpriteFlipbook fb = sr.GetComponent<SpriteFlipbook>();
         if (fb == null) fb = sr.gameObject.AddComponent<SpriteFlipbook>();
+        fb.enabled = true; // 풀에서 꺼낸 화살이면 Projectile.OnEnable이 꺼 둔 상태다
         fb.Play(frames, evolvedArrowFps, true);
     }
 
@@ -1223,7 +1243,7 @@ public class PlayerSkills : MonoBehaviour
         // Projectile은 자기 로컬 left로 날아간다 → left가 발사 방향을 향하도록 회전시킨다.
         float angle = Mathf.Atan2(launch.y, launch.x) * Mathf.Rad2Deg + 180f;
 
-        GameObject obj = Instantiate(basicAttackProjectilePrefab, origin, Quaternion.Euler(0f, 0f, angle));
+        GameObject obj = ObjectPool.Instance.Spawn(basicAttackProjectilePrefab, origin, Quaternion.Euler(0f, 0f, angle));
         obj.transform.localScale *= skill.Scale * ChasingArrowScale;
         Projectile p = obj.GetComponent<Projectile>();
         if (p == null) return;
@@ -1245,7 +1265,7 @@ public class PlayerSkills : MonoBehaviour
         StartCoroutine(MiniEagleBonus(primary, damage, critChance, scale, source));
         if (maxTargets <= 1) return;
 
-        IEnumerable<Enemy> nearby = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
+        IEnumerable<Enemy> nearby = Enemy.Active
             .Where(e => e != null && e != primary && Vector2.Distance(primary.transform.position, e.transform.position) <= 6f)
             .OrderBy(e => Vector2.Distance(primary.transform.position, e.transform.position))
             .Take(maxTargets - 1);
@@ -1260,7 +1280,7 @@ public class PlayerSkills : MonoBehaviour
         int targets = 1 + skill.ExtraTargets; // 레벨업 주 성장축: 동시 저격 대상 수
         if (MetaBonuses.SnipingExtraTarget) targets += 1; // 스킬트리 "한 발에 두 놈": +1 타겟
 
-        List<Enemy> chosen = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
+        List<Enemy> chosen = Enemy.Active
             .Where(e => e != null)
             .OrderByDescending(e => e.CurrentHealth)
             .Take(targets)
@@ -1314,7 +1334,7 @@ public class PlayerSkills : MonoBehaviour
         if (overkill <= 0f) yield break;
         yield return new WaitForSeconds(0.3f);
 
-        List<Enemy> next = FindObjectsByType<Enemy>(FindObjectsSortMode.None)
+        List<Enemy> next = Enemy.Active
             .Where(e => e != null && e != exclude && Vector2.Distance(fromPos, e.transform.position) <= radius)
             .OrderBy(e => Vector2.Distance(fromPos, e.transform.position))
             .Take(fanout)
@@ -1361,15 +1381,17 @@ public class PlayerSkills : MonoBehaviour
         if (homingMissilePrefab == null) return false;
 
         // 성장: 사용할수록 강해짐(이번 판 한정). 상한이 없어 판이 길수록 혼자 세진다 — 알려진 성질.
-        const float growthPerCast = 0.08f;
+        // 0.08 → 0.05(사용자 결정 2026-09-18): 우주 어려움 한 판에 600회 안팎을 쏴서 판 끝 피해가 첫 발의 ×49까지 갔다.
+        const float growthPerCast = 0.05f;
         skill.GrowthStacks++;
         float missileDamage = damage * (1f + growthPerCast * skill.GrowthStacks);
 
         // 레벨업 주 성장축: 미사일 수(레벨업=+1씩, 진화=R1이 배수로 얹힌다 — HomingMissileCount).
         int count = HomingMissileCount(skill, skill.ExtraProjectiles);
         float missileScale = skill.PathTier[2] >= 3 ? 0.45f : skill.PathTier[2] >= 2 ? 0.7f : 1f;
-        // 스킬트리 "더 많은 폭격"(Homing_MissileNum) 해금 시에만: 10회 사용마다 미사일 +1발
-        if (MetaBonuses.HomingMissileGrowth) count += skill.GrowthStacks / 10;
+        // 스킬트리 "더 많은 폭격"(Homing_MissileNum) 해금 시에만: 20회 사용마다 미사일 +1발
+        // (10 → 20, 사용자 결정 2026-09-18 — 10회일 땐 우주 어려움 판 끝에 +60발로 2차 진화 기본 60발을 두 배로 만들었다)
+        if (MetaBonuses.HomingMissileGrowth) count += skill.GrowthStacks / 20;
         // Route2(path1): T2 폭발, T3 폭발 강화
         bool explode = skill.PathTier[1] >= 2;
         float explodeRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
@@ -1384,7 +1406,7 @@ public class PlayerSkills : MonoBehaviour
             float spread = count > 1 ? Mathf.Lerp(-60f, 60f, i / (float)(count - 1)) : 0f;
             spread += Random.Range(-spreadJitter, spreadJitter);
             Vector2 dir = Quaternion.Euler(0f, 0f, spread) * Vector2.left; // 전방(-x) 부채꼴 — 적이 오는 쪽
-            GameObject obj = Instantiate(homingMissilePrefab, transform.position + Vector3.up * 0.2f, Quaternion.identity);
+            GameObject obj = ObjectPool.Instance.Spawn(homingMissilePrefab, transform.position + Vector3.up * 0.2f, Quaternion.identity);
             obj.transform.localScale *= missileScale;
             HomingMissile m = obj.GetComponent<HomingMissile>();
             m.Damage = missileDamage;
@@ -1552,7 +1574,7 @@ public class PlayerSkills : MonoBehaviour
 
     private bool AnyLivingEnemy()
     {
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active)
             if (e != null && e.IsAlive) return true;
         return false;
     }
@@ -1630,7 +1652,7 @@ public class PlayerSkills : MonoBehaviour
     {
         List<Vector3> spots = new List<Vector3>();
         List<Enemy> alive = new List<Enemy>();
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active)
             if (e != null && e.IsAlive) alive.Add(e);
 
         // 플레이어에 가까운 순 = 무리의 앞줄부터. 뒤에 던지면 앞줄은 이미 지나가 버려 아무도 안 맞는다.
@@ -1723,20 +1745,21 @@ public class PlayerSkills : MonoBehaviour
         float px = transform.position.x;
         float py = transform.position.y + SwingCenterYOffset; // 판정 사각형의 세로 중심
 
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (e == null || !e.IsAlive) continue;
-            Vector3 p = e.transform.position;
-            float dx = px - p.x;
-            if (dx < SwingNearOffset || dx > reach) continue;
-            if (Mathf.Abs(p.y - py) > halfHeight) continue;
+        using (Enemy.GetSnapshot(out List<Enemy> enemies))
+            foreach (Enemy e in enemies)
+            {
+                if (e == null || !e.IsAlive) continue;
+                Vector3 p = e.transform.position;
+                float dx = px - p.x;
+                if (dx < SwingNearOffset || dx > reach) continue;
+                if (Mathf.Abs(p.y - py) > halfHeight) continue;
 
-            e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);
-            e.ApplyKnockback(knockback);
-            if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
-            if (lifestealPerHit > 0 && health != null) health.AddOverheal(lifestealPerHit);
-            SpawnRockDebris(p);
-        }
+                e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing);
+                e.ApplyKnockback(knockback);
+                if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
+                if (lifestealPerHit > 0 && health != null) health.AddOverheal(lifestealPerHit);
+                SpawnRockDebris(p);
+            }
     }
 
     // 맞은 적 자리에서 돌조각이 위쪽 반원으로 튄다.
@@ -1777,7 +1800,7 @@ public class PlayerSkills : MonoBehaviour
 
         // 스킬트리 "블루베리 둔화"(Rewind_Slow) 해금 시: 되감을 때 모든 적을 천천히 감아 둔화(50% 감속, 2초)
         if (MetaBonuses.RewindSlowAll)
-            foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            foreach (Enemy e in Enemy.Active) // 둔화만 건다(처치·스폰 없음) — 복사본 불필요
                 if (e != null) e.ApplySlow(0.5f, 2f);
 
         // R0(충전 되감기, path1): 다음에 사용하는 스킬의 피해를 1회 증가 (ComputeBaseDamage가 소비)
@@ -1849,6 +1872,8 @@ public class PlayerSkills : MonoBehaviour
                 float spread = mainCount > 1 ? (i == 0 ? -0.7f : 0.7f) : 0f;
                 Vector3 spawnPos = transform.position + Vector3.left * (0.6f - spread) + Vector3.up * 0.6f;
                 Whirlwind main = SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration, tickIntervalMult: skill.TickIntervalMult);
+                // R0 본체는 높이와 상관없이 표적을 쫓는다(하늘의 비행선까지). 미니는 소멸 자리에서 원래대로 떨어진다.
+                if (main != null && skill.PathTier[0] >= 2) main.HomeInY = true;
 
                 if (miniOnExpire > 0 && main != null)
                 {
@@ -2239,7 +2264,7 @@ public class PlayerSkills : MonoBehaviour
 
         for (int i = 0; i < dropCount; i++)
         {
-            List<Enemy> enemies = new List<Enemy>(FindObjectsByType<Enemy>(FindObjectsSortMode.None));
+            List<Enemy> enemies = new List<Enemy>(Enemy.Active); // 복사본 — 아래에서 피해를 주면 활성 목록이 바뀐다
 
             foreach (Enemy enemy in enemies)
             {
@@ -2269,9 +2294,10 @@ public class PlayerSkills : MonoBehaviour
             // Effect_Explosion은 4프레임 16fps(0.25초)에 despawnOnFinish가 꺼져 있다 — 재생 길이 바로 뒤에 회수한다.
             ObjectPool.Instance.Despawn(go, 0.3f);
         }
-        foreach (Enemy o in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            if (o != null && o != origin && o.IsAlive && Vector2.Distance(pos, o.transform.position) <= radius)
-                o.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
+        using (Enemy.GetSnapshot(out List<Enemy> enemies))
+            foreach (Enemy o in enemies)
+                if (o != null && o != origin && o.IsAlive && Vector2.Distance(pos, o.transform.position) <= radius)
+                    o.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
     }
 
     private IEnumerator EagleRainRoutine(float damage, float critChance, EquippedSkill skill, float miniMult, int miniHits)
@@ -2289,9 +2315,10 @@ public class PlayerSkills : MonoBehaviour
     {
         yield return StartCoroutine(MeteorImpact(pos, skill.Scale));
 
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            if (e != null && e.IsAlive && Vector2.Distance(pos, e.transform.position) <= EagleRainRadius * skill.Scale) // 레벨업 "낙하 범위"
-                e.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
+        using (Enemy.GetSnapshot(out List<Enemy> enemies))
+            foreach (Enemy e in enemies)
+                if (e != null && e.IsAlive && Vector2.Distance(pos, e.transform.position) <= EagleRainRadius * skill.Scale) // 레벨업 "낙하 범위"
+                    e.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
 
         // 1차(회오리 폭격)를 이어받는다 — 비가 오는 내내 자리마다 미니 회오리가 남는다.
         SpawnWhirlwind(pos, damage * miniMult * (1f + MiniWhirlwindDamageBonus), critChance,
@@ -2302,7 +2329,7 @@ public class PlayerSkills : MonoBehaviour
     private Vector3 PickEagleRainSpot()
     {
         List<Enemy> alive = new List<Enemy>();
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        foreach (Enemy e in Enemy.Active)
             if (e != null && e.IsAlive) alive.Add(e);
 
         Vector3 center = alive.Count > 0
@@ -2437,15 +2464,16 @@ public class PlayerSkills : MonoBehaviour
                 }
             }
 
-            foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            {
-                if (e == null || !e.IsAlive) continue;
-                if (Vector2.Distance(center, e.transform.position) > radius) continue;
+            using (Enemy.GetSnapshot(out List<Enemy> enemies))
+                foreach (Enemy e in enemies)
+                {
+                    if (e == null || !e.IsAlive) continue;
+                    if (Vector2.Distance(center, e.transform.position) > radius) continue;
 
-                float hit = PlayerPassives.ApplyCrit(damage * ratio, critChance, out bool isCrit);
-                e.TakeDamage(hit, isLightningProc: true, isCrit: isCrit, source: ActiveSkillId.Lightning, rollLightning: false);
-                if (e != null && e.IsAlive) e.ApplySlow(0f, LightningRodStun); // 감속 0 = 기절
-            }
+                    float hit = PlayerPassives.ApplyCrit(damage * ratio, critChance, out bool isCrit);
+                    e.TakeDamage(hit, isLightningProc: true, isCrit: isCrit, source: ActiveSkillId.Lightning, rollLightning: false);
+                    if (e != null && e.IsAlive) e.ApplySlow(0f, LightningRodStun); // 감속 0 = 기절
+                }
             yield return new WaitForSeconds(LightningRodInterval);
         }
 

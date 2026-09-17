@@ -62,7 +62,7 @@ tree.desc.Rewind_Slow	Rewind winds back the blueberries' time as well,\nslowing 
 tree.name.Shotgun_CloseBonus	Close Aim
 tree.desc.Shotgun_CloseBonus	Buckshot-buffed attacks hit nearby enemies\n2 extra times.
 tree.name.Homing_MissileNum	More Bombardment
-tree.desc.Homing_MissileNum	Every 10 uses of Homing Missile\nadds one more missile per volley.
+tree.desc.Homing_MissileNum	Every 20 uses of Homing Missile\nadds one more missile per volley.
 tree.name.Sniping_TwoTarget	Two With One Shot
 tree.desc.Sniping_TwoTarget	Sniping targets one additional enemy.
 tree.name.swing_StartLev	Swing Mastery

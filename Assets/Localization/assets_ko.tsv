@@ -62,7 +62,7 @@ tree.desc.Rewind_Slow	되감기 사용 시 블루베리의 시간을 천천히 �
 tree.name.Shotgun_CloseBonus	근거리 조준
 tree.desc.Shotgun_CloseBonus	산탄 버프를 받은 공격이 가까이 있는 적에게\n+2회 더 타격합니다.
 tree.name.Homing_MissileNum	더 많은 폭격
-tree.desc.Homing_MissileNum	호밍 미사일을 10회 사용할 때마다\n날리는 미사일 수가 1개씩 증가합니다.
+tree.desc.Homing_MissileNum	호밍 미사일을 20회 사용할 때마다\n날리는 미사일 수가 1개씩 증가합니다.
 tree.name.Sniping_TwoTarget	한 발에 두 놈
 tree.desc.Sniping_TwoTarget	스나이핑이 한 놈을 추가로 타겟팅합니다.
 tree.name.swing_StartLev	휘두르기 숙련

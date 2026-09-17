@@ -46,7 +46,7 @@ public static class MetaBonuses
     public static float HealDropChanceBonus = 0f; // 적 처치 시 하트 드랍 확률 가산(0~1)
 
     public static bool OrbCanHitFlying = false;         // 기본 오브도 비행 적 타격 가능
-    public static bool HomingMissileGrowth = false;     // 호밍: 10회 사용마다 미사일 +1 (스킬트리 해금 시에만)
+    public static bool HomingMissileGrowth = false;     // 호밍: 20회 사용마다 미사일 +1 (스킬트리 해금 시에만)
     public static bool WhirlwindCooldownBonus = false;  // 회오리는 쿨타임 감소 효과를 1.5배로 받음
     public static float AccelCooldownBonus = 0f;        // 가속 패시브 보유 시 추가되는 쿨타임 감소 가산(0~1)
     public static float ThunderCooldownPerStrike = 0f;  // 낙뢰 1회 타격마다 낙뢰 쿨타임 감소(초)
@@ -221,7 +221,7 @@ public static class SkillEffects
         public float WhirlwindFlyDmgPct; // 회오리 비행 추가피해
         public float HealDropPct;        // 하트 드랍 확률 가산
         public bool OrbFly;              // 오브 비행 타격 가능
-        public bool HomingGrowth;        // 호밍 10회 사용마다 미사일 +1
+        public bool HomingGrowth;        // 호밍 20회 사용마다 미사일 +1
         public bool WhirlwindCdBonus;    // 회오리 쿨감 1.5배
         public float AccelCdPct;         // 가속 패시브 추가 쿨감(%p)
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)

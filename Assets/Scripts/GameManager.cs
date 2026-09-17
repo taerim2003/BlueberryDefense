@@ -60,7 +60,7 @@ public class GameManager : MonoBehaviour
         // 물량 기반 클리어: 이 스테이지의 스폰 쿼터를 다 소진하고 + 남은 적이 0이 되면 클리어
         if (spawner == null) spawner = FindAnyObjectByType<EnemySpawner>();
         if (spawner != null && !spawner.StageSpawnComplete) return;      // 아직 스폰 중
-        if (FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length > 0) return; // 잔몹 처리 대기
+        if (Enemy.Active.Count > 0) return; // 잔몹 처리 대기
 
         AdvanceStage();
     }

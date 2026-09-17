@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class OrbAltar : MonoBehaviour
@@ -63,11 +64,12 @@ public class OrbAltar : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(lightningInterval);
-            foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-            {
-                float hitDamage = PlayerPassives.ApplyCrit(LightningDamage, CritChance, out bool isCrit);
-                enemy.TakeDamage(hitDamage, isLightningProc: true, isCrit: isCrit);
-            }
+            using (Enemy.GetSnapshot(out List<Enemy> enemies))
+                foreach (Enemy enemy in enemies)
+                {
+                    float hitDamage = PlayerPassives.ApplyCrit(LightningDamage, CritChance, out bool isCrit);
+                    enemy.TakeDamage(hitDamage, isLightningProc: true, isCrit: isCrit);
+                }
         }
     }
 }

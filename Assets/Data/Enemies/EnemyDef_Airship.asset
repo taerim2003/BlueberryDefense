@@ -18,3 +18,4 @@ MonoBehaviour:
   xpValue: 25
   essenceDropChance: 1
   essenceDropAmount: 5
+  crowdControlResistance: 0.5

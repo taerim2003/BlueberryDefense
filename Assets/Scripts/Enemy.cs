@@ -10,11 +10,15 @@ public class Enemy : MonoBehaviour
     // 보스 표식. 프리팹이 아니라 EnemySpawner가 스폰 직후 켜준다
     // (보스 여부는 "어떤 프리팹이냐"가 아니라 "보스 슬롯으로 스폰됐느냐"로 정해진다 —
     //  같은 프리팹이 다른 슬롯으로도 나올 수 있다).
-    // 쓰임: 군중제어 감쇄. 보스는 둔화·기절·넉백을 절반만 받는다 — 안 그러면 넉백·기절을 연달아 걸어
+    // 쓰임: 군중제어 감쇄. 보스는 둔화·기절·넉백을 BossCrowdControlScale만큼만 받는다 — 안 그러면 넉백·기절을 연달아 걸어
     // 보스가 한 발짝도 못 오는 **무한 스톨링**이 된다(디펜스에서 보스전이 통째로 무력화된다).
     private bool isBoss;
     public void MarkAsBoss() => isBoss = true;
-    private const float BossCrowdControlScale = 0.5f;
+    private const float BossCrowdControlScale = 0.15f; // 보스는 군중제어를 15%만 받는다(사용자 결정 2026-09-18: "아주 강하게")
+
+    // 이번에 받을 군중제어 배율. 보스 슬롯 규칙과 종류별 저항(EnemyDefinition.crowdControlResistance) 중 강한 쪽.
+    private float CrowdControlScale =>
+        Mathf.Min(isBoss ? BossCrowdControlScale : 1f, 1f - (definition != null ? definition.crowdControlResistance : 0f));
 
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
@@ -24,6 +28,10 @@ public class Enemy : MonoBehaviour
     [SerializeField] private Sprite[] hitParticleSprites;
     [SerializeField] private GameObject playerCollisionVfxPrefab;
     [SerializeField] private float spawnYOffset = 0f;
+    // 스폰 높이를 0~이 값만큼 더 무작위로 올린다(비행선: 하늘을 나는 배라 높이가 제각각 — 높이 뜬 배는 지상 스킬이 못 닿아 대공 딜을 시험한다).
+    [SerializeField] private float spawnYJitter = 0f;
+    // 이번 스폰에서 실제로 올린 높이(spawnYOffset + 무작위분). 사망 분출이 레인 지면을 역산할 때 쓴다 — spawnYOffset으로 빼면 분출 몹이 공중에 착지한다.
+    private float appliedSpawnYOffset;
     // 개체마다 이동속도를 ±이 비율만큼 흩는다(0.15 = ±15%). 0이면 전원 같은 속도(=기존 적 전부).
     // 무리로 나오는 적이 자로 잰 듯 같은 속도로 붙어 오는 걸 깨는 용도.
     [SerializeField] private float speedVariance = 0f;
@@ -82,6 +90,10 @@ public class Enemy : MonoBehaviour
     [SerializeField] private GameObject[] deathSpawnPrefabs; // 사망 시 흩뿌릴 적들(마리마다 랜덤 선택). 대왕: 일반+리젠트+UFO
     [SerializeField] private int deathSpawnCount = 0;         // 흩뿌릴 총 마릿수(0=없음)
     [SerializeField] private float deathSpawnRadius = 0.6f;   // 초기 흩뿌림 반경
+    // 흩뿌린 적에게 **자기가 받은 스테이지 배율**을 물려줄지(UFO 투하 부대와 같은 방식).
+    // 비행선용: "단일 대상 딜 시험" 몹이라 코앞에서 터지면 쏟아진 적이 순식간에 큰 피해를 줘야 한다 — 기본 스탯이면 후반엔 잡몹이다.
+    // 보스는 끈다: 분출 30마리(UFO 포함)에 보스 판 배율이 붙으면 보스전 난도가 통째로 뛴다.
+    [SerializeField] private bool deathSpawnInheritsMultipliers = false;
     [SerializeField] private GameObject deathBurstVfxPrefab;  // 분출 시 대형 VFX(폭발)
     [SerializeField] private float deathBurstVfxScale = 1f;
 
@@ -200,6 +212,31 @@ public class Enemy : MonoBehaviour
     //    비활성화만 하므로 참조가 살아남는다. **적 참조를 프레임 넘어 들고 있는 쪽은 반드시 이걸 봐야 한다**
     //    (안 그러면 유도미사일이 재활용된 새 적을 계속 쫓는다). 소비처: Orb·Whirlwind·HomingMissile.
     public bool IsAlive => !isDead && gameObject.activeInHierarchy;
+
+    // ── 활성 적 목록 ──
+    // 🔴 적을 찾을 땐 `FindObjectsByType<Enemy>` 대신 이걸 쓴다. 그 호출은 풀에 쌓인 **비활성 적까지 전부 훑어서**
+    //    후반엔 한 번에 1ms 가까이 들었다(2026-09-18 봇 실측: 표적 없는 호밍 미사일 260발이 매 프레임 조회 → 스크립트 197ms).
+    //    풀 반납 = 비활성화라 OnDisable에서 빠지고, 재사용 = 활성화라 OnEnable에서 들어온다(FindObjectsByType의 "비활성 제외"와 같은 집합).
+    private static readonly List<Enemy> active = new List<Enemy>();
+
+    // 읽기만 하는 순회용(표적 고르기 등). ⚠️ 순회 중에 피해를 주면 안 된다 — 처치(반납)·사망 분출(스폰)로 목록이 바뀐다.
+    public static IReadOnlyList<Enemy> Active => active;
+
+    // 피해를 주는 순회용 복사본. `using (Enemy.GetSnapshot(out var list)) { ... }`로 쓴다.
+    // 호출마다 따로 빌리므로 루프 안에서 다시 불려도(폭발 → 중독 폭발 → 체인 번개) 서로 덮어쓰지 않는다.
+    public static UnityEngine.Pool.PooledObject<List<Enemy>> GetSnapshot(out List<Enemy> list)
+    {
+        var handle = UnityEngine.Pool.ListPool<Enemy>.Get(out list);
+        list.AddRange(active);
+        return handle;
+    }
+
+    private void OnEnable() => active.Add(this);
+    private void OnDisable() => active.Remove(this);
+
+    // 도메인 리로드를 끈 에디터에서 지난 플레이의 목록이 남지 않게.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetActiveList() => active.Clear();
 
     // 지금 실제로 걷는 속도(둔화·기절 반영). 포도알이 착탄 지점을 미리 짚는 데 쓴다.
     public float CurrentMoveSpeed => moveSpeed * slowMultiplier;
@@ -360,7 +397,11 @@ public class Enemy : MonoBehaviour
             carrierPhase = CarrierPhase.Descend;
         }
         else if (isDiveFlyer) SetupDive();
-        else if (spawnYOffset != 0f) transform.position += Vector3.up * spawnYOffset;
+        else
+        {
+            appliedSpawnYOffset = spawnYOffset + (spawnYJitter > 0f ? Random.Range(0f, spawnYJitter) : 0f);
+            if (appliedSpawnYOffset != 0f) transform.position += Vector3.up * appliedSpawnYOffset;
+        }
 
         // 호핑 기준 지면 = y 보정이 전부 끝난 최종 스폰 높이.
         // 위상은 랜덤하게 흩어 둔다 — 안 그러면 같이 나온 콩콩이들이 한 몸처럼 동시에 뛰어서 군무가 된다.
@@ -720,9 +761,9 @@ public class Enemy : MonoBehaviour
 
     public void ApplySlow(float multiplier, float duration)
     {
-        // 보스는 **감속의 세기**만 절반으로 받는다(지속시간은 그대로). 세기를 깎는 쪽이라
-        // 기절(multiplier 0)조차 "느려짐"으로 바뀌어 보스가 계속 전진한다 — 무한 스톨링을 끊는 지점이 여기다.
-        if (isBoss) multiplier = 1f - (1f - multiplier) * BossCrowdControlScale;
+        // 보스·저항 있는 적(비행선)은 **감속의 세기**만 깎여 받는다(지속시간은 그대로). 세기를 깎는 쪽이라
+        // 기절(multiplier 0)조차 "느려짐"으로 바뀌어 계속 전진한다 — 무한 스톨링을 끊는 지점이 여기다.
+        multiplier = 1f - (1f - multiplier) * CrowdControlScale;
         BotInput.OnSlow?.Invoke(this, multiplier, duration);
 
         slowMultiplier = multiplier;
@@ -736,7 +777,7 @@ public class Enemy : MonoBehaviour
     public void ApplyKnockback(float distance)
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
-        if (isBoss) distance *= BossCrowdControlScale; // 보스는 절반만 밀린다
+        distance *= CrowdControlScale; // 보스·저항 있는 적은 덜 밀린다
         BotInput.OnKnockback?.Invoke(this, distance);
         // 밀리는 도중에 또 맞으면 **끊고 처음부터 다시** 튕긴다. 남은 거리에 더하기만 하면
         // 이징이 이미 감속 구간에 들어가 있어서 두 번째 타격이 "씹힌" 것처럼 보인다.
@@ -821,13 +862,14 @@ public class Enemy : MonoBehaviour
     {
         float radius = PlayerSkills.GrapeExplodeRadius * PlayerSkills.GrapeExplodeRadiusMult;
         float damage = maxHealth * PlayerSkills.GrapeExplodeDamageRatio;
-        foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (e == null || e == this || !e.IsAlive) continue;
-            if (Vector2.Distance(e.transform.position, transform.position) > radius) continue;
-            e.ApplyPoison(poisonDamage, PlayerSkills.GrapePoisonDuration, poisonInterval, fromExplosion: true);
-            e.TakeDamage(damage, source: ActiveSkillId.GrapeToss, rollLightning: false);
-        }
+        using (GetSnapshot(out List<Enemy> enemies))
+            foreach (Enemy e in enemies)
+            {
+                if (e == null || e == this || !e.IsAlive) continue;
+                if (Vector2.Distance(e.transform.position, transform.position) > radius) continue;
+                e.ApplyPoison(poisonDamage, PlayerSkills.GrapePoisonDuration, poisonInterval, fromExplosion: true);
+                e.TakeDamage(damage, source: ActiveSkillId.GrapeToss, rollLightning: false);
+            }
     }
 
     private const int MaxLightningChain = 4;
@@ -963,9 +1005,9 @@ public class Enemy : MonoBehaviour
     // 체인 라이트닝: 첫 낙뢰 피격 시 주변 적 최대 3마리에게 전이 (재귀적으로 더 퍼지지는 않음)
     private void ChainLightningToNearby()
     {
-        Enemy[] all = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+        // 후보 목록은 복사본이어야 한다 — 아래에서 후보에게 피해를 주면 활성 목록이 바뀐다.
         List<Enemy> candidates = new List<Enemy>();
-        foreach (Enemy e in all)
+        foreach (Enemy e in active)
         {
             if (e == this) continue;
             if (Vector2.Distance(transform.position, e.transform.position) <= LightningStorm.ChainRadius)
@@ -1012,7 +1054,7 @@ public class Enemy : MonoBehaviour
 
         // 레인 기준선(스포너 Y) = 보스는 y로 움직이지 않으므로 자기 위치에서 자기 spawnYOffset을 빼면 역산된다.
         // 각 팝콘은 (기준선 + 그 종류의 spawnYOffset)에 착지 → 레인이 y=0이 아니어도 종류별 자연 높이에 정확히 내려앉는다.
-        float laneBaselineY = transform.position.y - spawnYOffset;
+        float laneBaselineY = transform.position.y - appliedSpawnYOffset;
         for (int i = 0; i < deathSpawnCount; i++)
         {
             GameObject prefab = deathSpawnPrefabs[Random.Range(0, deathSpawnPrefabs.Length)];
@@ -1020,6 +1062,7 @@ public class Enemy : MonoBehaviour
             Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
             Enemy e = Spawn(prefab, transform.position + (Vector3)offset);
             if (e == null) continue;
+            if (deathSpawnInheritsMultipliers) e.ApplyStageMultipliers(appliedHpMult, appliedSpeedMult, appliedDamageMult);
             // 캐리어(UFO)는 팝콘 낙하 대신 보스 죽은 자리에서 등장해 상승 퇴장(플레이어 위로 하강해 확정 피해 주던 문제 제거).
             // 그 외는 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.
             if (e.IsCarrier)
@@ -1095,6 +1138,7 @@ public class Enemy : MonoBehaviour
     private void SpawnOverkillBurst()
     {
         if (hitParticlePrefab == null || hitParticleSprites == null || hitParticleSprites.Length == 0) return;
+        if (HitParticle.Live >= HitParticle.MaxLive) return;
 
         for (int i = 0; i < OverkillBurstCount; i++)
         {
@@ -1112,6 +1156,7 @@ public class Enemy : MonoBehaviour
         if (hitParticlePrefab == null || hitParticleSprites == null || hitParticleSprites.Length == 0) return;
 
         int count = Mathf.Clamp(2 + Mathf.FloorToInt(damage / 8f), 2, 9);
+        count = Mathf.Min(count, HitParticle.MaxLive - HitParticle.Live); // 동시 파편 상한 — HitParticle.MaxLive 주석
         for (int i = 0; i < count; i++)
         {
             GameObject p = ObjectPool.Instance.Spawn(hitParticlePrefab, transform.position, Quaternion.identity);
