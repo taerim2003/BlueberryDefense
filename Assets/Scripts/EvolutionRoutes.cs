@@ -88,7 +88,8 @@ public static class EvolutionRoutes
         (ActiveSkillId.Whirlwind, _) => Need(ActiveSkillId.Orb),
 
         (ActiveSkillId.Orb, 0) => Need(PassiveSkillId.Knowledge),
-        (ActiveSkillId.Orb, _) => Need(ActiveSkillId.Homing),
+        // R1은 포도 전용 루트다(2026-09-10 노션에서 사용자가 호밍 → 독성 포도알로 바꿨다).
+        (ActiveSkillId.Orb, _) => Need(ActiveSkillId.GrapeToss),
 
         (ActiveSkillId.Lightning, 0) => Need(ActiveSkillId.Rewind),
         (ActiveSkillId.Lightning, _) => Need(PassiveSkillId.Strength),
@@ -164,77 +165,84 @@ public static class EvolutionRoutes
         return a.HasValue ? PlayerSkills.GetActiveSkillName(a.Value) : null;
     }
 
-    // ── 2차 진화의 열쇠 (2026-09-08 신설) ───────────────────────────────────
+    // ── 2차 진화의 열쇠 (2026-09-08 신설 · 2026-09-18 규칙 재정렬) ─────────────
     // 🔴 **2차는 "다른 진화체 하나를 이미 만들어 뒀을 것"을 요구한다.** 1차의 루트 조건(§RoutePrereq)이
     //    "그 스킬을 **보유**"인 것과 달리, 여기는 **그 스킬이 그 루트로 1차 진화까지 돼 있어야** 한다.
-    //    고른 기준은 오직 **2차가 하는 일과 어울리는가**다 — 치명타로 터지는 진화엔 암살을,
-    //    비처럼 쏟아지는 진화엔 화살비를 건다. (원본: 노션 「스킬 데이터 시트」 > 2차 진화 열쇠)
+    //    (원본: 노션 「스킬 데이터 시트」 > 2차 진화 열쇠)
+    // 🔴 **열쇠는 반드시 그 루트의 1차 조건을 이어받는다**(2026-09-18 사용자 결정).
+    //    열쇠 스킬 = `RoutePrereq(id, route)`의 스킬(패시브 포함). **고르는 건 열쇠의 루트뿐**이다.
+    //    1차 조건이 캐릭터 전용 스킬이면(회오리 R0·오브 R1·산탄 R1) 열쇠도 그 전용 스킬의 진화체다 —
+    //    그 루트는 1차부터 이미 그 캐릭터 전용이라 잃는 게 없다.
+    //    → 필요한 스킬이 {자신, 조건 스킬, 조건 스킬의 루트 조건} 최대 3개라 **슬롯(4) 초과가 구조적으로 안 생긴다.**
+    //    (2026-09-18: "어울림"만 보고 고른 옛 표에서 호밍 R0이 액티브 5개를 요구해 **영영 불가**였다.)
+    // 🔴 **열쇠끼리 순환 금지**(길이 무관, 2026-09-18 사용자 결정). A 2차 ← B 1차, B 2차 ← A 1차처럼 돌면
+    //    같은 스킬 묶음이 서로의 2차를 전부 열어 효율이 너무 좋다. **22칸 열쇠는 서로 겹치지 않게** 뒀다.
     // ⚠️ 열쇠는 **1차만** 요구한다. 2차를 열쇠로 걸면 서로가 서로를 기다리는 판이 나온다.
-    // 🔴 **열쇠에 캐릭터 전용 스킬을 걸지 말 것.** 레벨업 후보 풀은 8종뿐이고(LevelUpUI)
-    //    `BasicAttack`·`Swing`·`GrapeToss`는 각각 딸기·파인애플·포도의 **시작 스킬이라 다른 캐릭터가 못 얻는다.**
-    //    걸면 그 2차가 한 캐릭터 전용이 되거나(아예 도달 불가가 되기도 한다) 조용히 죽는다 — 화면엔 그냥 잠긴 칸으로 보인다.
-    //    같은 이유로 **열쇠의 루트 조건**도 봐야 한다: `Whirlwind R0`(←화살)·`Shotgun R1`(←휘두르기)·
-    //    `Defense R0`(←휘두르기)은 그 자체가 캐릭터 전용이라 열쇠로 못 쓴다.
-    //    (2026-09-08: 처음 짤 때 여섯 칸이 여기 걸렸다. 「로열 팔라딘의 망치」는 파인애플이 포도알을 못 얻어 **영영 불가**였다.)
+    // ⚠️ 루트를 고를 땐 **열쇠 루트의 조건**을 볼 것 — `Whirlwind R0`(←화살)·`Orb R1`(←포도알)·`Shotgun R1`(←휘두르기)·
+    //    `Defense R0`(←휘두르기)은 캐릭터 전용이라, 고르면 그 2차가 그 캐릭터 전용이 된다(화면엔 그냥 잠긴 칸으로 보인다).
+    //    레벨업 후보 풀은 8종뿐이고(LevelUpUI) 화살·휘두르기·포도알은 시작 스킬이라 다른 캐릭터가 못 얻는다.
+    //    유일한 의도된 예외는 독수리 R0(← 메카 버스터, 파인애플 전용) — 사용자 지정이다.
     private static (PassiveSkillId?, ActiveSkillId?, int) Key(PassiveSkillId p, int route) => (p, null, route);
     private static (PassiveSkillId?, ActiveSkillId?, int) Key(ActiveSkillId a, int route) => (null, a, route);
 
     public static (PassiveSkillId? Passive, ActiveSkillId? Active, int Route) Stage2Prereq(ActiveSkillId id, int route) => (id, route) switch
     {
-        // 추격 화살은 **치명타로 맞힐 때만** 나간다 → 치명타 킬을 보상하는 진화가 열쇠
-        (ActiveSkillId.BasicAttack, 0) => Key(PassiveSkillId.Assassinate, 0),  // 현상금
-        // 하늘을 덮는 화살비 ← 하늘에서 떨어지는 것끼리
-        (ActiveSkillId.BasicAttack, _) => Key(ActiveSkillId.EagleDrop, 0),     // 폭탄 독수리
+        // 각 줄 주석: 「열쇠 이름」 ← 열쇠 루트의 조건 · 그 루트를 고른 이유
+        // 1차 조건 = 암살. 추격 화살은 치명타로 맞힐 때만 나간다 → 치명타 킬을 보상하는 루트
+        (ActiveSkillId.BasicAttack, 0) => Key(PassiveSkillId.Assassinate, 0),  // 현상금 ← 지식
+        // 1차 조건 = 독수리. 하늘에서 떨어지는 것끼리 (사용자 지정)
+        (ActiveSkillId.BasicAttack, _) => Key(ActiveSkillId.EagleDrop, 1),     // 회오리 폭격 ← 회오리
 
-        // 회오리를 끊임없이 뽑는 **설치물** ← 설치물끼리
-        (ActiveSkillId.Whirlwind, 0) => Key(ActiveSkillId.Lightning, 1),       // 피뢰침
-        // 맞은 적을 **취약**하게 만든다 ← 적을 물렁하게 만드는 오브
-        (ActiveSkillId.Whirlwind, _) => Key(ActiveSkillId.Orb, 0),             // 강력한 마력
+        // 1차 조건 = 화살(딸기 전용 · 예외). 끊임없이 쏟아진다 = 끊임없이 생성
+        (ActiveSkillId.Whirlwind, 0) => Key(ActiveSkillId.BasicAttack, 1),     // 화살비 ← 독수리
+        // 1차 조건 = 오브. 맞은 적을 취약하게 ← 적을 물렁하게 만드는 오브
+        (ActiveSkillId.Whirlwind, _) => Key(ActiveSkillId.Orb, 0),             // 강력한 마력 ← 지식
 
-        // 주위를 **끌어당기는** 초대형 오브 ← 빨아들이는 거대 소용돌이
-        (ActiveSkillId.Orb, 0) => Key(ActiveSkillId.Whirlwind, 1),             // 대회오리
-        // **수많은** 오브를 다룬다 ← 수많은 소형 발사체
-        (ActiveSkillId.Orb, _) => Key(ActiveSkillId.Homing, 1),                // 소형 미사일 다발
+        // 1차 조건 = 지식. 보물 탐지 — 사용자 확인(2026-09-18). 패시브만으로 풀리는 가벼운 쪽이기도 하다
+        (ActiveSkillId.Orb, 0) => Key(PassiveSkillId.Knowledge, 0),            // 보물 탐지 ← 가속
+        // 1차 조건 = 포도알(포도 전용 · 예외). 노션 표의 값
+        (ActiveSkillId.Orb, _) => Key(ActiveSkillId.GrapeToss, 1),             // 찌릿찌릿 포도알 ← 낙뢰
 
-        // 20스택까지 **축적**한다 ← 충전해서 한 번에 터뜨리는 진화
-        (ActiveSkillId.Lightning, 0) => Key(ActiveSkillId.Rewind, 0),          // 충전 되감기
-        // 제우스의 은총 = 압도적인 힘
-        (ActiveSkillId.Lightning, _) => Key(PassiveSkillId.Strength, 0),       // 불타는 근육
+        // 1차 조건 = 되감기. 20스택까지 축적 ← 충전해서 한 번에 터뜨리는 진화
+        (ActiveSkillId.Lightning, 0) => Key(ActiveSkillId.Rewind, 0),          // 충전 되감기 ← 힘
+        // 1차 조건 = 힘. 제우스의 은총 = 압도적인 힘
+        (ActiveSkillId.Lightning, _) => Key(PassiveSkillId.Strength, 0),       // 불타는 근육 ← 암살
 
-        // 거대한 **폭발** 한 방 ← 폭발을 다루는 진화
-        (ActiveSkillId.EagleDrop, 0) => Key(ActiveSkillId.Homing, 0),          // 묵직한 탄두
-        // **끊임없이 쏟아진다** ← 수많은 것이 하늘에서 쏟아지는 진화
-        (ActiveSkillId.EagleDrop, _) => Key(ActiveSkillId.Homing, 1),          // 소형 미사일 다발
+        // 1차 조건 = 산탄. 🔴 사용자 지정 — 이 2차는 **파인애플 전용**이 된다(1차 「폭탄 독수리」는 누구나)
+        (ActiveSkillId.EagleDrop, 0) => Key(ActiveSkillId.Shotgun, 1),         // 메카 버스터 ← 휘두르기
+        // 1차 조건 = 회오리. R0 분열 회오리는 딸기 전용이라 강제
+        (ActiveSkillId.EagleDrop, _) => Key(ActiveSkillId.Whirlwind, 1),       // 대회오리 ← 오브
 
-        // 독수리 특공대를 **지휘**한다 ← 독수리를 먼저 길들여 뒀을 것
-        (ActiveSkillId.Sniping, 0) => Key(ActiveSkillId.EagleDrop, 0),         // 폭탄 독수리
-        // **피해를 입으면** 몸이 알아서 움직인다 ← 맞을 때마다 반응하는 진화
-        (ActiveSkillId.Sniping, _) => Key(PassiveSkillId.Accel, 1),            // 고통 가속
+        // 1차 조건 = 독수리. 독수리 특공대를 지휘한다 ← 독수리를 먼저 길들여 뒀을 것
+        (ActiveSkillId.Sniping, 0) => Key(ActiveSkillId.EagleDrop, 0),         // 폭탄 독수리 ← 산탄
+        // 1차 조건 = 방어. 피해를 입으면 반응한다 (R0 망치 반격은 파인애플 전용)
+        (ActiveSkillId.Sniping, _) => Key(PassiveSkillId.Defense, 1),          // 가시 갑주 ← 건강
 
-        // **가장 강한 적**에게 한 발 ← 최강 적을 조준하는 진화
-        (ActiveSkillId.Homing, 0) => Key(ActiveSkillId.Sniping, 0),            // 독수리 저격
-        // 세상을 뒤덮는 물량 ← 작은 것을 여러 개 뿌리는 진화
-        (ActiveSkillId.Homing, _) => Key(ActiveSkillId.Orb, 1),                // 추적 오브
+        // 1차 조건 = 산탄. R1 메카 버스터는 파인애플 전용이라 강제
+        (ActiveSkillId.Homing, 0) => Key(ActiveSkillId.Shotgun, 0),            // 보너스 탄환 장착 ← 스나이핑
+        // 1차 조건 = 가속 (사용자 지정)
+        (ActiveSkillId.Homing, _) => Key(PassiveSkillId.Accel, 1),             // 고통 가속 ← 방어
 
-        // 공격 **대신** 버프를 건다 ← 스킬을 강화하는 진화
-        (ActiveSkillId.Shotgun, 0) => Key(PassiveSkillId.Strength, 1),         // 생활 근육
-        // **무조건 치명타** ← 치명타 상한을 뚫어 둔 진화
-        (ActiveSkillId.Shotgun, _) => Key(PassiveSkillId.Assassinate, 1),      // 필중 암살
+        // 1차 조건 = 스나이핑. 공격 대신 지휘 → 스킬이 알아서 돈다.
+        // ⚠️ R0 독수리 저격이면 독수리 R0 ← 산탄 ← 스나이핑 ← 독수리로 **순환**하고 액티브 4/4가 꽉 찬다
+        (ActiveSkillId.Shotgun, 0) => Key(ActiveSkillId.Sniping, 1),           // 자동 방어 시스템 ← 방어
+        // 1차 조건 = 휘두르기(파인애플 전용 · 예외). 쓸어버린다 = 섬멸
+        (ActiveSkillId.Shotgun, _) => Key(ActiveSkillId.Swing, 0),             // 쓸어치기 ← 건강
 
-        // **다음 공격을 강하게** 만든다 ← 공격에 타수를 얹어 주는 진화(같은 결의 버프)
-        (ActiveSkillId.Rewind, 0) => Key(ActiveSkillId.Shotgun, 0),            // 보너스 탄환 장착
-        // 쿨타임이 **사라진다** ← 쿨을 초기화하는 진화
-        (ActiveSkillId.Rewind, _) => Key(PassiveSkillId.Accel, 0),             // 리프레쉬
+        // 1차 조건 = 힘. 다음 공격을 강하게 ← 스킬을 강화하는 같은 결
+        (ActiveSkillId.Rewind, 0) => Key(PassiveSkillId.Strength, 1),          // 생활 근육 ← 산탄
+        // 1차 조건 = 가속. 쿨타임이 사라진다 ← 쿨을 초기화하는 진화
+        (ActiveSkillId.Rewind, _) => Key(PassiveSkillId.Accel, 0),             // 리프레쉬 ← 되감기
 
-        // 맞은 적이 **오래 못 일어난다** ← 발을 땅에 붙여 두는 진화
-        (ActiveSkillId.Swing, 0) => Key(ActiveSkillId.Whirlwind, 1),           // 대회오리
-        // 땅을 타고 번지는 충격이 커진다 ← 땅에 꽂아 두는 진화
-        (ActiveSkillId.Swing, _) => Key(ActiveSkillId.Lightning, 1),           // 피뢰침
+        // 1차 조건 = 건강. 팔라딘 = 튼튼함
+        (ActiveSkillId.Swing, 0) => Key(PassiveSkillId.Health, 0),             // 강건함 ← 힘
+        // 1차 조건 = 낙뢰. 땅을 타고 번지는 충격 ← 땅에 꽂아 두는 진화
+        (ActiveSkillId.Swing, _) => Key(ActiveSkillId.Lightning, 1),           // 피뢰침 ← 힘
 
-        // 쓰러진 자리에서 **터져 번진다** ← 착탄 자리를 터뜨리는 진화
-        (ActiveSkillId.GrapeToss, 0) => Key(ActiveSkillId.EagleDrop, 0),       // 폭탄 독수리
-        // 찌릿찌릿 = 번개 ← 번개를 쌓아 두는 진화
-        (ActiveSkillId.GrapeToss, _) => Key(ActiveSkillId.Lightning, 0),       // 뇌운 축적
+        // 1차 조건 = 건강. 넘쳐 번진다 (R0 강건함은 휘두르기 R0과 겹쳐서 피했다 — 사용자 요청)
+        (ActiveSkillId.GrapeToss, 0) => Key(PassiveSkillId.Health, 1),         // 풍요 ← 오브
+        // 1차 조건 = 낙뢰. 찌릿찌릿 = 번개 ← 번개를 쌓아 두는 진화
+        (ActiveSkillId.GrapeToss, _) => Key(ActiveSkillId.Lightning, 0),       // 뇌운 축적 ← 되감기
 
         _ => (null, null, 0),
     };
