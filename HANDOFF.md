@@ -35,7 +35,8 @@ Unity CLI(1st-party)를 검토했고 **다음 프로토타입의 세션 0에서*
 ## 현재 상태 (2026-09-17, 세션 67)
 
 **세션 67 — 빌드 QA: 세이브 초기화 · 포도 해금.** 다음 세션이 알아야 할 것만:
-- 🔴 **세이브는 이제 `SaveStore` 파일(`LocalLow/taerimgames/BlueberryDefense/save.json`, 에디터는 `save_editor.json`)이다 — 미커밋.** 갈림길은 아래 확인 대기 [9/17].
+- 🔴 **세이브는 이제 `SaveStore` 파일(`LocalLow/taerimgames/BlueberryDefense/save.json`, 에디터는 `save_editor.json`)이다**(커밋 2408d92). 갈림길은 아래 확인 대기 [9/17].
+- 🔴 **Steam 빌드 리뷰가 Steam Cloud로 반려됐다**(BuildID 25232625). 코드는 끝났고 **Steamworks Auto-Cloud 설정 · 재빌드 · 업로드 · 재제출은 태리미 몫** — 절차는 칸반 「Steam 빌드 리뷰 반려 — Steam Cloud 동기화」.
 - **9/17 22:19 빌드는 세이브 초기화가 안 된다**(리셋 코드 수정 전에 뽑힘) → **재빌드 후 확인**이 칸반 「실제 exe QA」에 올라가 있다. 초기화하면 타이틀 씬을 다시 불러온다.
 - **포도 해금 조건은 정상**(누적 정수 2000 + `Map_Wide20` 승천 1 이상 클리어 — 에디터에서 6조합 실측). 빌드에서 실제로 깨서 풀리는지만 남았다.
 
@@ -137,7 +138,6 @@ Unity CLI(1st-party)를 검토했고 **다음 프로토타입의 세션 0에서*
   ① **음량·언어도 같은 파일에 넣어 클라우드로 동기화** → 한 파일이 단순하다 / PC마다 따로 두려면 `VolumeSettings.cs`·`Loc.cs`의 `SaveStore.`만 `PlayerPrefs.`로 되돌린다
   ② **에디터는 `save_editor.json`, 빌드는 `save.json`으로 분리** → 레지스트리 시절의 에디터/빌드 분리를 유지(에디터 테스트가 클라우드 세이브를 덮지 않게) / 같이 쓰려면 `SaveStore.cs` 맨 위 `#if UNITY_EDITOR` 제거
   ③ **기존 레지스트리 세이브를 첫 실행에 한 번 옮김**(지우지는 않음) → 테스터 진행도 보존 / 필요 없으면 `SaveStore.Migrate()` 삭제
-  ⚠️ **Steamworks 설정·빌드 업로드·심사 재제출은 태리미 몫**(Auto-Cloud: `WinAppDataLocalLow` · `taerimgames/BlueberryDefense` · `save.json`). 커밋 안 함.
   ⚠️ **9/17 22:19 빌드는 리셋이 안 된다 — 다시 뽑을 것.** 빌드(22:17:57~22:19:16) 뒤에 `OptionsMenu.cs`가 고쳐져(22:19:38) 빌드의 리셋 버튼은 레지스트리만 비우고 `save.json`은 안 건드렸다.
 - [9/17] **세이브 초기화 직후 타이틀 씬을 다시 불러옴**(`SceneFade.LoadScene("Title")`) → 캐릭터·맵·스킬트리 화면이 한 번만 지어져 옛 해금 상태가 남고, 고른 캐릭터(포도 등)가 그대로 남아 잠긴 캐릭터로 판이 시작되기 때문 / 반대쪽(창 유지 + 「초기화 완료」 문구)이면 그 두 문제가 남는다 / 되돌릴 곳: `OptionsMenu.OnSaveResetClicked` 마지막 `SceneFade.LoadScene` 한 줄
 
