@@ -2070,6 +2070,11 @@ public class PlayerSkills : MonoBehaviour
         return whirlwind;
     }
 
+    // 대형 오브 스폰 높이 보정. 아래 가장자리를 "진화 직전 오브(미진화 만렙 크기 1.3)"의 아래 가장자리에 맞춘다.
+    // 크기 1당 보이는 반높이 = 그림 1.91유닛(64px 중 61px 불투명, PPU32) ÷ 2 × 프리팹 1.5배 ≈ 1.43.
+    private const float BigOrbLiftBaseScale = 1.3f;
+    private const float BigOrbLiftPerScale = 1.43f;
+
     private void FireOrb(float damage, float critChance, EquippedSkill skill)
     {
         PlayCastSfx(orbCastSfx, orbCastSfxVolume);
@@ -2084,7 +2089,12 @@ public class PlayerSkills : MonoBehaviour
 
         // 지식 연계 path: T2부터는 큰 초록 오브 비주얼로 교체
         GameObject prefabToSpawn = skill.PathTier[1] >= 2 && bigOrbPrefab != null ? bigOrbPrefab : orbPrefab;
-        GameObject obj = Instantiate(prefabToSpawn, transform.position + Vector3.down * 0.1f, Quaternion.identity);
+        Vector3 spawnPos = transform.position + Vector3.down * 0.1f;
+        // 대형 오브 계통은 크기(진화 +0.3 · 레벨업 크기/범위 칸)가 커질수록 중심 기준으로 **아래로도** 커져 땅에 묻혀 보였다(9/18 사용자).
+        // 기준 크기보다 커진 만큼 올려서 아래 가장자리를 고정한다 — 위로만 자라는 것처럼 보인다.
+        if (skill.PathTier[1] >= 2)
+            spawnPos.y += BigOrbLiftPerScale * Mathf.Max(0f, skill.Scale - BigOrbLiftBaseScale);
+        GameObject obj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
         obj.transform.localScale *= skill.Scale;
         Orb orb = obj.GetComponent<Orb>();
         orb.Damage = damage;
