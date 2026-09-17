@@ -316,14 +316,20 @@ public class OptionsMenu : MonoBehaviour
             return;
         }
 
-        // 예전 빌드가 남긴 이름 모를 키까지 확실히 지우려고 통째로 비운다
-        // (정수·스킬트리 해금·승천 해금이 전부 PlayerPrefs에 있음).
+        // 세이브는 통째로 비운 채 **파일로 저장**한다(지우면 다음 실행에 옛 레지스트리 값이 마이그레이션돼 되살아난다).
+        SaveStore.DeleteAll();
+        SaveStore.Save();
+        // 예전 빌드가 PlayerPrefs(레지스트리)에 남긴 이름 모를 키까지 확실히 지운다.
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
 
         confirmUntil = 0f;
         saveResetLabel.text = Loc.T("ui.options.reset_done");
         saveResetBg.color = DangerColor;
+
+        // 타이틀을 다시 불러온다 — 캐릭터·맵·스킬트리 화면은 한 번만 지어서(built) 옛 해금 상태가 남고,
+        // 특히 CharacterSelectUI.selectedIndex가 남아 **잠긴 캐릭터로 판이 시작된다.** 리셋 행은 타이틀에서만 보인다.
+        SceneFade.LoadScene("Title");
     }
 
     private void SetResetIdle()

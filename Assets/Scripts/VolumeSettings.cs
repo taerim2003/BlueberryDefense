@@ -41,9 +41,9 @@ public static class VolumeSettings
         if (loaded) return;
         loaded = true;
 
-        Master = PlayerPrefs.GetFloat(MasterKey, 1f);
-        Bgm = PlayerPrefs.GetFloat(BgmKey, 1f);
-        Sfx = PlayerPrefs.GetFloat(SfxKey, 1f);
+        Master = SaveStore.GetFloat(MasterKey, 1f);
+        Bgm = SaveStore.GetFloat(BgmKey, 1f);
+        Sfx = SaveStore.GetFloat(SfxKey, 1f);
         Apply();
     }
 
@@ -74,10 +74,10 @@ public static class VolumeSettings
 
     private static void Save()
     {
-        PlayerPrefs.SetFloat(MasterKey, Master);
-        PlayerPrefs.SetFloat(BgmKey, Bgm);
-        PlayerPrefs.SetFloat(SfxKey, Sfx);
-        PlayerPrefs.Save();
+        SaveStore.SetFloat(MasterKey, Master);
+        SaveStore.SetFloat(BgmKey, Bgm);
+        SaveStore.SetFloat(SfxKey, Sfx);
+        SaveStore.Save();
     }
 
     // 게임 시작 시 저장값을 실제 오디오에 반영 (옵션 패널을 한 번도 안 열어도 적용되도록).

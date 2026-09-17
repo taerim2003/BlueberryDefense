@@ -148,8 +148,8 @@ public static class Loc
         IList<Locale> ls = Locales;
         if (index < 0 || index >= ls.Count) return;
         LocalizationSettings.SelectedLocale = ls[index];
-        PlayerPrefs.SetString(PrefKey, ls[index].Identifier.Code);
-        PlayerPrefs.Save();
+        SaveStore.SetString(PrefKey, ls[index].Identifier.Code);
+        SaveStore.Save();
     }
 
     public const string PrefKey = "loc.locale";
@@ -159,7 +159,7 @@ public static class Loc
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void RestoreSaved()
     {
-        string code = PlayerPrefs.GetString(PrefKey, "");
+        string code = SaveStore.GetString(PrefKey, "");
         if (string.IsNullOrEmpty(code)) return;   // 저장된 게 없으면 시스템 언어 선택기에 맡긴다
         foreach (Locale l in Locales)
             if (l.Identifier.Code == code) { LocalizationSettings.SelectedLocale = l; return; }

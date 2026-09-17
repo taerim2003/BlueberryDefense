@@ -16,7 +16,7 @@ public class CheatWindow : EditorWindow
     {
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
-        // 메타 자원(스킬트리) — Player/Play 모드 없이도 항상 사용 가능(PlayerPrefs 저장). 타이틀 씬에서도 됨.
+        // 메타 자원(스킬트리) — Player/Play 모드 없이도 항상 사용 가능(SaveStore 파일 저장). 타이틀 씬에서도 됨.
         DrawMetaResourceSection();
         DrawAscensionSection();
 

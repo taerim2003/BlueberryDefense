@@ -65,15 +65,15 @@ public static class SkillTreeSave
     private const string CurrentKey = "skilltree.current";
 
     // ── 정수 earned 총량 ──
-    public static int EssenceEarned => PlayerPrefs.GetInt(EssenceKey, 0);
+    public static int EssenceEarned => SaveStore.GetInt(EssenceKey, 0);
 
     public static void AddEssence(int amount) => Add(EssenceKey, amount);
 
     private static void Add(string key, int amount)
     {
         if (amount <= 0) return;
-        PlayerPrefs.SetInt(key, PlayerPrefs.GetInt(key, 0) + amount);
-        PlayerPrefs.Save();
+        SaveStore.SetInt(key, SaveStore.GetInt(key, 0) + amount);
+        SaveStore.Save();
     }
 
     // ── 노드별 레벨 (id→level, level≥1이면 보유). 저장 포맷 CSV "id:level,id:level" ──
@@ -206,16 +206,16 @@ public static class SkillTreeSave
     // ── 치트/디버그: 전체 초기화 (정상 플레이에는 되돌리기 없음) ──
     public static void ResetAll()
     {
-        PlayerPrefs.DeleteKey(EssenceKey);
-        PlayerPrefs.DeleteKey(CurrentKey);
-        PlayerPrefs.Save();
+        SaveStore.DeleteKey(EssenceKey);
+        SaveStore.DeleteKey(CurrentKey);
+        SaveStore.Save();
     }
 
     // ── 내부 CSV 직렬화 (id:level,id:level) ──
     private static Dictionary<string, int> ReadLevels(string key)
     {
         var map = new Dictionary<string, int>();
-        string csv = PlayerPrefs.GetString(key, "");
+        string csv = SaveStore.GetString(key, "");
         if (string.IsNullOrEmpty(csv)) return map;
         foreach (string tok in csv.Split(','))
         {
@@ -232,7 +232,7 @@ public static class SkillTreeSave
     {
         var parts = new List<string>();
         foreach (var kv in map) if (kv.Value >= 1) parts.Add(kv.Key + ":" + kv.Value);
-        PlayerPrefs.SetString(key, string.Join(",", parts));
-        PlayerPrefs.Save();
+        SaveStore.SetString(key, string.Join(",", parts));
+        SaveStore.Save();
     }
 }

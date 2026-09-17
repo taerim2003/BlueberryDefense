@@ -88,12 +88,12 @@ public static class AscensionSave
     private const string Key = "ascension.unlocked";
 
     // 지금까지 해금된 최고 승천 레벨(최소 1).
-    public static int Unlocked => Mathf.Max(1, PlayerPrefs.GetInt(Key, 1));
+    public static int Unlocked => Mathf.Max(1, SaveStore.GetInt(Key, 1));
 
     public static void UnlockUpTo(int level)
     {
-        if (level > Unlocked) { PlayerPrefs.SetInt(Key, level); PlayerPrefs.Save(); }
+        if (level > Unlocked) { SaveStore.SetInt(Key, level); SaveStore.Save(); }
     }
 
-    public static void Reset() { PlayerPrefs.DeleteKey(Key); PlayerPrefs.Save(); }
+    public static void Reset() { SaveStore.DeleteKey(Key); SaveStore.Save(); }
 }

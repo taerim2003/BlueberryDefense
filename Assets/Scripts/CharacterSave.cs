@@ -9,12 +9,12 @@ public static class CharacterSave
 {
     private const string Key = "select.character";
 
-    public static string Selected => PlayerPrefs.GetString(Key, "");
+    public static string Selected => SaveStore.GetString(Key, "");
 
     public static void Save(string characterId)
     {
         if (string.IsNullOrEmpty(characterId)) return;
-        PlayerPrefs.SetString(Key, characterId);
-        PlayerPrefs.Save();
+        SaveStore.SetString(Key, characterId);
+        SaveStore.Save();
     }
 }

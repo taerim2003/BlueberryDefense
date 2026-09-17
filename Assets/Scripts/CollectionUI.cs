@@ -24,7 +24,7 @@ using TMPro;
 // 그 에셋은 `Window > Blueberry Defense > 스킬 아이콘 라이브러리 굽기`로 굽는다.
 // **enum ↔ 파일명 표는 그 도구가 단독 소유**한다 — 여기서 이름을 다시 매핑하지 말 것.
 //
-// 발견 기록은 `CollectionSave`(PlayerPrefs에 CSV 한 줄). 기록을 남기는 지점은 `Acquire`/`Evolve` **4곳뿐**이라,
+// 발견 기록은 `CollectionSave`(SaveStore에 CSV 한 줄). 기록을 남기는 지점은 `Acquire`/`Evolve` **4곳뿐**이라,
 // 새 획득 경로를 만들면 거기서도 불러줘야 도감에 뜬다.
 public class CollectionUI : MonoBehaviour
 {
