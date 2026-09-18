@@ -31,7 +31,13 @@ public class SmallOrb : MonoBehaviour
     private const float HomingTurnDegPerSec = 360f;
 
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
-    private static readonly List<Enemy> candidates = new List<Enemy>();
+    // 정렬 키(거리)를 담을 때 미리 재서 넣는다 — 비교 함수 안에서 transform.position을 읽으면
+    // 네이티브 접근이 비교 횟수(N log N)만큼 일어난다. 먼저 재면 N번으로 끝난다.
+    private static readonly List<(float sqrDist, Enemy enemy)> candidates = new List<(float, Enemy)>();
+    // 정적 비교자. 위치를 캡처하는 람다는 **재타겟마다 클로저와 델리게이트를 새로 할당**한다
+    // (HomingMissile이 같은 이유로 정적 비교자를 쓴다).
+    private static readonly System.Comparison<(float sqrDist, Enemy enemy)> ByDistance =
+        (a, b) => a.sqrDist.CompareTo(b.sqrDist);
 
     public void Init(Vector2 dir, float damage, bool applyVulnerable)
     {
@@ -64,14 +70,19 @@ public class SmallOrb : MonoBehaviour
     private Enemy AcquireTarget()
     {
         candidates.Clear();
-        foreach (Enemy e in Enemy.Active)
-            if (e != null && e.IsAlive && !hitEnemies.Contains(e)) candidates.Add(e);
+        Vector2 self = transform.position;
+        // 인덱스 for로 도는 건 박싱 때문이다 — IReadOnlyList의 foreach는 List<T>.Enumerator를 박싱해 힙에 올린다.
+        IReadOnlyList<Enemy> active = Enemy.Active;
+        for (int i = 0; i < active.Count; i++)
+        {
+            Enemy e = active[i];
+            if (e != null && e.IsAlive && !hitEnemies.Contains(e))
+                candidates.Add((((Vector2)e.transform.position - self).sqrMagnitude, e));
+        }
         if (candidates.Count == 0) return null;
 
-        Vector2 self = transform.position;
-        candidates.Sort((a, b) => ((Vector2)a.transform.position - self).sqrMagnitude
-                        .CompareTo(((Vector2)b.transform.position - self).sqrMagnitude));
-        return candidates[TargetRank % candidates.Count];
+        candidates.Sort(ByDistance);
+        return candidates[TargetRank % candidates.Count].enemy;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

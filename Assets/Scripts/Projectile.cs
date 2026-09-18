@@ -114,8 +114,11 @@ public class Projectile : MonoBehaviour
     {
         Enemy best = null;
         float bestSqr = float.MaxValue;
-        foreach (Enemy e in Enemy.Active)
+        // 인덱스 for로 도는 건 박싱 때문이다 — IReadOnlyList의 foreach는 List<T>.Enumerator를 박싱해 힙에 올린다.
+        IReadOnlyList<Enemy> active = Enemy.Active;
+        for (int i = 0; i < active.Count; i++)
         {
+            Enemy e = active[i];
             if (e == null || !e.IsAlive) continue;
             if (e.RequiresAntiAir && !canHitFlying) continue;
             if (exclude != null && exclude.Contains(e)) continue;
@@ -128,9 +131,14 @@ public class Projectile : MonoBehaviour
     // 🔴 **멀어지는 축만** 지운다. 화살비는 캐릭터 앞까지 닿으려고 화면 오른쪽 한참 바깥(맵 배율에 따라 x≈14~18)에서도
     //    생기는데, 그건 화면 **쪽으로 날아오는** 화살이다. 거리만 보면 여백을 아무리 늘려도 맵·화면비에 따라 태어나자마자 지워진다.
     //    날아가는 방향이 늘 한 축 이상은 화면 밖으로 향하므로, 결국 그 축에서 멀어지며 지워진다.
+    // Camera.main은 태그 검색이라 투사체마다 매 프레임 부를 게 못 된다. 씬이 바뀌어 카메라가 파괴되면
+    // Unity의 가짜 null 판정에 걸려 저절로 다시 찾는다.
+    private static Camera mainCam;
+
     private static bool IsFarOffscreen(Vector3 position, Vector2 heading)
     {
-        Camera cam = Camera.main;
+        if (mainCam == null) mainCam = Camera.main;
+        Camera cam = mainCam;
         if (cam == null) return false; // 카메라를 못 찾으면 지우지 않는다(멀쩡한 화살을 날리는 것보다 낫다)
 
         Vector3 d = position - cam.transform.position;

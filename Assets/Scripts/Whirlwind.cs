@@ -48,6 +48,12 @@ public class Whirlwind : MonoBehaviour
     }
 
     private int hitCount;
+    // 표적 재탐색 주기. 예전엔 회오리마다 **매 프레임** 전체 적을 훑었다 — 미니 회오리는 본체 소멸마다
+    // 2~3개씩 늘고 개수 상한이 없어서(위 Start 주석의 463개 실측) 회오리 수 × 적 수가 그대로 프레임 비용이 됐다.
+    // 지터를 넣지 않는 건 결정성 때문이다 — 봇 재측정에서 같은 seed의 결과가 그대로여야 최적화가 밸런스 중립임을 확인할 수 있다.
+    private const float RetargetInterval = 0.1f;
+    private float nextRetargetTime;
+    private Enemy cachedTarget;
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
     private readonly List<Enemy> tickBuffer = new List<Enemy>();
@@ -123,10 +129,14 @@ public class Whirlwind : MonoBehaviour
     // 그보다 높은 표적은 바로 밑에서 기다리며 판정 상자가 닿는 만큼만 때린다.
     private const float ScreenTopMargin = 0.3f;
     private SpriteRenderer spriteRenderer;
+    // Camera.main은 태그 검색이라 회오리마다 매 프레임 부를 게 못 된다. 씬이 바뀌어 카메라가 파괴되면
+    // Unity의 가짜 null 판정에 걸려 저절로 다시 찾는다.
+    private static Camera mainCam;
 
     private void ClampBelowScreenTop()
     {
-        Camera cam = Camera.main;
+        if (mainCam == null) mainCam = Camera.main;
+        Camera cam = mainCam;
         if (cam == null) return;
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
         float halfHeight = spriteRenderer != null ? spriteRenderer.bounds.extents.y : 0.75f * transform.localScale.y;
@@ -134,17 +144,28 @@ public class Whirlwind : MonoBehaviour
         if (transform.position.y > maxY) transform.position = new Vector3(transform.position.x, maxY, transform.position.z);
     }
 
-    // 회오리마다 매 프레임 부르므로 FindObjectsByType 대신 활성 목록을 읽는다(Enemy.Active 주석).
+    // 회오리마다 부르므로 FindObjectsByType 대신 활성 목록을 읽는다(Enemy.Active 주석).
+    // 표적이 아직 살아 있으면 주기가 올 때까지 그대로 쓴다 — 갈아타기가 최대 RetargetInterval만큼 늦어지지만,
+    // 회오리 이동 속도에 비하면 0.1초는 눈에 띄지 않는다. 표적이 죽으면 주기와 무관하게 즉시 다시 찾는다.
     private Enemy FindTarget()
     {
-        Enemy target = null;
+        if (cachedTarget != null && cachedTarget.IsAlive && Time.time < nextRetargetTime
+            && !(cachedTarget.RequiresAntiAir && !CanHitFlying))
+            return cachedTarget;
 
+        nextRetargetTime = Time.time + RetargetInterval;
+
+        Enemy target = null;
         float nearestSqrDist = float.MaxValue;
-        foreach (Enemy enemy in Enemy.Active)
+        Vector2 self = transform.position;
+        // 인덱스 for로 도는 건 박싱 때문이다 — IReadOnlyList의 foreach는 List<T>.Enumerator를 박싱해 힙에 올린다.
+        IReadOnlyList<Enemy> active = Enemy.Active;
+        for (int i = 0; i < active.Count; i++)
         {
+            Enemy enemy = active[i];
             if (enemy == null || !enemy.IsAlive) continue;
             if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
-            float sqrDist = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
+            float sqrDist = ((Vector2)enemy.transform.position - self).sqrMagnitude;
             if (sqrDist < nearestSqrDist)
             {
                 nearestSqrDist = sqrDist;
@@ -152,6 +173,7 @@ public class Whirlwind : MonoBehaviour
             }
         }
 
+        cachedTarget = target;
         return target;
     }
 

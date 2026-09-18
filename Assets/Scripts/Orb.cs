@@ -32,6 +32,12 @@ public class Orb : MonoBehaviour
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
     private readonly HashSet<Enemy> claimed = new HashSet<Enemy>(); // 예산을 이미 소모한 적 — 얘들은 계속 무료로 간다
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
+    // 틱 순서를 정할 버퍼. 매 프레임 새 리스트를 만들면 그대로 GC 연료가 된다 — 비우고 다시 채운다.
+    // 정렬 키(거리)는 담을 때 미리 재 둔다(비교 함수 안에서 transform.position을 읽으면 비교 횟수만큼 네이티브 접근이 일어난다).
+    private readonly List<(float sqrDist, Enemy enemy)> ordered = new List<(float, Enemy)>();
+    // 정적 비교자 — `this`를 캡처하는 람다는 정렬마다 클로저와 델리게이트를 새로 할당한다.
+    private static readonly System.Comparison<(float sqrDist, Enemy enemy)> ByDistance =
+        (a, b) => a.sqrDist.CompareTo(b.sqrDist);
 
     private void Start()
     {
@@ -51,17 +57,16 @@ public class Orb : MonoBehaviour
         // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로** 예산이 닿는 만큼만 붙잡는다.
         // 예산은 "처음 만난 적"에만 소모되고, 한 번 붙잡은 적은 죽을 때까지 계속 간다.
         // 레벨업으로 이 예산이 올라가는 게 오브의 주 성장축(BalanceConstants.OrbBaseTargets부터 시작해 만렙까지 오른다).
-        List<Enemy> ordered = new List<Enemy>(overlappingEnemies);
-        ordered.Sort((a, b) =>
-        {
-            if (a == null || b == null) return 0;
-            float da = ((Vector2)a.transform.position - (Vector2)transform.position).sqrMagnitude;
-            float db = ((Vector2)b.transform.position - (Vector2)transform.position).sqrMagnitude;
-            return da.CompareTo(db);
-        });
+        ordered.Clear();
+        Vector2 self = transform.position;
+        foreach (Enemy e in overlappingEnemies)
+            if (e != null) ordered.Add((((Vector2)e.transform.position - self).sqrMagnitude, e));
+        ordered.Sort(ByDistance);
 
-        foreach (Enemy enemy in ordered)
+        // 틱 중 처치로 overlappingEnemies가 바뀌므로 이 복사본을 돈다(기존과 같다 — 리스트만 재사용한다).
+        for (int i = 0; i < ordered.Count; i++)
         {
+            Enemy enemy = ordered[i].enemy;
             if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             if (enemy.RequiresAntiAir && !canHitFlying) continue; // 대공 전용 적(UFO)만 차단 — 종이비행기는 히트박스로만 판정
 

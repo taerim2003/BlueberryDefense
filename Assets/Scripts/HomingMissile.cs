@@ -23,19 +23,25 @@ public class HomingMissile : MonoBehaviour
     public int TargetRank { get; set; }
 
     // 재타겟은 미사일마다 자주 일어난다. 후보 리스트를 매번 새로 만들지 않으려고 공용 버퍼를 쓴다.
-    private static readonly List<Enemy> candidates = new();
+    // 정렬 키(비행 여부·거리)를 **담을 때 미리 재서** 넣는다 — 비교 함수 안에서 transform.position을 읽으면
+    // 네이티브 접근이 비교 횟수(N log N)만큼 일어난다. 먼저 재면 N번으로 끝난다.
+    private static readonly List<(int flying, float sqrDist, Enemy enemy)> candidates = new();
 
-    // 비행 유닛 우선: 비행 후보가 하나라도 있으면 지상보다 항상 먼저 노린다. 같은 부류 안에선 가까운 순.
+    // 비행 유닛 우선: 비행 후보가 하나라도 있으면 지상보다 항상 먼저 노린다(flying 0 < 지상 1). 같은 부류 안에선 가까운 순.
     // 비교 함수를 정적으로 둔다 — 위치를 캡처하는 람다는 재타겟마다 할당되는데, 노리던 적이 죽는 프레임엔
     // 그 적에게 몰렸던 미사일(2차 진화면 수십 발)이 한꺼번에 재타겟한다.
-    private static Vector2 sortOrigin;
-    private static readonly System.Comparison<Enemy> ByPriority = (a, b) =>
+    private static readonly System.Comparison<(int flying, float sqrDist, Enemy enemy)> ByPriority = (a, b) =>
     {
-        if (a.IsFlying != b.IsFlying) return a.IsFlying ? -1 : 1;
-        float sa = ((Vector2)a.transform.position - sortOrigin).sqrMagnitude;
-        float sb = ((Vector2)b.transform.position - sortOrigin).sqrMagnitude;
-        return sa.CompareTo(sb);
+        if (a.flying != b.flying) return a.flying - b.flying;
+        return a.sqrDist.CompareTo(b.sqrDist);
     };
+
+    // 재타겟 주기. 예전엔 표적이 없는 미사일이 **매 프레임** 전체 적을 훑고 정렬했다 —
+    // 후반엔 미사일 수십~90발 × 적 수백이라 그것만으로 프레임을 먹었다
+    // (2026-09-18 봇 260런 실측: 호밍을 쓴 판의 시뮬 배속 3.64x, 안 쓴 판 6.06x — 스킬 중 격차 1위).
+    // 표적이 없는 동안엔 아래 Update 주석대로 **직진**하므로 이 지연이 동작을 바꾸지 않는다.
+    private const float RetargetInterval = 0.15f;
+    private float nextRetargetTime;
 
     private Enemy target;
     private Vector2 dir = Vector2.left; // 전방 = 적이 오는 쪽(-x). 이 프로젝트의 전 스킬 공통 관례다.
@@ -62,6 +68,7 @@ public class HomingMissile : MonoBehaviour
         ExplodeVfxMult = 1f;
         ExplodeRatio = 0.4f;
         TargetRank = 0;
+        nextRetargetTime = 0f; // 꺼내자마자 한 번은 즉시 표적을 잡는다(주기는 그 다음부터)
     }
 
     public void Init(Vector2 initialDir)
@@ -83,7 +90,13 @@ public class HomingMissile : MonoBehaviour
     {
         // IsAlive까지 봐야 한다 — 풀링된 적은 죽어도 참조가 null이 되지 않아서, null만 보면
         // 반납된(또는 재활용된) 적을 계속 쫓으며 재타겟을 영영 안 한다.
-        if (target == null || !target.IsAlive) target = AcquireTarget();
+        if ((target == null || !target.IsAlive) && Time.time >= nextRetargetTime)
+        {
+            // 다음 주기에 TargetRank로 위상을 어긋내 둔다 — 한 시전의 수십 발은 같은 프레임에 발사되므로,
+            // 고정 간격만 두면 9프레임마다 전량이 **한꺼번에** 재타겟해서 주기를 둔 의미가 없어진다.
+            nextRetargetTime = Time.time + RetargetInterval * (0.5f + (TargetRank % 16) / 32f);
+            target = AcquireTarget();
+        }
 
         life -= Time.deltaTime;
         if (life <= 0f) { Despawn(); return; }
@@ -110,14 +123,21 @@ public class HomingMissile : MonoBehaviour
     private Enemy AcquireTarget()
     {
         candidates.Clear();
-        foreach (Enemy e in Enemy.Active) // 표적 없는 미사일은 매 프레임 여기 온다 — FindObjectsByType을 쓰면 안 된다(Enemy.Active 주석)
-            if (e != null && e.IsAlive) candidates.Add(e);
+        Vector2 origin = transform.position;
+        // FindObjectsByType을 쓰면 안 된다(Enemy.Active 주석). 인덱스 for로 도는 건 박싱 때문이다 —
+        // IReadOnlyList의 foreach는 List<T>.Enumerator를 **박싱해 힙에 올려서**, 재타겟마다 쓰레기가 하나씩 생긴다.
+        IReadOnlyList<Enemy> active = Enemy.Active;
+        for (int i = 0; i < active.Count; i++)
+        {
+            Enemy e = active[i];
+            if (e != null && e.IsAlive)
+                candidates.Add((e.IsFlying ? 0 : 1, ((Vector2)e.transform.position - origin).sqrMagnitude, e));
+        }
         if (candidates.Count == 0) return null;
 
-        sortOrigin = transform.position;
         candidates.Sort(ByPriority);
         // 미사일이 적보다 많으면 순번이 한 바퀴 돌아 겹친다 — 그건 그대로 둔다(적이 적을 땐 몰리는 게 맞다).
-        return candidates[TargetRank % candidates.Count];
+        return candidates[TargetRank % candidates.Count].enemy;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
