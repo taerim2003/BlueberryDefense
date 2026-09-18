@@ -71,7 +71,8 @@ Unity CLI(1st-party)는 **다음 프로토타입의 세션 0에서** 채택. 근
 **봇 플레이테스트 · 밸런스 루프** — `Assets/Scripts/Bot/`, `Tools/BotPlaytest/`, `balance`·`balance-loop` 스킬.
 - 무인 반복은 **새 세션에서 `/loop /balance-loop [최대이터레이션] [마감HH:MM]`** (자동 수락 모드 · Unity 켜 둔 채 · 다른 세션이 Unity를 안 쓸 때). 상태는 `BotRuns/loop_state.json`, 보고서 URL은 `BotRuns/report_url.txt`.
 - **0회차(기준선)·1회차 측정 완료, 2회차 측정 미완**(9/18 새벽). 이터레이션별 가설·판정·수치는 `BotRuns/iterations/NN.json`과 보고서가 원본 — 여기 옮겨 적지 않는다.
-  - **2회차 이어 돌리기**: `BotRuns/request.json`에 `{"label":"it02-probe-r","resumeFrom":"20260918-060837_it02-probe"}` (4번째 판부터). 변경(우주 비행선 밀도)은 이미 에셋에 들어가 있다.
+  - **2회차 측정은 9/18 14:01에 이어 돌리기 시작**(`20260918-140146_it02-probe-r`, 4번째 판부터 · 남은 60판 약 1시간). **요청을 또 넣지 말고** 그 세션 폴더의 `status.json`부터 볼 것 — `done`이면 `node Tools/BotPlaytest/analyze.js` → `iterations/02.json` 판정부터 시작한다.
+    ⚠️ 이어 돌리기 요청이 안 집히면 `BotRuns/active/session.json`이 남아 있는지 본다 — 죽은 세션이 남긴 그 파일이 있으면 런처가 요청을 아예 안 집는다(`BotLauncher.cs:41`).
   - 🔴 **목표별 3판(캐릭터당 1판)의 노이즈 폭이 ±0.1~0.18**로 실측됐다 — 그보다 작은 D 변화는 판정할 수 없다. 2회차부터 `probeRuns` 2(목표별 6판).
   - **실측 속도**: 정주행 42~47판에 39~57분 · probe 판당 약 75초. 마감이 촉박하면 probe만 돌린다(G1·G3만 못 재게 된다).
 - 🚦 **봇이 도는 중에 Unity가 필요하면 `BotRuns/yield` 파일을 만들고(내용 `now` = 즉시), 다 쓰면 지운다.** 규칙 전문은 `CLAUDE.md` §6-2 — 봇 쪽이 비켜 주는 게 원칙이다.
