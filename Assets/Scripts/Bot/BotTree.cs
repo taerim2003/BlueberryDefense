@@ -87,8 +87,17 @@ public static class BotTree
         {
             int target = Mathf.CeilToInt(TotalLevels() * ratio);
             var rng = new System.Random(7);
+            // 상한이 있어야 한다 — TryUpgrade가 성공해도 OwnedLevels가 안 오르는 조합이면
+            // 이 루프가 메인 스레드를 영원히 잡고, 그러면 Update도 안 돌아 봇 워치독조차 못 짖는다.
+            int guard = 0;
             while (OwnedLevels() < target)
             {
+                if (++guard > 5000)
+                {
+                    Debug.LogError("[Bot] BuildReferenceSave 루프 상한 도달 — ratio=" + ratio
+                        + " target=" + target + " owned=" + OwnedLevels());
+                    break;
+                }
                 List<SkillNode> buyable = Tree.nodes.Where(n => SkillTreeSave.CanUpgrade(Tree, n.id)).ToList();
                 if (buyable.Count == 0) break;
                 int min = buyable.Min(n => SkillTreeSave.NextLevelCost(Tree, n));

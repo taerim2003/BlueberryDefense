@@ -44,7 +44,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
-    hopperChance: 0.1
+    hopperChance: 0.05
     surferChance: 0.3
     enemyHpMultiplier: 1.7
     enemySpeedMultiplier: 1.11
@@ -62,7 +62,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
-    hopperChance: 0.15
+    hopperChance: 0.05
     surferChance: 0.4
     enemyHpMultiplier: 2.2
     enemySpeedMultiplier: 1.14
@@ -80,7 +80,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
-    hopperChance: 0.3
+    hopperChance: 0.15
     surferChance: 0.35
     enemyHpMultiplier: 2.7
     enemySpeedMultiplier: 1.17
@@ -98,7 +98,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
-    hopperChance: 0.15
+    hopperChance: 0.05
     surferChance: 0.85
     enemyHpMultiplier: 3.5
     enemySpeedMultiplier: 1.21
@@ -116,7 +116,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0.15
-    hopperChance: 0.4
+    hopperChance: 0.25
     surferChance: 0.35
     enemyHpMultiplier: 4.6
     enemySpeedMultiplier: 1.25
@@ -152,7 +152,7 @@ MonoBehaviour:
     ufoChance: 0.06
     shieldChance: 0.05
     riderChance: 0.12
-    hopperChance: 0.45
+    hopperChance: 0.3
     surferChance: 0.55
     enemyHpMultiplier: 9
     enemySpeedMultiplier: 1.31
@@ -170,7 +170,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0.5
     riderChance: 0
-    hopperChance: 0.5
+    hopperChance: 0.35
     surferChance: 0
     enemyHpMultiplier: 9.9
     enemySpeedMultiplier: 1.34
@@ -188,7 +188,7 @@ MonoBehaviour:
     ufoChance: 0.08
     shieldChance: 0.09
     riderChance: 0.12
-    hopperChance: 0.48
+    hopperChance: 0.33
     surferChance: 0.6
     enemyHpMultiplier: 16.3
     enemySpeedMultiplier: 1.37
@@ -224,7 +224,7 @@ MonoBehaviour:
     ufoChance: 0.09
     shieldChance: 0.1
     riderChance: 0.1
-    hopperChance: 0.5
+    hopperChance: 0.35
     surferChance: 0.65
     enemyHpMultiplier: 36
     enemySpeedMultiplier: 1.44
@@ -260,7 +260,7 @@ MonoBehaviour:
     ufoChance: 0.09
     shieldChance: 0.1
     riderChance: 0.1
-    hopperChance: 0.5
+    hopperChance: 0.35
     surferChance: 0.7
     enemyHpMultiplier: 63
     enemySpeedMultiplier: 1.5
@@ -278,7 +278,7 @@ MonoBehaviour:
     ufoChance: 0.08
     shieldChance: 0.1
     riderChance: 0.1
-    hopperChance: 0.5
+    hopperChance: 0.35
     surferChance: 0.65
     enemyHpMultiplier: 92
     enemySpeedMultiplier: 1.53
@@ -296,7 +296,7 @@ MonoBehaviour:
     ufoChance: 0.1
     shieldChance: 0.11
     riderChance: 0.1
-    hopperChance: 0.55
+    hopperChance: 0.4
     surferChance: 0.7
     enemyHpMultiplier: 120
     enemySpeedMultiplier: 1.55
@@ -314,7 +314,7 @@ MonoBehaviour:
     ufoChance: 0.08
     shieldChance: 0.1
     riderChance: 0.15
-    hopperChance: 0.6
+    hopperChance: 0.45
     surferChance: 0.75
     enemyHpMultiplier: 155
     enemySpeedMultiplier: 1.57
@@ -332,7 +332,7 @@ MonoBehaviour:
     ufoChance: 0.1
     shieldChance: 0.12
     riderChance: 0.1
-    hopperChance: 0.55
+    hopperChance: 0.4
     surferChance: 0.7
     enemyHpMultiplier: 195
     enemySpeedMultiplier: 1.58
@@ -368,7 +368,7 @@ MonoBehaviour:
     ufoChance: 0.1
     shieldChance: 0.12
     riderChance: 0.1
-    hopperChance: 0.55
+    hopperChance: 0.4
     surferChance: 0.7
     enemyHpMultiplier: 310
     enemySpeedMultiplier: 1.61
@@ -386,7 +386,7 @@ MonoBehaviour:
     ufoChance: 0.11
     shieldChance: 0.13
     riderChance: 0.1
-    hopperChance: 0.55
+    hopperChance: 0.4
     surferChance: 0.75
     enemyHpMultiplier: 380
     enemySpeedMultiplier: 1.63
@@ -422,7 +422,7 @@ MonoBehaviour:
     ufoChance: 0.11
     shieldChance: 0.13
     riderChance: 0.1
-    hopperChance: 0.55
+    hopperChance: 0.4
     surferChance: 0.75
     enemyHpMultiplier: 570
     enemySpeedMultiplier: 1.66
@@ -440,7 +440,7 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0.5
     riderChance: 0
-    hopperChance: 0.5
+    hopperChance: 0.35
     surferChance: 0
     enemyHpMultiplier: 690
     enemySpeedMultiplier: 1.67
@@ -458,7 +458,7 @@ MonoBehaviour:
     ufoChance: 0.11
     shieldChance: 0.14
     riderChance: 0.1
-    hopperChance: 0.6
+    hopperChance: 0.45
     surferChance: 0.78
     enemyHpMultiplier: 860
     enemySpeedMultiplier: 1.69

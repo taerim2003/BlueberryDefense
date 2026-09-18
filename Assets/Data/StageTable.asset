@@ -109,7 +109,7 @@ MonoBehaviour:
     riderChance: 0.35
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0
+    airshipChance: 0.08
     enemyHpMultiplier: 1.55
     enemySpeedMultiplier: 1.13
     enemyDamageMultiplier: 1.32
@@ -129,7 +129,7 @@ MonoBehaviour:
     riderChance: 0.2
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0
+    airshipChance: 0.08
     enemyHpMultiplier: 1.8
     enemySpeedMultiplier: 1.16
     enemyDamageMultiplier: 1.4
@@ -169,7 +169,7 @@ MonoBehaviour:
     riderChance: 0.143
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.053
+    airshipChance: 0.117
     enemyHpMultiplier: 2.4
     enemySpeedMultiplier: 1.22
     enemyDamageMultiplier: 1.6
@@ -209,7 +209,7 @@ MonoBehaviour:
     riderChance: 0.14
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.08
+    airshipChance: 0.176
     enemyHpMultiplier: 3.6
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.8
@@ -229,7 +229,7 @@ MonoBehaviour:
     riderChance: 0.106
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.135
+    airshipChance: 0.297
     enemyHpMultiplier: 5.5
     enemySpeedMultiplier: 1.32
     enemyDamageMultiplier: 2.25
@@ -249,7 +249,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.134
+    airshipChance: 0.295
     enemyHpMultiplier: 7.2
     enemySpeedMultiplier: 1.35
     enemyDamageMultiplier: 2.45
@@ -289,7 +289,7 @@ MonoBehaviour:
     riderChance: 0.097
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.217
+    airshipChance: 0.477
     enemyHpMultiplier: 11
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.65
@@ -309,7 +309,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.287
+    airshipChance: 0.631
     enemyHpMultiplier: 14.5
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 3.05
@@ -329,7 +329,7 @@ MonoBehaviour:
     riderChance: 0.088
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.363
+    airshipChance: 0.7
     enemyHpMultiplier: 18.6
     enemySpeedMultiplier: 1.45
     enemyDamageMultiplier: 3.14
@@ -369,7 +369,7 @@ MonoBehaviour:
     riderChance: 0.086
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.393
+    airshipChance: 0.7
     enemyHpMultiplier: 30.4
     enemySpeedMultiplier: 1.48
     enemyDamageMultiplier: 3.33
@@ -409,7 +409,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.422
+    airshipChance: 0.7
     enemyHpMultiplier: 49.8
     enemySpeedMultiplier: 1.51
     enemyDamageMultiplier: 3.53
@@ -429,7 +429,7 @@ MonoBehaviour:
     riderChance: 0.077
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.489
+    airshipChance: 0.7
     enemyHpMultiplier: 63.7
     enemySpeedMultiplier: 1.53
     enemyDamageMultiplier: 3.64
@@ -469,7 +469,7 @@ MonoBehaviour:
     riderChance: 0.074
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.521
+    airshipChance: 0.7
     enemyHpMultiplier: 104.4
     enemySpeedMultiplier: 1.56
     enemyDamageMultiplier: 3.86
@@ -509,7 +509,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    airshipChance: 0.57
+    airshipChance: 0.7
     enemyHpMultiplier: 171
     enemySpeedMultiplier: 1.59
     enemyDamageMultiplier: 4.1

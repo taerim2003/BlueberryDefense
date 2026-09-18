@@ -289,7 +289,10 @@ public class BotPilot : MonoBehaviour
         {
             if (YieldRequested()) { st.nextProbeIndex = i; Yield(st); yield break; }
             var cell = cells[i];
+            Trace("probe cell " + i + " ratio=" + cell.ratio + " " + cell.goal.map + ":" + cell.goal.ascension + " " + cell.ch);
+            Trace("buildReferenceSave 시작");
             BotTree.BuildReferenceSave(cell.ratio, mapNames);
+            Trace("buildReferenceSave 끝");
             CharacterDefinition ch = BotTree.LoadByName<CharacterDefinition>(cell.ch);
             if (ch == null) Fail("캐릭터 에셋 없음: " + cell.ch);
 
@@ -301,11 +304,15 @@ public class BotPilot : MonoBehaviour
             header["spentBefore"] = BotTree.Spent(); header["treeTotalCost"] = BotTree.TotalCost();
 
             SetProgress(0, i, cell.goal, cell.ch);
+            Trace("enterRun 시작");
             yield return EnterRun(cell.goal, ch);
             Dictionary<string, object> run = null;
+            Trace("playBattle 시작");
             yield return PlayBattle(header, r => run = r);
+            Trace("playBattle 끝 result=" + run["result"]);
             if ((string)run["result"] == "yielded") { st.nextProbeIndex = i; Yield(st); yield break; }
             recorder.WriteRun(run);
+            Trace("writeRun 끝");
             st.nextProbeIndex = i + 1;
             SaveResume(st);
             if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png 참고");
@@ -665,6 +672,20 @@ public class BotPilot : MonoBehaviour
     }
 
     private void Set(string key, object value) => status[key] = value;
+
+    // 메인 스레드가 동기 코드 안에서 멈추면 Update도 안 돌아 status.json·워치독·콘솔이 전부 멈춘다
+    // (2026-09-18: 클리어 직후 7시간 멈춤. 마지막 로그가 "Game Clear"라 어느 단계인지 알 수 없었다).
+    // 그래서 단계 이름만 그때그때 **동기로** 덧붙인다 — 다음에 멈추면 이 파일의 마지막 줄이 범인을 가리킨다.
+    private void Trace(string step)
+    {
+        if (cfg == null || string.IsNullOrEmpty(cfg.sessionDir)) return;
+        try
+        {
+            File.AppendAllText(Path.Combine(cfg.sessionDir, "trace.log"),
+                DateTime.UtcNow.ToString("o") + " " + Time.realtimeSinceStartup.ToString("0.0") + " " + step + "\n");
+        }
+        catch (Exception) { }
+    }
 
     private void WriteStatus()
     {
