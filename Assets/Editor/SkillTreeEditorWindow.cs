@@ -211,8 +211,20 @@ public class SkillTreeEditorWindow : EditorWindow
         n.displayName = EditorGUILayout.TextField("이름", n.displayName);
         n.type = (SkillNodeType)EditorGUILayout.EnumPopup("타입", n.type);
 
-        // 비용 대역(0=루트, 1~6 = 일반 노드 이름의 I~VI). 인게임 정수 비용은 SkillTreeSave.CostOf가 계산(스킬·기타 해금 노드는 일반 노드 가격의 60%).
-        n.tier = Mathf.Max(0, EditorGUILayout.IntField($"대역 (={SkillTreeSave.CostOf(n)} 정수)", n.tier));
+        // 가격 = 이 노드의 1레벨 정수 비용. 에셋에 직접 저작한다(2026-09-19 — 대역 등비 공식 폐기).
+        n.cost = Mathf.Max(1, EditorGUILayout.IntField("가격 (정수)", n.cost));
+        // 대역은 이제 **표시·그룹용**일 뿐 비용과 무관하다(일반 노드 이름의 I~VI와 같은 뜻).
+        n.tier = Mathf.Max(0, EditorGUILayout.IntField("대역 (표시용)", n.tier));
+
+        // 🔴 가격을 노드마다 손으로 치면 "부모보다 싼 자식"이 반드시 생긴다 — 그러면 선행을 안 찍고도
+        //    낼 수 있어서 해금 순서가 무너진다. 해금류는 싸도 되는 것이 규칙이라 예외.
+        if (n.type != SkillNodeType.SkillUnlock && n.type != SkillNodeType.SpecialUnlock)
+            foreach (string pid in n.prereqIds)
+            {
+                SkillNode parent = data != null ? data.nodes.Find(x => x.id == pid) : null;
+                if (parent != null && n.cost < SkillTreeSave.CostOf(parent))
+                    EditorGUILayout.HelpBox($"선행 {pid}({SkillTreeSave.CostOf(parent)}정수)보다 쌉니다", MessageType.Error);
+            }
 
         // 스킬 해금/강화 노드는 대상 스킬을 지정(해금 노드는 이 스킬이 인게임 카드 풀에 등장).
         // ⚠️ 강화 노드에선 **표시용**이다 — 실제 효과는 id로 정해진다(SkillEffects의 스위치).

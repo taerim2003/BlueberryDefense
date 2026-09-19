@@ -37,11 +37,10 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float speedVariance = 0f;
     [SerializeField] private bool alwaysBackLayer = false;
     [SerializeField] private bool isFlying = false;
-    // "비행 유닛인가"(isFlying = 추가피해·호밍 우선타겟 같은 분류)와 "대공 능력이 있어야만 맞힐 수 있는가"를 분리한다.
-    // ⚠️ 기본값은 반드시 **false**(= 히트박스로만 판정). true로 두면 이 필드가 직렬화되지 않은
-    //    기존 프리팹 전부가 "대공 필요"로 잡혀 지상 적조차 아무 스킬에도 안 맞는다(실제로 한 번 터진 버그).
-    //    대공 전용으로 만들 적(UFO)에만 프리팹에서 켤 것.
-    [SerializeField] private bool requiresAntiAir = false;
+    // 🔴 "대공 능력이 있어야만 맞힐 수 있는가"(requiresAntiAir)는 **폐지됐다**(2026-09-19 사용자).
+    //    비행 적은 이제 **히트박스가 닿으면 무엇에든 맞는다.** 비행에 대한 유일한 축은 `isFlying`이고,
+    //    그건 분류용이다 — 추가피해(MetaBonuses.FlyDamageBonus)·호밍 우선타겟에만 쓴다.
+    //    "때릴 수 있나"를 막는 불리언은 스킬마다 예외가 늘어 관리가 안 되고, 사거리가 닿는데 안 맞는 게 어색하다.
     [SerializeField] private bool blocksProjectiles = false; // 방패 블루베리: 관통 투사체·오브가 이 적을 통과하지 못하고 여기서 소멸
 
     [Header("대각선 강하(종이비행기·서핑) — 화면 위/바다에서 플레이어로 직선 수렴")]
@@ -142,7 +141,7 @@ public class Enemy : MonoBehaviour
 
     // GameManager가 Awake에서 할당 — 모든 적 프리팹에 개별로 물릴 필요 없이 한 곳에서 관리
     public static GameObject HeartPickupPrefab;
-    // 하트(체력회복) 드랍 확률 = 기본 3% + MetaBonuses.HealDropChanceBonus(스킬트리 가산, 현재 대응 노드 없음)
+    // 하트(체력회복) 드랍 확률. 건강 진화 path2(오브 연계)의 배율만 여기에 곱해진다.
     private const float BaseHealDropChance = 0.03f;
 
     // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=노랑, 2회=파랑, 3회=보라, 4회=마젠타)
@@ -155,7 +154,6 @@ public class Enemy : MonoBehaviour
     };
 
     public bool IsFlying => isFlying;
-    public bool RequiresAntiAir => requiresAntiAir; // 스킬이 "대공 불가라 못 맞힘" 판정에 쓰는 값(분류용 IsFlying과 별개)
     public bool IsCarrier => isCarrier;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
@@ -299,7 +297,8 @@ public class Enemy : MonoBehaviour
         shadowTr.localPosition = lp;
     }
 
-    private static Sprite BuildShadowSprite()
+    // 휘두르기 범위 그림자(PlayerSkills)도 같은 타원을 쓴다 — 사본을 두 개 두지 않는다.
+    internal static Sprite BuildShadowSprite()
     {
         const int w = 16, h = 8;
         var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
@@ -977,9 +976,9 @@ public class Enemy : MonoBehaviour
                     MetaRun.Collect(essenceDropAmount); // 프리팹 미설정 시 즉시 적립(폴백)
             }
 
-            // 건강 진화 path2(오브 연계)가 배율을 올린다 — 기본 3%에 스킬트리 가산을 더한 뒤 곱한다.
+            // 건강 진화 path2(오브 연계)가 배율을 올린다.
             if (HeartPickupPrefab != null
-                && Random.value < (BaseHealDropChance + MetaBonuses.HealDropChanceBonus) * PlayerPassives.HeartDropMultiplier)
+                && Random.value < BaseHealDropChance * PlayerPassives.HeartDropMultiplier)
                 Instantiate(HeartPickupPrefab, transform.position, Quaternion.identity);
 
             // 만화식 의성어: 보스(사망분출을 가진 대왕)는 무조건 SMASH!,
@@ -1079,7 +1078,6 @@ public class Enemy : MonoBehaviour
     {
         int natural = Mathf.Max(1, PlayerSkills.NaturalHits(source)); // 스킬 고유 타수(기본공격=BasicAttackHits, 그 외 1)
         int total = natural + PlayerSkills.GlobalBonusHits(source)     // 산탄(타수) 버프로 추가된 타격 수
-                    + PlayerSkills.CloseRangeBonusHits(source, transform.position) // 산탄 근거리 조준(+2, 스킬트리)
                     // 스킬트리 "암살: 치명타 확률 100%인 스킬은 타수 +1".
                     // ⚠️ 기본 상한은 70%(BalanceConstants.MaxCritChance)다. 100%에 닿는 길은
                     //    암살 R1 「필중 암살」이 상한을 열고(CritChanceCapOverride) 레벨업으로 확률을 쌓는 경우뿐이다.

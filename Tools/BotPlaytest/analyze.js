@@ -95,6 +95,8 @@ function campaignMetrics(campaigns, runs) {
       allNodesMinutes: nodesAt ? round(nodesAt.cumGameTime / 60, 1) : null,
       nodesOwnedEnd: lastRun ? lastRun.nodesOwnedAfter : null,
       nodesTotal: lastRun ? lastRun.nodesTotal : null,
+      // 판당 선택 횟수 — 플레이시간의 3분의 1이 여기서 나온다(2026-09-18 실측). 예측 대조에 쓴다.
+      picksPerRun: lastRun && lastRun.cumRuns ? round(lastRun.cumPicks / lastRun.cumRuns, 1) : null,
       goals: (c.goals || []).map(g => ({ key: goalKey(g.map, g.ascension), name: goalName(g.map, g.ascension), attempts: g.attempts, cleared: !!g.firstClear, clearMinutes: g.firstClear ? round(g.firstClear.cumGameTime / 60, 1) : null })),
     };
   });
@@ -140,7 +142,17 @@ function campaignMetrics(campaigns, runs) {
     campaigns: rows, perGoal, curves,
     G1: { value: round(median(play), 1), spread: round(std(play), 1), target: targets.playtimeMinutes, complete: play.length, total: rows.length,
           pass: play.length > 0 && median(play) >= targets.playtimeMinutes[0] && median(play) <= targets.playtimeMinutes[1] },
-    G3: { value: round(cv, 3), target: targets.attemptsCvMax, pass: cv != null && cv <= targets.attemptsCvMax, goalsMeasured: att.length },
+    // G3 = 난이도 밸런스의 본체. 균일성(변동계수)만 보면 "다 똑같이 10판"도 통과하므로 **절대 범위**를 같이 본다(사용자 지시 2026-09-18).
+    G3: (() => {
+      const band = targets.attemptsPerGoal || null;
+      const outOfBand = band ? perGoal.filter(g => g.meanAttempts != null && (g.meanAttempts < band[0] || g.meanAttempts > band[1])) : [];
+      return {
+        value: round(cv, 3), target: targets.attemptsCvMax, goalsMeasured: att.length,
+        band, outOfBand: outOfBand.map(g => ({ name: g.name, attempts: g.meanAttempts })),
+        meanAttempts: round(mean(att), 2),
+        pass: cv != null && cv <= targets.attemptsCvMax && outOfBand.length === 0,
+      };
+    })(),
   };
 }
 
@@ -215,7 +227,7 @@ function skillMetrics(runs, enemyTypes) {
       let air = 0, boss = 0, shield = 0;
       for (const [e, v] of Object.entries(s.effByEnemy || {})) {
         const ty = enemyTypes[e] || {};
-        if (ty.antiAir) air += v;
+        if (ty.flying) air += v;   // 대공 축 = 비행 적에게 준 피해(옛 antiAir 태그 폐지, flying은 예전 세션에도 있다)
         if (ty.boss || e === 'Boss' || e.includes('Airship') || e.includes('Regent')) boss += v;
         if (ty.shield) shield += v;
       }
@@ -301,7 +313,8 @@ function cooldownMetrics(cd) {
   const c2 = cd.violations.filter(v => v.rule === 'C2');
   return {
     rows: cd.rows, violations: cd.violations,
-    C1: { value: c1.length, pass: c1.length === 0 },
+    // C1(쿨 15초)은 참고선이다 — targets.cooldownCapHard가 false면 위반이 있어도 목표 미달로 세지 않는다(사용자 결정 2026-09-18).
+    C1: { value: c1.length, pass: targets.cooldownCapHard === false ? true : c1.length === 0, soft: targets.cooldownCapHard === false },
     C2: { value: c2.length, shorter: c2.filter(v => v.severity === 'shorter').length, pass: c2.length === 0 },
   };
 }
@@ -339,7 +352,11 @@ function analyze() {
       plan: it.synthetic ? null : { target: it.target, symptom: it.symptom, axisAnalysis: it.axisAnalysis, chosenAxis: it.chosenAxis, rejected: it.rejected,
         hypothesis: it.hypothesis, changes: it.changes, prediction: it.prediction, passCriterion: it.passCriterion, verdict: it.verdict, verdictNote: it.verdictNote, nextToVerify: it.nextToVerify, codeSuggestions: it.codeSuggestions },
       runCount: runs.length,
-      scoreboard: { G1: camp.G1, G2: probe.G2, G3: camp.G3, G4: probe.G4, G5: skills.G5, G6: probe.G6, C1: cool.C1, C2: cool.C2 },
+      // 이 이터레이션이 실제로 잡아먹은 측정 시간(실시간). 루프 종합에서 "몇 시간 써서 뭘 얻었나"를 말할 때 쓴다.
+      realMinutes: round(runs.reduce((a, r) => a + (r.realTime || 0), 0) / 60, 1),
+      // C2(진화하면 쿨이 길어진다)는 목표에서 뺐다 — 사용자 결정 2026-09-18.
+      // 되살리려면 `C2: cool.C2`를 다시 넣고 report.html의 C2 타일·칩 주석을 푼다. cool.C2는 계속 계산된다.
+      scoreboard: { G1: camp.G1, G2: probe.G2, G3: camp.G3, G4: probe.G4, G5: skills.G5, G6: probe.G6, C1: cool.C1 },
       campaign: camp, probe, skills, deaths: deathMetrics(runs), cooldowns: cool,
       changedFiles: fingerprintDiff(prevFp, fp),
       results: Object.fromEntries(['clear', 'dead', 'stuck', 'timeout', 'error'].map(k => [k, runs.filter(r => r.result === k).length])),

@@ -149,3 +149,6 @@ ui.levelup.evoHint	진화 조건 — Lv.{0} · 연계: {1}
 ui.levelup.evoHintNone	없음
 ui.evotree.sealed	???
 ui.evotree.sealedDesc	[잠김 — 스킬트리에서 개방]
+step.VolleyCount	발사 횟수 +{0}회
+ui.evotree.prereq	['{0}' 연계]
+ui.evotree.keyPrereq	['{0}' 진화 연계]

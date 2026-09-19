@@ -15,7 +15,9 @@ public class Projectile : MonoBehaviour
     // 초당 SpeedMultiplier 증가량. 0이면 등속(기본값) — 화살비처럼 "떨어지면서 빨라지는" 투사체만 켠다.
     public float Acceleration { get; set; } = 0f;
     public int PierceRemaining { get; set; }
-    public bool CanHitFlying { get; set; } // 기본 path T1: 비행 적 타격 가능
+    // 방패 블루베리를 뚫고 지나간다(검은 화살 = 암살 연계 진화 전용, 2026-09-19 사용자).
+    // ⚠️ 관통(PierceRemaining)과는 별개 축이다 — 방패는 원래 관통 예산과 무관하게 투사체를 끊는다.
+    public bool PiercesShields { get; set; }
     public System.Action<Enemy, bool> OnHitBonus { get; set; } // (적, 이번 타격의 치명타 여부)
 
     // ── 유도(암살 사격의 추격 화살 전용) ────────────────────────────────────
@@ -66,7 +68,7 @@ public class Projectile : MonoBehaviour
         SpeedMultiplier = 1f;
         Acceleration = 0f;
         PierceRemaining = 0;
-        CanHitFlying = false;
+        PiercesShields = false;   // 🔴 안 되돌리면 재사용된 화살이 일반 화살·화살비인데도 방패를 뚫는다
         OnHitBonus = null;
         Homing = false;
         HomingTarget = null;
@@ -96,7 +98,7 @@ public class Projectile : MonoBehaviour
     {
         // ⚠️ null만 보면 안 된다 — 풀링된 적은 죽어도 참조가 살아 있어서 시체를 영영 쫓는다(HomingMissile과 같은 이유).
         if (HomingTarget == null || !HomingTarget.IsAlive)
-            HomingTarget = NearestLivingEnemy(transform.position, CanHitFlying, hitEnemies);
+            HomingTarget = NearestLivingEnemy(transform.position, hitEnemies);
         if (HomingTarget == null) return;
 
         Vector2 desired = (Vector2)HomingTarget.transform.position - (Vector2)transform.position;
@@ -108,9 +110,9 @@ public class Projectile : MonoBehaviour
             Mathf.MoveTowardsAngle(transform.eulerAngles.z, want, TurnDegPerSec * Time.deltaTime));
     }
 
-    // 가장 가까운 산 적. 못 맞히는 비행 적과 이미 때린 적은 후보에서 뺀다
+    // 가장 가까운 산 적. 이미 때린 적은 후보에서 뺀다
     // (관통이 0인 추격 화살이 이미 때린 적을 다시 쫓으면 그 자리를 맴돌기만 한다).
-    public static Enemy NearestLivingEnemy(Vector3 from, bool canHitFlying, HashSet<Enemy> exclude = null)
+    public static Enemy NearestLivingEnemy(Vector3 from, HashSet<Enemy> exclude = null)
     {
         Enemy best = null;
         float bestSqr = float.MaxValue;
@@ -120,7 +122,6 @@ public class Projectile : MonoBehaviour
         {
             Enemy e = active[i];
             if (e == null || !e.IsAlive) continue;
-            if (e.RequiresAntiAir && !canHitFlying) continue;
             if (exclude != null && exclude.Contains(e)) continue;
             float d = ((Vector2)e.transform.position - (Vector2)from).sqrMagnitude;
             if (d < bestSqr) { bestSqr = d; best = e; }
@@ -151,7 +152,7 @@ public class Projectile : MonoBehaviour
         if (consumed) return;
 
         Enemy enemy = other.GetComponent<Enemy>();
-        if (enemy == null || (enemy.RequiresAntiAir && !CanHitFlying) || hitEnemies.Contains(enemy)) return;
+        if (enemy == null || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
         // 기본공격 멀티히트: baseDamage를 N회로 쪼개 각각 크리 개별 판정(총 데미지 유지). 반환=서브히트 중 크리 있었는지
@@ -163,8 +164,9 @@ public class Projectile : MonoBehaviour
         if (impactVfxPrefab != null)
             ObjectPool.Instance.SpawnTimed(impactVfxPrefab, transform.position, 2f);
 
-        // 방패 블루베리는 관통을 끊는다 — 남은 관통 횟수와 무관하게 여기서 소멸(뒤에 있는 적은 못 맞힘)
-        if (enemy.BlocksProjectiles)
+        // 방패 블루베리는 관통을 끊는다 — 남은 관통 횟수와 무관하게 여기서 소멸(뒤에 있는 적은 못 맞힘).
+        // 예외: PiercesShields(검은 화살)는 그대로 지나간다 — 방패를 뚫는 것이 그 진화의 값이다.
+        if (enemy.BlocksProjectiles && !PiercesShields)
         {
             Consume();
             return;

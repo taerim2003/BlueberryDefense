@@ -42,6 +42,9 @@ public class EquippedSkill
     public int ExtraProjectiles = 0;
     // 동시에 상대하는 적 수 — 오브 동시 타격, 스나이핑 저격 대상
     public int ExtraTargets = 0;
+    // 한 번 시전에 나가는 발사 묶음 수 추가 — 산탄의 "빵 빵"을 몇 번 할지(2026-09-19 사용자).
+    // ⚠️ ExtraProjectiles(알 수)와 다른 축이다. 볼리가 늘면 같은 피해 묶음이 통째로 한 번 더 나간다.
+    public int ExtraVolleys = 0;
     // 반복 타격 간격 배율(작을수록 자주 때림) — 회오리 피해 주기, 독수리 투하 간격
     public float TickIntervalMult = 1f;
     public float ExtraWhirlwindDuration = 0f; // 회오리: 지속시간(초) 추가
@@ -143,22 +146,12 @@ public class PlayerSkills : MonoBehaviour
     public static bool IsShotgunBuffed => shotgunTimer > 0f && shotgunBonus > 0;
 
     private static PlayerSkills instance; // 근거리 판정 등 정적 메서드가 플레이어 위치를 참조하기 위한 인스턴스
-    private const float ShotgunCloseRange = 3.5f;
 
     // ── 스킬트리 강화 노드의 경계값 (2026-09-03 재설계) ──
     // ⚠️ 둘 사이(4초 초과 ~ 5초 미만)인 스킬은 힘·가속 강화를 **둘 다 못 받는다.** 값을 고칠 땐 같이 볼 것.
     private const float StrengthDoubleCooldown = 5f;    // 힘 강화: 이 쿨 **이상**이면 힘 효과 2배
     private const float AccelFastSkillCooldown = 4f;    // 가속 강화: 이 쿨 **이하**면 피해 증가
     private const float AccelFastSkillDamageBonus = 0.3f;
-
-    // Enemy.TakeSkillHit가 참조: 산탄 버프를 받은 공격이 플레이어 근처(ShotgunCloseRange) 적을 때릴 때 추가 타수(+2).
-    // 스킬트리 "근거리 조준"(Shotgun_CloseBonus) 해금 시에만.
-    public static int CloseRangeBonusHits(ActiveSkillId source, Vector3 enemyPos)
-    {
-        if (!MetaBonuses.ShotgunCloseBonus || instance == null) return 0;
-        if (!IsShotgunBuffed) return 0;
-        return Vector2.Distance(instance.transform.position, enemyPos) <= ShotgunCloseRange ? 2 : 0;
-    }
 
     // 버프류 스킬 = 지속시간 버프를 부여하는 스킬. **산탄은 집중 산탄 루트를 탔을 때만** 해당한다 —
     // 미진화 산탄과 관통 산탄은 순수 공격기라 버프를 아예 안 건다(FireShotgun의 PathTier[1] 게이트와 같은 조건).
@@ -462,6 +455,7 @@ public class PlayerSkills : MonoBehaviour
             case SkillStat.RewindAmount: skill.RewindAmount = Op(skill.RewindAmount, s); break;
             case SkillStat.TickRate: skill.TickIntervalMult = Mathf.Max(0.15f, Op(skill.TickIntervalMult, s)); break;
             case SkillStat.MaxTargets: skill.ExtraTargets = Mathf.RoundToInt(Op(skill.ExtraTargets, s)); break;
+            case SkillStat.VolleyCount: skill.ExtraVolleys = Mathf.RoundToInt(Op(skill.ExtraVolleys, s)); break;
         }
     }
 
@@ -536,6 +530,8 @@ public class PlayerSkills : MonoBehaviour
                 return id == ActiveSkillId.Orb
                     ? Loc.F("step.MaxTargets.orb", Mathf.RoundToInt(s.amount))
                     : Loc.F("step.MaxTargets", Mathf.RoundToInt(s.amount));
+            // 발사 묶음이 한 번 더 나간다 — 산탄의 "빵 빵"이 "빵 빵 빵"이 된다.
+            case SkillStat.VolleyCount: return Loc.F("step.VolleyCount", Mathf.RoundToInt(s.amount));
             default: return "";
         }
     }
@@ -912,10 +908,9 @@ public class PlayerSkills : MonoBehaviour
         if (PlayerPassives.BuffSkillCooldownMult < 1f && IsBuffSkill(skill))
             cdMult *= PlayerPassives.BuffSkillCooldownMult;
         // 패시브 "가속": 전 스킬 쿨타임 감소. 스킬트리 전역 쿨감과 같은 축이라 곱해서 들어간다.
-        // 스킬트리 보너스는 리프레쉬와 같은 방식으로 **가속을 보유했을 때만** 얹힌다.
         if (passives != null && passives.HasPassive(PassiveSkillId.Accel))
         {
-            float cut = PlayerPassives.AccelCooldownReduction + MetaBonuses.AccelCooldownBonus;
+            float cut = PlayerPassives.AccelCooldownReduction;
             if (cut > 0f) cdMult *= Mathf.Max(0.05f, 1f - cut);
         }
         // 되감기 R1 2차 「블루베리 절멸의 시간」 — 모든 스킬의 쿨타임이 감소한다(진화 쿨감 금지의 유일한 예외).
@@ -1001,8 +996,7 @@ public class PlayerSkills : MonoBehaviour
 
         float damage = skill.Damage * damageMultiplier;
 
-        // 스킬트리 "가속" 강화: 쿨 4초 이하 스킬 피해 +30%. 쿨감(AccelCooldownBonus)과 같은 방식으로
-        // **가속 패시브를 보유했을 때만** 얹힌다.
+        // 스킬트리 "가속" 강화: 쿨 4초 이하 스킬 피해 +30%. **가속 패시브를 보유했을 때만** 얹힌다.
         if (MetaBonuses.AccelFastSkillDamage && skill.Cooldown <= AccelFastSkillCooldown
             && passives != null && passives.HasPassive(PassiveSkillId.Accel))
             damage *= 1f + AccelFastSkillDamageBonus;
@@ -1120,7 +1114,6 @@ public class PlayerSkills : MonoBehaviour
                 p.SpeedMultiplier = skill.ProjectileSpeedMultiplier * ArrowRainStartSpeed;
                 p.Acceleration = skill.ProjectileSpeedMultiplier * ArrowRainAcceleration;
                 p.PierceRemaining = 0;   // 명세: 화살비의 각 화살은 관통 없음
-                p.CanHitFlying = true;   // 위에서 떨어지므로 비행 적을 자연히 지나간다
             }
             yield return new WaitForSeconds(ArrowRainWaveInterval);
         }
@@ -1158,7 +1151,9 @@ public class PlayerSkills : MonoBehaviour
         projectile.SpeedMultiplier = skill.ProjectileSpeedMultiplier
             * (skill.PathTier[1] >= 2 ? AssassinArrowSpeedMult : 1f);
         projectile.PierceRemaining = pierce;
-        projectile.CanHitFlying = false;
+        // 검은 화살(암살 연계 진화)은 방패 블루베리를 뚫는다(2026-09-19 사용자).
+        // 미진화 정면 화살·화살비는 그대로 막힌다 — Projectile.OnEnable이 매 스폰마다 false로 되돌린다.
+        projectile.PiercesShields = skill.PathTier[1] >= 2;
         if (skill.PathTier[1] >= 2) ApplyEvolvedArrowSprite(obj, skill.PathTier[1] >= 3);
 
         // R0(암살 연계, path1): 이 화살이 **치명타로 때린 적마다** 기본 화살이 따로 날아가 그 적만 노린다.
@@ -1203,7 +1198,9 @@ public class PlayerSkills : MonoBehaviour
     // 2026-08-26 사용자 요청으로 셋이 바뀌었다: ① 딸기가 아니라 **암살 화살 뒤쪽**에서 나오고
     // ② **포물선**을 그리며 날아가고 ③ 일반 화살의 **절반 크기**다.
     // 암살 연계(path1) 진화 화살은 느리게 날고 쿨이 길다 — "한 발이 무겁다"를 손으로 느끼게 한다.
-    private const float AssassinArrowSpeedMult = 0.6f;   // 정면 화살 속도의 60%
+    // 🔴 2026-09-19 사용자: 0.6은 "굼벵이 같다"고 해서 0.85로 올렸다. 쿨 +3초는 그대로 둔다 —
+    //    "한 발이 무겁다"의 나머지 절반이고, 속도만으로 답답함이 풀리는지 먼저 본다.
+    private const float AssassinArrowSpeedMult = 0.85f;  // 정면 화살 속도의 85%
     private const float AssassinArrowExtraCooldown = 3f; // 기본 쿨에 그대로 더한다(감소율보다 먼저)
 
     private const float ChasingArrowDamageRatio = 0.5f;
@@ -1226,7 +1223,7 @@ public class PlayerSkills : MonoBehaviour
         //    → 대상이 죽었으면 그 자리에서 가장 가까운 산 적으로 갈아탄다(2026-08-25 사용자 결정).
         Vector3 hitPos = target != null ? target.transform.position : transform.position;
         if (target == null || !target.IsAlive)
-            target = Projectile.NearestLivingEnemy(hitPos, canHitFlying: true);
+            target = Projectile.NearestLivingEnemy(hitPos);
         if (target == null) return; // 화면에 산 적이 하나도 없을 때만 안 쏜다
 
         // 🔴 **딸기에게서** 나간다(2026-09-07 사용자 결정 — 명중 지점 뒤에서 짧게 나가니 안 보였다).
@@ -1251,7 +1248,6 @@ public class PlayerSkills : MonoBehaviour
         p.CritChance = critChance;
         p.SpeedMultiplier = skill.ProjectileSpeedMultiplier;
         p.PierceRemaining = 0;
-        p.CanHitFlying = target.RequiresAntiAir; // 비행 적을 노리고 쏜 화살이면 그 적은 맞힐 수 있어야 한다
 
         // 날아가는 동안에도 대상이 죽으면 다른 적으로 갈아탄다(호밍 미사일과 같은 장치).
         p.Homing = true;
@@ -1477,8 +1473,12 @@ public class PlayerSkills : MonoBehaviour
     // 딸기의 화살 쏘기 자리를 대신하는 주력기. 사거리가 짧은 대신 쿨이 짧고, 맞은 적을 왼쪽으로
     // 밀어내 방어선을 되돌린다(디펜스에서 시간을 버는 것이 이 스킬의 정체성).
     // 투사체가 아니라 즉발 판정이라 비행 적도 범위 안이면 같이 맞는다.
-    private const float SwingReach = 4.8f;       // 플레이어 앞(왼쪽) 사거리 = 판정의 **끝점**
-    private const float SwingHalfHeight = 2f;    // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
+    // 🔴 2026-09-18 범위 상향(4.8→6.2 · 2.0→2.6): 파인애플이 9개 목표 중 8개에서 최약체였고,
+    //    원인은 시작 스킬인 이 스킬의 **오버킬 78%**(피해의 78%가 이미 죽은 적에게 들어감)였다.
+    //    오버킬은 *대상 하나당* 낭비라 피해를 올려도 낭비만 커진다 — 대신 **닿는 적 수**를 늘리면
+    //    한 대상당 낭비는 그대로 두고 유효타 총량만 오른다. 그래서 피해가 아니라 범위를 키웠다.
+    private const float SwingReach = 6.2f;       // 플레이어 앞(왼쪽) 사거리 = 판정의 **끝점**
+    private const float SwingHalfHeight = 2.6f;  // 위아래 판정 반높이 — 비행 적까지 닿게 넉넉히
     private const float SwingKnockback = 2.4f;   // 밀어내는 거리
     // 판정의 **시작점** — 파인애플 몸통 바로 앞. 몸통을 덮던 예전 판정(등 뒤 0.5까지)을 앞으로 밀어낸 것.
     // ⚠️ 일부러 skill.Scale을 곱하지 않는다. 시작점은 "몸통 위치"라 크기 진화와 무관하게 고정돼야 한다
@@ -1502,8 +1502,11 @@ public class PlayerSkills : MonoBehaviour
     private const float ShockwaveSpawnOffset = 1.6f;            // 내려찍은 지점에서 출발(앞쪽)
     // 땅을 타고 번지는 연출이라 플레이어 중심이 아니라 **발밑 높이**에서 나가야 한다.
     // (0이면 몸통 한가운데서 나가 공중에 뜬 것처럼 보인다.)
-    // (실측: 플레이어 pivot→발밑 1.125, 충격파 스프라이트 반높이 약 0.3 → 발밑에 얹으면 -0.85)
-    private const float ShockwaveSpawnYOffset = -0.85f;
+    // (실측: 플레이어 pivot→발밑 1.125, 충격파 스프라이트 반높이 약 0.3 → 발밑에 딱 얹으면 -0.85)
+    // 다만 딱 얹으니 너무 낮아 보여 0.3 올렸다(9/18 사용자). 0은 몸통 한가운데라 위 주석대로 뜬 것처럼 보인다.
+    // ⚠️ 이 값은 연출만이 아니다 — 충격파는 Collider2D 트리거로 때리므로(SwingShockwave.OnTriggerEnter2D)
+    //    올릴수록 낮게 깔린 적을 덜 맞춘다. 더 올릴 땐 피해 대상이 같이 바뀌는 걸 감안할 것.
+    private const float ShockwaveSpawnYOffset = -0.55f;
     private const float ShockwaveDamageRatio = 0.6f;            // 진화 1차: 본체 피해의 60%
     private const float ShockwaveEmpoweredDamageRatio = 1f;     // 진화 2차: 본체와 같은 피해
     private const float ShockwaveKnockback = 0.35f;
@@ -1727,6 +1730,81 @@ public class PlayerSkills : MonoBehaviour
         if (shockwave) SpawnShockwave(damage, critChance, empoweredShock);
     }
 
+    // ── 휘두르기 범위 보여주기 (사용자 요청 2026-09-18) ──────────────────────────────
+    // ① 망치 그림이 **실제 판정 범위만큼** 커진다. ② 그 범위가 발밑에 둥근 그림자로 깔린다.
+    // 판정은 SwingHit의 사각형(왼쪽으로 reach · 위아래 halfHeight)이고, 그림자는 그 **가로 폭**을 그린다.
+    // ⚠️ 두 연출 다 여기 한 배율(SwingRangeMult)에서 나온다 — 범위 수식이 바뀌면 이것부터 맞출 것.
+    private const float SwingShadowFlatten = 0.32f;   // 가로 폭 대비 세로 — 바닥에 누운 타원으로 보이는 비율
+    private const float SwingShadowAlpha = 0.22f;     // 적 그림자(0.35)보다 옅게 — 범위 표시지 물체가 아니다
+    private static Sprite swingShadowSprite;
+    private Transform hammerTr;
+    private Vector3 hammerBaseScale;
+    private Transform swingShadowTr;
+    private SpriteRenderer swingShadowSr;
+    private SpriteRenderer bodySrCache;
+
+    // 기본 범위(SwingReach) 대비 지금 범위가 몇 배인가. FireSwing/SwingRoutine의 reach 계산과 같은 식이다.
+    private static float SwingRangeMult(EquippedSkill swing) =>
+        (swing.PathTier[1] >= 2 ? 1.45f : 1f) * swing.Scale;
+
+    private void LateUpdate()
+    {
+        // Animator가 Hammer 자식의 **스프라이트만** 건드리므로(Pinapple_Attack*.anim) localScale은 여기서 줘도 안 덮인다.
+        EquippedSkill swing = null;
+        for (int i = 0; i < equippedSkills.Count; i++)          // LINQ는 매 프레임 열거자를 할당한다 — 쓰지 않는다
+            if (equippedSkills[i].Id == ActiveSkillId.Swing) { swing = equippedSkills[i]; break; }
+
+        if (swing == null)
+        {
+            if (swingShadowTr != null) swingShadowTr.gameObject.SetActive(false);
+            return;
+        }
+
+        float mult = SwingRangeMult(swing);
+
+        if (hammerTr == null && animator != null)
+        {
+            hammerTr = animator.transform.Find("Hammer");        // 망치 없는 캐릭터(딸기 등)는 null로 남는다
+            if (hammerTr != null) hammerBaseScale = hammerTr.localScale;
+        }
+        if (hammerTr != null) hammerTr.localScale = hammerBaseScale * mult;
+
+        UpdateSwingShadow(SwingReach * mult);
+    }
+
+    // 판정 사각형의 가로 구간(플레이어 왼쪽 SwingNearOffset ~ reach)을 발밑 타원으로 깐다.
+    // 플레이어의 자식으로 두면 프리팹 1.5배와 좌우 반전을 같이 물려받으므로 **월드에 따로 두고** 매 프레임 맞춘다.
+    private void UpdateSwingShadow(float reach)
+    {
+        float width = reach - SwingNearOffset;
+        if (width <= 0f) { if (swingShadowTr != null) swingShadowTr.gameObject.SetActive(false); return; }
+
+        if (bodySrCache == null && animator != null) bodySrCache = animator.GetComponent<SpriteRenderer>();
+        SpriteRenderer bodySr = bodySrCache;
+
+        if (swingShadowTr == null)
+        {
+            if (swingShadowSprite == null) swingShadowSprite = Enemy.BuildShadowSprite();
+            var go = new GameObject("SwingRangeShadow");
+            swingShadowSr = go.AddComponent<SpriteRenderer>();
+            swingShadowSr.sprite = swingShadowSprite;
+            swingShadowSr.color = new Color(0f, 0f, 0f, SwingShadowAlpha);
+            swingShadowTr = go.transform;
+        }
+        if (!swingShadowTr.gameObject.activeSelf) swingShadowTr.gameObject.SetActive(true);
+
+        if (bodySr != null)
+        {
+            swingShadowSr.sortingLayerID = bodySr.sortingLayerID;
+            swingShadowSr.sortingOrder = bodySr.sortingOrder - 2;   // 본체·적보다 뒤(바닥)
+        }
+
+        // 그림 원본이 0.5×0.25유닛(16×8px / PPU32)이라 그 크기로 나눠 목표 폭·높이를 만든다.
+        swingShadowTr.localScale = new Vector3(width / 0.5f, width * SwingShadowFlatten / 0.25f, 1f);
+        float groundY = bodySr != null ? bodySr.bounds.min.y + 0.05f : transform.position.y;
+        swingShadowTr.position = new Vector3(transform.position.x - (reach + SwingNearOffset) * 0.5f, groundY, 0f);
+    }
+
     // 내려찍은 자리에서 맵 끝까지 달려나가는 충격파. 본체보다 약하게 때리고 살짝만 밀어낸다.
     private void SpawnShockwave(float damage, float critChance, bool empowered)
     {
@@ -1947,8 +2025,11 @@ public class PlayerSkills : MonoBehaviour
     // 🔴 **미진화 산탄은 한 프레임에 전탄을 동시에** 내보낸다(사용자 명세, 8/25 빌드 검수).
     //    한 볼리 안에서 알을 시간차로 나눠 쏘면 산탄이 아니게 된다.
     //    🔴 대신 **그 볼리를 두 번** 쏜다 — "빵 빵"(사용자 명세 2026-09-17). 볼리마다 피해는 그대로다(총량 2배).
-    private const int ShotgunVolleyCount = 2;
-    private const float ShotgunVolleyGap = 0.25f; // 두 볼리 사이 간격(초)
+    //    🔴 2026-09-19 사용자: 볼리 수가 **레벨업 성장축**이 됐다(알 수 증가를 빼고 그 자리에 넣었다) —
+    //       "투사체 1 늘어봐야 티도 안 난다"는 지적. 만렙에 2 → 4회가 된다.
+    private const int ShotgunBaseVolleys = 2;
+    private static int ShotgunVolleyCount(EquippedSkill skill) => Mathf.Max(1, ShotgunBaseVolleys + skill.ExtraVolleys);
+    private const float ShotgunVolleyGap = 0.25f; // 볼리 사이 간격(초)
     //    ⚠️ 이 규칙은 이제 **미진화 산탄에만** 적용된다. 관통 산탄(path2 T2+)은 2026-09-02에 연사로 바뀌었고,
     //       거기서는 애니메이션이 볼리마다 도는 것이 의도다(사용자 결정).
     //    빠르기·사거리는 `Scatter_Pellet.prefab`의 `moveSpeed`·`lifetime`이 정한다(게임에서 제일 빠른 투사체).
@@ -1980,10 +2061,13 @@ public class PlayerSkills : MonoBehaviour
 
     private IEnumerator ShotgunDoubleShot(EquippedSkill skill, int pellets, float spreadDegrees, float pelletDamage, float critChance)
     {
-        for (int v = 0; v < ShotgunVolleyCount; v++)
+        int volleys = ShotgunVolleyCount(skill);
+        for (int v = 0; v < volleys; v++)
         {
             if (v > 0) yield return new WaitForSeconds(ShotgunVolleyGap);
-            FireVolley(skill, pellets, spreadDegrees, pelletDamage, critChance, pierce: 0);
+            // 🔴 관통 무한(2026-09-19 사용자 — "막히는 게 좀 어색해 보임"). 예전엔 0이라 첫 명중에 사라졌다.
+            //    사거리는 여전히 `Scatter_Pellet`의 lifetime이 정한다(약 7유닛) — 화면을 끝까지 뚫진 않는다.
+            FireVolley(skill, pellets, spreadDegrees, pelletDamage, critChance, pierce: int.MaxValue);
         }
     }
 
@@ -2035,8 +2119,9 @@ public class PlayerSkills : MonoBehaviour
             pellet.CritChance = critChance;
             // 🔴 SmallOrb의 기본 출처가 Orb다 — 안 갈아주면 산탄 피해가 **데미지 미터에 오브로 잡힌다**.
             pellet.Source = ActiveSkillId.Shotgun;
-            // 🔴 **미진화 산탄은 관통 0** — 첫 명중에 바로 사라진다. 그 스킬의 정체성이라 켜지 말 것.
-            //    관통 산탄(path2 T2+)만 이름값대로 뚫는다(무한, 사용자 결정 2026-09-02).
+            // 🔴 2026-09-19 사용자 결정으로 **산탄 알은 언제나 무한 관통**이다("막히는 게 어색하다").
+            //    예전엔 미진화만 관통 0이었고 그게 정체성이라고 적혀 있었다 — 그 결정은 폐기됐다.
+            //    사거리 상한은 `Scatter_Pellet`의 lifetime(약 7유닛)이고, 방패는 관통과 무관하게 끊는다(SmallOrb).
             pellet.PierceRemaining = pierce;
             pellet.Init(dir, pelletDamage, false);
         }
@@ -2080,7 +2165,6 @@ public class PlayerSkills : MonoBehaviour
         whirlwind.ExtraLifetime = extraLifetime;
         // 소용돌이 수명의 기본값도 에셋이 정할 수 있다(0이면 프리팹 값 그대로). 미니도 같은 축을 쓴다.
         whirlwind.BaseLifetimeOverride = BaseDuration(ActiveSkillId.Whirlwind, 0f);
-        whirlwind.CanHitFlying = !isMini; // 미니 회오리는 비행 적을 타격할 수 없다
         whirlwind.TickIntervalMult = tickIntervalMult; // 레벨업 보조축: 피해 주기
 
         // 미니는 크기가 작아 기본 groundY(피벗=중심)에 놓으면 지면 위로 떠 보인다 — 바닥선을 큰 회오리와 맞춘다.
@@ -2114,7 +2198,7 @@ public class PlayerSkills : MonoBehaviour
 
         // 지식 연계 path: T2부터는 큰 초록 오브 비주얼로 교체
         GameObject prefabToSpawn = skill.PathTier[1] >= 2 && bigOrbPrefab != null ? bigOrbPrefab : orbPrefab;
-        Vector3 spawnPos = transform.position + Vector3.down * 0.1f;
+        Vector3 spawnPos = transform.position + Vector3.up * 0.35f; // 너무 낮게 깔려 나가 보여 위로 올렸다(9/18 사용자)
         // 대형 오브 계통은 크기(진화 +0.3 · 레벨업 크기/범위 칸)가 커질수록 중심 기준으로 **아래로도** 커져 땅에 묻혀 보였다(9/18 사용자).
         // 기준 크기보다 커진 만큼 올려서 아래 가장자리를 고정한다 — 위로만 자라는 것처럼 보인다.
         if (skill.PathTier[1] >= 2)
@@ -2126,8 +2210,7 @@ public class PlayerSkills : MonoBehaviour
         orb.CritChance = critChance;
         orb.ApplyGemVulnerable = false;
 
-        // 오브는 진화로 공중 추가 피해를 얻지 않는다 — 비행 타격은 스킬트리(MetaBonuses.OrbCanHitFlying)로만 열린다.
-        orb.FlyingDamageMultiplier = 1f;
+        // 오브는 진화로 공중 추가 피해를 얻지 않는다(비행 적도 히트박스가 닿으면 그냥 맞는다).
 
         // 🔴 스킬트리 「끈적한 오브」(orb_BasicSlow)를 사야 오브가 둔화를 건다(프리팹 0.8배=20% 감속·2초). 기본 오브엔 둔화가 없다
         //    (사용자 결정 — 노션 「스킬트리 재설계」의 "오브: 기본 둔화"). 예전엔 기본 둔화를 **강화**하는 노드였다.
@@ -2425,7 +2508,15 @@ public class PlayerSkills : MonoBehaviour
     private const float LightningRodBoltSpreadRatio = 0.7f; // 반경의 몇 %까지 흩뿌리나
     private const float LightningRodBoltScale = 1.5f;       // 프리팹(1.5배) 위에 더 키운다 — 화면을 채우는 크기
     private const float ZeusChargeDelay = 0.5f;             // Effect_ZeusStatue 6프레임 × fps6 = 1초. 내리치는 4프레임째가 0.5초
-    private const float LightningRodGroundOffset = 2.025f;  // 기둥 밑동이 서는 자리(카메라 중심 기준). 예전 3.25유닛 기둥의 밑동 그대로
+    // 🔴 기둥 밑동은 **플레이어 발밑**에 선다(사용자 결정 2026-09-19 — "주인공의 밑점이랑 피뢰침/피뢰침번개의 밑면이 같아야지").
+    //    예전엔 카메라 중심에서 고정 오프셋(2.025 → 2.425)을 뺐는데, 맵마다 카메라와 플레이어의 상대 높이가 달라
+    //    **우주에서만 떠 보였다.** 발밑을 기준으로 잡으면 맵이 늘어도 저절로 맞는다.
+    //    기둥과 번개가 같이 이 선에 선다 — 둘의 밑면이 항상 같이 움직인다.
+    private float LightningRodGroundY()
+    {
+        if (bodySrCache == null && animator != null) bodySrCache = animator.GetComponent<SpriteRenderer>();
+        return bodySrCache != null ? bodySrCache.bounds.min.y : transform.position.y;
+    }
 
     // scale: 레벨업 "피뢰침 범위" 스텝(2026-09-18). 피해 반경과 번개가 흩뿌려지는 폭이 같이 커진다.
     private IEnumerator LightningRodRoutine(float damage, float critChance, bool empowered, float scale)
@@ -2438,7 +2529,7 @@ public class PlayerSkills : MonoBehaviour
 
         // 🔴 기둥을 키울 땐 **밑동을 고정하고 위로** 키운다 — 중심을 고정하면 커진 만큼 땅에 파묻힌다.
         float rodHeight = RodHeight(empowered);
-        float groundY = center.y - LightningRodGroundOffset;
+        float groundY = LightningRodGroundY();
         GameObject rod = SpawnLightningRod(new Vector3(center.x, groundY + rodHeight * 0.5f, 0f), empowered);
 
         // 제우스상은 번개를 **모았다가(1~3프레임) 내리친다(4~6프레임)** — 1초 한 바퀴라 첫 타격을 모으는 반 바퀴만큼 늦춰

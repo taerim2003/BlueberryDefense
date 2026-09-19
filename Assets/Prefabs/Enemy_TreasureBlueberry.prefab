@@ -218,7 +218,6 @@ MonoBehaviour:
   spawnYOffset: 0.1
   alwaysBackLayer: 0
   isFlying: 0
-  requiresAntiAir: 0
   blocksProjectiles: 0
   isDiveFlyer: 0
   diveSpawnHeightRatioMin: 0.4

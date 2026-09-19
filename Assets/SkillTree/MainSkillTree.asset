@@ -19,6 +19,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 8
     effect: 0
     perLevel: 10
     maxLevel: 4
@@ -31,6 +32,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 123
     effect: 0
     perLevel: 10
     maxLevel: 4
@@ -43,6 +45,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 25
     effect: 1
     perLevel: 8
     maxLevel: 4
@@ -55,6 +58,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 89
     effect: 1
     perLevel: 8
     maxLevel: 4
@@ -68,6 +72,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 1
+    cost: 36
     effect: 0
     perLevel: 5
     maxLevel: 1
@@ -80,6 +85,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 44
     effect: 11
     perLevel: 1
     maxLevel: 1
@@ -92,6 +98,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 22
     effect: 7
     perLevel: 5
     maxLevel: 2
@@ -104,6 +111,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 139
     effect: 7
     perLevel: 5
     maxLevel: 2
@@ -116,8 +124,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 32
     effect: 5
-    perLevel: 13
+    perLevel: 8
     maxLevel: 3
     prereqIds:
     - fly_1
@@ -128,8 +137,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 190
     effect: 5
-    perLevel: 13
+    perLevel: 8
     maxLevel: 3
     prereqIds:
     - thunder_Stack
@@ -140,6 +150,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 15
     effect: 6
     perLevel: 40
     maxLevel: 3
@@ -152,6 +163,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 104
     effect: 6
     perLevel: 90
     maxLevel: 3
@@ -165,6 +177,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 2
+    cost: 100
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -177,6 +190,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 28
     effect: 8
     perLevel: 20
     maxLevel: 1
@@ -190,6 +204,7 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 4
+    cost: 920
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -202,6 +217,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 112
     effect: 8
     perLevel: 20
     maxLevel: 1
@@ -214,6 +230,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 48
     effect: 3
     perLevel: 2
     maxLevel: 4
@@ -226,6 +243,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 55
     effect: 3
     perLevel: 2
     maxLevel: 4
@@ -239,6 +257,7 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 2
+    cost: 108
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -252,6 +271,7 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 4
+    cost: 1153
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -264,6 +284,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 203
     effect: 0
     perLevel: 10
     maxLevel: 4
@@ -276,6 +297,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 220
     effect: 6
     perLevel: 180
     maxLevel: 3
@@ -288,6 +310,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 0
+    cost: 1
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -299,6 +322,7 @@ MonoBehaviour:
     type: 1
     skill: 2
     tier: 1
+    cost: 17
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -311,6 +335,7 @@ MonoBehaviour:
     type: 1
     skill: 3
     tier: 1
+    cost: 11
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -324,6 +349,7 @@ MonoBehaviour:
     type: 1
     skill: 6
     tier: 2
+    cost: 60
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -337,6 +363,7 @@ MonoBehaviour:
     type: 1
     skill: 7
     tier: 2
+    cost: 45
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -350,6 +377,7 @@ MonoBehaviour:
     type: 1
     skill: 8
     tier: 3
+    cost: 128
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -364,6 +392,7 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 4
+    cost: 1060
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -378,6 +407,7 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 2
+    cost: 148
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -391,6 +421,7 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 2
+    cost: 173
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -404,6 +435,7 @@ MonoBehaviour:
     type: 2
     skill: 9
     tier: 3
+    cost: 325
     effect: 0
     perLevel: 5
     maxLevel: 5
@@ -417,6 +449,7 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 4
+    cost: 873
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -429,6 +462,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 360
     effect: 3
     perLevel: 2
     maxLevel: 4
@@ -441,6 +475,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 547
     effect: 3
     perLevel: 2
     maxLevel: 4
@@ -453,6 +488,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 2255
     effect: 3
     perLevel: 2
     maxLevel: 4
@@ -466,6 +502,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 395
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -479,6 +516,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
+    cost: 6900
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -491,6 +529,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 40
     effect: 9
     perLevel: 12
     maxLevel: 2
@@ -503,6 +542,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 63
     effect: 9
     perLevel: 12
     maxLevel: 2
@@ -515,6 +555,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 290
     effect: 9
     perLevel: 12
     maxLevel: 2
@@ -528,6 +569,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 273
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -541,6 +583,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
+    cost: 2795
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -553,6 +596,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 156
     effect: 11
     perLevel: 1
     maxLevel: 1
@@ -565,6 +609,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 185
     effect: 11
     perLevel: 1
     maxLevel: 1
@@ -577,6 +622,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 1200
     effect: 11
     perLevel: 1
     maxLevel: 1
@@ -589,6 +635,7 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 2
+    cost: 106
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -601,6 +648,7 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 4
+    cost: 1013
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -613,6 +661,7 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 2
+    cost: 80
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -627,6 +676,7 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 2
+    cost: 114
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -640,6 +690,7 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 4
+    cost: 733
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -652,8 +703,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 378
     effect: 5
-    perLevel: 13
+    perLevel: 8
     maxLevel: 3
     prereqIds:
     - health_BaseHp
@@ -664,8 +716,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 593
     effect: 5
-    perLevel: 13
+    perLevel: 8
     maxLevel: 3
     prereqIds:
     - New_Shotgun
@@ -676,8 +729,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 2525
     effect: 5
-    perLevel: 13
+    perLevel: 8
     maxLevel: 3
     prereqIds:
     - strength_BaseDmg
@@ -689,6 +743,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 255
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -702,6 +757,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
+    cost: 2120
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -715,6 +771,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 2
+    cost: 52
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -727,6 +784,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 4
+    cost: 640
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -739,6 +797,7 @@ MonoBehaviour:
     type: 2
     skill: 9
     tier: 5
+    cost: 3200
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -751,6 +810,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 827
     effect: 6
     perLevel: 360
     maxLevel: 3
@@ -763,6 +823,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 1985
     effect: 6
     perLevel: 720
     maxLevel: 3
@@ -776,6 +837,7 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 2
+    cost: 165
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -789,6 +851,7 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 2
+    cost: 182
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -801,6 +864,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 238
     effect: 1
     perLevel: 8
     maxLevel: 4
@@ -813,6 +877,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 687
     effect: 1
     perLevel: 8
     maxLevel: 4
@@ -826,6 +891,7 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 4
+    cost: 1107
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -839,6 +905,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 308
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -852,6 +919,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
+    cost: 2930
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -864,8 +932,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 2660
     effect: 1
-    perLevel: 8
+    perLevel: 22
     maxLevel: 4
     prereqIds:
     - strength_BaseDmg
@@ -877,6 +946,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 413
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -890,6 +960,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
+    cost: 7350
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -902,8 +973,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 6
+    cost: 6000
     effect: 1
-    perLevel: 8
+    perLevel: 22
     maxLevel: 4
     prereqIds:
     - knowledge_BaseXp
@@ -915,6 +987,7 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 4
+    cost: 967
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -927,6 +1000,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 500
     effect: 0
     perLevel: 10
     maxLevel: 4
@@ -939,8 +1013,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 1850
     effect: 0
-    perLevel: 10
+    perLevel: 35
     maxLevel: 4
     prereqIds:
     - assassin_BaseCrit
@@ -952,6 +1027,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
+    cost: 430
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -965,6 +1041,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
+    cost: 7800
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -978,6 +1055,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 5
+    cost: 1900
     effect: 0
     perLevel: 0
     maxLevel: 1
@@ -990,8 +1068,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 6
+    cost: 6450
     effect: 0
-    perLevel: 10
+    perLevel: 35
     maxLevel: 4
     prereqIds:
     - defense_BaseReduce
@@ -1002,11 +1081,12 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
+    cost: 50
     effect: 10
     perLevel: 10
     maxLevel: 1
     prereqIds:
-    - crit_2
+    - crit_1
     editorPos: {x: 700, y: -1350}
   - id: boss_2
     displayName: "\uBCF4\uC2A4 \uC0AC\uB0E5 II"
@@ -1014,6 +1094,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
+    cost: 131
     effect: 10
     perLevel: 10
     maxLevel: 1
@@ -1026,6 +1107,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
+    cost: 343
     effect: 10
     perLevel: 10
     maxLevel: 1
@@ -1038,6 +1120,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
+    cost: 780
     effect: 10
     perLevel: 10
     maxLevel: 1
@@ -1050,9 +1133,23 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
+    cost: 2390
     effect: 10
-    perLevel: 10
+    perLevel: 35
     maxLevel: 1
     prereqIds:
     - accel_BaseCool
     editorPos: {x: -1220, y: 0}
+  - id: fly_3
+    displayName: "\uBE44\uD589 III"
+    description: "\uBE44\uD589 \uC801 \uCD94\uAC00 \uD53C\uD574 +30%"
+    type: 0
+    skill: 0
+    tier: 5
+    cost: 1460
+    effect: 8
+    perLevel: 30
+    maxLevel: 2
+    prereqIds:
+    - fly_2
+    editorPos: {x: 1980, y: -70}

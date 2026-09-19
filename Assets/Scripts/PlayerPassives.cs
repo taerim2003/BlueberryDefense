@@ -82,7 +82,7 @@ public class PlayerPassives : MonoBehaviour
     public static bool HealItemDouble = false;   // 건강: 체력회복템 회복량 2배 — HeartPickup이 읽는다
     public static bool ReviveOnce = false;       // 방어: 사망 시 1회 부활 — PlayerHealth가 읽고 소비한다
     public static bool FullCritExtraHit = false; // 암살: 치명타 100% 스킬은 타수 +1 — Enemy.TakeSkillHit가 읽는다
-    public static bool ShowEvolutionHint = false;// 지식: 레벨업 카드에 진화 조건 표시 — LevelUpUI가 읽는다
+    // (진화 조건 표시는 여기 없다 — 패시브 보유와 무관한 편의 기능이라 LevelUpUI가 MetaBonuses를 직접 읽는다)
 
     [SerializeField] private PassiveProgression[] progressions; // 패시브별 기본값+레벨업당 상승값(Tier A). 미할당 패시브는 코드 기본값 폴백(=현행)
 
@@ -139,7 +139,6 @@ public class PlayerPassives : MonoBehaviour
         HealItemDouble = false;
         ReviveOnce = false;
         FullCritExtraHit = false;
-        ShowEvolutionHint = false;
     }
 
     // 직렬화된 progressions[]를 id→SO 조회맵으로 승격. 미포함 패시브는 조회 실패 → 코드 기본값 폴백.
@@ -226,7 +225,8 @@ public class PlayerPassives : MonoBehaviour
             case PassiveSkillId.Health: if (MetaBonuses.HealItemDouble) HealItemDouble = true; break;
             case PassiveSkillId.Defense: if (MetaBonuses.DefenseRevive) ReviveOnce = true; break;
             case PassiveSkillId.Assassinate: if (MetaBonuses.AssassinFullCritExtraHit) FullCritExtraHit = true; break;
-            case PassiveSkillId.Knowledge: if (MetaBonuses.ShowEvolutionHint) ShowEvolutionHint = true; break;
+            // 🔴 지식의 "진화 조건 표시"는 여기 없다(2026-09-19 사용자) — 그건 성능 보너스가 아니라
+            //    **노드를 찍기만 하면 켜지는 편의 기능**이라 지식 보유와 무관하다. LevelUpUI가 MetaBonuses를 직접 읽는다.
         }
     }
 

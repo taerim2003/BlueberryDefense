@@ -199,6 +199,36 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); align-items: center; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .empty { padding: 18px; color: var(--muted); background: var(--surface); border: 1px dashed var(--axis); border-radius: 10px; font-size: 13px; }
+
+/* 표 밑 해설 — 표가 무엇을 말하고 있고 그래서 뭘 해야 하는지. 사용자 요청 2026-09-18 */
+.readout { background: var(--surface); border: 1px solid var(--hair); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 16px; display: grid; gap: 7px; }
+.readout h4 { margin: 0; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.readout p { font-size: 13.5px; line-height: 1.65; color: var(--ink-2); max-width: 78ch; }
+.readout p strong { color: var(--ink); font-weight: 600; }
+.readout p.todo { color: var(--ink); }
+.readout .rd { display: grid; grid-template-columns: 5.5em 1fr; gap: 4px 14px; align-items: start; }
+.readout .rd + .rd { border-top: 1px solid var(--hair); padding-top: 9px; }
+.readout .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 0 0; white-space: nowrap; }
+.readout .rd.now .lbl { color: var(--muted); }
+.readout .rd.fix .lbl { color: var(--accent); }
+.readout .rd.goal .lbl { color: var(--good-ink); }
+.readout .rd-body { display: grid; gap: 6px; min-width: 0; }
+.readout .rd.goal .rd-body p { color: var(--ink); }
+@media (max-width: 560px) { .readout .rd { grid-template-columns: 1fr; gap: 2px; } }
+
+/* 맨 위 핵심 결론 */
+.wrapup h3 { font-size: 14px; margin-top: 4px; color: var(--ink-2); }
+.wrapup .tally, .summary .tally { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 12.5px; color: var(--ink-2); }
+.wrapup .tally span, .summary .tally span { background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-variant-numeric: tabular-nums; }
+.insight { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.insight.lead { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.insight-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.insight-head h3 { font-size: 16px; flex: 1 1 auto; min-width: 0; }
+.insight .rank { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); background: var(--accent-wash); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.insight p { font-size: 13.5px; line-height: 1.65; color: var(--ink-2); max-width: 82ch; }
+.insight .lbl { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+.insight .action { color: var(--ink); border-top: 1px solid var(--hair); padding-top: 8px; }
+.insight .action .lbl { color: var(--accent); }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
 .tabs button { font: inherit; font-size: 13px; border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--ink); color: var(--page); border-color: var(--ink); }
@@ -257,6 +287,533 @@ function seqColor(v) { // 0..1 → 한 색조 7단
 function inkOn(v) { return v != null && v > 0.55 ? '#ffffff' : 'var(--ink)'; }
 
 // ───── 렌더 ─────
+// ───────── 맨 위 결론 (사용자 요청 2026-09-18: "핵심 발견과 고치는 법이 맨 위에")
+// 내용은 BotRuns/loop_state.json의 insights[]에서 온다 — 루프가 이터레이션마다 갱신한다.
+// 여기서 만들어내지 않는다: 판단은 한 곳(loop_state)에만 두고 보고서는 그리기만 한다.
+// 루프 종합 — 사용자 요청 2026-09-18: "루프가 끝날 때 각 이터레이션 보고서를 모두 수합해 정리".
+// 읽는 사람은 사용자다. 세 가지가 나와야 한다: ① N회를 거쳐 뭐가 좋아졌나 ② 이터레이션별로 뭘 했나 ③ 남은 문제는 뭔가.
+// 전부 data.json에서 만든다 — 손으로 쓴 요약을 여기 두면 다음 이터레이션에 낡는다.
+const GOAL_LABEL = { G1: '플레이타임', G2: '난이도 서열', G3: '목표별 판수', G4: '풀트리 우주 어려움', G5: '스킬 밸런스', G6: '캐릭터 편차' };
+const GOAL_ORDER = ['G2', 'G3', 'G6', 'G4', 'G5', 'G1'];   // balance 스킬 §1의 다룰 순서
+const scoreNum = (m) => {
+  if (!m || m.value == null) return null;
+  if (typeof m.value === 'number') return m.value;
+  const n = parseInt(String(m.value), 10);
+  return Number.isNaN(n) ? null : n;
+};
+
+function wrapupSection(iters) {
+  const measured = iters.filter(x => (x.runCount || 0) > 0);
+  if (measured.length < 2) return null;
+  const first = measured[0], last = measured[measured.length - 1];
+  const running = !(DATA.loop || {}).final;
+  const sec = h('section', { class: 'wrapup' }, sectionHead(
+    running ? `중간 집계 — 이터레이션 ${measured.length}회` : `루프 종합 — 이터레이션 ${measured.length}회`,
+    running ? '루프가 아직 도는 중이다. 지금까지를 모아 본 것' : '이번 루프에서 무엇이 좋아졌고, 무엇이 남았는가'));
+
+  const totalRuns = measured.reduce((a, x) => a + (x.runCount || 0), 0);
+  const totalMin = measured.reduce((a, x) => a + (x.realMinutes || 0), 0);
+  const verdicts = iters.map(x => (x.plan || {}).verdict).filter(Boolean);
+  const cnt = v => verdicts.filter(x => x === v).length;
+  sec.append(h('div', { class: 'tally' },
+    h('span', {}, `측정 ${fmt(totalRuns, 0)}판`),
+    h('span', {}, `측정 시간 ${fmt(totalMin / 60, 1)}시간`),
+    h('span', {}, `확인 ${cnt('confirmed')} · 반박 ${cnt('refuted')} · 불확실 ${cnt('inconclusive')} · 대기 ${cnt('pending')}`)));
+
+  // ── ① 목표가 얼마나 좋아졌나 (기준선 → 지금)
+  const goalRows = GOAL_ORDER.map(k => {
+    const a = scoreNum((first.scoreboard || {})[k]), b = scoreNum((last.scoreboard || {})[k]);
+    const m = (last.scoreboard || {})[k] || {};
+    return { k, a, b, pass: m.pass, raw: m };
+  }).filter(r => r.a != null || r.b != null);
+  if (goalRows.length) {
+    sec.append(h('h3', { style: 'margin-top:6px' }, '① 목표별 변화 — 기준선에서 지금까지'));
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, `이터 ${first.iteration}`), h('th', { class: 'r' }, `이터 ${last.iteration}`), h('th', { class: 'r' }, '변화'), h('th', {}, '지금'))),
+      h('tbody', {}, goalRows.map(r => {
+        const d = r.a != null && r.b != null ? r.b - r.a : null;
+        return h('tr', {}, h('td', {}, `${r.k} ${GOAL_LABEL[r.k] || ''}`),
+          h('td', { class: 'r num' }, r.a == null ? '—' : fmt(r.a, 2)),
+          h('td', { class: 'r num' }, r.b == null ? '—' : fmt(r.b, 2)),
+          h('td', { class: 'r num' }, d == null ? '—' : (d >= 0 ? '+' : '') + fmt(d, 2)),
+          h('td', {}, r.raw.value == null ? chip('', '측정 전') : r.pass ? chip('pass', '통과') : chip('fail', '미달')));
+      })))));
+  }
+
+  // ── ② 난이도 D가 목표별로 어떻게 움직였나
+  const names = (last.probe && last.probe.perGoal || []).map(g => g.name);
+  if (names.length) {
+    sec.append(h('h3', {}, '② 난이도 D 추이 — 9개 목표'));
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '목표'), ...measured.map(x => h('th', { class: 'r' }, `이터 ${x.iteration}`)), h('th', { class: 'r' }, '변화'))),
+      h('tbody', {}, names.map(n => {
+        const vals = measured.map(x => { const g = (x.probe && x.probe.perGoal || []).find(y => y.name === n); return g ? g.D : null; });
+        const a = vals.find(v => v != null), b = [...vals].reverse().find(v => v != null);
+        const d = a != null && b != null ? b - a : null;
+        return h('tr', {}, h('td', {}, n),
+          ...vals.map(v => h('td', { class: 'cell', style: `background:${seqColor(v)};color:${inkOn(v)}` }, v == null ? '—' : fmt(v, 2))),
+          h('td', { class: 'r num' }, d == null ? '—' : (d >= 0 ? '+' : '') + fmt(d, 2)));
+      })))));
+  }
+
+  // ── ③ 이터레이션별로 뭘 했나
+  sec.append(h('h3', {}, '③ 이터레이션별로 한 일'));
+  sec.append(h('div', { class: 'scroll' }, h('table', {},
+    h('thead', {}, h('tr', {}, h('th', {}, '이터'), h('th', {}, '겨냥'), h('th', { class: 'r' }, '변경'), h('th', {}, '바꾼 것'), h('th', { class: 'r' }, '판'), h('th', {}, '판정'))),
+    h('tbody', {}, iters.map(x => {
+      const p = x.plan || {};
+      const ch = p.changes || [];
+      const files = [...new Set(ch.map(c => String(c.file).split('/').pop().replace(/\.(asset|prefab|cs).*$/, '')))];
+      const v = p.verdict;
+      const vv = VERDICT[v] || null;
+      return h('tr', {},
+        h('td', { class: 'num' }, x.iteration),
+        h('td', {}, p.target ? String(p.target).slice(0, 46) + (String(p.target).length > 46 ? '…' : '') : (x.iteration === 0 ? '기준선' : '—')),
+        h('td', { class: 'r num' }, ch.length || '—'),
+        h('td', {}, files.length ? files.slice(0, 5).join(' · ') + (files.length > 5 ? ` 외 ${files.length - 5}` : '') : '—'),
+        h('td', { class: 'r num' }, x.runCount || '—'),
+        h('td', {}, vv ? chip(vv[1], vv[0]) : chip('', '—')));
+    })))));
+
+  // ── ④ 남은 문제
+  const fails = GOAL_ORDER.map(k => ({ k, m: (last.scoreboard || {})[k] || {} })).filter(x => x.m.value != null && !x.m.pass);
+  const blockers = ((DATA.loop || {}).insights || []).filter(x => x.status === 'blocker');
+  sec.append(h('h3', {}, '④ 남은 문제'));
+  if (!fails.length && !blockers.length) sec.append(h('div', { class: 'empty' }, '측정된 목표가 전부 통과했다.'));
+  else {
+    const ul = h('ul', { class: 'plain' });
+    for (const f of fails) ul.append(h('li', {}, bold(`${f.k} ${GOAL_LABEL[f.k]}`), ` — 현재 ${fmt(f.m.value, 2)}`,
+      f.m.target != null ? ` · 목표 ${Array.isArray(f.m.target) ? f.m.target.join('~') : f.m.target}` : ''));
+    for (const b of blockers) ul.append(h('li', {}, bold('막고 있음'), ` — ${b.title}`));
+    sec.append(ul);
+  }
+
+  // ── 해설
+  const improved = goalRows.filter(r => r.a != null && r.b != null && ((r.k === 'G2' || r.k === 'G4') ? r.b > r.a : r.b < r.a));
+  const worsened = goalRows.filter(r => r.a != null && r.b != null && ((r.k === 'G2' || r.k === 'G4') ? r.b < r.a : r.b > r.a));
+  put(sec, prose({
+    now: [
+      [`이터레이션 ${measured.length}회 · 측정 ${fmt(totalRuns, 0)}판 · ${fmt(totalMin / 60, 1)}시간을 썼다. `,
+        cnt('confirmed') ? `가설 ${cnt('confirmed')}개가 확인됐다.` : bold('아직 확인된 가설이 0개다.'),
+        cnt('inconclusive') ? ` 불확실 ${cnt('inconclusive')}개는 변경 효과가 노이즈 폭보다 작아 판정하지 못한 것이다.` : ''],
+      improved.length || worsened.length
+        ? [`좋아진 목표: ${improved.length ? improved.map(r => r.k).join('·') : '없음'} · 나빠진 목표: ${worsened.length ? worsened.map(r => r.k).join('·') : '없음'}.`]
+        : null,
+    ],
+    fix: [
+      fails.length ? [`남은 미달 ${fails.length}개는 **${fails[0].k} ${GOAL_LABEL[fails[0].k]}**부터 푼다(balance 스킬 §1의 다룰 순서). `,
+        `위 ②표에서 그 목표의 D가 이터레이션마다 어떻게 움직였는지 보면, 지금까지의 손잡이가 먹혔는지 아닌지가 바로 보인다.`] : '측정되지 않은 목표를 채우는 것이 다음 할 일이다.',
+      `③표에서 **변경 수가 1~2건인 이터레이션은 대부분 판정이 불확실**로 끝났다 — 다음 루프에서는 지표가 갈라지는 덩어리를 여러 개 넣는다.`,
+    ],
+    goal: [
+      `다음 루프의 목표는 ④의 항목이 줄어드는 것이다. 특히 **확인된 가설 수가 0에서 벗어나는 것** — 그게 안 되면 변경이 아니라 측정 설계를 먼저 고쳐야 한다는 신호다.`,
+    ],
+  }));
+  return sec;
+}
+
+function summarySection(iters, idx) {
+  const loop = DATA.loop || {};
+  const ins = loop.insights || [];
+  const sec = h('section', { class: 'summary' }, sectionHead('핵심 결론', '이터레이션을 돌려서 실제로 알아낸 것과, 그래서 다음에 무엇을 해야 하는지'));
+
+  const verdicts = iters.map(x => (x.plan || {}).verdict).filter(Boolean);
+  const cnt = v => verdicts.filter(x => x === v).length;
+  const runs = iters.reduce((a, x) => a + (x.runCount || 0), 0);
+  sec.append(h('div', { class: 'tally' },
+    h('span', {}, `이터레이션 ${iters.length}회`), h('span', {}, `누적 ${fmt(runs, 0)}판`),
+    h('span', {}, `가설 판정 — 확인 ${cnt('confirmed')} · 반박 ${cnt('refuted')} · 불확실 ${cnt('inconclusive')} · 대기 ${cnt('pending')}`)));
+
+  if (!ins.length) {
+    sec.append(h('div', { class: 'empty' }, 'loop_state.json에 insights가 아직 없습니다. 루프가 이터레이션을 판정하면서 채웁니다.'));
+    return sec;
+  }
+  ins.forEach((x, i) => {
+    const card = h('div', { class: 'insight' + (i === 0 ? ' lead' : '') },
+      h('div', { class: 'insight-head' },
+        h('span', { class: 'rank' }, i === 0 ? '가장 중요' : String(i + 1)),
+        h('h3', {}, x.title || ''),
+        x.status ? chip(x.status === 'blocker' ? 'fail' : x.status === 'good' ? 'pass' : 'warn',
+          x.status === 'blocker' ? '막고 있음' : x.status === 'good' ? '좋아짐' : '지켜볼 것') : null),
+      prose({ now: [x.now || x.body, x.evidence].filter(Boolean), fix: [x.fix || x.action].filter(Boolean), goal: [x.goal].filter(Boolean) }));
+    sec.append(card);
+  });
+  return sec;
+}
+
+// ───────── 표 밑 해설 — 현재 상황 → 개선안 → 기대 목표 (사용자 요청 2026-09-18)
+// "차이가 난다"로 끝내지 않는다. 무엇이 무엇보다 어떻고 · 왜 문제고 · 무엇을 얼마로 바꾸면 · 다음 측정에서 무엇이 어떻게 나와야 하는지.
+// 기대 목표는 **다음 이터레이션에 그대로 대조할 수 있는 숫자**여야 한다. 그게 없으면 해설이 아니라 감상이다.
+const put = (parent, node) => { if (node) parent.append(node); };  // append(null)은 "null" 텍스트를 찍는다
+const bold = t => h('strong', {}, t);
+const rich = t => String(t).split(/\*\*/).map((s, i) => (i % 2 ? h('strong', {}, s) : s));
+const richKids = p => (Array.isArray(p) ? p : [p]).flatMap(x => (typeof x === 'string' ? rich(x) : [x]));
+function prose(o) {
+  const box = h('div', { class: 'readout' });
+  if (o.lead) box.append(o.lead);
+  const row = (lbl, cls, items) => {
+    const list = (items || []).filter(Boolean);
+    if (!list.length) return;
+    box.append(h('div', { class: 'rd ' + cls }, h('span', { class: 'lbl' }, lbl),
+      h('div', { class: 'rd-body' }, ...list.map(x => h('p', {}, ...richKids(x))))));
+  };
+  row('현재 상황', 'now', o.now);
+  row('개선안', 'fix', o.fix);
+  row('기대 목표', 'goal', o.goal);
+  return box;
+}
+const goalByName = (it, n) => (it.probe.perGoal || []).find(g => g.name === n);
+const sk = s => { const [id, r] = String(s).split('/'); return skillName(id) + (r && r !== '-1' ? ' R' + r : ''); };
+
+// 목표 i가 **이웃 때문에** 가져야 하는 D 범위. 이게 "얼마로 만들어야 하나"의 답이다.
+function dWindows(it) {
+  const per = it.probe.perGoal || [], rel = it.probe.relations || [];
+  return per.map((g, i) => {
+    const lo = i > 0 && rel[i - 1] && per[i - 1].D != null ? per[i - 1].D + rel[i - 1].need : null;
+    const hi = rel[i] && per[i + 1] && per[i + 1].D != null ? per[i + 1].D - rel[i].need : null;
+    return { g, lo, hi, empty: lo != null && hi != null && lo > hi, ok: (lo == null || g.D >= lo) && (hi == null || g.D <= hi) };
+  });
+}
+
+function boardNote(iters, idx) {
+  const sb = iters[idx].scoreboard || {};
+  // 다룰 순서 (balance 스킬 §1, 2026-09-18 개정) — C1은 참고선이라 여기서 뺐다.
+  const order = [['G2', '난이도 서열'], ['G3', '목표별 판수 = 난이도'], ['G6', '캐릭터 편차'], ['G4', '풀트리 우주 어려움'], ['G5', '스킬 밸런스'], ['G1', '플레이타임']];
+  const done = order.filter(([k]) => sb[k] && sb[k].value != null);
+  const fail = done.filter(([k]) => !sb[k].pass);
+  const none = order.filter(([k]) => !sb[k] || sb[k].value == null);
+  const now = [[`측정된 ${done.length}개 중 `, bold(`${done.length - fail.length}개 통과 · ${fail.length}개 미달`),
+    none.length ? `. ${none.map(x => x[0]).join('·')}는 정주행 세션을 안 돌려 값이 없다(실패가 아니다).` : '.']];
+  if (fail.length) now.push([`다룰 순서 **G2 서열 → G3 판수 → G6·G4 캐릭터 → G5 스킬 → G1 시간** 으로 처음 걸리는 건 `, bold(`${fail[0][0]}(${fail[0][1]})`), `다.`]);
+  const g4 = sb.G4 || {}, g6 = sb.G6 || {};
+  const fix = [], goal = [];
+  if (g4.value != null && !g4.pass) {
+    const weak = Object.entries(g4.byCharacter || {}).filter(([, v]) => v && v.rate < DATA.targets.fullTreeClearRateMin);
+    fix.push([`G4를 떨어뜨리는 건 특정 캐릭터다 — ${weak.map(([c, v]) => `${charName(c)} ${pct(v.rate)}`).join(' · ')}. `,
+      `G6(캐릭터 편차)와 **원인이 같다**. 두 목표를 따로 겨냥하지 말고 아래 캐릭터 섹션이 지목하는 캐릭터 하나를 고치면 둘이 같이 움직인다.`]);
+    goal.push([`G4 ${pct(g4.value)} → `, bold(pct(DATA.targets.fullTreeClearRateMin) + ' 이상'), `(캐릭터마다 3판 중 최소 2.4판 클리어). 같은 변경으로 G6도 `, bold(`${fmt(g6.value, 2)} → ${fmt(DATA.targets.characterSpreadMax * 2, 2)} 이하`), `로 줄면 방향이 맞은 것이다.`]);
+  }
+  fix.push('**지표가 갈라지면 한 이터레이션에 여러 덩어리를 넣는다**(맵·캐릭터·스킬·경제는 읽는 칸이 다르다). 같은 지표를 둘이 건드리는 조합만 피한다. 그리고 예상 효과가 노이즈 폭보다 작은 변경은 아예 넣지 않는다 — 재도 답이 안 나온다.');
+  return prose({ now, fix, goal });
+}
+
+// 예측 vs 실측 — 판정을 사람 머리에서 꺼내 표로 만든다.
+// 이터레이션 파일의 prediction[]에 `key`를 붙이면 여기서 자동으로 직전 이터레이션과 대조한다.
+// 키 목록은 balance-loop 스킬 §3에 있다. key가 없는 예측은 표에 안 나오고 글로만 남는다.
+function metricValue(it, key) {
+  if (!it || !key) return null;
+  const i = String(key).indexOf(':');
+  const kind = i < 0 ? String(key) : String(key).slice(0, i);
+  const arg = i < 0 ? null : String(key).slice(i + 1);
+  const P = it.probe || {}, C = it.campaign || {}, S = it.skills || {};
+  const row = n => (S.rows || []).find(r => r.evoStage === 0 && r.skill === n);
+  const camp = (C.campaigns || [])[0];
+  const curve = (C.curves || [])[0];
+  const pick = (o, k) => (o && o[k] != null ? o[k] : null);
+  switch (kind) {
+    case 'probeD': { const g = (P.perGoal || []).find(x => x.name === arg); return g ? g.D : null; }
+    case 'charD': return ((P.G6 || {}).characterMeanD || {})[arg] ?? null;
+    case 'charSpread': return pick(P.G6, 'value');
+    case 'g4': return pick(P.G4, 'value');
+    case 'g2': { const v = pick(P.G2, 'value'); return v ? parseInt(String(v), 10) : null; }
+    case 'skillPower': return pick(row(arg), 'power');
+    case 'skillProgress': return pick(row(arg), 'meanProgress');
+    case 'skillOverkill': return pick(row(arg), 'overkill');
+    case 'skillsOutOfBand': { const g = (S.groups || {})['0']; return g ? (g.outOfBand || []).length : null; }
+    case 'attemptsMean': return pick(C.G3, 'meanAttempts');
+    case 'attemptsOf': { const g = (C.perGoal || []).find(x => x.name === arg); return g ? g.meanAttempts : null; }
+    case 'attemptsInBand': { const b = pick(C.G3, 'band'); if (!b) return null; return (C.perGoal || []).filter(g => g.meanAttempts != null && g.meanAttempts >= b[0] && g.meanAttempts <= b[1]).length; }
+    case 'picksPerRun': return pick(camp, 'picksPerRun');
+    case 'clearMinutes': { const p = curve && curve.points.find(x => x.clear === (arg || '우주 어려움')); return p ? p.minutes : null; }
+    case 'allNodesMinutes': { const p = curve && curve.points.find(x => x.nodes >= 0.999); return p ? p.minutes : null; }
+    case 'playMinutes': return pick(C.G1, 'value');
+    default: return null;
+  }
+}
+
+function predictionTable(it, prev) {
+  const preds = ((it.plan || {}).prediction || []).filter(p => p.key);
+  if (!preds.length) return null;
+  const body = preds.map(p => {
+    const before = metricValue(prev, p.key);
+    const after = metricValue(it, p.key);
+    const exp = p.expectedDelta;
+    let state = 'info', label = '측정 전';
+    if (after != null && before != null) {
+      const act = after - before;
+      const wantUp = p.direction === 'up', wantDown = p.direction === 'down', flat = p.direction === 'flat';
+      const dirOk = flat ? Math.abs(act) <= Math.abs(exp || 0.05) + 1e-9 : (wantUp ? act > 0 : wantDown ? act < 0 : true);
+      const big = exp == null || exp === 0 ? dirOk : Math.abs(act) >= Math.abs(exp) * 0.5;
+      state = !dirOk ? 'fail' : big ? 'pass' : 'warn';
+      label = !dirOk ? '반대로 움직임' : big ? '예측대로' : '방향은 맞는데 작음';
+    } else if (after != null) { state = 'info'; label = '직전 값 없음'; }
+    const act = after != null && before != null ? after - before : null;
+    return h('tr', {},
+      h('td', {}, p.metric || p.key, h('div', { class: 'muted mono', style: 'font-size:11px' }, p.key)),
+      h('td', { class: 'r num' }, before == null ? '—' : fmt(before, 3)),
+      h('td', { class: 'r num' }, after == null ? '—' : fmt(after, 3)),
+      h('td', { class: 'r num' }, act == null ? '—' : (act >= 0 ? '+' : '') + fmt(act, 3)),
+      h('td', { class: 'r num muted' }, exp == null ? '—' : (exp >= 0 ? '+' : '') + fmt(exp, 3)),
+      h('td', {}, chip(state, label)));
+  });
+  return h('div', { class: 'scroll', style: 'margin-bottom:4px' },
+    h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '예측한 지표'), h('th', { class: 'r' }, '직전'), h('th', { class: 'r' }, '이번'),
+      h('th', { class: 'r' }, '실제 변화'), h('th', { class: 'r' }, '예측'), h('th', {}, '판정'))), h('tbody', {}, body)));
+}
+
+function planNote(it, prev) {
+  const p = it.plan || {};
+  if (!p.hypothesis) return null;
+  const v = p.verdict || 'pending';
+  const say = { confirmed: '가설이 확인됐다', refuted: '가설이 반박됐다', inconclusive: '판정할 수 없었다', pending: '아직 측정 전이다' }[v] || v;
+  const now = [[bold(say), '. ', p.verdictNote || '(판정 근거가 아직 기록되지 않았다)']];
+  const fix = [], goal = [];
+  if (v === 'inconclusive') {
+    fix.push('불확실은 "효과가 없다"가 아니라 **표본이 모자라 답을 못 낸다**는 뜻이다. 변경을 되돌리기 전에, 겨냥 목표를 좁혀(`probeGoalFilter`) 같은 판 수를 그 목표들에 몰아주고 다시 잰다.');
+    goal.push('다음 측정에서 **손대지 않은 목표들의 D 변동폭**이 겨냥한 변화 크기보다 작아야 한다. 그게 성립해야 비로소 판정이 가능하다.');
+  }
+  if (v === 'refuted') fix.push('지표가 예측과 반대로 움직였으면 그 변경을 되돌리는 것부터 검토한다. 되돌리는 것도 "변경 포함" 이터레이션이다.');
+  if (v === 'confirmed') fix.push('같은 축을 한 번 더 밀지, 다음 목표로 넘어갈지 고른다. 통과한 관계가 다시 깨지지 않는지 다음 측정에서 확인한다.');
+  if (p.nextToVerify) goal.push(['다음에 확인할 것 — ', p.nextToVerify]);
+  return prose({ lead: predictionTable(it, prev), now, fix, goal });
+}
+
+function goalsNote(it, prev) {
+  const wins = dWindows(it);
+  if (!wins.some(w => w.g.D != null)) return null;
+  const rel = (it.probe.relations || []).filter(r => r.gap != null);
+  const bad = rel.filter(r => !r.pass);
+  const empty = wins.filter(w => w.empty);
+  const fixable = wins.filter(w => !w.ok && !w.empty && w.g.D != null);
+  const now = [];
+  now.push([`서열 관계 ${rel.length}개 중 `, bold(`${rel.length - bad.length}개가 맞고 ${bad.length}개가 어긋난다`),
+    `. 아래 "필요 범위"는 **양옆 목표의 현재 D가 정한 자리**다 — 이 목표가 얼마가 되어야 하는지를 그대로 말해 준다.`]);
+  const tbl = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, '현재 D'), h('th', { class: 'r' }, '필요 범위'), h('th', {}, '판정'))),
+    h('tbody', {}, wins.map(w => h('tr', {}, h('td', {}, w.g.name), h('td', { class: 'r num' }, fmt(w.g.D, 3)),
+      h('td', { class: 'r num' }, `${w.lo == null ? '—' : fmt(w.lo, 3)} ~ ${w.hi == null ? '—' : fmt(w.hi, 3)}`),
+      h('td', {}, w.empty ? chip('fail', '범위가 비었다') : w.ok ? chip('pass', '맞음') : chip('warn', w.lo != null && w.g.D < w.lo ? '올려야 함' : '내려야 함'))))));
+  if (empty.length) now.push([bold(`${empty.map(w => w.g.name).join('·')}는 범위가 비어 있다`),
+    ` — 이웃 둘이 서로 뒤집혀 있어서 이 목표를 어떤 값으로 만들어도 두 관계를 동시에 만족시킬 수 없다. `,
+    `${empty[0].g.name}은 ${fmt(empty[0].lo, 3)} 이상이면서 ${fmt(empty[0].hi, 3)} 이하여야 한다 — 불가능하다. **이 목표를 건드리는 건 낭비다. 이웃을 먼저 고쳐야 한다.**`]);
+  const fix = [], goal = [];
+  const viol = w => (w.lo != null && w.g.D < w.lo ? w.lo - w.g.D : w.hi != null && w.g.D > w.hi ? w.g.D - w.hi : 0);
+  const open = wins.filter(w => !w.ok && !w.empty && w.g.D != null && (w.lo == null || w.hi == null)).sort((a, b) => viol(b) - viol(a));
+  const pick = open[0] || fixable[0];
+  if (pick) {
+    const dir = pick.lo != null && pick.g.D < pick.lo ? '올린다' : '내린다';
+    const tgt = pick.lo != null && pick.g.D < pick.lo ? pick.lo : pick.hi;
+    fix.push([bold(`${pick.g.name}부터 손댄다`), `. `,
+      open.length ? `끝 목표라 한쪽에만 제약이 걸려 있어 **가장 적은 부작용으로 관계 하나를 통과시킬 수 있다.**` : `범위가 비어 있지 않아 이 목표만 움직여도 관계가 닫힌다.`,
+      ` 현재 ${fmt(pick.g.D, 3)}에서 ${fmt(tgt, 3)} 쪽으로 ${dir}.`]);
+    fix.push(['맵 축(A)으로 갈지는 아래 "어디서 죽나"가 정한다 — 그 목표의 사망이 **특정 스테이지·특정 적**에 몰려 있으면 그 스테이지 구성을 고치고, 곡선 전체에 퍼져 있으면 `StageTable`의 체력·피해 배수를 구간째 움직인다.']);
+    goal.push([bold(`${pick.g.name} D ${fmt(pick.g.D, 3)} → ${fmt(tgt, 3)}`), ` (${dir === '올린다' ? '이상' : '이하'}). `,
+      `그러면 관계 "${(bad[0] || {}).a || ''} ${(bad[0] || {}).op || ''} ${(bad[0] || {}).b || ''}"가 닫힌다. `,
+      `**다른 목표의 D는 ±0.10 안에 머물러야 한다** — 그보다 크게 움직이면 그 변경이 맵 하나에만 든 게 아니라는 뜻이다.`]);
+  }
+  if (empty.length) goal.push([`${empty.map(w => w.g.name).join('·')}의 필요 범위가 **비어 있지 않게** 되는 것. 즉 이웃을 고쳐 하한 < 상한이 성립하면 그다음 이터레이션에서 이 목표를 겨냥할 수 있다.`]);
+  if (prev && prev.probe) {
+    const moves = (it.probe.perGoal || []).map(g => { const q = goalByName(prev, g.name); return q && q.D != null && g.D != null ? { name: g.name, d: g.D - q.D } : null; }).filter(Boolean);
+    if (moves.length) {
+      const big = moves.slice().sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
+      now.push([`지난 이터레이션 대비 가장 크게 움직인 건 `, bold(`${big.name} ${big.d >= 0 ? '+' : ''}${fmt(big.d, 3)}`),
+        `다. 손대지 않은 목표가 이만큼 움직인다면 그게 **노이즈 폭**이고, 위 "필요 범위"까지의 거리가 그보다 작으면 한 번의 측정으로는 확인할 수 없다.`]);
+    }
+  }
+  return prose({ lead: h('div', { class: 'scroll', style: 'margin-bottom:4px' }, tbl), now, fix, goal });
+}
+
+function charNote(it) {
+  const mean = (it.scoreboard.G6 || {}).characterMeanD || {};
+  const names = Object.keys(mean);
+  if (!names.length) return null;
+  const sorted = names.slice().sort((a, b) => mean[a] - mean[b]);
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  const gap = mean[worst] - mean[best];
+  const per = it.probe.perGoal || [];
+  const worstCount = per.filter(g => { const b = g.byCharacter || {}; return b[worst] != null && names.every(c => b[c] == null || b[worst] >= b[c]); }).length;
+  const now = [
+    [`캐릭터 평균 난이도는 ${sorted.map(c => `${charName(c)} ${fmt(mean[c], 3)}`).join(' · ')}다(높을수록 어렵다). `,
+      bold(`${charName(worst)}가 ${charName(best)}보다 ${fmt(gap, 3)} 어렵고`), `, 목표 허용폭 ${DATA.targets.characterSpreadMax}의 ${fmt(gap / DATA.targets.characterSpreadMax, 1)}배다.`],
+    [`이게 표본 운이 아니라는 근거: `, bold(`${charName(worst)}가 ${per.length}개 목표 중 ${worstCount}개에서 최악`), `이다. 한두 목표에 몰렸다면 운이지만 거의 전부라면 캐릭터 자체 문제다.`],
+  ];
+  const fix = [
+    [`캐릭터 간 차이는 **시작 스킬**에서 온다(다른 조건은 전부 같다). 아래 스킬 섹션에서 ${charName(worst)}의 시작 스킬이 어느 축에서 비어 있는지 보고, 그 축을 채우는 쪽으로 그 스킬의 \`Prog_*\`를 고친다.`],
+    [`⚠️ 시작 스킬의 **종합 파워가 이미 높은데 진행률이 낮다면 피해를 더 올리는 게 아니라 낭비(오버킬)를 의심**한다 — 오버킬이 높으면 피해를 올려도 잡몹에는 안 먹히고 단단한 적에만 들어가므로, 그 자체가 처방이 된다.`],
+  ];
+  const goal = [
+    [bold(`${charName(worst)} 평균 D ${fmt(mean[worst], 3)} → ${fmt(mean[best] + DATA.targets.characterSpreadMax * 2, 3)} 이하`),
+      `, 그래서 캐릭터 간 격차 ${fmt(gap, 3)} → ${fmt(DATA.targets.characterSpreadMax * 2, 3)} 이하. `,
+      `동시에 `, bold(`${charName(best)}의 D는 ±0.05 안에 머물러야 한다`), ` — 최악을 올린 게 아니라 최고를 끌어내린 것이면 실패다.`],
+  ];
+  const full = (it.probe.G4 || {}).byCharacter || {};
+  const weak = Object.entries(full).filter(([, v]) => v && v.rate < DATA.targets.fullTreeClearRateMin);
+  if (weak.length) goal.push([`풀트리 우주 어려움(G4)도 같이 본다 — ${weak.map(([c, v]) => `${charName(c)} ${pct(v.rate)}`).join(' · ')}가 ${pct(DATA.targets.fullTreeClearRateMin)} 이상으로 올라가야 원인을 제대로 짚은 것이다.`]);
+  return prose({ now, fix, goal });
+}
+
+function skillNote(it) {
+  const rows = (it.skills.rows || []).filter(r => r.evoStage === 0 && r.skill !== 'Other' && r.n >= 3);
+  if (!rows.length) return null;
+  const band = DATA.targets.skillPowerBand;
+  const dealers = rows.filter(r => r.power > 0);
+  const over = dealers.filter(r => r.power > band[1]).sort((a, b) => b.power - a.power);
+  const under = dealers.filter(r => r.power < band[0]).sort((a, b) => a.power - b.power);
+  // 파워는 높은데 진행률은 낮은 스킬 = "피해는 많은데 필요한 곳에 안 들어간다"
+  const byProg = dealers.slice().sort((a, b) => a.meanProgress - b.meanProgress);
+  const decoy = byProg.find(r => r.power > band[1]);
+  const now = [];
+  if (over.length) now.push([bold('밴드 위'), ` (${band[1]} 초과): ${over.map(r => `${skillName(r.skill)} ${fmt(r.power, 2)}`).join(' · ')}.`]);
+  if (under.length) now.push([bold('밴드 아래'), ` (${band[0]} 미만): ${under.map(r => `${skillName(r.skill)} ${fmt(r.power, 2)}`).join(' · ')}. 종합 파워는 "가진 스킬 수로 나눈 제 몫"이라 1.0이 제 몫이다 — ${fmt(under[0].power, 2)}는 제 몫의 ${Math.round(under[0].power * 100)}%만 한다는 뜻이다.`]);
+  if (decoy) now.push([bold(`${skillName(decoy.skill)}는 파워 ${fmt(decoy.power, 2)}로 가장 세 보이는데 그 스킬을 가진 판의 진행률이 ${fmt(decoy.meanProgress, 2)}로 가장 낮다`),
+    `. 오버킬 ${pct(decoy.overkill)} — 피해의 ${Math.round(decoy.overkill * 100)}%가 **이미 죽은 적**에게 들어간다. 파워 숫자가 그 낭비까지 세고 있어서 세 보이는 것이다.`]);
+  const fix = [];
+  if (decoy) fix.push([`${skillName(decoy.skill)}: 오버킬이 ${pct(decoy.overkill)}라 **피해를 올려도 잡몹 쪽 유효타는 거의 안 늘고 단단한 적(보스·엘리트·방패)에만 들어간다.** `,
+    `\`Prog_${decoy.skill}.baseDamage\`를 올리는 것이 "이 스킬이 약한 축"만 정확히 채우는 손잡이다 — 쿨은 건드리지 않는다(근접은 한 방이 크고 쿨이 길다는 설계 의도).`]);
+  if (under.length) fix.push([`${skillName(under[0].skill)}처럼 밴드 아래인 스킬은 먼저 **\`Prog_*\` 에셋에 값이 실제로 들어 있는지** 본다 — \`baseDamage: 0\`이면 피해가 코드에서 오므로 데이터 칸으로는 못 고친다(그때는 \`codeSuggestions\`로 넘긴다).`]);
+  const goal = [];
+  if (decoy) goal.push([bold(`${skillName(decoy.skill)}의 보스 축을 현재값의 2배로`), `, 그리고 그 스킬로 시작하는 캐릭터의 평균 D가 내려갈 것. `,
+    `**오버킬은 ${pct(decoy.overkill)}에서 크게 안 변해야 한다** — 오버킬까지 같이 뛰면 잡몹에 낭비만 늘린 것이므로 가설 기각이다.`]);
+  if (under.length) goal.push([`${skillName(under[0].skill)} 파워 ${fmt(under[0].power, 2)} → ${band[0]} 이상. 동시에 밴드 위 스킬들이 더 올라가지 않아야 한다.`]);
+  goal.push('G5는 "다 똑같이 세게"가 아니라 **장단점이 있어야 한다**는 목표다 — 밴드 안에 들어오되 축 프로필은 서로 달라야 통과다.');
+  return prose({ now, fix, goal });
+}
+
+function cdNote(it) {
+  const c1 = it.cooldowns.C1 || {};
+  if (c1.value == null) return null;
+  return prose({
+    now: [c1.value === 0
+      ? ['맨몸 쿨타임이 ', bold('15초를 넘는 스킬은 없다'), '. C1은 하드 제약이라 0건이어야 정상이고, 지금은 정상이다.']
+      : ['🔴 ', bold(`${c1.value}건이 15초를 넘는다`), '. C1은 다른 모든 목표보다 먼저다 — 이 상태로 잰 측정은 밸런스 판단에 쓰지 않는다.']],
+    fix: c1.value === 0
+      ? ['스킬 파워를 낮출 때 쿨을 올리는 방식을 쓰면 여기에 먼저 걸린다. 진화 스킬을 너프할 땐 쿨을 올리되 **15초를 넘기는 순간 그 변경은 무효**이므로 피해 쪽으로 돌린다.']
+      : [`넘는 스킬의 \`Evo_*.baseCooldown\` 또는 \`levels\`의 쿨 스텝을 내려 15초 안으로 넣는다. 다른 어떤 변경보다 먼저 한다.`],
+    goal: [c1.value === 0 ? '다음 이터레이션에서도 **0건 유지**. 1건이라도 생기면 그 이터레이션의 다른 결과는 보지 않는다.' : '다음 측정에서 0건.'],
+  });
+}
+
+function progNote(it) {
+  const g1 = it.scoreboard.G1 || {}, g3 = it.scoreboard.G3 || {};
+  if (g1.value == null) return null;
+  const T = DATA.targets.playtimeMinutes;
+  const over = g1.value > T[1];
+  return prose({
+    now: [[`전 노드 해금 + 우주 어려움까지 `, bold(`${fmt(g1.value, 0)}분`), `이 걸렸다(목표 ${T[0]}–${T[1]}분). `,
+      over ? `목표 상한보다 ${fmt(g1.value - T[1], 0)}분 길다.` : g1.value < T[0] ? `목표 하한보다 ${fmt(T[0] - g1.value, 0)}분 짧다.` : '목표 안이다.'],
+    g3.value != null ? [`목표별 평균 판수의 변동계수는 `, bold(fmt(g3.value, 2)), `로 목표(≤ ${DATA.targets.attemptsCvMax})를 ${g3.pass ? '만족한다' : '넘는다'}. `,
+      g3.pass ? '' : '어떤 목표는 몇 판에 뚫리고 어떤 목표는 계속 막힌다는 뜻 — 뒤로 갈수록 판 길이만 길어지게 하려던 설계와 어긋난다.'] : null],
+    fix: [over ? '경제 축(D)은 **모든 목표를 같이 움직여 서열을 못 고친다.** 서열(G2)이 아직 미달이면 G1은 건드리지 않는다 — 서열을 맞춘 뒤 마지막에 노드 가격 곡선·정수 드랍으로 시간만 조정한다.' : '지금은 손댈 필요가 없다.'],
+    goal: [`G1·G3는 우선순위 최하위다. **서열(G2)과 G4가 통과한 뒤**에 겨냥한다 — 그전에 건드리면 앞선 목표의 측정이 같이 흔들린다.`],
+  });
+}
+
+function deathNote(it) {
+  const goals = (it.deaths || []).filter(g => g.runs > 0);
+  if (!goals.length) return null;
+  let peak = null;
+  for (const g of goals) for (const [s, r] of Object.entries(g.deathRate || {})) {
+    if (!r) continue;
+    const reached = g.reached[s] || 0;
+    if (reached < 3) continue;
+    if (!peak || r > peak.rate) peak = { goal: g.name, stage: s, rate: r, reached, causes: g.causes };
+  }
+  const cause = {};
+  for (const g of goals) for (const [e, n] of Object.entries(g.causes || {})) cause[e] = (cause[e] || 0) + n;
+  const topCause = Object.entries(cause).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const total = Object.values(cause).reduce((a, b) => a + b, 0);
+  const now = [];
+  if (topCause.length) now.push([`막타를 친 적은 ${topCause.map(([e, n]) => `${enemyName(e)} ${n}회(${Math.round(n / total * 100)}%)`).join(' · ')}다. `,
+    bold(`${enemyName(topCause[0][0])}·${enemyName(topCause[1] ? topCause[1][0] : topCause[0][0])} 둘이 전체 사망의 ${Math.round(((topCause[0][1] + (topCause[1] ? topCause[1][1] : 0)) / total) * 100)}%`), `를 차지한다.`]);
+  if (peak) now.push([`한 칸만 보면 가장 위험한 곳은 `, bold(`${peak.goal} ${peak.stage}스테이지(도달 ${peak.reached}판 중 ${pct(peak.rate)} 사망)`), `다.`]);
+  return prose({
+    now,
+    fix: [
+      [`맵 축(A)을 고를 자격이 있는지는 여기서 갈린다 — 사망이 **특정 스테이지·특정 적**에 몰려야 맵을 건드린다. `,
+        topCause.length ? `지금은 ${enemyName(topCause[0][0])}가 ${Math.round(topCause[0][1] / total * 100)}%로 몰려 있으니, 그 적의 \`EnemyDef_*\` 또는 해당 \`StageTable_*\`의 등장 확률이 손잡이다.` : ''],
+      `곡선 전체가 고르게 어려우면 맵을 너프해도 **서열은 안 움직이고 난이도만 내려간다.** 그때는 스킬(B)·트리(C)를 본다.`,
+    ],
+    goal: [
+      peak ? [`겨냥한 목표의 D를 위 "필요 범위"로 옮기되, `, bold(`${peak.goal} ${peak.stage}스테이지의 사망률 ${pct(peak.rate)}가 이웃 스테이지 수준으로 내려와야`), ` 스테이지 구성을 고친 것이다. 목표 D만 맞고 이 칸이 그대로면 다른 곳을 깎아 총합만 맞춘 것이다.`] : null,
+      `막타 분포도 같이 본다 — 한 적이 40%를 넘게 차지하면 그 적 하나가 난이도를 대표하고 있다는 뜻이라 맵 정체성이 무너진다.`,
+    ],
+  });
+}
+
+// 목표별 "몇 판 · 몇 시간에 깨나" — 사용자 요청 2026-09-18.
+// 🔴 단위 주의: `goals[].clearMinutes`와 `s3ClearMinutes`는 **게임시간**이고, 목표 4~5시간은 **추정 플레이시간**이다
+//    (게임시간 + 선택당 3초 + 판 사이 30초). 둘을 섞으면 "이미 예산 안"이라는 정반대 결론이 나온다 — 실제로 한 번 틀렸다.
+//    그래서 여기서는 곡선(curves[].points.minutes)의 플레이시간만 쓴다.
+function paceSection(iters, idx) {
+  let src = null;
+  for (let i = idx; i >= 0; i--) {
+    const c = (iters[i].campaign || {}).campaigns || [];
+    const cv = (iters[i].campaign || {}).curves || [];
+    if (c.length && c[0].goals && c[0].goals.length && cv.length) { src = { it: iters[i], camp: c[0], curve: cv[0] }; break; }
+  }
+  const sec = h('section', {}, sectionHead('목표별 진행 속도 — 몇 판 · 몇 시간에 깨나',
+    '정주행 1회 기준. 시간은 모두 **추정 플레이시간**(게임시간 + 선택·판 사이 여유)'));
+  if (!src) { sec.append(h('div', { class: 'empty' }, '정주행(campaign) 기록이 아직 없습니다.')); return sec; }
+  const { camp, curve } = src;
+  const stale = src.it.iteration !== iters[idx].iteration;
+  const T = DATA.targets.playtimeMinutes;
+  const budget = T[0];                       // 4시간 = 240분
+  const at = name => { const p = curve.points.find(x => x.clear === name); return p ? p.minutes : null; };
+  const goals = camp.goals;
+  const attempts = goals.map(g => g.attempts);
+  const totalRuns = attempts.reduce((a, b) => a + b, 0);
+  const mean = totalRuns / attempts.length;
+  const cv = Math.sqrt(attempts.reduce((s, x) => s + (x - mean) ** 2, 0) / attempts.length) / mean;
+  const lastClear = at(goals[goals.length - 1].name);
+  const fullPt = curve.points.find(p => p.nodes >= 0.999);
+  const allNodes = fullPt ? fullPt.minutes : null;
+  const evenRuns = totalRuns / goals.length;
+  const evenStep = budget / goals.length;
+
+  let prev = 0;
+  const table = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, '트라이 판수'),
+    h('th', { class: 'r' }, '이 목표에 쓴 시간'), h('th', { class: 'r' }, '누적 시간'), h('th', { class: 'r' }, `4시간 설계의 자리`), h('th', {}, '판수'))),
+    h('tbody', {}, goals.map((g, i) => {
+      const t = at(g.name); const seg = t == null ? null : t - prev; if (t != null) prev = t;
+      const band = DATA.targets.attemptsPerGoal || [mean * 0.5, mean * 1.5];
+      const over = g.attempts > band[1], under = g.attempts < band[0];
+      return h('tr', {}, h('td', {}, g.name),
+        h('td', { class: 'r num' }, g.attempts),
+        h('td', { class: 'r num' }, seg == null ? '—' : fmt(seg, 1) + '분'),
+        h('td', { class: 'r num' }, t == null ? '—' : fmt(t, 0) + '분'),
+        h('td', { class: 'r num muted' }, fmt(evenStep * (i + 1), 0) + '분'),
+        h('td', {}, over ? chip('fail', '너무 많음') : under ? chip('warn', '너무 적음') : chip('pass', '적정')));
+    })));
+  sec.append(h('div', { class: 'scroll' }, table));
+
+  const now = [];
+  if (stale) now.push(`⚠️ 이 섹션은 **이터레이션 ${src.it.iteration}**의 정주행 기록이다 — 지금 보는 이터레이션은 probe만 돌아 정주행 값이 없다.`);
+  now.push([`우주 어려움 클리어까지 `, bold(`${fmt(lastClear, 0)}분 = ${fmt(lastClear / 60, 1)}시간`),
+    allNodes != null ? [`, 전 노드 해금까지 `, bold(`${fmt(allNodes, 0)}분 = ${fmt(allNodes / 60, 1)}시간`), `. 둘의 간격은 ${fmt(allNodes - lastClear, 0)}분이다.`] : '.',
+    ` 목표는 **둘 다 ${budget}분(4시간) 근처에서 비슷한 시점에** 끝나는 것이다.`]);
+  now.push([`즉 클리어를 `, bold(`${fmt(lastClear - budget, 0)}분`), `, 노드 해금을 `, bold(`${fmt((allNodes || 0) - budget, 0)}분`),
+    ` 당겨야 한다. `, (allNodes - lastClear) <= 30 ? `간격 ${fmt(allNodes - lastClear, 0)}분은 이미 목표(30분 이내)라 **둘을 같은 비율로 줄이면 간격은 유지된다.**` : [`간격 ${fmt(allNodes - lastClear, 0)}분도 목표(30분 이내)보다 `, bold(`${fmt(allNodes - lastClear - 30, 0)}분 넓다`), ` — 노드 해금을 클리어보다 **더 많이** 당겨야 둘이 만난다.`]]);
+  now.push([`목표별 트라이 판수는 ${attempts.join(' · ')} — 평균 ${fmt(mean, 1)}판, 변동계수 `, bold(fmt(cv, 2)), `(목표 ≤ ${DATA.targets.attemptsCvMax}). `,
+    bold(`${goals[0].name} ${attempts[0]}판 vs ${goals[goals.length - 1].name} ${attempts[attempts.length - 1]}판`),
+    ` — 앞 목표에서 훨씬 많이 죽는다. 뒤로 갈수록 스킬트리가 맵 난이도보다 빨리 세진다는 뜻이다.`]);
+
+  const fix = [
+    [`**판수 균일(G3)은 맵이 아니라 트리·경제로 고친다.** 뒤 목표가 적게 걸리는 건 그 맵이 쉬워서가 아니라 도착했을 때 트리가 이미 강하기 때문이다 — `,
+      `노드 가격 곡선을 뒤로 갈수록 가파르게 하거나, 초반 정수 드랍을 늘려 **앞 목표의 첫 벽을 낮춘다.**`],
+    [`**시간(G1)은 판 길이가 아니라 판 수와 노드 가격이 정한다.** 지금 ${fmt(totalRuns, 0)}판을 도는데, 4시간 설계라면 판당 평균 ${fmt(budget / totalRuns, 1)}분이어야 한다. `,
+      `노드 총 가격을 낮추면 전 노드 해금이 앞당겨지고, 앞 목표의 판수가 줄면 클리어도 같이 앞당겨진다 — **한 손잡이(경제)가 둘을 같이 움직인다.**`],
+    `🔴 단 이건 **우선순위 최하위(G1·G3)**다. 서열(G2)과 G4를 고치면 목표별 난이도가 바뀌어 판수·시간이 통째로 다시 잡힌다 — 그전에 경제를 건드리면 두 번 일하게 된다.`,
+  ];
+  const goal = [
+    [bold(`우주 어려움 클리어 ${fmt(lastClear, 0)}분 → ${budget}분 안`), `, `, bold(`전 노드 해금 ${fmt(allNodes, 0)}분 → ${budget}분 안`),
+      `, 그리고 **둘의 간격을 30분 이내**로. 어느 한쪽만 당겨지면 "다 모았는데 못 깬다" 또는 "깼는데 트리가 비었다"가 되어 둘 다 설계 의도와 어긋난다.`],
+    [bold(`목표별 트라이 판수를 ${fmt(evenRuns, 1)}판 안팎으로`), ` 모아 변동계수 ${fmt(cv, 2)} → ${DATA.targets.attemptsCvMax} 이하. `,
+      `${goals[0].name} ${attempts[0]}판 → ${Math.round(evenRuns)}판, ${goals[goals.length - 1].name} ${attempts[attempts.length - 1]}판 → ${Math.round(evenRuns)}판.`],
+    `표의 "4시간 설계의 자리" 칸이 그 목표가 있어야 할 누적 시점이다 — 다음 측정에서 누적 시간이 그 칸에 가까워지면 성공이다.`,
+  ];
+  put(sec, prose({ now, fix, goal }));
+  return sec;
+}
+
 function render(idx) {
   const app = document.getElementById('app');
   app.replaceChildren();
@@ -279,12 +836,15 @@ function render(idx) {
       h('span', { class: 'muted num' }, '갱신 ' + new Date(DATA.generatedUtc).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })),
       sel)));
 
+  app.append(summarySection(iters, idx));
+  put(app, wrapupSection(iters));
   app.append(scoreboard(iters, idx));
   app.append(timeline(iters, idx));
-  app.append(goalsSection(it));
+  app.append(goalsSection(it, iters[idx - 1]));
+  app.append(paceSection(iters, idx));
   app.append(characterSection(it));
   app.append(skillSection(it));
-  app.append(cooldownSection(it));
+  // 쿨타임 섹션 제거 — C1은 사소한 항목이라 보고서에서 뺐다(사용자 결정 2026-09-18). 되살리려면 이 줄과 스코어보드 C1 타일을 복구한다.
   app.append(progressSection(it));
   app.append(deathSection(it));
 }
@@ -299,12 +859,14 @@ function scoreboard(iters, idx) {
   const defs = [
     ['G1', '총 플레이타임', m => m.value == null ? '—' : fmt(m.value, 0) + '분', `목표 ${T.playtimeMinutes[0]}–${T.playtimeMinutes[1]}분 · 전 노드 + 우주 어려움`, m => m.value],
     ['G2', '난이도 서열', m => m.measured ? m.value : '—', '관계 8개 · 농장1 < … < 우주3', m => m.measured ? +String(m.value).split('/')[0] : null],
-    ['G3', '목표별 판수 균일', m => fmt(m.value, 2), `변동계수 ≤ ${T.attemptsCvMax}`, m => m.value],
+    ['G3', '난이도 — 목표별 판수', m => m.meanAttempts == null ? '—' : fmt(m.meanAttempts, 1) + '판', T.attemptsPerGoal ? `목표당 ${T.attemptsPerGoal[0]}~${T.attemptsPerGoal[1]}판 · 변동계수 ≤ ${T.attemptsCvMax}` : `변동계수 ≤ ${T.attemptsCvMax}`, m => m.meanAttempts],
     ['G4', '풀트리 우주 어려움', m => m.value == null ? '—' : pct(m.value), `캐릭터별 클리어율 ≥ ${pct(T.fullTreeClearRateMin)}`, m => m.value],
     ['G5', '스킬 밸런스', m => m.value, '지배 없음 · 장점 1개 이상 · 종합 0.7–1.4', null],
     ['G6', '캐릭터 편차', m => fmt(m.value, 2), `같은 목표에서 난이도 차 ≤ ${T.characterSpreadMax}`, m => m.value],
-    ['C1', '쿨 15초 초과', m => m.value == null ? '—' : m.value + '건', '하드 제약 · 0건이어야 함', m => m.value],
-    ['C2', '진화 쿨 원칙 미충족', m => m.value == null ? '—' : m.value + '건', '진화하면 쿨이 길어져야 함', m => m.value],
+    // C1(쿨 15초) 타일 제거 — 사소한 항목이라 뺐다(사용자 결정 2026-09-18).
+    // C2(진화하면 쿨이 길어진다)는 감사 항목에서 뺐다 — 사용자 결정 2026-09-18.
+    // 되돌리려면 이 줄을 살리고 아래 쿨 감사표의 c2 칩도 같이 되살린다:
+    // ['C2', '진화 쿨 원칙 미충족', m => m.value == null ? '—' : m.value + '건', '진화하면 쿨이 길어져야 함', m => m.value],
   ];
   const board = h('div', { class: 'board' });
   for (const [code, label, show, target, series] of defs) {
@@ -320,7 +882,7 @@ function scoreboard(iters, idx) {
     }
     board.append(tile);
   }
-  return h('section', {}, sectionHead('목표 달성 현황', '선택한 이터레이션 기준. 아래 작은 선은 이터레이션별 추이'), board);
+  return h('section', {}, sectionHead('목표 달성 현황', '선택한 이터레이션 기준. 아래 작은 선은 이터레이션별 추이'), board, boardNote(iters, idx));
 }
 
 function sparkline(vals) {
@@ -388,19 +950,47 @@ function timeline(iters, idx) {
     list.append(card);
   }
   sec.append(list);
+  put(sec, planNote(iters[idx], iters[idx - 1]));
   return sec;
 }
 
+// 목표 하나의 마지막 스테이지(승천이 15/20/25로 늘린다). deaths 집계에만 있어서 이름으로 찾는다.
+const finalStageOf = (it, name) => { const d = (it.deaths || []).find(x => x.name === name); return d ? d.finalStage : null; };
+// D를 사람이 읽는 말로 되돌린다 — "몇 번째 스테이지에서 죽었나". D의 정의를 그대로 뒤집은 것이다.
+const deathStageOf = (D, F) => (D == null || !F) ? null : 1 + (1 - D) * F;
+
+// 🔴 D가 뭔지 보고서 어디에도 없어서 사용자가 물었다(2026-09-19). 표를 읽으려면 이게 먼저다.
+function dExplainer(it) {
+  const probe = it.probe.perGoal || [];
+  const withD = probe.filter(g => g.D != null);
+  if (!withD.length) return null;
+  const hardest = withD.reduce((a, b) => (b.D > a.D ? b : a));
+  const F = finalStageOf(it, hardest.name);
+  const s = deathStageOf(hardest.D, F);
+  const box = h('div', { class: 'readout' });
+  box.append(h('div', { class: 'rd now' }, h('span', { class: 'lbl' }, 'D 읽는 법'),
+    h('div', { class: 'rd-body' },
+      h('p', {}, ...richKids('**D = 1 − (죽은 스테이지 − 1) ÷ 마지막 스테이지.** 봇이 “얼마나 못 갔나”를 0~1로 잰 값이라 **높을수록 어렵다**. 0이면 끝까지 갔고(클리어), 1이면 첫 스테이지에서 전멸이다.')),
+      h('p', {}, ...richKids('모든 목표를 **같은 스킬트리(고정)**로 돌려서 잰다 — 그래야 “트리가 세서 깼다”와 “맵이 쉬워서 깼다”가 안 섞인다. 정주행(판수·시간)과는 다른 측정이다.')),
+      F ? h('p', {}, ...richKids(`지금 가장 어려운 목표는 **${hardest.name}**이고 D ${fmt(hardest.D, 3)}다 — ${F}스테이지짜리인데 봇이 평균 **${fmt(s, 1)}스테이지**에서 죽는다는 뜻이다.`)) : null,
+      h('p', {}, ...richKids('그래서 아래 사다리의 각 줄에 죽는 자리를 같이 적어 뒀다. **승천이 마지막 스테이지를 15 → 20 → 25로 늘리므로**, 같은 맵이라도 승천마다 죽는 자리가 다르다.')))));
+  return box;
+}
+
 // 9개 목표
-function goalsSection(it) {
+function goalsSection(it, prev) {
   const sec = h('section', {}, sectionHead('9개 목표', '판수·시간은 정주행, 난이도 점수 D는 고정 트리 측정(0 = 전부 클리어, 1 = 첫 스테이지에서 전멸)'));
+  put(sec, dExplainer(it));
   const probe = it.probe.perGoal, camp = it.campaign.perGoal;
   const hasD = probe.some(g => g.D != null);
   const ladder = h('div', { class: 'ladder', role: 'list', 'aria-label': '난이도 서열' });
   probe.forEach((g, i) => {
     const bar = h('div', { class: 'bar' }, h('span', { style: `width:${g.D == null ? 0 : Math.round(g.D * 100)}%` }));
-    const row = h('div', { class: 'rung', role: 'listitem' }, h('span', {}, g.name), bar, h('span', { class: 'r num' }, g.D == null ? '—' : fmt(g.D, 3)));
-    hover(row, `${g.name} · D ${fmt(g.D, 3)} · 클리어율 ${pct(g.clearRate)} · ${g.n}판`);
+    const F = finalStageOf(it, g.name), s = deathStageOf(g.D, F);
+    const row = h('div', { class: 'rung', role: 'listitem' }, h('span', {}, g.name), bar,
+      h('span', { class: 'r num' }, g.D == null ? '—' : fmt(g.D, 3),
+        s == null ? null : h('span', { class: 'muted', style: 'display:block;font-size:11px;line-height:1.2' }, `${fmt(s, 1)}/${F}`)));
+    hover(row, `${g.name} · D ${fmt(g.D, 3)}${s == null ? '' : ` · 평균 ${fmt(s, 1)}스테이지에서 죽음(마지막 ${F})`} · 클리어율 ${pct(g.clearRate)} · ${g.n}판`);
     ladder.append(row);
     const rel = it.probe.relations[i];
     if (rel) ladder.append(h('div', { class: 'rel' }, h('span', { class: 'op' }, rel.op),
@@ -411,6 +1001,7 @@ function goalsSection(it) {
     h('tbody', {}, camp.map(g => h('tr', {}, h('td', {}, g.name), h('td', { class: 'r' }, fmt(g.meanAttempts, 1)), h('td', { class: 'r' }, fmt(g.attemptsStd, 1)),
       h('td', { class: 'r' }, g.clearRunGameMinutes == null ? '—' : fmt(g.clearRunGameMinutes, 1) + '분'), h('td', { class: 'r' }, `${g.clearedCampaigns}/${g.campaigns}`))))));
   sec.append(h('div', { class: 'two' }, hasD ? ladder : h('div', { class: 'empty' }, '난이도 측정(probe) 세션이 아직 없습니다.'), table));
+  put(sec, goalsNote(it, prev));
   return sec;
 }
 
@@ -428,6 +1019,7 @@ function characterSection(it) {
     h('tbody', {}, chars.map(c => h('tr', {}, h('td', {}, charName(c)), h('td', { class: 'r' }, full[c] ? [pct(full[c].rate), ' ', chip(full[c].rate >= DATA.targets.fullTreeClearRateMin ? 'pass' : 'fail', full[c].rate >= DATA.targets.fullTreeClearRateMin ? '안정' : '불안정')] : '—'),
       h('td', { class: 'r num' }, full[c] ? full[c].n : '—'), h('td', { class: 'r num' }, fmt((it.probe.G6.characterMeanD || {})[c], 3))))));
   sec.append(h('div', { class: 'two' }, h('div', { class: 'scroll' }, table), h('div', { class: 'scroll' }, fullTable)));
+  put(sec, charNote(it));
   return sec;
 }
 
@@ -471,6 +1063,7 @@ function skillSection(it) {
   groupNames.forEach((n, g) => tabs.append(h('button', { type: 'button', role: 'tab', id: 'skill-tab-' + g, onclick: () => show(g) }, n)));
   sec.append(tabs, body);
   show(0);
+  put(sec, skillNote(it));
   return sec;
 }
 function divStyle(v) {
@@ -484,7 +1077,8 @@ function divStyle(v) {
 // 쿨 감사
 function cooldownSection(it) {
   const cd = it.cooldowns;
-  const sec = h('section', {}, sectionHead('진화 쿨타임 감사', '맨몸 쿨(스킬트리·패시브 감소 전). 칸 = Lv1 → Lv10 초'));
+  // 제목에서 "진화 감사"를 뺐다 — C2 폐지(사용자 결정 2026-09-18). 이 표에 남은 목적은 C1(15초 상한) 확인이다.
+  const sec = h('section', {}, sectionHead('쿨타임 — 15초 상한(C1)', '맨몸 쿨(스킬트리·패시브 감소 전). 칸 = Lv1 → Lv10 초'));
   if (!cd.rows || !cd.rows.length) { sec.append(h('div', { class: 'empty' }, '쿨 감사표가 없습니다(세션 설정 runAudit).')); return sec; }
   const skills = [...new Set(cd.rows.map(r => r.skill))];
   const cols = [[-1, 0, '진화 전'], [0, 1, 'R0 1차'], [0, 2, 'R0 2차'], [1, 1, 'R1 1차'], [1, 2, 'R1 2차']];
@@ -494,14 +1088,12 @@ function cooldownSection(it) {
       const r = cd.rows.find(x => x.skill === s && x.route === route && x.tier === tier);
       if (!r) return h('td', { class: 'r muted' }, '—');
       const v = viol(s, route, tier);
-      const c1 = v.find(x => x.rule === 'C1'), c2 = v.find(x => x.rule === 'C2');
-      const td = h('td', { class: 'r num' }, `${fmt(r.lv1, 2)} → ${fmt(r.lv10, 2)}`,
-        c1 ? h('div', {}, chip('fail', '15초 초과')) : null,
-        c2 ? h('div', {}, chip(c2.severity === 'shorter' ? 'fail' : 'warn', c2.severity === 'shorter' ? '진화 후 짧아짐' : '진화 후 그대로')) : null);
-      if (c2) hover(td, `진화 전 단계 Lv10 ${fmt(c2.prevLv10, 2)}초 → 이 단계 Lv1 ${fmt(c2.lv1, 2)}초`);
-      return td;
+      const c1 = v.find(x => x.rule === 'C1');   // C2 표시는 뺐다 — 사용자 결정 2026-09-18
+      return h('td', { class: 'r num' }, `${fmt(r.lv1, 2)} → ${fmt(r.lv10, 2)}`,
+        c1 ? h('div', {}, chip('fail', '15초 초과')) : null);
     })))));
   sec.append(h('div', { class: 'scroll' }, table));
+  put(sec, cdNote(it));
   return sec;
 }
 
@@ -544,6 +1136,7 @@ function progressSection(it) {
       h('td', { class: 'r num' }, c.s3ClearMinutes == null ? '—' : fmt(c.s3ClearMinutes / 60, 2) + '시간'), h('td', { class: 'r num' }, c.allNodesMinutes == null ? '—' : fmt(c.allNodesMinutes / 60, 2) + '시간'),
       h('td', { class: 'r num' }, c.nodesTotal ? `${c.nodesOwnedEnd}/${c.nodesTotal}` : '—'))))));
   sec.append(h('div', { class: 'chart' }, s, legend), table);
+  put(sec, progNote(it));
   return sec;
 }
 
@@ -565,8 +1158,14 @@ function deathSection(it) {
       }),
       h('td', { style: 'white-space:nowrap' }, Object.entries(g.causes).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([e, n]) => `${enemyName(e)} ${n}`).join(' · ') || '—')))));
   sec.append(h('div', { class: 'scroll' }, table));
+  put(sec, deathNote(it));
   return sec;
 }
 
-render(DATA && DATA.iterations ? DATA.iterations.length - 1 : 0);
+// 기본 선택 = **측정이 있는** 마지막 이터레이션. 변경만 적용하고 아직 안 잰 이터레이션이 기본으로 열리면 빈 표만 보인다.
+render((() => {
+  const it = (DATA && DATA.iterations) || [];
+  for (let i = it.length - 1; i >= 0; i--) if ((it[i].runCount || 0) > 0) return i;
+  return Math.max(0, it.length - 1);
+})());
 </script>

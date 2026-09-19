@@ -30,16 +30,16 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 1
-    enemySpeedMultiplier: 1
-    enemyDamageMultiplier: 1
+    enemyHpMultiplier: 0.63
+    enemySpeedMultiplier: 0.92
+    enemyDamageMultiplier: 1.05
   - stageNumber: 2
     spawnCount: 13
     duration: 11
     spawnInterval: 0.7
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.035
+    eliteChance: 0
     evolutionItemDrops: 0
     ambushCount: 0
     ambushSquads: 1
@@ -47,92 +47,92 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
-    hopperChance: 0
+    hopperChance: 0.05
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 1.08
-    enemySpeedMultiplier: 1.03
-    enemyDamageMultiplier: 1.08
+    enemyHpMultiplier: 0.714
+    enemySpeedMultiplier: 0.94
+    enemyDamageMultiplier: 1.13
   - stageNumber: 3
     spawnCount: 23
     duration: 12
     spawnInterval: 0.12
     burstSize: 5
     burstRest: 2
-    eliteChance: 0.07
+    eliteChance: 0.03
     evolutionItemDrops: 0
     ambushCount: 0
     ambushSquads: 1
     paperPlaneChance: 0
     ufoChance: 0
-    shieldChance: 0
+    shieldChance: 0.06
     riderChance: 0
-    hopperChance: 0
+    hopperChance: 0.07
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 1.2
-    enemySpeedMultiplier: 1.06
-    enemyDamageMultiplier: 1.15
+    enemyHpMultiplier: 0.601
+    enemySpeedMultiplier: 0.95
+    enemyDamageMultiplier: 1.21
   - stageNumber: 4
     spawnCount: 30
     duration: 13
     spawnInterval: 0.5
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.1
+    eliteChance: 0.04
     evolutionItemDrops: 0
     ambushCount: 2
     ambushSquads: 1
-    paperPlaneChance: 0.08
+    paperPlaneChance: 0.04
     ufoChance: 0
-    shieldChance: 0
+    shieldChance: 0.07
     riderChance: 0
-    hopperChance: 0
+    hopperChance: 0.08
     surferChance: 0
-    airshipChance: 0
-    enemyHpMultiplier: 1.35
-    enemySpeedMultiplier: 1.09
-    enemyDamageMultiplier: 1.24
+    airshipChance: 0.059
+    enemyHpMultiplier: 0.737
+    enemySpeedMultiplier: 0.97
+    enemyDamageMultiplier: 1.3
   - stageNumber: 5
     spawnCount: 38
     duration: 14
     spawnInterval: 0.5
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.1
+    eliteChance: 0.04
     evolutionItemDrops: 0
     ambushCount: 2
     ambushSquads: 1
-    paperPlaneChance: 0.1
+    paperPlaneChance: 0.05
     ufoChance: 0
-    shieldChance: 0
-    riderChance: 0.35
-    hopperChance: 0
+    shieldChance: 0.08
+    riderChance: 0.01
+    hopperChance: 0.1
     surferChance: 0
-    airshipChance: 0.08
-    enemyHpMultiplier: 1.55
-    enemySpeedMultiplier: 1.13
-    enemyDamageMultiplier: 1.32
+    airshipChance: 0.072
+    enemyHpMultiplier: 0.956
+    enemySpeedMultiplier: 0.98
+    enemyDamageMultiplier: 1.39
   - stageNumber: 6
     spawnCount: 45
     duration: 15
     spawnInterval: 0.5
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.18
+    eliteChance: 0.05
     evolutionItemDrops: 0
     ambushCount: 3
     ambushSquads: 1
-    paperPlaneChance: 0.1
+    paperPlaneChance: 0.05
     ufoChance: 0
-    shieldChance: 0
-    riderChance: 0.2
-    hopperChance: 0
+    shieldChance: 0.09
+    riderChance: 0.01
+    hopperChance: 0.1
     surferChance: 0
-    airshipChance: 0.08
-    enemyHpMultiplier: 1.8
-    enemySpeedMultiplier: 1.16
-    enemyDamageMultiplier: 1.4
+    airshipChance: 0.081
+    enemyHpMultiplier: 1.256
+    enemySpeedMultiplier: 1
+    enemyDamageMultiplier: 1.49
   - stageNumber: 7
     spawnCount: 30
     duration: 15
@@ -143,36 +143,36 @@ MonoBehaviour:
     evolutionItemDrops: 1
     ambushCount: 0
     ambushSquads: 1
-    paperPlaneChance: 1
+    paperPlaneChance: 0.98
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 2.1
-    enemySpeedMultiplier: 1.19
-    enemyDamageMultiplier: 1.63
+    enemyHpMultiplier: 2.604
+    enemySpeedMultiplier: 1.02
+    enemyDamageMultiplier: 1.71
   - stageNumber: 8
     spawnCount: 43
     duration: 14
     spawnInterval: 0.12
     burstSize: 8
     burstRest: 2
-    eliteChance: 0.24
+    eliteChance: 0.05
     evolutionItemDrops: 0
     ambushCount: 2
     ambushSquads: 1
-    paperPlaneChance: 0.096
-    ufoChance: 0
-    shieldChance: 0.038
-    riderChance: 0.143
-    hopperChance: 0
+    paperPlaneChance: 0.05
+    ufoChance: 0.03
+    shieldChance: 0.1
+    riderChance: 0.015
+    hopperChance: 0.13
     surferChance: 0
-    airshipChance: 0.117
-    enemyHpMultiplier: 2.4
-    enemySpeedMultiplier: 1.22
-    enemyDamageMultiplier: 1.6
+    airshipChance: 0.104
+    enemyHpMultiplier: 7.182
+    enemySpeedMultiplier: 1.03
+    enemyDamageMultiplier: 1.73
   - stageNumber: 9
     spawnCount: 28
     duration: 13
@@ -185,74 +185,74 @@ MonoBehaviour:
     ambushSquads: 1
     paperPlaneChance: 0
     ufoChance: 0
-    shieldChance: 0.5
+    shieldChance: 0.55
     riderChance: 0
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 2.75
-    enemySpeedMultiplier: 1.25
-    enemyDamageMultiplier: 1.7
+    enemyHpMultiplier: 7.9
+    enemySpeedMultiplier: 1.05
+    enemyDamageMultiplier: 1.79
   - stageNumber: 10
     spawnCount: 53
     duration: 13
     spawnInterval: 0.36
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.31
+    eliteChance: 0.06
     evolutionItemDrops: 0
     ambushCount: 6
     ambushSquads: 1
-    paperPlaneChance: 0.075
-    ufoChance: 0
-    shieldChance: 0.084
-    riderChance: 0.14
-    hopperChance: 0
+    paperPlaneChance: 0.06
+    ufoChance: 0.03
+    shieldChance: 0.13
+    riderChance: 0.015
+    hopperChance: 0.17
     surferChance: 0
-    airshipChance: 0.176
-    enemyHpMultiplier: 3.6
-    enemySpeedMultiplier: 1.28
-    enemyDamageMultiplier: 1.8
+    airshipChance: 0.135
+    enemyHpMultiplier: 13.007
+    enemySpeedMultiplier: 1.06
+    enemyDamageMultiplier: 2
   - stageNumber: 11
     spawnCount: 56
     duration: 15
     spawnInterval: 0.3
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.45
+    eliteChance: 0.07
     evolutionItemDrops: 0
     ambushCount: 7
     ambushSquads: 1
-    paperPlaneChance: 0.091
-    ufoChance: 0.09
-    shieldChance: 0.089
-    riderChance: 0.106
-    hopperChance: 0
+    paperPlaneChance: 0.06
+    ufoChance: 0.05
+    shieldChance: 0.14
+    riderChance: 0.015
+    hopperChance: 0.19
     surferChance: 0
-    airshipChance: 0.297
-    enemyHpMultiplier: 5.5
-    enemySpeedMultiplier: 1.32
-    enemyDamageMultiplier: 2.25
+    airshipChance: 0.153
+    enemyHpMultiplier: 16.12
+    enemySpeedMultiplier: 1.08
+    enemyDamageMultiplier: 2.15
   - stageNumber: 12
     spawnCount: 61
     duration: 15
     spawnInterval: 0.11
     burstSize: 12
     burstRest: 1.9
-    eliteChance: 0.5
+    eliteChance: 0.07
     evolutionItemDrops: 0
     ambushCount: 7
     ambushSquads: 1
-    paperPlaneChance: 0.09
-    ufoChance: 0.098
-    shieldChance: 0.088
-    riderChance: 0
-    hopperChance: 0
+    paperPlaneChance: 0.06
+    ufoChance: 0.05
+    shieldChance: 0.14
+    riderChance: 0.015
+    hopperChance: 0.19
     surferChance: 0
-    airshipChance: 0.295
-    enemyHpMultiplier: 7.2
-    enemySpeedMultiplier: 1.35
-    enemyDamageMultiplier: 2.45
+    airshipChance: 0.162
+    enemyHpMultiplier: 28.728
+    enemySpeedMultiplier: 1.09
+    enemyDamageMultiplier: 2.68
   - stageNumber: 13
     spawnCount: 8
     duration: 15
@@ -269,110 +269,110 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    airshipChance: 1
-    enemyHpMultiplier: 8
-    enemySpeedMultiplier: 1.38
-    enemyDamageMultiplier: 2.26
+    airshipChance: 0.98
+    enemyHpMultiplier: 28.728
+    enemySpeedMultiplier: 1.11
+    enemyDamageMultiplier: 2.37
   - stageNumber: 14
     spawnCount: 68
     duration: 15
     spawnInterval: 0.1
     burstSize: 14
     burstRest: 2
-    eliteChance: 0.59
+    eliteChance: 0.08
     evolutionItemDrops: 0
     ambushCount: 8
     ambushSquads: 1
-    paperPlaneChance: 0.094
-    ufoChance: 0.101
-    shieldChance: 0.082
-    riderChance: 0.097
-    hopperChance: 0
+    paperPlaneChance: 0.08
+    ufoChance: 0.05
+    shieldChance: 0.17
+    riderChance: 0.03
+    hopperChance: 0.23
     surferChance: 0
-    airshipChance: 0.477
-    enemyHpMultiplier: 11
-    enemySpeedMultiplier: 1.41
-    enemyDamageMultiplier: 2.65
+    airshipChance: 0.46
+    enemyHpMultiplier: 26.46
+    enemySpeedMultiplier: 1.13
+    enemyDamageMultiplier: 2.94
   - stageNumber: 15
     spawnCount: 80
     duration: 15
     spawnInterval: 0.2
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.665
+    eliteChance: 0.08
     evolutionItemDrops: 0
     ambushCount: 8
     ambushSquads: 1
-    paperPlaneChance: 0.1
-    ufoChance: 0.106
-    shieldChance: 0.096
-    riderChance: 0
-    hopperChance: 0
+    paperPlaneChance: 0.08
+    ufoChance: 0.05
+    shieldChance: 0.17
+    riderChance: 0.03
+    hopperChance: 0.25
     surferChance: 0
-    airshipChance: 0.631
-    enemyHpMultiplier: 14.5
-    enemySpeedMultiplier: 1.44
-    enemyDamageMultiplier: 3.05
+    airshipChance: 0.49
+    enemyHpMultiplier: 38.64
+    enemySpeedMultiplier: 1.14
+    enemyDamageMultiplier: 3.2
   - stageNumber: 16
     spawnCount: 80
     duration: 15
     spawnInterval: 0.2
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.676
+    eliteChance: 0.08
     evolutionItemDrops: 0
     ambushCount: 8
     ambushSquads: 1
-    paperPlaneChance: 0.096
-    ufoChance: 0.094
-    shieldChance: 0.091
-    riderChance: 0.088
-    hopperChance: 0
+    paperPlaneChance: 0.08
+    ufoChance: 0.05
+    shieldChance: 0.19
+    riderChance: 0.03
+    hopperChance: 0.27
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 18.6
-    enemySpeedMultiplier: 1.45
-    enemyDamageMultiplier: 3.14
+    airshipChance: 0.53
+    enemyHpMultiplier: 50.4
+    enemySpeedMultiplier: 1.16
+    enemyDamageMultiplier: 3.36
   - stageNumber: 17
     spawnCount: 45
     duration: 15
     spawnInterval: 0.6
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.3
+    eliteChance: 0
     evolutionItemDrops: 0
     ambushCount: 12
     ambushSquads: 1
     paperPlaneChance: 0
     ufoChance: 0
-    shieldChance: 0.14
-    riderChance: 0.25
-    hopperChance: 0
+    shieldChance: 0
+    riderChance: 0
+    hopperChance: 0.98
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 23.8
-    enemySpeedMultiplier: 1.47
-    enemyDamageMultiplier: 3.24
+    enemyHpMultiplier: 186
+    enemySpeedMultiplier: 1.17
+    enemyDamageMultiplier: 3.52
   - stageNumber: 18
     spawnCount: 87
     duration: 15
     spawnInterval: 0.19
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.697
+    eliteChance: 0.09
     evolutionItemDrops: 0
     ambushCount: 9
     ambushSquads: 1
-    paperPlaneChance: 0.095
-    ufoChance: 0.108
-    shieldChance: 0.089
-    riderChance: 0.086
-    hopperChance: 0
+    paperPlaneChance: 0.09
+    ufoChance: 0.06
+    shieldChance: 0.22
+    riderChance: 0.03
+    hopperChance: 0.31
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 30.4
-    enemySpeedMultiplier: 1.48
-    enemyDamageMultiplier: 3.33
+    airshipChance: 0.68
+    enemyHpMultiplier: 234
+    enemySpeedMultiplier: 1.19
+    enemyDamageMultiplier: 3.62
   - stageNumber: 19
     spawnCount: 60
     duration: 15
@@ -386,53 +386,53 @@ MonoBehaviour:
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
-    riderChance: 1
+    riderChance: 0.98
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 38.9
-    enemySpeedMultiplier: 1.5
-    enemyDamageMultiplier: 3.43
+    enemyHpMultiplier: 288
+    enemySpeedMultiplier: 1.21
+    enemyDamageMultiplier: 3.73
   - stageNumber: 20
     spawnCount: 91
     duration: 15
     spawnInterval: 0.19
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.712
+    eliteChance: 0.1
     evolutionItemDrops: 0
     ambushCount: 8
     ambushSquads: 1
-    paperPlaneChance: 0.092
-    ufoChance: 0.104
-    shieldChance: 0.092
-    riderChance: 0
-    hopperChance: 0
+    paperPlaneChance: 0.09
+    ufoChance: 0.06
+    shieldChance: 0.23
+    riderChance: 0.03
+    hopperChance: 0.35
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 49.8
-    enemySpeedMultiplier: 1.51
-    enemyDamageMultiplier: 3.53
+    airshipChance: 0.81
+    enemyHpMultiplier: 372
+    enemySpeedMultiplier: 1.22
+    enemyDamageMultiplier: 3.83
   - stageNumber: 21
     spawnCount: 90
     duration: 15
     spawnInterval: 0.1
     burstSize: 16
     burstRest: 1.8
-    eliteChance: 0.7
+    eliteChance: 0.1
     evolutionItemDrops: 0
     ambushCount: 9
     ambushSquads: 1
-    paperPlaneChance: 0.095
-    ufoChance: 0.106
-    shieldChance: 0.087
-    riderChance: 0.077
-    hopperChance: 0
+    paperPlaneChance: 0.09
+    ufoChance: 0.06
+    shieldChance: 0.23
+    riderChance: 0.03
+    hopperChance: 0.35
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 63.7
-    enemySpeedMultiplier: 1.53
-    enemyDamageMultiplier: 3.64
+    airshipChance: 0.81
+    enemyHpMultiplier: 456
+    enemySpeedMultiplier: 1.24
+    enemyDamageMultiplier: 3.99
   - stageNumber: 22
     spawnCount: 26
     duration: 15
@@ -444,35 +444,35 @@ MonoBehaviour:
     ambushCount: 4
     ambushSquads: 1
     paperPlaneChance: 0
-    ufoChance: 1
-    shieldChance: 0.16
+    ufoChance: 0.98
+    shieldChance: 0.98
     riderChance: 0
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 81.6
-    enemySpeedMultiplier: 1.54
-    enemyDamageMultiplier: 3.75
+    enemyHpMultiplier: 552
+    enemySpeedMultiplier: 1.25
+    enemyDamageMultiplier: 4.1
   - stageNumber: 23
     spawnCount: 96
     duration: 15
     spawnInterval: 0.17
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.72
+    eliteChance: 0.1
     evolutionItemDrops: 0
     ambushCount: 10
     ambushSquads: 1
-    paperPlaneChance: 0.093
-    ufoChance: 0.11
-    shieldChance: 0.084
-    riderChance: 0.074
-    hopperChance: 0
+    paperPlaneChance: 0.09
+    ufoChance: 0.06
+    shieldChance: 0.23
+    riderChance: 0.03
+    hopperChance: 0.35
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 104.4
-    enemySpeedMultiplier: 1.56
-    enemyDamageMultiplier: 3.86
+    airshipChance: 0.81
+    enemyHpMultiplier: 684
+    enemySpeedMultiplier: 1.27
+    enemyDamageMultiplier: 4.2
   - stageNumber: 24
     spawnCount: 44
     duration: 15
@@ -487,32 +487,32 @@ MonoBehaviour:
     ufoChance: 0
     shieldChance: 0.5
     riderChance: 0
-    hopperChance: 0
+    hopperChance: 0.98
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 133.6
-    enemySpeedMultiplier: 1.57
-    enemyDamageMultiplier: 3.98
+    enemyHpMultiplier: 828
+    enemySpeedMultiplier: 1.28
+    enemyDamageMultiplier: 4.31
   - stageNumber: 25
     spawnCount: 96
     duration: 15
     spawnInterval: 0.17
     burstSize: 0
     burstRest: 0
-    eliteChance: 0.723
+    eliteChance: 0.1
     evolutionItemDrops: 0
     ambushCount: 10
     ambushSquads: 1
-    paperPlaneChance: 0.091
-    ufoChance: 0.092
-    shieldChance: 0.08
-    riderChance: 0
-    hopperChance: 0
+    paperPlaneChance: 0.09
+    ufoChance: 0.06
+    shieldChance: 0.23
+    riderChance: 0.03
+    hopperChance: 0.35
     surferChance: 0
-    airshipChance: 0.7
-    enemyHpMultiplier: 171
-    enemySpeedMultiplier: 1.59
-    enemyDamageMultiplier: 4.1
+    airshipChance: 0.81
+    enemyHpMultiplier: 1032
+    enemySpeedMultiplier: 1.3
+    enemyDamageMultiplier: 4.51
   extendedHpGrowth: 1.28
   extendedDamageGrowth: 1.03
   extendedSpeedGrowth: 1.01

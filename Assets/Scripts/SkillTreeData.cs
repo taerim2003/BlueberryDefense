@@ -26,10 +26,15 @@ public class SkillNode
     // SkillUnlock: 이 스킬을 레벨업 카드 풀에 해금. SkillEnhance: 어느 스킬 강화인지(표시용, 효과는 id 레지스트리).
     public ActiveSkillId skill = ActiveSkillId.BasicAttack;
 
-    // 노드 비용 "대역"(0=루트, 1~6). 노드마다 정수 비용을 직접 치지 않고 대역만 지정한다.
-    // 실제 정수 비용은 SkillTreeSave.CostOf가 계산(대역마다 곱으로 오름 — 공식 상수만 바꾸면 전체 밸런싱).
-    // 인게임엔 계산된 정수만 보이고 등급은 노출 안 함.
+    // 노드 "대역"(0=루트, 1~6). 일반 노드 이름의 숫자 I~VI와 같다.
+    // 🔴 2026-09-19부터 **비용과 무관하다** — 표시·그룹용으로만 남겼다(지우면 84노드 YAML의 tier 값이 날아간다).
     public int tier = 1;
+
+    // 이 노드의 1레벨 정수 가격. **이 값이 곧 가격이다**(2026-09-19 사용자 — 등비 공식 폐기).
+    // 🔴 규칙: 모든 간선에서 자식 가격 ≥ 부모 가격. 단 자식이 해금류(SkillUnlock/SpecialUnlock)면 예외 —
+    //    해금은 즉시 강해지지 않으므로 싸게 둬 빨리 찍게 유도한다(그 할인은 이 값에 이미 녹아 있다).
+    // 검사: node Tools/SkillTree/verify-costs.js  (위반 0건이어야 한다)
+    public int cost = 20;
 
     // Normal 노드가 올리는 스탯 축과 그 크기. SkillEffects.Compute가 이 둘을 그대로 읽는다.
     public MetaUpgradeId effect = MetaUpgradeId.Attack;
@@ -124,25 +129,13 @@ public static class SkillTreeSave
         return set;
     }
 
-    // ── 노드 비용(정수) ── tier = **대역(1~6)**. 일반 노드 이름의 숫자 I~VI와 같다(사용자 결정 2026-09-14).
-    //   비용은 대역마다 **곱으로** 오른다: 20 · 80 · 320 · 1280 · 5120 · 20480. tier 0(루트) = 1정수.
-    //   🔴 곱셈인 이유: 선형이면 옆 대역과 1.x배 차이라 해금 순서가 안 잡힌다. 곱으로 올리고 그 벽은
-    //      「부유」(정수 획득) 노드로 넘게 해서, 선행으로 묶지 않아도 "지금 찍을 수 있는 노드"가 한 대역에 모인다.
-    //   수치는 시뮬레이터로 골랐다(k대역이 열릴 때 k+1대역 ≈ 판 1회, k+2대역 ≈ 판 3~5회). 전체 길이는 Base, 대역 간 벽 높이는 Ratio.
-    public const int TierCostBase = 20;
-    public const float TierCostRatio = 4f;
-
-    public static int TierCost(int tier) => tier <= 0 ? 1 : Mathf.RoundToInt(TierCostBase * Mathf.Pow(TierCostRatio, tier - 1));
-
-    // 해금 노드(스킬 해금 + 리롤·진화 같은 기타 해금)는 같은 대역 일반 노드 가격의 60% —
-    // 해금은 즉시 강해지지 않아서, 싸게 둬 빨리 찍게 유도한다(사용자 결정 2026-09-14). 루트(tier 0)는 1정수 그대로.
-    public const float UnlockCostMult = 0.6f;
-
-    // 노드의 기본(1레벨) 비용 = 대역 비용(해금 노드는 그 60%).
-    public static int CostOf(SkillNode n) =>
-        (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SpecialUnlock) && n.tier > 0
-            ? Mathf.Max(1, Mathf.RoundToInt(TierCost(n.tier) * UnlockCostMult))
-            : TierCost(n.tier);
+    // ── 노드 비용(정수) ──
+    //   🔴 대역(tier) 등비 공식은 **폐기됐다**(2026-09-19 사용자: "3.2배 등비 공식 아예 버려").
+    //      예전엔 20·64·205·655·2097·6711 여섯 값뿐이라 **같은 대역 노드가 전부 같은 가격**이었고
+    //      (tier 1에 13개 노드가 전부 20정수) "8 → 15 → 20" 같은 촘촘한 간격을 만들 수가 없었다.
+    //      이제 가격은 노드가 직접 갖는다(SkillNode.cost) — 84노드가 서로 다른 값이다.
+    //   ⚠️ Max(1,…)은 안전망이다. cost가 안 적힌 옛/백업 에셋이 0으로 읽혀 노드가 공짜가 되는 걸 막는다.
+    public static int CostOf(SkillNode n) => Mathf.Max(1, n.cost);
 
     // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐 — 레벨제 Normal 노드용)
     private const float LevelCostGrowth = 1.5f;

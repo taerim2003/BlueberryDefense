@@ -336,17 +336,23 @@ public class BotPilot : MonoBehaviour
     // ───────────────────────── 판 진입 (타이틀 정상 흐름) ─────────────────────────
     private IEnumerator EnterRun(BotGoal goal, CharacterDefinition ch)
     {
+        // 🔴 2026-09-18 정지 3건이 전부 이 메서드 안에서 났다(trace.log 마지막 줄이 세 번 다 "enterRun 시작").
+        //    정상 전환은 3.5초다. 어느 문장인지 좁히려고 단계마다 도장을 찍는다 — 다음 정지 때 trace.log가 답을 준다.
         if (SceneManager.GetActiveScene().name != TitleScene)
         {
+            Trace("  타이틀 복귀 요청 전");
             if (GameManager.Instance != null) GameManager.Instance.ReturnToTitle();
             else SceneFade.LoadScene(TitleScene);
+            Trace("  타이틀 복귀 요청 후");
         }
         yield return WaitReal(() => SceneManager.GetActiveScene().name == TitleScene && FindAnyObjectByType<TitleController>() != null, 60f, "타이틀 로드");
+        Trace("  타이틀 로드됨");
         yield return new WaitForSecondsRealtime(1.2f);
         Tick();
 
         TitleController title = FindAnyObjectByType<TitleController>();
         Get<Button>(title, "playButton").onClick.Invoke();
+        Trace("  play 버튼 누름");
         yield return new WaitForSecondsRealtime(0.4f);
         Tick();
 
@@ -357,6 +363,7 @@ public class BotPilot : MonoBehaviour
         Call(cs, "Pick", ci);
         if (cs.Selected != chars[ci]) Fail("캐릭터 선택이 거부됨(잠김?): " + ch.name);
         Get<Button>(cs, "confirmButton").onClick.Invoke();
+        Trace("  캐릭터 확정");
         yield return new WaitForSecondsRealtime(0.4f);
         Tick();
 
@@ -372,9 +379,11 @@ public class BotPilot : MonoBehaviour
         Button start = Get<Button>(ms, "startButton");
         if (!start.interactable) Fail("시작 버튼 비활성: " + goal.map);
         start.onClick.Invoke();
+        Trace("  시작 버튼 누름");
 
         yield return WaitReal(() => SceneManager.GetActiveScene().name == BattleScene && GameManager.Instance != null
                                      && FindAnyObjectByType<PlayerSkills>() != null, 60f, "전투 로드");
+        Trace("  전투 로드됨");
         yield return new WaitForSecondsRealtime(0.3f);
         if (RunConfig.Map == null || RunConfig.Map.name != goal.map || RunConfig.AscensionLevel != goal.ascension
             || RunConfig.Character == null || RunConfig.Character.name != ch.name)
@@ -537,7 +546,26 @@ public class BotPilot : MonoBehaviour
         return d;
     }
 
+    // 🔴 대공에 강한 스킬(2026-09-19 사용자 지정). 8회차 측정의 대공 축(비행 적에게 준 피해/시간)이 근거다:
+    //    Sniping 5891 · Homing 5727 · Lightning 2297 · EagleDrop 827.
+    //    나머지는 BasicAttack 752 · Swing 156 · GrapeToss 62 · Whirlwind 31 · Shotgun 3 · Orb 0 · Rewind 0.
+    //    이제는 **사거리·유도 성능의 차이**다 — "때릴 수 있나"를 막던 requiresAntiAir 게이트는 폐지됐고,
+    //    비행 적은 히트박스가 닿으면 무엇에든 맞는다. 회오리가 지상에 묶여 못 닿고, 저격·호밍은 쫓아가서 맞힌다.
+    // ⚠️ 위 숫자는 **게이트가 살아 있던 때** 잰 것이다 — 게이트가 사라지면 오브·산탄 쪽이 특히 오를 수 있다.
+    //    9회차 측정 뒤 보고서 스킬 표의 대공 열로 이 목록을 **다시 뽑을 것.**
+    private static readonly HashSet<ActiveSkillId> AntiAirSkills = new HashSet<ActiveSkillId>
+    {
+        ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.Lightning, ActiveSkillId.EagleDrop,
+    };
+
+    // 대공 스킬이 하나도 없을 때 대공 카드를 고를 확률. 1.0으로 두지 않는 이유 —
+    // 항상 고르면 모든 판의 빌드가 같아져서 "대공 유무가 만드는 차이"를 측정할 수 없게 된다.
+    private const float AntiAirPickChance = 0.75f;
+
     // 레벨업 3택 우선순위(사용자 지정 2026-09-18 — 무작위만으로는 2차 진화가 거의 안 만들어져서):
+    //   ⓪ **대공에 강한 스킬이 하나도 없으면** 그 스킬의 획득 카드(확률 AntiAirPickChance) — 2026-09-19 사용자
+    //      비행선은 높이 떠서 지상에 묶인 스킬로는 닿지 않는다. 사람은 하늘이 안 잡히는 걸 보고 대공을 고르는데
+    //      무작위 봇은 그걸 못 봐서, 봇의 후반이 사람보다 구조적으로 약해지는 원인 중 하나였다.
     //   ① 보유한 **1차 진화 스킬**의 2차 열쇠(`EvolutionRoutes.Stage2Prereq`) 중 아직 없는 것의 획득 카드
     //   ② 보유한 **진화 전 스킬**(액티브·패시브)의 1차 루트 조건(`RoutePrereq`, 두 루트 모두) 중 아직 없는 것의 획득 카드
     //   ③ 보유한 스킬의 레벨업 카드   ④ 아무 카드
@@ -589,6 +617,20 @@ public class BotPilot : MonoBehaviour
             var pid = OptField<PassiveSkillId?>(o, "PassiveId");
             return (sid.HasValue && actives.Contains(sid.Value)) || (pid.HasValue && passives.Contains(pid.Value));
         }).ToList();
+
+        // ⓪ 대공 구멍 메우기 — 보유 스킬에 대공이 하나도 없을 때만 연다.
+        bool hasAntiAir = ps != null && ps.EquippedSkills.Any(s => AntiAirSkills.Contains(s.Id));
+        if (!hasAntiAir)
+        {
+            List<int> air = all.Where(i =>
+            {
+                object o = opts.GetValue(i);
+                if (!OptField<bool>(o, "IsNew")) return false;
+                var sid = OptField<ActiveSkillId?>(o, "SkillId");
+                return sid.HasValue && AntiAirSkills.Contains(sid.Value);
+            }).ToList();
+            if (air.Count > 0 && rng.NextDouble() < AntiAirPickChance) { rule = "antiAir"; return air; }
+        }
 
         List<int> pool = Match(keyActive1, keyPassive1);
         if (pool.Count > 0) { rule = "stage2Key"; return pool; }

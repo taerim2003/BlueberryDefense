@@ -217,7 +217,31 @@ public class HUDController : MonoBehaviour
         healthFillTween = healthFill.DOFillAmount(ratio, 0.25f).SetEase(isDamage ? Ease.OutCubic : Ease.OutBack);
 
         if (isDamage && healthPanel != null)
-            healthPanel.DOShakeAnchorPos(0.3f, 8f, 15, 90, false, true);
+            ShakeHealthPanel();
+    }
+
+    private Tween healthShakeTween;
+    private Vector2 healthPanelHome;
+    private bool healthPanelHomeSet;
+
+    // 겹쳐 흔들면 DOTween이 흔들린 자리를 새 기준으로 잡아 오프셋이 누적된다 — 연타로 맞으면 체력바가
+    // 제자리로 안 돌아오고 화면 밖까지 걸어 나갔다(9/18 사용자). ScreenShake와 같은 처방: 이전 것을 끄고
+    // 기준점부터 복구한 뒤 다시 흔든다. 기준점은 처음 한 번만 잡는다(패널의 제자리는 고정이다).
+    private void ShakeHealthPanel()
+    {
+        if (!healthPanelHomeSet)
+        {
+            healthPanelHome = healthPanel.anchoredPosition;
+            healthPanelHomeSet = true;
+        }
+
+        if (healthShakeTween != null && healthShakeTween.IsActive()) healthShakeTween.Kill();
+        healthPanel.anchoredPosition = healthPanelHome;
+
+        // 레벨업 등으로 timeScale=0이 되면 스케일 시간 트윈은 흔들린 자리에서 얼어붙는다 → unscaled로 끝낸다.
+        healthShakeTween = healthPanel.DOShakeAnchorPos(0.3f, 8f, 15, 90, false, true)
+                                      .SetUpdate(true)
+                                      .OnComplete(() => healthPanel.anchoredPosition = healthPanelHome);
     }
 
     // 체력 위험 시 화면 가장자리 붉은 점멸. 오버힐은 빼고 **순수 최대 체력** 대비로 판정한다 —
@@ -364,17 +388,14 @@ public class HUDController : MonoBehaviour
 
     // 슬롯 아래 보석 = 진화 횟수(0~2). 예전엔 투자한 path 수였지만 진화가 2루트×2티어로 바뀌면서
     // 루트는 항상 하나뿐이라 "몇 차 진화까지 갔나"를 보여주는 게 맞다.
+    // 🔴 2026-09-19 사용자 결정: 진화 차수 보석을 화면에서 뺀다(슬롯 좌측 상단에 뜨는 게 보기 싫다).
+    //    씬 배선(gemIcons)과 그림 배열(gemIconSprites)은 그대로 둔다 — 되살리려면 아래 false를 `i < stage`로만 되돌리면 된다.
     private void SetPathIcons(ActiveSlot slot, EquippedSkill skill)
     {
         if (slot.gemIcons == null) return;
 
-        int stage = skill != null ? skill.EvolutionStage : 0;
         for (int i = 0; i < slot.gemIcons.Length; i++)
-        {
-            bool filled = i < stage;
-            slot.gemIcons[i].enabled = filled;
-            if (filled) slot.gemIcons[i].sprite = GetIcon(gemIconSprites, i);
-        }
+            slot.gemIcons[i].enabled = false;
     }
 
     private static Sprite GetIcon(Sprite[] icons, int index) =>

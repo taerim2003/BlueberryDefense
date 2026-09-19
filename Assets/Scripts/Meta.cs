@@ -43,16 +43,12 @@ public static class MetaBonuses
     public static float WhirlwindFlyDamageBonus = 0f; // 회오리의 비행 적 추가 피해(전역 위에 더해짐)
     public static float BossDamageBonus = 0f;     // 보스 적 추가 피해 배율 가산(0~)
     public static float CritDamageBonus = 0f;     // 치명타 피해 배율 가산 — PlayerPassives.AssassinateCritMultiplier에 더해진다
-    public static float HealDropChanceBonus = 0f; // 적 처치 시 하트 드랍 확률 가산(0~1)
 
-    public static bool OrbCanHitFlying = false;         // 기본 오브도 비행 적 타격 가능
     public static bool HomingMissileGrowth = false;     // 호밍: 20회 사용마다 미사일 +1 (스킬트리 해금 시에만)
     public static bool WhirlwindCooldownBonus = false;  // 회오리는 쿨타임 감소 효과를 1.5배로 받음
-    public static float AccelCooldownBonus = 0f;        // 가속 패시브 보유 시 추가되는 쿨타임 감소 가산(0~1)
     public static float ThunderCooldownPerStrike = 0f;  // 낙뢰 1회 타격마다 낙뢰 쿨타임 감소(초)
     public static bool SnipingExtraTarget = false;      // 스나이핑 저격 타겟 +1
     public static bool RewindSlowAll = false;           // 되감기 사용 시 모든 적 둔화
-    public static bool ShotgunCloseBonus = false;       // 산탄 버프 받은 공격이 근거리 적에게 +2타
     public static int ArrowStartLevel = 1;              // 기본공격(화살) 시작 레벨
     public static int SwingStartLevel = 1;              // 기본공격(휘두르기) 시작 레벨 — 파인애플용
     public static int RerollCount = 0;                  // 레벨업 선택지 리롤 가능 횟수(게임당)
@@ -115,15 +111,11 @@ public static class MetaBonuses
         WhirlwindFlyDamageBonus = 0f;
         BossDamageBonus = 0f;
         CritDamageBonus = 0f;
-        HealDropChanceBonus = 0f;
-        OrbCanHitFlying = false;
         HomingMissileGrowth = false;
         WhirlwindCooldownBonus = false;
-        AccelCooldownBonus = 0f;
         ThunderCooldownPerStrike = 0f;
         SnipingExtraTarget = false;
         RewindSlowAll = false;
-        ShotgunCloseBonus = false;
         ArrowStartLevel = 1;
         SwingStartLevel = 1;
         RerollCount = 0;
@@ -219,17 +211,13 @@ public static class SkillEffects
         // ── 강화/해금 노드가 채우는 것(코드 주도) ──
         public float EagleFlyDmgPct;     // 독수리 비행 추가피해
         public float WhirlwindFlyDmgPct; // 회오리 비행 추가피해
-        public float HealDropPct;        // 하트 드랍 확률 가산
-        public bool OrbFly;              // 오브 비행 타격 가능
         public bool HomingGrowth;        // 호밍 20회 사용마다 미사일 +1
         public bool WhirlwindCdBonus;    // 회오리 쿨감 1.5배
-        public float AccelCdPct;         // 가속 패시브 추가 쿨감(%p)
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;      // 화살 시작 레벨(0=미설정)
         public int SwingStartLevel;      // 휘두르기 시작 레벨(0=미설정)
         public bool SnipingExtraTarget;  // 스나이핑 타겟 +1
         public bool RewindSlow;          // 되감기 시 모든 적 둔화
-        public bool ShotgunClose;        // 산탄 버프 근거리 +2타
 
         public int ArrowPierce;          // 화살 기본 관통 +N
         public float SwingKnockbackMult; // 휘두르기 넉백 배율(1=기본)
@@ -310,7 +298,6 @@ public static class SkillEffects
                 // 🔴 기본 오브는 둔화를 **안 건다**. 이 노드가 둔화를 켠다(오브 프리팹 slowMultiplier 0.8 / 2초).
                 case "orb_BasicSlow": t.OrbSlowUnlocked = true; break;
                 case "orb_Pierce": t.OrbTargets += 3; break;
-                case "orb_BasicFly": t.OrbFly = true; break; // 구 트리 노드 — 재설계 목록엔 없지만 살려 둔다
 
                 // ── 독수리 투하 ──
                 case "eagle_DropNum": t.EagleDrops += 1; break;
@@ -323,7 +310,6 @@ public static class SkillEffects
                 // ── 산탄 ──
                 case "shotgun_BonusHit": t.ShotgunBonusHit += 1; break;
                 case "shotgun_Crit": t.ShotgunCritPct += 30f; break;
-                case "Shotgun_CloseBonus": t.ShotgunClose = true; break; // 구 트리 노드
 
                 // ── 스나이핑 ──
                 case "Sniping_TwoTarget": t.SnipingExtraTarget = true; break;
@@ -355,9 +341,6 @@ public static class SkillEffects
                 case "knowledge_BaseXp": t.PassiveKnowledge += 0.10f; break;
                 case "knowledge_EvoHint": t.ShowEvolutionHint = true; break;
 
-                // 구 트리 잔재 — 하트 드랍(루트)·가속 쿨감. 재설계 목록엔 없지만 노드가 남아 있으면 계속 동작한다.
-                case "root_hp": t.HealDropPct += 4f * lv; break;
-                case "refresh_bonus": t.AccelCdPct += 2f * lv; break;
             }
         }
         return t;

@@ -170,14 +170,6 @@ MonoBehaviour:
     m_Localized: (With Strawberry) Start Arrow Shot at level 3
     m_Metadata:
       m_Items: []
-  - m_Id: 269044864983065
-    m_Localized: Orb Hits Flyers
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269044864983066
-    m_Localized: The basic orb can now hit flying enemies
-    m_Metadata:
-      m_Items: []
   - m_Id: 269044864983067
     m_Localized: Anti-Air I
     m_Metadata:
@@ -307,16 +299,6 @@ MonoBehaviour:
 
       slowing
       every blueberry on the field.'
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269044864983099
-    m_Localized: Close Aim
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269044864983100
-    m_Localized: 'Buckshot-buffed attacks hit nearby enemies
-
-      2 extra times.'
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983101
@@ -2025,6 +2007,26 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 13076071072866304
     m_Localized: Lightning rod radius +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866305
+    m_Localized: "+{0} volley"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866306
+    m_Localized: "[linked: '{0}']"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866307
+    m_Localized: "[linked: '{0}' evolved]"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866310
+    m_Localized: "Flight III"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13076071072866311
+    m_Localized: "+30% damage to flying enemies"
     m_Metadata:
       m_Items: []
   references:

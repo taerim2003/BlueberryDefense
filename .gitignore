@@ -120,3 +120,6 @@ InitTestScene*.unity*
 
 # 봇 플레이테스트 산출물(판 기록·보고서) — 원본 데이터는 로컬에만. 루프 절차는 .claude/skills/balance-loop
 /BotRuns/
+
+# Unity 크래시 복구 씬(2.6MB) — 에디터가 비정상 종료될 때마다 쌓인다. 작업물이 아니다.
+/Assets/_Recovery/

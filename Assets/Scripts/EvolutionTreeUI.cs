@@ -212,7 +212,9 @@ public class EvolutionTreeUI : MonoBehaviour
                                           // 열쇠는 **어느 진화체를 만들어야 하는지**를 이름으로 알려준다 — 안 그러면 왜 잠겼는지 알 길이 없다.
                                           : keyMissing && !owned ? Loc.F("ui.evotree.lockedKey", keyName) + " " + effect
                                           : locked ? Loc.T("ui.evotree.locked") + " " + effect
-                                          : effect;
+                                          // 🔴 열린 칸에도 **왜 열렸는지**를 적는다(2026-09-19 사용자) — 예전엔 잠긴 칸에만 조건이 보여서
+                                          //    "지금 이게 왜 가능한지"를 알 길이 없었다. 2차 칸은 연계 스킬이 아니라 열쇠 진화체가 조건이다.
+                                          : OpenPrereqTag(tier, prereqName, keyName) + effect;
                     node.description.color = locked ? LockedTextColor : Color.white;
                 }
 
@@ -304,6 +306,16 @@ public class EvolutionTreeUI : MonoBehaviour
     private string RouteEffect(int route, int tier) => isPassiveMode
         ? PlayerPassives.DescribePathEffect(currentPassive.Id, route, tier)
         : PlayerSkills.DescribePathEffect(currentSkill.Id, route, tier);
+
+    // 잠기지 않은 칸(선택 가능·이미 획득)에 붙는 "이게 왜 열렸나" 표기. 조건이 없는 루트는 빈 문자열이다.
+    // 1차 칸은 **연계 스킬**(RoutePrereqName), 2차 칸은 **열쇠 진화체**(Stage2PrereqName)가 조건이다 —
+    // 잠김 문구(lockedPrereq/lockedKey)가 갈리는 기준과 같게 맞춘다.
+    private static string OpenPrereqTag(int tier, string prereqName, string keyName)
+    {
+        string name = tier >= 2 ? keyName : prereqName;
+        if (string.IsNullOrEmpty(name)) return "";
+        return Loc.F(tier >= 2 ? "ui.evotree.keyPrereq" : "ui.evotree.prereq", name) + " ";
+    }
 
     private void OnRouteClicked(int route)
     {

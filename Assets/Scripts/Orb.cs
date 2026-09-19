@@ -14,7 +14,6 @@ public class Orb : MonoBehaviour
     public float Damage { get; set; }
     public bool ApplyGemVulnerable { get; set; }
     public float CritChance { get; set; } // 타격 기준: 틱마다 개별적으로 치명타를 굴린다
-    public float FlyingDamageMultiplier { get; set; } = 1f;
     // 🔴 기본 오브는 둔화를 **걸지 않는다** — 스킬트리 「끈적한 오브」(orb_BasicSlow)를 사야 켜진다(FireOrb가 세팅).
     //    아래 두 보너스(진화 R0)는 둔화가 켜져 있을 때만 의미가 있다.
     public bool SlowsEnemies { get; set; }
@@ -52,7 +51,6 @@ public class Orb : MonoBehaviour
 
         // 풀링된 적은 죽어도 null이 되지 않는다 — IsAlive로 걸러야 반납된 적을 계속 붙잡고 있지 않는다.
         overlappingEnemies.RemoveWhere(e => e == null || !e.IsAlive);
-        bool canHitFlying = FlyingDamageMultiplier > 1f || MetaBonuses.OrbCanHitFlying; // 기본 오브는 비행형 타격 불가, 공중 적 추가 피해 진화(path0) 또는 스킬트리로 해금
 
         // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로** 예산이 닿는 만큼만 붙잡는다.
         // 예산은 "처음 만난 적"에만 소모되고, 한 번 붙잡은 적은 죽을 때까지 계속 간다.
@@ -68,7 +66,6 @@ public class Orb : MonoBehaviour
         {
             Enemy enemy = ordered[i].enemy;
             if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
-            if (enemy.RequiresAntiAir && !canHitFlying) continue; // 대공 전용 적(UFO)만 차단 — 종이비행기는 히트박스로만 판정
 
             if (!claimed.Contains(enemy))
             {
@@ -79,7 +76,7 @@ public class Orb : MonoBehaviour
 
             nextTickTime[enemy] = Time.time + tickInterval;
 
-            float baseDamage = enemy.IsFlying ? Damage * FlyingDamageMultiplier : Damage;
+            float baseDamage = Damage;
             enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb);
             if (SlowsEnemies)
                 enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);

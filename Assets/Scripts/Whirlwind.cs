@@ -29,7 +29,6 @@ public class Whirlwind : MonoBehaviour
     public float ExtraLifetime { get; set; } // 레벨업 고유 강화: 지속시간(초) 추가
     // 0보다 크면 프리팹의 lifetime 대신 이 값을 쓴다 — `Prog_Whirlwind.baseDuration`이 넘겨 준다.
     public float BaseLifetimeOverride { get; set; }
-    public bool CanHitFlying { get; set; } = true; // 미니 회오리는 비행 적을 타격할 수 없다
     // 켜면 표적을 **x·y 둘 다** 쫓는다(중력 없음) — 회오리 R0 「분열 회오리」 본체가 하늘 높이 뜬 비행선까지 따라가게(사용자 결정 2026-09-18).
     // 표적이 없으면 원래대로 땅으로 내려와 좌우로만 움직인다. 미니 회오리는 끈 채로 태어나 소멸 자리에서 떨어진다.
     public bool HomeInY { get; set; }
@@ -94,7 +93,7 @@ public class Whirlwind : MonoBehaviour
         tickBuffer.AddRange(overlappingEnemies);
         foreach (Enemy enemy in tickBuffer)
         {
-            if (enemy == null || !enemy.IsAlive || (enemy.RequiresAntiAir && !CanHitFlying) || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
+            if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval * TickIntervalMult;
 
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
@@ -149,8 +148,7 @@ public class Whirlwind : MonoBehaviour
     // 회오리 이동 속도에 비하면 0.1초는 눈에 띄지 않는다. 표적이 죽으면 주기와 무관하게 즉시 다시 찾는다.
     private Enemy FindTarget()
     {
-        if (cachedTarget != null && cachedTarget.IsAlive && Time.time < nextRetargetTime
-            && !(cachedTarget.RequiresAntiAir && !CanHitFlying))
+        if (cachedTarget != null && cachedTarget.IsAlive && Time.time < nextRetargetTime)
             return cachedTarget;
 
         nextRetargetTime = Time.time + RetargetInterval;
@@ -164,7 +162,6 @@ public class Whirlwind : MonoBehaviour
         {
             Enemy enemy = active[i];
             if (enemy == null || !enemy.IsAlive) continue;
-            if (enemy.RequiresAntiAir && !CanHitFlying) continue; // 때릴 수 없는 적은 쫓아가지도 않는다
             float sqrDist = ((Vector2)enemy.transform.position - self).sqrMagnitude;
             if (sqrDist < nearestSqrDist)
             {

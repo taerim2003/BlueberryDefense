@@ -28,7 +28,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 1.5
+    enemyHpMultiplier: 0.54
     enemySpeedMultiplier: 1.08
     enemyDamageMultiplier: 1
   - stageNumber: 2
@@ -46,7 +46,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.05
     surferChance: 0.3
-    enemyHpMultiplier: 1.7
+    enemyHpMultiplier: 0.61
     enemySpeedMultiplier: 1.11
     enemyDamageMultiplier: 1.08
   - stageNumber: 3
@@ -64,7 +64,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.05
     surferChance: 0.4
-    enemyHpMultiplier: 2.2
+    enemyHpMultiplier: 0.79
     enemySpeedMultiplier: 1.14
     enemyDamageMultiplier: 1.15
   - stageNumber: 4
@@ -82,7 +82,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.15
     surferChance: 0.35
-    enemyHpMultiplier: 2.7
+    enemyHpMultiplier: 0.97
     enemySpeedMultiplier: 1.17
     enemyDamageMultiplier: 1.24
   - stageNumber: 5
@@ -100,7 +100,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.05
     surferChance: 0.85
-    enemyHpMultiplier: 3.5
+    enemyHpMultiplier: 1.26
     enemySpeedMultiplier: 1.21
     enemyDamageMultiplier: 1.32
   - stageNumber: 6
@@ -118,7 +118,7 @@ MonoBehaviour:
     riderChance: 0.15
     hopperChance: 0.25
     surferChance: 0.35
-    enemyHpMultiplier: 4.6
+    enemyHpMultiplier: 1.655
     enemySpeedMultiplier: 1.25
     enemyDamageMultiplier: 1.42
   - stageNumber: 7
@@ -136,7 +136,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 6.2
+    enemyHpMultiplier: 2.23
     enemySpeedMultiplier: 1.28
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
@@ -154,7 +154,7 @@ MonoBehaviour:
     riderChance: 0.12
     hopperChance: 0.3
     surferChance: 0.55
-    enemyHpMultiplier: 9
+    enemyHpMultiplier: 3.24
     enemySpeedMultiplier: 1.31
     enemyDamageMultiplier: 1.65
   - stageNumber: 9
@@ -172,7 +172,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.35
     surferChance: 0
-    enemyHpMultiplier: 9.9
+    enemyHpMultiplier: 5.526
     enemySpeedMultiplier: 1.34
     enemyDamageMultiplier: 1.7
   - stageNumber: 10
@@ -190,7 +190,7 @@ MonoBehaviour:
     riderChance: 0.12
     hopperChance: 0.33
     surferChance: 0.6
-    enemyHpMultiplier: 16.3
+    enemyHpMultiplier: 9.099
     enemySpeedMultiplier: 1.37
     enemyDamageMultiplier: 1.9
   - stageNumber: 11
@@ -208,7 +208,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.9
     surferChance: 0.3
-    enemyHpMultiplier: 20.2
+    enemyHpMultiplier: 11.269
     enemySpeedMultiplier: 1.41
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
@@ -226,7 +226,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.35
     surferChance: 0.65
-    enemyHpMultiplier: 36
+    enemyHpMultiplier: 20.088
     enemySpeedMultiplier: 1.44
     enemyDamageMultiplier: 2.55
   - stageNumber: 13
@@ -244,7 +244,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 36
+    enemyHpMultiplier: 20.088
     enemySpeedMultiplier: 1.47
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
@@ -262,7 +262,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.35
     surferChance: 0.7
-    enemyHpMultiplier: 63
+    enemyHpMultiplier: 22.68
     enemySpeedMultiplier: 1.5
     enemyDamageMultiplier: 2.8
   - stageNumber: 15
@@ -280,7 +280,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.35
     surferChance: 0.65
-    enemyHpMultiplier: 92
+    enemyHpMultiplier: 33.12
     enemySpeedMultiplier: 1.53
     enemyDamageMultiplier: 3.05
   - stageNumber: 16
@@ -298,7 +298,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.4
     surferChance: 0.7
-    enemyHpMultiplier: 120
+    enemyHpMultiplier: 43.2
     enemySpeedMultiplier: 1.55
     enemyDamageMultiplier: 3.2
   - stageNumber: 17
@@ -316,7 +316,7 @@ MonoBehaviour:
     riderChance: 0.15
     hopperChance: 0.45
     surferChance: 0.75
-    enemyHpMultiplier: 155
+    enemyHpMultiplier: 111.6
     enemySpeedMultiplier: 1.57
     enemyDamageMultiplier: 3.35
   - stageNumber: 18
@@ -334,7 +334,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.4
     surferChance: 0.7
-    enemyHpMultiplier: 195
+    enemyHpMultiplier: 140.4
     enemySpeedMultiplier: 1.58
     enemyDamageMultiplier: 3.45
   - stageNumber: 19
@@ -352,7 +352,7 @@ MonoBehaviour:
     riderChance: 0.6
     hopperChance: 0
     surferChance: 0.9
-    enemyHpMultiplier: 240
+    enemyHpMultiplier: 172.8
     enemySpeedMultiplier: 1.6
     enemyDamageMultiplier: 3.55
   - stageNumber: 20
@@ -370,7 +370,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.4
     surferChance: 0.7
-    enemyHpMultiplier: 310
+    enemyHpMultiplier: 223.2
     enemySpeedMultiplier: 1.61
     enemyDamageMultiplier: 3.65
   - stageNumber: 21
@@ -388,7 +388,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.4
     surferChance: 0.75
-    enemyHpMultiplier: 380
+    enemyHpMultiplier: 273.6
     enemySpeedMultiplier: 1.63
     enemyDamageMultiplier: 3.8
   - stageNumber: 22
@@ -406,7 +406,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0
     surferChance: 0
-    enemyHpMultiplier: 460
+    enemyHpMultiplier: 331.2
     enemySpeedMultiplier: 1.64
     enemyDamageMultiplier: 3.9
   - stageNumber: 23
@@ -424,7 +424,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.4
     surferChance: 0.75
-    enemyHpMultiplier: 570
+    enemyHpMultiplier: 410.4
     enemySpeedMultiplier: 1.66
     enemyDamageMultiplier: 4
   - stageNumber: 24
@@ -442,7 +442,7 @@ MonoBehaviour:
     riderChance: 0
     hopperChance: 0.35
     surferChance: 0
-    enemyHpMultiplier: 690
+    enemyHpMultiplier: 496.8
     enemySpeedMultiplier: 1.67
     enemyDamageMultiplier: 4.1
   - stageNumber: 25
@@ -460,7 +460,7 @@ MonoBehaviour:
     riderChance: 0.1
     hopperChance: 0.45
     surferChance: 0.78
-    enemyHpMultiplier: 860
+    enemyHpMultiplier: 619.2
     enemySpeedMultiplier: 1.69
     enemyDamageMultiplier: 4.3
   extendedHpGrowth: 1.28

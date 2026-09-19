@@ -54,15 +54,11 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.FlyDamageBonus = 0.01f * totals.FlyDmgPct;
         MetaBonuses.EagleFlyDamageBonus = 0.01f * totals.EagleFlyDmgPct;
         MetaBonuses.WhirlwindFlyDamageBonus = 0.01f * totals.WhirlwindFlyDmgPct;
-        MetaBonuses.HealDropChanceBonus = 0.01f * totals.HealDropPct;
-        MetaBonuses.OrbCanHitFlying = totals.OrbFly;
         MetaBonuses.HomingMissileGrowth = totals.HomingGrowth;
         MetaBonuses.WhirlwindCooldownBonus = totals.WhirlwindCdBonus;
-        MetaBonuses.AccelCooldownBonus = 0.01f * totals.AccelCdPct;
         MetaBonuses.ThunderCooldownPerStrike = totals.ThunderCdPerStrike;
         MetaBonuses.SnipingExtraTarget = totals.SnipingExtraTarget;
         MetaBonuses.RewindSlowAll = totals.RewindSlow;
-        MetaBonuses.ShotgunCloseBonus = totals.ShotgunClose;
         MetaBonuses.RerollCount = totals.RerollCount;
         if (totals.ArrowStartLevel > 1) MetaBonuses.ArrowStartLevel = totals.ArrowStartLevel;
         if (totals.SwingStartLevel > 1) MetaBonuses.SwingStartLevel = totals.SwingStartLevel;

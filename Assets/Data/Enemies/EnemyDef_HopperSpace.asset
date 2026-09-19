@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6504fa31c990c8b47929f7fb488f293e, type: 3}
-  m_Name: EnemyDef_Shield
+  m_Name: EnemyDef_HopperSpace
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
-  moveSpeed: 2
-  damage: 1
-  maxHealth: 45
-  xpValue: 8
+  moveSpeed: 1.8
+  damage: 12
+  maxHealth: 34
+  xpValue: 9
   essenceDropChance: 0.15
   essenceDropAmount: 2

@@ -157,7 +157,8 @@ public class BotRecorder
     {
         if (enemyTypes.ContainsKey(key)) return;
         var t = BotJson.Obj();
-        t["antiAir"] = e.RequiresAntiAir; t["flying"] = e.IsFlying; t["shield"] = e.BlocksProjectiles;
+        // 대공 축은 이제 "비행 적에게 준 피해"다 — 때릴 수 있나를 막던 requiresAntiAir는 폐지됐다(2026-09-19).
+        t["flying"] = e.IsFlying; t["shield"] = e.BlocksProjectiles;
         t["carrier"] = e.IsCarrier; t["boss"] = e.IsBoss; t["treasure"] = e.IsTreasure;
         enemyTypes[key] = t;
     }

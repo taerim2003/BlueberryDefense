@@ -119,9 +119,11 @@ public class LevelUpUI : MonoBehaviour
     private int pendingTreasures;
     private int pendingEvolutions;
 
-    // 보물상자: 선택 없이 굴려서 나온 만큼 자동 레벨업(뱀서식). 보통 1개, 운 좋으면 3개, 더 좋으면 5개.
-    private const float TreasureEscalateChance = 0.45f; // 1 → 3 → 5로 한 단계 더 올라갈 확률
-    private const int TreasureMaxRolls = 5;
+    // 보물상자: 선택 없이 굴려서 나온 만큼 자동 레벨업(뱀서식).
+    // 🔴 개수 분포는 사용자 지정이다(2026-09-19) — 1개 40% · 2개 30% · 3개 15% · 4개 10% · 5개 5%, 기댓값 2.10개.
+    //    예전엔 "1에서 45%로 +2씩"이라 **2개·4개가 아예 안 나왔다**(1/3/5뿐, 기댓값 2.305).
+    //    인덱스 i가 곧 (i+1)개다. 합이 100이 아니어도 가중치로 동작하지만, 읽는 사람이 %로 읽으므로 100에 맞춰 둔다.
+    private static readonly int[] TreasureRollWeights = { 40, 30, 15, 10, 5 };
     private const float TreasureRevealInterval = 0.55f; // 결과 하나가 뜨고 다음 것이 뜰 때까지
 
     private void Awake()
@@ -567,7 +569,8 @@ public class LevelUpUI : MonoBehaviour
 
     private static string EvolutionHint(EquippedSkill s)
     {
-        if (!PlayerPassives.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) return "";
+        // 스킬트리 노드(knowledge_EvoHint)만 보면 된다 — 지식 패시브 보유와 무관한 편의 기능이다(2026-09-19 사용자).
+        if (!MetaBonuses.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) return "";
         var names = new List<string>();
         // 2차를 앞둔 스킬은 조건이 "보유"가 아니라 **열쇠 진화체**다 — 그쪽 이름을 보여준다.
         if (s.EvolutionStage >= 1)
@@ -586,7 +589,7 @@ public class LevelUpUI : MonoBehaviour
 
     private static string EvolutionHint(EquippedPassive p)
     {
-        if (!PlayerPassives.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStageFor(p.Id)) return "";
+        if (!MetaBonuses.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStageFor(p.Id)) return "";
         var names = new List<string>();
         foreach (int r in PlayerPassives.SelectableRoutes(p))
         {
@@ -641,13 +644,28 @@ public class LevelUpUI : MonoBehaviour
         StartCoroutine(TreasureRollRoutine());
     }
 
-    // 뱀서식 상자: 몇 개 나올지 먼저 굴리고(1 → 3 → 5), 그 수만큼 하나씩 랜덤 레벨업을 떨군다.
+    // 가중 표에서 개수를 하나 뽑는다. 합을 코드에서 다시 더하므로 표만 고치면 되고, 표가 비었으면 1개로 떨어진다.
+    private static int RollTreasureCount()
+    {
+        int total = 0;
+        foreach (int w in TreasureRollWeights) total += Mathf.Max(0, w);
+        if (total <= 0) return 1;
+
+        int pick = Random.Range(0, total);   // [0, total)
+        for (int i = 0; i < TreasureRollWeights.Length; i++)
+        {
+            pick -= Mathf.Max(0, TreasureRollWeights[i]);
+            if (pick < 0) return i + 1;
+        }
+        return TreasureRollWeights.Length;   // 부동소수 없이 정수만 쓰므로 여기 닿지 않는다(방어용)
+    }
+
+    // 뱀서식 상자: 몇 개 나올지 먼저 굴리고, 그 수만큼 하나씩 랜덤 레벨업을 떨군다.
     // 아이콘은 **지워지지 않고 옆으로 쌓여서**, 끝나면 이번에 뭘 얻었는지 한눈에 남는다.
     // 만렙에 닿은 대상은 **다음 시행부터 후보에서 빠지므로** 초과분이 허공에 버려지지 않는다.
     private IEnumerator TreasureRollRoutine()
     {
-        int rolls = 1;
-        while (rolls < TreasureMaxRolls && Random.value < TreasureEscalateChance) rolls += 2;
+        int rolls = RollTreasureCount();
 
         for (int i = 0; i < rolls; i++)
         {
