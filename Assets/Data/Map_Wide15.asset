@@ -22,7 +22,7 @@ MonoBehaviour:
   - {fileID: -8912423719709367971, guid: 8bc740c35f7e3be4dbc2d45e884865de, type: 3}
   - {fileID: -8009902624631408473, guid: 77c50bff0532ba7418d40e10aa416555, type: 3}
   - {fileID: -3689808702313170799, guid: a1b5342561470634ab865dffc83ef289, type: 3}
-  backgroundFrameSeconds: 0.4
+  backgroundFrameSeconds: 1.2
   bgm: {fileID: 8300000, guid: ad64045c53e17054caa7b73b14ee4ba4, type: 3}
   unlockedFromStart: 0
   requiredClearMap: {fileID: 11400000, guid: 2b3e15dc0d9b0ca46bfd3a3a480185cf, type: 2}
@@ -42,3 +42,5 @@ MonoBehaviour:
   surferEnemyPrefab: {fileID: 200601693386062424, guid: 5703b8e999276e34a9f16b936ca42d41, type: 3}
   airshipEnemyPrefab: {fileID: 0}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}
+  bossEnemyPrefabEasy: {fileID: 5499205096416923899, guid: 21cd878ff7d042b9f048a053e7b9d3ed, type: 3}
+  bossEnemyPrefabHard: {fileID: 5499205096416923899, guid: 31ef70a9b08715194162bcfb7dbf2995, type: 3}

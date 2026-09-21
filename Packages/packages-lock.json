@@ -11,6 +11,13 @@
       },
       "url": "https://package.openupm.com"
     },
+    "com.rlabrecque.steamworks.net": {
+      "version": "2025.164.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.unity.2d.animation": {
       "version": "14.0.3",
       "depth": 0,

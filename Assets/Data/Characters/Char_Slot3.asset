@@ -28,8 +28,8 @@ MonoBehaviour:
   attackFrameOffset: {x: 0.0429, y: 0.019}
   baseHealth: 130
   unlockedFromStart: 0
-  requiredEssenceEarned: 2000
-  requiredClearMap: {fileID: 11400000, guid: 9db28795bfcf4d74f8bf189493c35ce4, type: 2}
+  requiredEssenceEarned: 20000
+  requiredClearMap: {fileID: 11400000, guid: 6e8e7f7751a96b746afa6b8fd4d9b777, type: 2}
   requiredClearAscension: 1
   startingSkill: 10
   allowedActivePool: 

@@ -629,7 +629,7 @@ MonoBehaviour:
     - line: '|     PS5: DOTWEEN;UNITY_MCP_READY'
     - line: '|     QNX: DOTWEEN;UNITY_MCP_READY'
     - line: '|     Server: UNITY_MCP_READY'
-    - line: '|     Standalone: DOTWEEN;UNITY_MCP_READY'
+    - line: '|     Standalone: DOTWEEN;UNITY_MCP_READY;STEAMWORKS_NET'
     - line: '|     VisionOS: DOTWEEN;UNITY_MCP_READY'
     - line: '|     WebGL: DOTWEEN;UNITY_MCP_READY'
     - line: '|     Windows Store Apps: DOTWEEN;UNITY_MCP_READY'

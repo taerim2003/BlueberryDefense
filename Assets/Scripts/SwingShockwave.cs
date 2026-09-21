@@ -16,6 +16,10 @@ public class SwingShockwave : MonoBehaviour
     public float Damage { get; set; }
     public float CritChance { get; set; }
     public float Knockback { get; set; }
+    // 휘두르기 R1 2차 「거대한 파도」 — 노션 문구 "지진파가 커지고 맞은 적들이 **받는 피해가 증가**한다".
+    // 0이면 취약을 안 건다(1차 「지진파」).
+    public float VulnerableMultiplier { get; set; }
+    public float VulnerableDuration { get; set; } = 3f;
 
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
     private float age;
@@ -35,6 +39,7 @@ public class SwingShockwave : MonoBehaviour
 
         enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Swing);
         if (Knockback > 0f) enemy.ApplyKnockback(Knockback);
+        if (VulnerableMultiplier > 0f) enemy.ApplyVulnerable(VulnerableMultiplier, VulnerableDuration);
 
         // 방패 블루베리에 막힌다 — 한 대 주고 여기서 멈춘다(뒤에 있는 적은 못 맞힌다).
         if (enemy.BlocksProjectiles) Destroy(gameObject);

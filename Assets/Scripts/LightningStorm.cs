@@ -38,6 +38,29 @@ public static class LightningStorm
     // 리프레쉬 연계 (패시브 path2): 낙뢰가 실제로 떨어질 때마다 호출
     public static System.Action OnProc;
 
+    // ── 낙뢰 R0 2차 「초대형 축적 번개」 ────────────────────────────────────
+    // 노션 문구: "낙뢰 버프가 **20스택** 중첩되었을 시 초대형 낙뢰가 떨어짐"
+    // 2026-09-19 사용자: "일정 스택 이상 번개가 쌓이면 번개가 **이 번개로 변화**해.
+    //   주위 적들에게 큰 피해를 입히지만 **약간의 쿨타임(0.5초 정도)** 이 있음."
+    // ⚠️ 평소 낙뢰를 **대체**한다(추가가 아니다). 쿨 중에는 평소 낙뢰가 그대로 나간다.
+    public static bool HugeBoltEnabled;
+    public const int HugeBoltStackThreshold = 20;
+    public const float HugeBoltCooldown = 0.5f;
+    public static float HugeBoltDamageMult = 6f;   // 평소 낙뢰 피해의 배수
+    public static float HugeBoltRadius = 4f;       // 주위 적에게 퍼지는 반경(유닛)
+    public static GameObject HugeBoltVfxPrefab;    // PlayerSkills가 시전할 때 넣어 준다(Enemy 프리팹 12장 배선을 피한다)
+    private static float hugeBoltReadyAt;
+
+    // 지금 초대형 번개를 쓸 수 있으면 true를 돌려주고 **쿨을 건다**(한 번만 소비된다).
+    public static bool TryConsumeHugeBolt()
+    {
+        if (!HugeBoltEnabled || HugeBoltVfxPrefab == null) return false;
+        if (Time.time < hugeBoltReadyAt) return false;
+        if (ActiveStackCount < HugeBoltStackThreshold) return false;
+        hugeBoltReadyAt = Time.time + HugeBoltCooldown;
+        return true;
+    }
+
     public static int ActiveStackCount
     {
         get
@@ -73,6 +96,9 @@ public static class LightningStorm
         ChainCount = 3;
         StackDamageEnabled = false;
         StackDamageBonusPerStack = BaseStackDamageBonus;
+        HugeBoltEnabled = false;
+        HugeBoltVfxPrefab = null;
+        hugeBoltReadyAt = 0f;
     }
 
     // 낙뢰 시전: 스택이 켜져 있으면 기존 스택 위에 새 스택을 추가하고, 꺼져 있으면 기존 것을 갈아끼운다.

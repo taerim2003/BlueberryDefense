@@ -189,9 +189,22 @@ public class HUDController : MonoBehaviour
         "Lightning" => GetIcon(activeIcons, (int)ActiveSkillId.Lightning),
         "OrbAltar" => GetIcon(activeIcons, (int)ActiveSkillId.Orb),
         "LightningDamageBuff" => GetIcon(passiveIcons, (int)PassiveSkillId.Strength),
-        "Shotgun" => GetIcon(activeIcons, (int)ActiveSkillId.Shotgun),
+        // 🔴 아래 셋은 **진화 아이콘이 그대로 버프 아이콘**이 된다(2026-09-19 사용자 지시).
+        //    산탄 R0은 1차 「보너스 탄환 장착」·2차 「내 지휘를 따라!」가 같은 키를 쓰고, 아이콘만 차수를 따라 바뀐다.
+        "Shotgun" => SkillBuffIcon(ActiveSkillId.Shotgun),
+        "RewindEndTimes" => SkillBuffIcon(ActiveSkillId.Rewind),   // R1 2차 「블루베리 절멸의 시간」 — 상시
+        "RewindOvercharge" => SkillBuffIcon(ActiveSkillId.Rewind), // R0 2차 「과충전」 — 다음 스킬을 쓰면 사라진다
         _ => null,
     };
+
+    // 장착한 스킬의 **진화 아이콘**을 준다. 미진화이거나 진화 그림이 비어 있으면 원본 스킬 아이콘으로 떨어진다.
+    private Sprite SkillBuffIcon(ActiveSkillId id)
+    {
+        var equipped = playerSkills.EquippedSkills;
+        for (int i = 0; i < equipped.Count; i++)
+            if (equipped[i].Id == id) return EvoIcon(equipped[i]) ?? GetIcon(activeIcons, (int)id);
+        return GetIcon(activeIcons, (int)id);
+    }
 
     // 체력바의 눈금 기준. 오버힐이 붙으면 **같은 길이 안에서** 체력과 오버힐이 비율을 나눠 갖는다.
     //

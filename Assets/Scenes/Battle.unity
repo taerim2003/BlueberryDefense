@@ -2529,7 +2529,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 28
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -4943,7 +4943,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 28
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -7657,6 +7657,7 @@ GameObject:
   m_Component:
   - component: {fileID: 984900548}
   - component: {fileID: 984900547}
+  - component: {fileID: 984900549}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -7694,6 +7695,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &984900549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 984900546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 091c4235e04182648a9023727ac9fc46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatusIconLibrary
+  stun: {fileID: 21300000, guid: ea08afdfa506f2e4790a7c11875f9a80, type: 3}
+  slow: {fileID: 21300000, guid: ff8165b38512c764db0926714cd75724, type: 3}
+  poison: {fileID: 21300000, guid: 5dc509ec022d7e94995b561c0107fadb, type: 3}
+  vulnerable: {fileID: 21300000, guid: 97310198814a08a4dadfa88289b5726e, type: 3}
 --- !u!1 &993327680
 GameObject:
   m_ObjectHideFlags: 0
@@ -10788,9 +10805,9 @@ RectTransform:
   - {fileID: 1058269849}
   m_Father: {fileID: 935526387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 159.6388, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 88, y: 96}
   m_Pivot: {x: 1, y: 1}
 --- !u!1 &1230292636
@@ -13280,13 +13297,13 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 10d6eec7c2408b648bc428a143ce7500, type: 3}
   - {fileID: 21300000, guid: 3b8d38ba5d74cdd47b72e862b47f0a01, type: 3}
   - {fileID: 21300000, guid: 26918668eecf6844399bf7ceb7c32b02, type: 3}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 686c6ee624d99054a90183d955cef5a7, type: 3}
   - {fileID: 21300000, guid: ec5d2bc40f09e8547aef2de438ef0d6e, type: 3}
   - {fileID: 21300000, guid: 010e2e59825701248b217b606ac199b7, type: 3}
   - {fileID: 21300000, guid: a61e97ae0b18f9242831f3971c5b11c1, type: 3}
   - {fileID: 21300000, guid: 1deee3aabc898ed4bb3329bc1278573b, type: 3}
   - {fileID: 21300000, guid: 8efc043d187106d4ead334401c96af1c, type: 3}
-  - {fileID: 21300000, guid: 1640ebdda62067643aef86fdb5a03bfd, type: 3}
+  - {fileID: 21300000, guid: ebb49f546d94e634b8c4381b55e0da8b, type: 3}
   - {fileID: 21300000, guid: 8d4a28854fe02ea409d38d3b0a577b61, type: 3}
   - {fileID: 21300000, guid: 9e1a48a0870a20a4882d477a30138c88, type: 3}
   - {fileID: 21300000, guid: 30ef921530e45064db25f89e213f38e9, type: 3}
@@ -13314,7 +13331,6 @@ MonoBehaviour:
   choiceEvolveCount: {fileID: 1497134}
   choiceArt: {fileID: 953795192}
   choiceBackButton: {fileID: 995296822}
-  evolveGlowSprite: {fileID: 21300000, guid: 315eae5735e4b4747b5a52e9aeb3f710, type: 3}
 --- !u!114 &1464816410
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14852,9 +14868,9 @@ RectTransform:
   - {fileID: 1051932570}
   m_Father: {fileID: 935526387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 395.6388, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 88, y: 96}
   m_Pivot: {x: 1, y: 1}
 --- !u!1 &1617238089
@@ -17425,9 +17441,9 @@ RectTransform:
   - {fileID: 1143503856}
   m_Father: {fileID: 935526387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 277.6388, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 88, y: 96}
   m_Pivot: {x: 1, y: 1}
 --- !u!1 &1815414078
@@ -18063,7 +18079,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 28
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -19643,23 +19659,32 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c4aeaabb80dc9cf49aca8094ac5df122, type: 3}
   evolvedArrowFramesTier2: []
   evolvedArrowFps: 12
+  skyShredderArrowSprite: {fileID: 21300000, guid: 7f7e117837e5752478d8724f47ca83f6, type: 3}
+  skyShredderShipPrefab: {fileID: 7804808487776919345, guid: e914ebcb1666a3549bb3b00b22dccbcc, type: 3}
   whirlwindPrefab: {fileID: 4661064112381412059, guid: b1c005aacf4b94c44badaf01d49562f0, type: 3}
   miniWhirlwindPrefab: {fileID: 4777049671626510843, guid: 47f22ab36d6f00b4caee45efabb5a538, type: 3}
   lightningRodPrefab: {fileID: 5310107282684247074, guid: e52c39b174e1c464ba3db35fb41d511d, type: 3}
   zeusStatuePrefab: {fileID: 5310107282684247074, guid: 3a2922a29bf076a4c8e92ee2876bc7f8, type: 3}
   bigThunderVfxPrefab: {fileID: 2421693898407340826, guid: f26fa841d90bd904b8ce13dd7f177439, type: 3}
+  hugeBoltVfxPrefab: {fileID: 3519533357812194783, guid: d102ca1dba0c0f5488c35bf90ebf1cd8, type: 3}
   rewindVfxPrefab: {fileID: 2799329666111628083, guid: 3fa2c0ba199fa0a44b4d3f5c573506b5, type: 3}
-  rewindRoute2VfxPrefab: {fileID: 5256276268673320489, guid: 7e094f03688814e43a65ca5be57b3876, type: 3}
+  rewindRoute2VfxPrefab: {fileID: 3021534565609420928, guid: 7ab922c007377f341a33d270072ec305, type: 3}
   rockDebrisPrefab: {fileID: 3800901426102578592, guid: 6522ba420ef08f5428ce845314ac8e17, type: 3}
   bigHammerController: {fileID: 22100000, guid: 542351b9926d7734fa38eff38e448e4c, type: 2}
   shockHammerController: {fileID: 22100000, guid: 763b33ea8c1e0ec408a5dd4c540e7d0a, type: 2}
+  paladinHammerController: {fileID: 22100000, guid: 9f51b63694f696a43b2c4c9a2067c46d, type: 2}
   bigTornadoPrefab: {fileID: 2123850053679450034, guid: bf4be5bc7a2558c4e84b324434cda0a9, type: 3}
+  skyWailTornadoPrefab: {fileID: 44610616766879916, guid: baa9660743b76d048a41205a362ee120, type: 3}
+  hugeOrbPrefab: {fileID: 7169263694694941840, guid: bac328b3fffc6054a936599ff34f668b, type: 3}
+  jugglerOrbPrefab: {fileID: 5162208192561643368, guid: 77d8f1a83b5595b4ab66b7353cdf0de2, type: 3}
+  giantWavePrefab: {fileID: 56570419558054018, guid: e8f15dfe8b2c33a468d1ec090e621850, type: 3}
   orbPrefab: {fileID: 8167710670162793820, guid: a7fd477c57002644c80a6b7cb81e2ff1, type: 3}
   bigOrbPrefab: {fileID: 1516889034151912622, guid: 067e0321efd77c44bbeb41f6824531e6, type: 3}
   orbAltarPrefab: {fileID: 9115850515498546779, guid: 8b00a56b7e34de04fa99c150d454f9b1, type: 3}
   shotgunPelletPrefab: {fileID: 3514838508345509191, guid: 40a74e4322362af4a89f9747ce7531da, type: 3}
   scatterPelletPrefab: {fileID: 8284477195746414742, guid: 74cea3e5cfec53344bf7aa0b2c7f5655, type: 3}
   scatterFireVfxPrefab: {fileID: 2108096441357373658, guid: 828290014ec336f4f9dd83df67668dda, type: 3}
+  fullBurstVfxPrefab: {fileID: 7192364020941621774, guid: fcbfdca9eed3caa42a20a794dddac228, type: 3}
   eagleDropPrefab: {fileID: 9157304669273838960, guid: 20af74ddf124cc5408f927b8792f8b33, type: 3}
   eagleImpactVfxPrefab: {fileID: 4748681987041982144, guid: 69f9c1460d45c5a4bb7a014ad125a17f, type: 3}
   eagleBombVfxPrefab: {fileID: 4445664314901236262, guid: d25df58ec7ab40e4d9b55e295d8663a9, type: 3}
@@ -19670,7 +19695,7 @@ MonoBehaviour:
   homingMissilePrefab: {fileID: 3810769506768160135, guid: 27a79c3ee0a97ca4cac38111c746f7ab, type: 3}
   swingShockwavePrefab: {fileID: 830679570193835966, guid: 4d97f9d976d13194084297fcab195f5f, type: 3}
   grapeBallPrefab: {fileID: 0}
-  grapeExplosionVfxPrefab: {fileID: 0}
+  grapeExplosionVfxPrefab: {fileID: 4445664314901236262, guid: d25df58ec7ab40e4d9b55e295d8663a9, type: 3}
   animator: {fileID: 2031227614}
   progressions:
   - {fileID: 11400000, guid: 2d193ef8697aa854ca6671efb0a07774, type: 2}
@@ -19738,6 +19763,22 @@ MonoBehaviour:
   orbCastSfxVolume: 0.37
   grapePopSfxVolume: 0.6
   whirlwindCastSfxVolume: 0.5
+  bunkerVfxPrefab: {fileID: 8219784948828499952, guid: ecab444aadd7a9a4da0b90a6c0d9117b, type: 3}
+  superRocketPrefab: {fileID: 1821045211873446863, guid: 10c80fe02929cb04691536f31036569f, type: 3}
+  grapeBallFrames:
+  - {fileID: 21300000, guid: f2d8b1554d5274e4b9efa5a1242da962, type: 3}
+  - {fileID: 21300000, guid: 7fde19e5db6800d4881dfee6edd5bc00, type: 3}
+  grapeBallBiohazardFrames:
+  - {fileID: 21300000, guid: b2fdb18e06d982d4cb7fad72a7374902, type: 3}
+  - {fileID: 21300000, guid: e7cc1155c7631a44a9d465d3ecf16b1b, type: 3}
+  grapeBallElectricFrames:
+  - {fileID: 21300000, guid: 0a8e598765cba3c4ba6139bce917dea7, type: 3}
+  - {fileID: 21300000, guid: e726e5b29a394fe40ae68b5b39816de6, type: 3}
+  grapeBallFps: 8
+  tornadoMakerPrefab: {fileID: 3683737460966097986, guid: 7bbaa4d5013735d46b0fa1c5a07c42df, type: 3}
+  superEaglePrefab: {fileID: 9164193474563792692, guid: 0f283928ce92cdb45aa6a32be769446d, type: 3}
+  nuclearVfxPrefab: {fileID: 2612890319139219517, guid: be6f1fcd4381f9c429c8e7dff246dff1, type: 3}
+  snipingMarkVfxPrefab: {fileID: 6906826785288031417, guid: 3408f7b2f55366b4ea71b4dec8d3a39b, type: 3}
 --- !u!95 &2031227614
 Animator:
   serializedVersion: 7

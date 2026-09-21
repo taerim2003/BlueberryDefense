@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Prog_Shotgun
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 7
-  baseCooldown: 14
-  baseDamage: 48
+  baseCooldown: 8
+  baseDamage: 20
   baseDuration: 7
-  baseHits: 1
+  baseHits: 2
   basePierce: 0
   baseProjectiles: 0
   levels:

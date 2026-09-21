@@ -26,6 +26,8 @@ public enum MetaUpgradeId
     CritDamage, // 치명타 피해 — 치명타 배율에 +N%p(기본 배율 3.0에 더해진다)
     BossDamage, // 보스 추가피해 — 보스에게 +N%
     Reroll,     // 리롤 횟수 — 게임당 리롤 +N회(레벨당)
+    // ↓ 2026-09-20 추가. 🔴 끝에만 붙일 것 — 중간에 끼우면 기존 노드 에셋의 effect 정수값이 통째로 밀린다.
+    HealItem,   // 회복 — 체력 회복 아이템이 **최대 체력의 +N%**를 추가로 회복한다(고정 회복량 위에 더해진다)
 }
 
 // 판 시작 시 MetaRunApplier가 저장값을 읽어 세팅하는 인게임 런타임 보너스.
@@ -76,6 +78,7 @@ public static class MetaBonuses
     public static float PassiveBaseAccel = 0f;      // 가속: 기본 쿨타임 감소 +N
 
     public static bool HealItemDouble = false;      // 건강: 체력회복템 회복량 2배
+    public static float HealItemPct = 0f;           // 회복 노드: 회복템이 최대 체력의 +N%를 더 회복
     public static bool StrengthSlowSkillDouble = false; // 힘: 쿨 5초 이상 스킬에 힘 피해 배율을 2배로
     public static bool AssassinFullCritExtraHit = false;// 암살: 치명타 확률 100%인 스킬은 타수 +1
     public static bool DefenseRevive = false;       // 방어: 사망 시 1회 부활
@@ -140,6 +143,7 @@ public static class MetaBonuses
         PassiveBaseAccel = 0f;
 
         HealItemDouble = false;
+        HealItemPct = 0f;
         StrengthSlowSkillDouble = false;
         AssassinFullCritExtraHit = false;
         DefenseRevive = false;
@@ -171,9 +175,23 @@ public static class MetaRun
     public static void Reset() => RunCurrency = 0;
 
     // 정수 픽업이 플레이어에게 흡수될 때 호출 — 부유(정수 획득) 배율이 여기서 적용된다.
+    // 🔴 여기에 **스테이지 감쇠**도 곱한다(BalanceConstants.StageEssenceMin 주석 참고) —
+    //    뒤 스테이지일수록 덜 준다. 정수가 들어오는 창구가 이 함수 하나뿐이라 여기서만 곱하면 된다.
     public static void Collect(int baseAmount)
     {
-        RunCurrency += Mathf.Max(1, Mathf.RoundToInt(baseAmount * MetaBonuses.CurrencyMult));
+        RunCurrency += Mathf.Max(1, Mathf.RoundToInt(baseAmount * MetaBonuses.CurrencyMult * StageFactor()));
+    }
+
+    // 1층 1배 → StageEssenceFalloffStage층 StageEssenceMin배. **초반은 평평하고 뒤에서 가파르다**
+    // (BalanceConstants.StageEssenceFalloffPower). GameManager가 없으면(씬 단독 실행) 1배.
+    public static float StageFactor()
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm == null) return 1f;
+        int end = Mathf.Max(2, BalanceConstants.StageEssenceFalloffStage);
+        float t = Mathf.Clamp01((gm.CurrentStage - 1) / (float)(end - 1));
+        float curved = Mathf.Pow(t, Mathf.Max(1f, BalanceConstants.StageEssenceFalloffPower));
+        return 1f - (1f - BalanceConstants.StageEssenceMin) * curved;
     }
 }
 
@@ -207,6 +225,7 @@ public static class SkillEffects
         public float FlyDmgPct;      // 비행 추가피해(전역)
         public float BossDmgPct;     // 보스 추가피해
         public int RerollCount;      // 레벨업 리롤 횟수(게임당)
+        public float HealItemPct;    // 회복 아이템이 추가로 회복하는 최대 체력 비율(%)
 
         // ── 강화/해금 노드가 채우는 것(코드 주도) ──
         public float EagleFlyDmgPct;     // 독수리 비행 추가피해
@@ -363,6 +382,7 @@ public static class SkillEffects
             case MetaUpgradeId.CritDamage: t.CritDmgPct += amount; break;
             case MetaUpgradeId.BossDamage: t.BossDmgPct += amount; break;
             case MetaUpgradeId.Reroll: t.RerollCount += Mathf.RoundToInt(amount); break;
+            case MetaUpgradeId.HealItem: t.HealItemPct += amount; break;
         }
     }
 }

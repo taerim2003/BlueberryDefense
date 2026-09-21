@@ -23,6 +23,18 @@ public class Orb : MonoBehaviour
     // 매 틱 리셋되는 동시 타격 한도가 아니라 소모성 예산이다 — 다 쓰고 붙잡은 적이 전부 정리되면 오브가 사라진다.
     public int MaxTargets { get; set; } = 4;
 
+    // ── 오브 R0 2차 「초대형 오브」 전용 손잡이 (2026-09-19 사용자 명세) ──────────
+    // "모든 것을 관통하는 초대형 오브를 소환해 주위 적들을 끌어당긴다" (노션 UI 문구) +
+    // "오브 자체는 엄청 천천히 움직이고 · 방패병도 관통 · 관통 무한 · 대신 지속시간이 있다"
+    public bool PiercesShields { get; set; }          // 방패 블루베리에 안 막히고 통과한다
+    public float SpeedMultiplier { get; set; } = 1f;  // 이동 속도 배율(초대형은 아주 낮다)
+    public float LifetimeOverride { get; set; }       // >0이면 프리팹 수명 대신 이 값을 쓴다
+    public float PullInterval { get; set; }           // 0이면 끌어당기지 않는다(= 기존 오브 전부)
+    public float PullRadius { get; set; } = 4f;
+    public float PullDistance { get; set; } = 1.6f;
+
+    private float nextPullTime;
+
     private const float ImpactSfxCooldown = 0.9f; // Whirlwind와 동일한 이유: 임팩트 클립 길이가 틱 간격(0.3초)보다 길어서 매 틱 재생하면 겹쳐 쌓인다.
 
     private float nextImpactSfxTime;
@@ -41,13 +53,18 @@ public class Orb : MonoBehaviour
     private void Start()
     {
         budgetRemaining = Mathf.Max(1, MaxTargets);
-        // 수명은 이제 주 소멸 조건이 아니라 **안전망**이다 — 아무도 못 만난 오브가 영원히 날아가지 않게.
-        Destroy(gameObject, lifetime * MetaBonuses.DurationMult);
+        // 수명은 보통 **안전망**이다(아무도 못 만난 오브가 영원히 날아가지 않게).
+        // 🔴 단 초대형 오브(LifetimeOverride > 0)에서는 이것이 **주 소멸 조건**이다 — 관통이 무한이라
+        //    예산이 바닥나는 일이 없어서, 여기서 끊지 않으면 화면 끝까지 영원히 간다.
+        float life = LifetimeOverride > 0f ? LifetimeOverride : lifetime;
+        Destroy(gameObject, life * MetaBonuses.DurationMult);
+        nextPullTime = Time.time + PullInterval;
     }
 
     private void Update()
     {
-        transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
+        transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
+        TickPull();
 
         // 풀링된 적은 죽어도 null이 되지 않는다 — IsAlive로 걸러야 반납된 적을 계속 붙잡고 있지 않는다.
         overlappingEnemies.RemoveWhere(e => e == null || !e.IsAlive);
@@ -104,6 +121,23 @@ public class Orb : MonoBehaviour
             Destroy(gameObject);
     }
 
+    // 주기적으로 주위 적을 오브 쪽으로 끌어당긴다(초대형 오브). PullInterval이 0이면 아무 일도 안 한다.
+    // ⚠️ 겹쳐 있는 적만이 아니라 **반경 안의 모든 적**이 대상이다 — 그래야 "빨아들인다"가 된다.
+    private void TickPull()
+    {
+        if (PullInterval <= 0f || Time.time < nextPullTime) return;
+        nextPullTime = Time.time + PullInterval;
+
+        float sqrRadius = PullRadius * PullRadius;
+        Vector2 self = transform.position;
+        foreach (Enemy e in Enemy.Active)   // 끌어당기기만 한다(처치·스폰 없음) — 복사본 불필요
+        {
+            if (e == null || !e.IsAlive) continue;
+            if (((Vector2)e.transform.position - self).sqrMagnitude > sqrRadius) continue;
+            e.ApplyPullTowardX(self.x, PullDistance);
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (consumed) return;
@@ -111,8 +145,10 @@ public class Orb : MonoBehaviour
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy == null) return;
 
-        // 방패 블루베리: 오브도 통과하지 못하고 여기서 소멸 — 마지막으로 한 번 타격을 주고 사라진다
-        if (enemy.BlocksProjectiles)
+        // 방패 블루베리: 오브도 통과하지 못하고 여기서 소멸 — 마지막으로 한 번 타격을 주고 사라진다.
+        // 🔴 예외는 PiercesShields — **대형(1차)·초대형(2차) 오브**가 그렇다(2026-09-20 사용자로 1차까지 확대).
+        //    관통이 오브의 주 성장축이라 방패 하나로 막히면 진화 자체가 무력화된다.
+        if (enemy.BlocksProjectiles && !PiercesShields)
         {
             consumed = true;
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);

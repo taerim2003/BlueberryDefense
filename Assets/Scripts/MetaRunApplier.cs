@@ -84,6 +84,7 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.PassiveBaseAccel = totals.PassiveAccel;
 
         MetaBonuses.HealItemDouble = totals.HealItemDouble;
+        MetaBonuses.HealItemPct = totals.HealItemPct;
         MetaBonuses.StrengthSlowSkillDouble = totals.StrengthSlowSkillDouble;
         MetaBonuses.AssassinFullCritExtraHit = totals.AssassinFullCritExtraHit;
         MetaBonuses.DefenseRevive = totals.DefenseRevive;

@@ -21,6 +21,8 @@ public class HomingMissile : MonoBehaviour
     public float ExplodeRatio { get; set; } = 0.4f;
     // 노릴 적의 순번. FireHoming이 발사 순서대로 0,1,2…를 준다 — 전부 같은 적으로 몰리는 걸 막는 장치다.
     public int TargetRank { get; set; }
+    // 호밍 R0 2차 「초강력 슈퍼 로켓」 — 순번이 아니라 **체력이 가장 높은 적** 하나를 쫓는다.
+    public bool TargetHighestHealth { get; set; }
 
     // 재타겟은 미사일마다 자주 일어난다. 후보 리스트를 매번 새로 만들지 않으려고 공용 버퍼를 쓴다.
     // 정렬 키(비행 여부·거리)를 **담을 때 미리 재서** 넣는다 — 비교 함수 안에서 transform.position을 읽으면
@@ -68,6 +70,7 @@ public class HomingMissile : MonoBehaviour
         ExplodeVfxMult = 1f;
         ExplodeRatio = 0.4f;
         TargetRank = 0;
+        TargetHighestHealth = false; // 🔴 안 되돌리면 재사용된 미사일이 일반 호밍인데도 체력 1위만 쫓는다
         nextRetargetTime = 0f; // 꺼내자마자 한 번은 즉시 표적을 잡는다(주기는 그 다음부터)
     }
 
@@ -122,6 +125,21 @@ public class HomingMissile : MonoBehaviour
 
     private Enemy AcquireTarget()
     {
+        // 초강력 슈퍼 로켓(호밍 R0 2차)은 **체력이 가장 높은 적**을 노린다(2026-09-19 사용자 명세).
+        // 평소의 "비행 우선 → 가까운 순 → TargetRank번째"와 완전히 다른 기준이라 먼저 갈라낸다.
+        if (TargetHighestHealth)
+        {
+            Enemy best = null;
+            IReadOnlyList<Enemy> all = Enemy.Active;
+            for (int i = 0; i < all.Count; i++)
+            {
+                Enemy e = all[i];
+                if (e == null || !e.IsAlive) continue;
+                if (best == null || e.CurrentHealth > best.CurrentHealth) best = e;
+            }
+            return best;
+        }
+
         candidates.Clear();
         Vector2 origin = transform.position;
         // FindObjectsByType을 쓰면 안 된다(Enemy.Active 주석). 인덱스 for로 도는 건 박싱 때문이다 —

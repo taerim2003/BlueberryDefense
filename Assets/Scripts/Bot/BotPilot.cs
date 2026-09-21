@@ -553,9 +553,14 @@ public class BotPilot : MonoBehaviour
     //    비행 적은 히트박스가 닿으면 무엇에든 맞는다. 회오리가 지상에 묶여 못 닿고, 저격·호밍은 쫓아가서 맞힌다.
     // ⚠️ 위 숫자는 **게이트가 살아 있던 때** 잰 것이다 — 게이트가 사라지면 오브·산탄 쪽이 특히 오를 수 있다.
     //    9회차 측정 뒤 보고서 스킬 표의 대공 열로 이 목록을 **다시 뽑을 것.**
+    // 🔴 실측으로 추린 목록이다(219판, effByEnemy의 비행 적 몫). 전체 피해 중 비행 적 몫이 **24.4%**이고
+    //    그게 기준선이다 — 스나이핑 63.6% · 호밍 54.5% · 독수리 34.3%만 그 위다.
+    //    **피뢰침은 21.6%로 기준선 아래라 2026-09-21에 뺐다**(사용자 결정). 들어 있으면 피뢰침만 든 판에서
+    //    봇이 "대공 있음"으로 판단해 ⓪단계(대공 구멍 메우기)를 안 연다.
+    //    참고로 대공이 거의 안 되는 것: 오브 4.6% · 산탄 4.3% · 기본화살 4.2% · 휘두르기 6.6% · 회오리 7.9%.
     private static readonly HashSet<ActiveSkillId> AntiAirSkills = new HashSet<ActiveSkillId>
     {
-        ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.Lightning, ActiveSkillId.EagleDrop,
+        ActiveSkillId.Sniping, ActiveSkillId.Homing, ActiveSkillId.EagleDrop,
     };
 
     // 대공 스킬이 하나도 없을 때 대공 카드를 고를 확률. 1.0으로 두지 않는 이유 —
@@ -636,13 +641,37 @@ public class BotPilot : MonoBehaviour
         if (pool.Count > 0) { rule = "stage2Key"; return pool; }
         pool = Match(keyActive2, keyPassive2);
         if (pool.Count > 0) { rule = "stage1Key"; return pool; }
-        pool = all.Where(i =>
+        // 보유한 것 레벨업 — 🔴 **액티브를 패시브보다 먼저 올린다**(사용자 결정 2026-09-21).
+        //    종전엔 둘을 한 통에 넣고 무작위로 골라서, 패시브만 계속 올리고 액티브가 저레벨로 남는 판이 나왔다.
+        //    실측에서 결과를 가르는 것은 스킬 쪽이다(스킬 격차 44%p vs 패시브 10.8%p, 219판).
+        //    ⚠️ 액티브 레벨업 선택지가 없을 때만 패시브로 내려간다 — 패시브를 막는 게 아니다.
+        List<int> levelUp(bool activeOnly) => all.Where(i =>
         {
             object o = opts.GetValue(i);
-            return !OptField<bool>(o, "IsNew")
-                && (OptField<ActiveSkillId?>(o, "SkillId").HasValue || OptField<PassiveSkillId?>(o, "PassiveId").HasValue);
+            if (OptField<bool>(o, "IsNew")) return false;
+            bool isActive = OptField<ActiveSkillId?>(o, "SkillId").HasValue;
+            bool isPassive = OptField<PassiveSkillId?>(o, "PassiveId").HasValue;
+            return activeOnly ? isActive : (isActive || isPassive);
         }).ToList();
-        if (pool.Count > 0) { rule = "levelUp"; return pool; }
+
+        pool = levelUp(true);
+        if (pool.Count > 0) { rule = "levelUpActive"; return pool; }
+        pool = levelUp(false);
+        if (pool.Count > 0) { rule = "levelUpPassive"; return pool; }
+
+        // 🔴 **되감기는 액티브 중 맨 뒤로 미룬다**(사용자 결정 2026-09-21).
+        //    되감기는 피해가 0인 유틸이라 **사람이 쓰면 강한데 무작위 봇은 못 쓴다** — 슬롯만 먹는다.
+        //    실측(219판, 5층까지 뽑은 스킬로 통제): 되감기를 초반에 뽑은 판이 **-9.3%p**, 같은 목표 안에서는
+        //    해변 쉬움 **-25%p**로 전 스킬 최하위다. 이건 게임의 난이도가 아니라 **봇의 눈이 없는 것**이므로
+        //    측정 편향으로 보고 정책을 고친다(balance §6 "봇이 사람보다 약한 축은 정책을 고쳐도 된다").
+        //    ⚠️ **빼는 게 아니라 미루는 것**이다 — 되감기뿐인 선택지면 그대로 뽑아 빌드 다양성이 남는다.
+        List<int> notRewind = all.Where(i =>
+        {
+            var sid = OptField<ActiveSkillId?>(opts.GetValue(i), "SkillId");
+            return !(sid.HasValue && sid.Value == ActiveSkillId.Rewind);
+        }).ToList();
+        if (notRewind.Count > 0 && notRewind.Count < all.Count) { rule = "deferRewind"; return notRewind; }
+
         rule = "random";
         return all;
     }

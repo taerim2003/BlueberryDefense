@@ -59,7 +59,12 @@ public class BotConfig
     // ── probe ──
     public float[] probeTreeRatios = { 0.3f, 0.6f };   // 보유 노드 레벨 비율(싼 것부터 삼). 1 = 풀트리
     public int probeRuns = 1;
-    public int fullTreeRuns = 2;
+    // 🔴 0 = 안 돈다 (2026-09-20 사용자 결정). 풀트리 판은 "아무 캐릭터나 집었을 때 깰 확률"을 재는데,
+    //    게임은 **한 번만 깨면 되는 것**이라 그 평균이 의미가 없다. 정주행은 캐릭터를 돌아가며 시도하다
+    //    한 명이라도 깨면 멈추므로 실제 플레이와 같은 질문을 묻는다 — 난이도는 정주행으로만 본다.
+    //    ⚠️ 이 값을 되살리면 G4(풀트리 클리어율)가 다시 측정되지만, 캐릭터 셋 중 하나만 깨는 상태에서는
+    //    정주행보다 항상 낮게 나온다(그게 낮아 보이던 이유이지 버그가 아니다).
+    public int fullTreeRuns = 0;
     public string[] probeGoalFilter;                  // 비면 9개 전부. "Map_Wide20:3" 형식
 
     // ── 공통 ──

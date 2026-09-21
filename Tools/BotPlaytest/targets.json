@@ -60,7 +60,7 @@
   "orderStrictGap": 0.05,
   "orderLooseGap": -0.02,
   "playtimeMinutes": [
-    240,
+    200,
     300
   ],
   "secondsPerPick": 3,

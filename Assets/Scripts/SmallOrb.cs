@@ -23,6 +23,13 @@ public class SmallOrb : MonoBehaviour
     public ActiveSkillId Source { get; set; } = ActiveSkillId.Orb; // 데미지 집계용 출처
     // 노릴 적의 순번(가까운 순). 발사 순서대로 0,1,2…를 준다 — HomingMissile.TargetRank와 같은 장치.
     public int TargetRank { get; set; }
+
+    // ── 오브 R1 2차 「저글러」 전용 ──────────────────────────────────────────
+    // "화면 내 **무작위** 적을 추적해서 한 번 맞춘 후 다시 캐릭터 쪽으로 돌아온다"(2026-09-19 사용자).
+    public bool RandomTarget { get; set; }      // 가까운 순 대신 무작위로 고른다 — 오브가 한 적에게 몰리지 않는다
+    public Transform ReturnTo { get; set; }     // 설정하면 첫 명중 뒤 이쪽으로 돌아온다. null이면 기존 동작.
+    private bool returning;
+    private const float ReturnArriveDistance = 0.5f;   // 이만큼 가까워지면 임무 완료
     // Start에서 소멸 예약에 쓰인다 — Start 전에(생성 직후) 바꿔야 먹는다.
     public float Lifetime { get => lifetime; set => lifetime = value; }
 
@@ -50,6 +57,20 @@ public class SmallOrb : MonoBehaviour
 
     private void Update()
     {
+        // 저글러의 복귀 구간: 적이 아니라 **캐릭터**를 향해 돌아온다. 도착하면 그 자리에서 사라진다.
+        // 돌아오는 길에 닿는 적도 그대로 때린다(OnTriggerEnter2D가 계속 돈다).
+        if (returning)
+        {
+            if (ReturnTo == null) { Destroy(gameObject); return; }
+            Vector2 toOwner = (Vector2)ReturnTo.position - (Vector2)transform.position;
+            if (toOwner.sqrMagnitude <= ReturnArriveDistance * ReturnArriveDistance) { Destroy(gameObject); return; }
+
+            float maxRadBack = HomingTurnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
+            direction = ((Vector2)Vector3.RotateTowards(direction, toOwner.normalized, maxRadBack, 0f)).normalized;
+            transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+            return;
+        }
+
         // 추적: 아직 안 때린 적 중 가장 가까운 쪽으로 방향을 튼다.
         // ⚠️ 풀링된 적은 죽어도 참조가 null이 안 된다 — IsAlive를 같이 봐야 반납된 적을 영영 쫓지 않는다.
         if (Homing)
@@ -81,6 +102,9 @@ public class SmallOrb : MonoBehaviour
         }
         if (candidates.Count == 0) return null;
 
+        // 저글러는 **무작위**로 고른다 — 가까운 순이면 오브가 많아질수록 앞줄 몇 마리에 전부 몰린다.
+        if (RandomTarget) return candidates[Random.Range(0, candidates.Count)].enemy;
+
         candidates.Sort(ByDistance);
         return candidates[TargetRank % candidates.Count].enemy;
     }
@@ -97,6 +121,16 @@ public class SmallOrb : MonoBehaviour
 
         if (impactVfxPrefab != null)
             ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2.2f);
+
+        // 저글러: **첫 명중과 동시에 복귀로 전환**한다(2026-09-19 사용자 "한번 맞춘 후 다시 캐릭터 쪽으로 돌아와").
+        // 돌아오는 길에 닿는 적도 때려야 해서 hitEnemies를 비운다 — 안 비우면 왔던 길의 적이 전부 면역이 된다.
+        if (ReturnTo != null && !returning)
+        {
+            returning = true;
+            homingTarget = null;
+            hitEnemies.Clear();
+            return;
+        }
 
         // 관통이 남았으면 살아서 다음 적을 찾아간다(오브 R1). 방패는 관통과 무관하게 끊는다.
         if (PierceRemaining > 0 && !enemy.BlocksProjectiles)

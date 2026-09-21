@@ -10,6 +10,9 @@ public class Whirlwind : MonoBehaviour
     [SerializeField] private float tickInterval = 0.3f;
     // 레벨업으로 이 배율이 내려가면 더 자주 갈아버린다(회오리 성장의 보조축). 1 = 프리팹 기본 주기.
     public float TickIntervalMult { get; set; } = 1f;
+    // 이동 속도 배율. 회오리 R1 2차 「하늘의 울음」이 1차 대회오리보다 빠르게 움직이라고 올린다(2026-09-19 사용자).
+    // 적을 갈고 있을 때 느려지는 배율(damagingMoveSpeedMultiplier)에는 곱해지고 나서 적용된다.
+    public float SpeedMultiplier { get; set; } = 1f;
     [SerializeField] private GameObject impactVfxPrefab;
     [SerializeField] private float groundY = 0f; // 공중(비행 적 처치 지점 등)에서 생성돼도 이 높이까지 자연스럽게 낙하
     [SerializeField] private float gravity = 25f;
@@ -84,7 +87,7 @@ public class Whirlwind : MonoBehaviour
             direction = target == null ? Vector2.left
                 : target.transform.position.x >= transform.position.x ? Vector2.right : Vector2.left;
         }
-        float speed = overlappingEnemies.Count > 0 ? moveSpeed * damagingMoveSpeedMultiplier : moveSpeed;
+        float speed = (overlappingEnemies.Count > 0 ? moveSpeed * damagingMoveSpeedMultiplier : moveSpeed) * SpeedMultiplier;
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
         if (HomeInY) ClampBelowScreenTop();
 

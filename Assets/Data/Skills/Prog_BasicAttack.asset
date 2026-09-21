@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Prog_BasicAttack
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 0
-  baseCooldown: 3
+  baseCooldown: 4
   baseDamage: 8
   baseDuration: 0
   baseHits: 1

@@ -53,6 +53,10 @@ public static class EvolutionIconWiring
     {
         { (int)ActiveSkillId.Lightning * 2 + 1, SpriteDir + "/LightningRod/Icon_Jeus.png" },    // 제우스의 은총
         { (int)ActiveSkillId.Shotgun * 2 + 1,   SpriteDir + "/FIRE!!!/Icon_FullBurst.png" },    // 초강력 섬멸용 전탄발사
+        // 2026-09-19: 아래 둘은 **그림이 있는데 규칙 경로에 없어서** 빈 칸으로 남아 있던 것들이다.
+        { (int)ActiveSkillId.Homing * 2 + 0,    SpriteDir + "/SuperMissile/Icon_SuperMissile.png" }, // 초강력 슈퍼 로켓
+        // ⚠️ 루트에도 같은 이름(Icon_SwingR1_2.png)의 **옛 그림**이 있다 — 규칙 경로가 그걸 집으므로 여기서 덮는다.
+        { (int)ActiveSkillId.Swing * 2 + 0,     SpriteDir + "/로얄팔라딘의망치/Icon_SwingR1_2.png" }, // 로열 팔라딘의 망치
     };
 
     [MenuItem("Window/Blueberry Defense/진화 아이콘 배선")]

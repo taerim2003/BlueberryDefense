@@ -24,28 +24,28 @@ MonoBehaviour:
   levels:
   - stat: 0
     op: 1
-    amount: 1.1
+    amount: 1.2
   - stat: 0
     op: 1
-    amount: 1.3
+    amount: 1.35
   - stat: 1
     op: 1
-    amount: 0.95
-  - stat: 1
-    op: 1
-    amount: 0.88
-  - stat: 0
-    op: 1
-    amount: 1.1
-  - stat: 0
-    op: 1
-    amount: 1.3
-  - stat: 1
-    op: 1
-    amount: 0.95
+    amount: 0.9
   - stat: 1
     op: 1
     amount: 0.85
   - stat: 0
     op: 1
-    amount: 1.1
+    amount: 1.2
+  - stat: 0
+    op: 1
+    amount: 1.35
+  - stat: 1
+    op: 1
+    amount: 0.9
+  - stat: 1
+    op: 1
+    amount: 0.82
+  - stat: 0
+    op: 1
+    amount: 1.2

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 0.5
   damage: 200
-  maxHealth: 500
+  maxHealth: 350
   xpValue: 30
   essenceDropChance: 1
   essenceDropAmount: 8

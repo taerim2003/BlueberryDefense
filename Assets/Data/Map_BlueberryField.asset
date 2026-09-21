@@ -41,3 +41,5 @@ MonoBehaviour:
   hopperEnemyPrefab: {fileID: 0}
   surferEnemyPrefab: {fileID: 0}
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}
+  bossEnemyPrefabEasy: {fileID: 5499205096416923899, guid: 21cd878ff7d042b9f048a053e7b9d3ed, type: 3}
+  bossEnemyPrefabHard: {fileID: 5499205096416923899, guid: 31ef70a9b08715194162bcfb7dbf2995, type: 3}

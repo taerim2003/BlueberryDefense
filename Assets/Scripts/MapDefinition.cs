@@ -78,5 +78,12 @@ public class MapDefinition : ScriptableObject
     public GameObject hopperEnemyPrefab;
     public GameObject surferEnemyPrefab;
     public GameObject airshipEnemyPrefab;   // 해적 비행선(엘리트 공중) — 이 프리팹을 꽂은 맵에만 등장한다
+    // 🔴 **보스는 승천 티어마다 오브젝트가 따로다**(2026-09-21 사용자: "보스 그냥 보통/어려움이랑 오브젝트 분리해"
+    //    → "보통이랑 어려움 보스도 분할해"). 같은 오브젝트를 공유하면 한 티어를 조율할 때 다른 티어가 같이 움직인다 —
+    //    실제로 농장 보통의 보스 체력을 −30% 했을 때 어려움 보스까지 같이 약해졌다.
+    //    배선: Easy = 승천 1 · **bossEnemyPrefab = 승천 2(보통)** · Hard = 승천 3.
+    //    ⚠️ Easy/Hard가 **비어 있으면 bossEnemyPrefab을 그대로 쓴다** — 안 꽂은 맵은 종전과 완전히 같이 동작한다.
     public GameObject bossEnemyPrefab;
+    public GameObject bossEnemyPrefabEasy;
+    public GameObject bossEnemyPrefabHard;
 }

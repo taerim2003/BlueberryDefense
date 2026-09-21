@@ -241,6 +241,8 @@ public class SkillTreeUI : MonoBehaviour
             MetaUpgradeId.FlyDamage => SkillIconLibrary.Fly(),
             MetaUpgradeId.BossDamage => SkillIconLibrary.Boss(),
             MetaUpgradeId.Reroll => SkillIconLibrary.Reroll(),
+            // 「회복」 노드 — 건강 진화 R1(날개 달린 하트) 그림을 빌려 쓴다(사용자 지정 2026-09-20).
+            MetaUpgradeId.HealItem => SkillIconLibrary.PassiveEvo(PassiveSkillId.Health, 0),
             _ => null,
         };
         if (n.type == SkillNodeType.SpecialUnlock) return n.id switch

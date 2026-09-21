@@ -492,7 +492,10 @@ public class PlayerPassives : MonoBehaviour
     //    루트를 안 탄 패시브(EvolutionStage 0)는 걸리지 않는다.
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
     private const float HealthSturdyBase = 0.5f;       // 건강 R0: 진화 즉시 최대체력 +50%
-    private const float HealthSturdyPerLevel = 0.3f;   //          레벨마다 최대체력 +30%(현재 최대치 기준 = 복리)
+    // 🔴 0.3 → 0.1 (2026-09-20 사용자). 복리라 레벨당 30%면 만렙에 최대체력이 약 ×13.8이 되고,
+    //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
+    //    가른 것이 트리도 맵도 아니라 "이 패시브를 뽑았나"였다. 10%면 만렙 약 ×2.6이다.
+    private const float HealthSturdyPerLevel = 0.1f;   //          레벨마다 최대체력 +10%(현재 최대치 기준 = 복리)
     private const float HeartDropBase = 3f;            // 건강 R1: 회복템 3배
     private const float HeartDropPerLevel = 0.3f;      //          진화 시 1회 + 레벨업 9회 = 만렙 6.0배
     private const float HomingKillXpBase = 2f;         // 지식 R1: 호밍 처치 경험치 2배

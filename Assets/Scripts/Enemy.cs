@@ -348,9 +348,9 @@ public class Enemy : MonoBehaviour
         isDead = false;
 
         popping = false; popVelY = 0f; popVelX = 0f; popGroundY = 0f;
-        // 박치기 타이머를 주기만큼 채운 채로 시작한다 — 플레이어 앞에 도착하는 즉시 첫 박치기가 나간다
-        // (0으로 두면 도착 후 HeadbuttInterval만큼 멀뚱히 서 있다가 때린다).
-        headbuttTimer = BalanceConstants.HeadbuttInterval;
+        // 박치기 타이머를 미리 채운 채로 시작한다 — 덜 채울수록 도착 후 첫 박치기까지 더 기다린다.
+        // (0으로 두면 도착 후 HeadbuttInterval만큼 멀뚱히 서 있고, 주기만큼 채우면 도착 즉시 때린다.)
+        headbuttTimer = BalanceConstants.HeadbuttInterval - BalanceConstants.HeadbuttFirstDelay;
         holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
         knockbackDistance = 0f; knockbackElapsed = 0f; knockbackMoved = 0f;
         slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
@@ -390,8 +390,10 @@ public class Enemy : MonoBehaviour
             float halfW = cam != null ? halfH * cam.aspect : halfH * 1.78f;
             carrierTopY = camY + halfH + 1f;        // 화면 위 바로 바깥에서 등장
             carrierHoverY = camY + halfH * 0.28f;   // 화면 상단부에서 호버·투하(살짝 더 아래로 내려와 투하)
-            // 플레이어(우측)에게 부대가 곧장 떨어지지 않도록, 화면 우측 1/3은 피하고 좌측~중앙에 등장
-            float spawnX = camX + Random.Range(-halfW * 0.6f, halfW * 0.3f);
+            // 플레이어(우측)에게 부대가 곧장 떨어지지 않도록 좌측에 등장한다.
+            // 2026-09-20 사용자: 투하 부대가 너무 앞(플레이어 쪽)에 떨어진다 → 범위를 통째로 뒤(좌측)로 민다.
+            //   전: -0.6 ~ +0.3 (중앙을 넘어 우측까지) / 후: -0.9 ~ -0.1 (전부 중앙 왼쪽)
+            float spawnX = camX + Random.Range(-halfW * 0.9f, -halfW * 0.1f);
             transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
             carrierPhase = CarrierPhase.Descend;
         }
@@ -498,6 +500,7 @@ public class Enemy : MonoBehaviour
         }
 
         TickPoison();
+        UpdateStatusIcons();   // 타이머를 깎은 **뒤** — 이번 프레임에 풀린 상태는 아이콘도 같이 내려간다
 
         if (isCarrier)
         {
@@ -765,14 +768,29 @@ public class Enemy : MonoBehaviour
         multiplier = 1f - (1f - multiplier) * CrowdControlScale;
         BotInput.OnSlow?.Invoke(this, multiplier, duration);
 
+        bool wasActive = slowTimer > 0f;
         slowMultiplier = multiplier;
         slowTimer = duration;
         SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
+        // 새로 걸릴 때만 튄다 — 안개처럼 매 프레임 다시 거는 것까지 튀면 파편 예산이 통째로 날아간다.
+        if (!wasActive)
+            SpawnStatusParticle(multiplier <= 0.01f ? StatusIconLibrary.Stun : StatusIconLibrary.Slow);
     }
 
     // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 물러나게 한다.
     // 예전엔 한 프레임에 순간이동시켰는데, 그러면 "밀렸다"가 눈에 안 보인다(특히 타격 이펙트가
     // 그 프레임을 가린다). 거리를 KnockbackSpeed로 나눠 몇 프레임에 걸쳐 미끄러지게 한다.
+    // 어떤 지점 **쪽으로** 끌어당긴다(초대형 오브 · 제우스의 은총).
+    // 🔴 **가로로만 당긴다.** 아래 TickKnockback 주석대로 y를 건드리면 콩콩이 도약(y 절대 대입)·
+    //    서핑 너울(y 차분 누적)과 섞여 높이가 어긋나 쌓인다. 화면에서는 "빨려 들어온다"로 충분히 읽힌다.
+    // 넉백과 같은 손잡이(CrowdControlScale·이징)를 타므로 보스·비행선은 덜 끌려온다.
+    public void ApplyPullTowardX(float targetX, float distance)
+    {
+        // 밀어내기와 부호만 반대다 — 목표가 왼쪽이면 왼쪽으로(양수), 오른쪽이면 오른쪽으로(음수).
+        float signed = targetX >= transform.position.x ? -distance : distance;
+        ApplyKnockback(signed);
+    }
+
     public void ApplyKnockback(float distance)
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
@@ -802,8 +820,10 @@ public class Enemy : MonoBehaviour
 
     public void ApplyVulnerable(float multiplier, float duration)
     {
+        bool wasActive = vulnerableTimer > 0f;
         vulnerableMultiplier = multiplier;
         vulnerableTimer = duration;
+        if (!wasActive) SpawnStatusParticle(StatusIconLibrary.Vulnerable);
     }
 
     // 독성 안개가 매 프레임 다시 걸어 온다 — 지속시간은 새로 채우고 피해는 **더 센 쪽**만 남긴다
@@ -814,6 +834,8 @@ public class Enemy : MonoBehaviour
     {
         if (isDead || popping) return;
         if (damagePerTick > poisonDamage) poisonDamage = damagePerTick;
+        // 처음 중독될 때만 튄다 — 안개는 매 프레임 다시 걸어 오므로 여기서 안 막으면 파편이 폭주한다.
+        if (poisonTimer <= 0f) SpawnStatusParticle(StatusIconLibrary.Poison);
         if (poisonTimer <= 0f) { poisonNextTick = interval; poisonTicksTaken = 0; poisonFromExplosion = fromExplosion; }
         poisonInterval = interval;
         poisonTimer = Mathf.Max(poisonTimer, duration);
@@ -840,6 +862,9 @@ public class Enemy : MonoBehaviour
 
         poisonNextTick += Mathf.Max(0.05f, poisonInterval);
         poisonTicksTaken++;
+        // 🔴 중독만은 **피해를 입을 때마다** 아이콘이 튄다(2026-09-19 사용자). 걸릴 때 한 번이 아니다.
+        //    TakeDamage가 평소 타격 파편을 같이 띄우므로 "다른 파티클과 함께" 튀는 그림이 된다.
+        SpawnStatusParticle(StatusIconLibrary.Poison);
         TakeDamage(poisonDamage, source: ActiveSkillId.GrapeToss, rollLightning: false);
 
         // 찌릿찌릿 루트: N번째 중독 피해마다 기절. 2차는 기절이 끝난 뒤 취약까지 남긴다.
@@ -905,7 +930,33 @@ public class Enemy : MonoBehaviour
 
         // 체인 라이트닝으로 전이된 타격은 연결선(beam)으로 이미 시각화되므로,
         // 하늘에서 세로로 내리치는 낙뢰 VFX를 여기서도 또 띄우면 "이어진다"는 느낌이 묻힘 — 이 경우만 생략.
-        if (isLightningProc && !suppressLightningStrikeVfx && lightningVfxPrefab != null)
+        // 낙뢰 R0 2차 「초대형 축적 번개」 — 스택이 임계를 넘으면 이 낙뢰가 **초대형으로 바뀐다**(쿨 0.5초).
+        // 평소 낙뢰 VFX 대신 큰 번개를 띄우고, 주위 적까지 한 번에 쓸어버린다.
+        if (isLightningProc && !suppressLightningStrikeVfx && LightningStorm.TryConsumeHugeBolt())
+        {
+            // 🔴 번개는 **아래끝이 맞은 자리**에 와야 한다. 개큰번개 그림은 18.8유닛짜리라 적 중심에 그냥 놓으면
+            //    절반(9.4)이 땅 아래로 내려간다(실측 바닥차 -8.12). 반높이만큼 올려 밑동을 적 발치에 맞춘다.
+            GameObject huge = ObjectPool.Instance.Spawn(LightningStorm.HugeBoltVfxPrefab, transform.position, Quaternion.identity);
+            var hugeSr = huge != null ? huge.GetComponentInChildren<SpriteRenderer>(true) : null;
+            if (hugeSr != null)
+                huge.transform.position += Vector3.up * (transform.position.y - hugeSr.bounds.min.y);
+            ObjectPool.Instance.Despawn(huge, 2f);
+            float splash = LightningStorm.ProcDamage * LightningStorm.HugeBoltDamageMult;
+            float sqr = LightningStorm.HugeBoltRadius * LightningStorm.HugeBoltRadius;
+            Vector2 at = transform.position;
+            using (GetSnapshot(out List<Enemy> around))
+                foreach (Enemy o in around)
+                {
+                    if (o == null || !o.IsAlive || o == this) continue;
+                    if (((Vector2)o.transform.position - at).sqrMagnitude > sqr) continue;
+                    // suppressLightningStrikeVfx: 퍼진 타격까지 저마다 큰 번개를 띄우면 화면이 통째로 가려진다.
+                    o.TakeDamage(splash, isLightningProc: true, suppressLightningStrikeVfx: true,
+                                 source: ActiveSkillId.Lightning, rollLightning: false);
+                }
+            TakeDamage(splash, isLightningProc: true, suppressLightningStrikeVfx: true,
+                       source: ActiveSkillId.Lightning, rollLightning: false);
+        }
+        else if (isLightningProc && !suppressLightningStrikeVfx && lightningVfxPrefab != null)
         {
             GameObject strikeVfx = ObjectPool.Instance.Spawn(lightningVfxPrefab, transform.position, Quaternion.identity);
             if (lightningChainDepth >= 1) TintLightningVfx(strikeVfx, RecursiveLightningColors[Mathf.Min(lightningChainDepth, RecursiveLightningColors.Length) - 1]);
@@ -1146,6 +1197,77 @@ public class Enemy : MonoBehaviour
             float angle = (i + Random.Range(0f, 1f)) / OverkillBurstCount * Mathf.PI * 2f;
             Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
             p.GetComponent<HitParticle>().Init(sprite, dir * Random.Range(7f, 14f));
+        }
+    }
+
+    // ── 상태이상 표시 (2026-09-19 사용자 명세) ──────────────────────────────
+    // ① 걸려 있는 동안 **머리 위에 아이콘**이 떠 있다(여러 개면 가로로 나열).
+    // ② 그 상태이상을 **거는 공격이 맞는 순간**, 아이콘이 켜지는 것과 동시에
+    //    평소 타격 파편과 **함께** 그 아이콘도 하나 튀어나와 흩어진다.
+    // ③ 중독만은 **피해를 입을 때마다**(도트 틱마다) 다시 튄다.
+    //
+    // 🔴 파편은 `HitParticle.MaxLive`(2000) 예산을 평소 타격 파편과 **같이 쓴다**(2026-09-18 후반 렉 대책).
+    //    독은 여러 적에게 오래 걸려서 여기가 제일 많이 먹는 자리다 — **한 번에 1개만** 띄운다.
+    private const float StatusIconSpacing = 0.34f;
+    private const float StatusIconHeadGap = 0.18f;
+    private const int StatusIconSortingAbove = 3;
+
+    private Transform statusIconRoot;
+    private SpriteRenderer[] statusIconSlots;
+    private static readonly Sprite[] statusIconBuffer = new Sprite[4];
+
+    private void SpawnStatusParticle(Sprite icon)
+    {
+        if (icon == null || hitParticlePrefab == null) return;
+        if (HitParticle.Live >= HitParticle.MaxLive) return;   // 상한에 닿으면 생략(평소 파편과 같은 규칙)
+
+        GameObject p = ObjectPool.Instance.Spawn(hitParticlePrefab, transform.position, Quaternion.identity);
+        Vector2 dir = new Vector2(Random.Range(-1f, 1f), Random.Range(0.7f, 1f)).normalized;
+        p.GetComponent<HitParticle>().Init(icon, dir * Random.Range(4f, 7f));
+    }
+
+    private void UpdateStatusIcons()
+    {
+        int n = 0;
+        // 기절은 감속과 같은 타이머를 쓴다 — 감속 0이 곧 기절이라 **둘 중 하나만** 띄운다.
+        if (slowTimer > 0f)
+            statusIconBuffer[n++] = slowMultiplier <= 0.01f ? StatusIconLibrary.Stun : StatusIconLibrary.Slow;
+        if (poisonTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Poison;
+        if (vulnerableTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Vulnerable;
+
+        if (n == 0)
+        {
+            if (statusIconRoot != null && statusIconRoot.gameObject.activeSelf) statusIconRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        if (statusIconRoot == null)
+        {
+            var go = new GameObject("StatusIcons");
+            statusIconRoot = go.transform;
+            statusIconRoot.SetParent(transform, false);
+            statusIconSlots = new SpriteRenderer[statusIconBuffer.Length];
+            for (int i = 0; i < statusIconSlots.Length; i++)
+            {
+                var slot = new GameObject("Icon" + i);
+                slot.transform.SetParent(statusIconRoot, false);
+                statusIconSlots[i] = slot.AddComponent<SpriteRenderer>();
+            }
+        }
+        if (!statusIconRoot.gameObject.activeSelf) statusIconRoot.gameObject.SetActive(true);
+
+        // 머리 위 — 스프라이트 윗변 기준이라 적 크기가 달라도 같은 간격으로 뜬다.
+        float headY = spriteRenderer.bounds.max.y - transform.position.y + StatusIconHeadGap;
+        float startX = -(n - 1) * 0.5f * StatusIconSpacing;
+        for (int i = 0; i < statusIconSlots.Length; i++)
+        {
+            SpriteRenderer sr = statusIconSlots[i];
+            bool used = i < n && statusIconBuffer[i] != null;
+            sr.enabled = used;
+            if (!used) continue;
+            sr.sprite = statusIconBuffer[i];
+            sr.sortingOrder = spriteRenderer.sortingOrder + StatusIconSortingAbove;
+            sr.transform.localPosition = new Vector3(startX + i * StatusIconSpacing, headY, 0f);
         }
     }
 

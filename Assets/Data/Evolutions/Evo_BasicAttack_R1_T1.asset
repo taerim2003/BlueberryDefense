@@ -22,9 +22,9 @@ MonoBehaviour:
   basePierce: 0
   baseProjectiles: 0
   levels:
-  - stat: 4
-    op: 0
-    amount: 1
+  - stat: 1
+    op: 1
+    amount: 0.95
   - stat: 0
     op: 1
     amount: 1.3
