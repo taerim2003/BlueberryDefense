@@ -200,7 +200,8 @@ function probeMetrics(runs) {
 
   return {
     perGoal, relations,
-    G2: { value: `${measured.filter(r => r.pass).length}/${relations.length}`, pass: measured.length === relations.length && measured.every(r => r.pass), measured: measured.length },
+    // probe를 안 돈 회차는 value null — "0/8"로 적으면 보고서가 서열 악화로 그린다
+    G2: { value: measured.length ? `${measured.filter(r => r.pass).length}/${relations.length}` : null, pass: measured.length === relations.length && measured.every(r => r.pass), measured: measured.length },
     G4: { value: round(minRate), byCharacter: fullRates, target: targets.fullTreeClearRateMin, pass: minRate != null && minRate >= targets.fullTreeClearRateMin && Object.keys(fullRates).length >= 3 },
     G6: { value: spreads.length ? round(Math.max(...spreads)) : null, target: targets.characterSpreadMax, pass: spreads.length > 0 && Math.max(...spreads) <= targets.characterSpreadMax,
           characterMeanD: Object.fromEntries(Object.entries(charMeanD).map(([c, v]) => [c, round(mean(v))])) },
