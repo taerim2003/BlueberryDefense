@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameOver { get; private set; }
     public bool IsGameClear { get; private set; }
+    // 엔딩(블루베리 군집체 → 크레딧) 진행 중. 클리어 기록은 이미 끝났고, 판정·스폰·피격은 멈춘다.
+    public bool IsEnding { get; private set; }
     public int CurrentStage { get; private set; } = 1;
     public bool IsSpawningPaused => stageBreakTimer > 0f;
 
@@ -49,7 +51,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsGameOver || IsGameClear) return;
+        if (IsGameOver || IsGameClear || IsEnding) return;
 
         if (stageBreakTimer > 0f)
         {
@@ -96,7 +98,7 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
-        if (IsGameOver) return;
+        if (IsGameOver || IsEnding) return;
 
         IsGameOver = true;
         Debug.Log("Game Over");
@@ -107,12 +109,29 @@ public class GameManager : MonoBehaviour
 
     public void GameClear()
     {
-        if (IsGameClear) return;
+        if (IsGameClear || IsEnding) return;
+
+        // 광활한 우주 어려움은 클리어 화면 대신 엔딩으로 간다. 기록은 엔딩 **전에** 남긴다 — 도중에 꺼도 클리어는 클리어다.
+        if (EndingSequence.ShouldPlay())
+        {
+            IsEnding = true;
+            Debug.Log("Game Clear (ending)");
+            BankRunCurrency();
+            RecordClear();
+            EndingSequence.Play();
+            return;
+        }
 
         IsGameClear = true;
         Debug.Log("Game Clear");
         SfxPlayer.Play(SfxId.Victory);
         BankRunCurrency();
+        RecordClear();
+        Time.timeScale = 0f;
+    }
+
+    private void RecordClear()
+    {
         // 승천 해금의 근거는 **맵별 기록**이다(MapSelectUI.MaxSelectableAscension = 이 맵 클리어 등급 + 1).
         // 캐릭터·맵 해금 조건도 맵을 특정해 묻기 때문에 같은 기록을 본다.
         if (RunConfig.Map != null)
@@ -120,13 +139,14 @@ public class GameManager : MonoBehaviour
 
         // 전역 최고 기록. 선택 화면은 더 이상 이걸 보지 않고 표시·치트용으로만 남는다.
         AscensionSave.UnlockUpTo(RunConfig.AscensionLevel + 1);
-        Time.timeScale = 0f;
+        Achievements.SyncSave();   // 맵·난이도 클리어 업적
     }
 
     // 이번 판에서 모은 정수를 영구 저장에 적립(판 종료 시 1회)
     private void BankRunCurrency()
     {
         SkillTreeSave.AddEssence(MetaRun.RunCurrency);
+        Achievements.OnRunEnd();   // 판 수·누적 처치 업적(여기가 승패 무관 판당 1회인 유일한 자리)
     }
 
     // 게임오버/클리어 패널의 "타이틀로" 버튼이 호출

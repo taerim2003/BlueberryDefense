@@ -24,6 +24,7 @@ public class MetaRunApplier : MonoBehaviour
         totals = SkillEffects.Compute(tree);
         ApplyRuntimeBonuses();
         ApplySkillGating();
+        Achievements.SyncTree(tree);   // 소급 — 패치 전에 산 노드
     }
 
     // 스킬트리의 해금 노드 → 인게임 카드 풀 게이팅 집합 세팅(트리 미배선이면 게이팅 없음 = 현행).

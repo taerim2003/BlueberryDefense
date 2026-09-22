@@ -197,6 +197,7 @@ public static class SkillTreeSave
         levels.TryGetValue(id, out int cur);
         levels[id] = cur + 1;
         WriteLevels(CurrentKey, levels);
+        Achievements.SyncTree(tree);
         return true;
     }
 

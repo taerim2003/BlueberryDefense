@@ -99,11 +99,8 @@ public class MapSelectUI : MonoBehaviour
         if (splitTransition != null) splitTransition.Show();
         else if (panelTransition != null) panelTransition.Show();
         else if (panelRoot != null) panelRoot.SetActive(true);
-        Select(FirstUnlockedIndex());
+        Select(FirstUnlockedIndex()); // 난이도도 여기서 정해진다
         RefreshCharacter();
-        // 지난 선택을 이어받되 해금 범위로 클램프
-        ascensionLevel = Mathf.Clamp(RunConfig.AscensionLevel, 1, MaxSelectableAscension);
-        RefreshAscension();
     }
 
     // ── 승천 선택 (StS식: 화살표로 등급 조절, 해금된 데까지만) ──
@@ -268,6 +265,9 @@ public class MapSelectUI : MonoBehaviour
 
         PlayThumbAnimation(index);
 
+        // 기본 난이도 = 이 맵에서 **아직 안 깬 첫 난이도**(= 해금된 최고 등급). 쉬움을 깼으면 보통부터 뜬다(2026-09-21 사용자).
+        // ⚠️ 예전엔 지난 판 난이도(RunConfig.AscensionLevel)를 이어받아서 깨고 돌아와도 같은 난이도가 떠 있었다.
+        ascensionLevel = MaxSelectableAscension;
         // 승천 상한은 맵마다 다르다 — 맵을 바꾸면 범위와 화살표 활성 상태를 다시 계산해야 한다.
         RefreshAscension();
     }

@@ -23,15 +23,18 @@
 ## Title.unity
 
 ```
-Controllers   ← TitleController · SkillTreeUI · MapSelectUI · CharacterSelectUI · CursorSetter · TitleBgm
+Controllers   ← TitleController · SkillTreeUI · MapSelectUI · CharacterSelectUI · CreditsUI · CursorSetter · TitleBgm
 Main Camera
 EventSystem
 Canvas
  ├─ Background · Dim(UIHorizontalFade) · TitleImage(UIFloat)
+ ├─ Btn_크레딧 (우하단 블루베리 버튼 → CreditsUI.Open)
  ├─ Layout (TitleMenuIntro)
  │    Btn_플레이 · Btn_업그레이드 · Btn_컬렉션 · Btn_설정 · Btn_종료   (각 JuicyButton + UIFloat)
  ├─ SkillTreeRoot        [inactive]  ← UITransition
  │    Wallpaper · Viewport(TreePanDrag) · TitleBox · EssenceBox · CloseButton · Tooltip · UnlockPoster(CharacterUnlockPoster)
+ ├─ CreditsRoot          [inactive]  ← UITransition   (명단 = CreditsContent 프리팹 — 엔딩과 공유)
+ │    Wallpaper · Scroll(진짜큰네모 판 · ScrollRect) → Viewport(RectMask2D, 판 안쪽) → Content[prefab CreditsContent](Heading_*·Names_*) · TitleBox · CloseButton
  ├─ CharacterSelectRoot  [inactive]  ← PanelSplitTransition
  │    Wallpaper · TitleBox · CardContainer · CloseButton · SkillBox · SelectButton
  └─ MapSelectRoot        [inactive]  ← PanelSplitTransition
@@ -72,6 +75,7 @@ Canvas           ← LevelUpUI · EvolutionTreeUI · DamageMeterUI
 Background
 Player  [tag=Player]   ← PlayerHealth · PlayerSkills · PlayerExperience · PlayerPassives · StormCloudAura   (자식 Hammer)
 [prefab] PausePanel · OptionsPanel   (씬 루트의 프리팹 인스턴스)
+[runtime] EndingSequence   (광활한 우주 어려움 클리어 시 GameManager가 Resources에서 생성 — 씬에 없음. 군집체 = Enemy_BlueberryCluster)
 ```
 
 **핵심 배선:**

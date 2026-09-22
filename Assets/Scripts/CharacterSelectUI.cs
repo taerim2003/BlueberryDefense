@@ -60,6 +60,7 @@ public class CharacterSelectUI : MonoBehaviour
     private void Awake()
     {
         RestoreSelection(); // 카드를 짓기 전에 복원해야 Open() 없이도 Selected가 옳다(MapSelectUI가 바로 읽는다)
+        Achievements.SyncCharacters(characters); // 해금 조건을 복사하지 않고 로스터 에셋에 직접 묻는다 — 타이틀에 올 때마다 돈다
         if (backButton != null) backButton.onClick.AddListener(Close);
         if (confirmButton != null) confirmButton.onClick.AddListener(Confirm);
         if (cardTemplate != null) cardTemplate.SetActive(false);

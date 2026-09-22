@@ -98,6 +98,14 @@ public class RunBootstrap : MonoBehaviour
         }
     }
 
+    // 엔딩 연출이 곡을 끄고(보스 처치 직후) 다시 켠다("Game Cleared!"). 다시 켤 땐 처음부터.
+    public void SetBgmPlaying(bool playing)
+    {
+        if (bgmSource == null) return;
+        if (playing) bgmSource.Play();
+        else bgmSource.Stop();
+    }
+
     // 판이 끝나면(승패 무관) BGM을 "옆방에서 들리는" 소리로 물린다 — 타이틀 화면의 패널과 같은 처리.
     // ⚠️ 이 시점엔 Time.timeScale이 0이므로 BgmMuffle이 unscaledDeltaTime으로 보간한다.
     private void Update()

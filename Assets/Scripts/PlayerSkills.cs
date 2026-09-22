@@ -295,8 +295,12 @@ public class PlayerSkills : MonoBehaviour
     }
 
     // 이 판에서만 유효한 static 상태 초기화 (RunState에서도 호출)
+    // 엔딩 연출 중 스킬 봉인(EndingSequence가 켜고 끈다). 켜져 있으면 쿨도 흐르지 않는다.
+    public static bool Sealed;
+
     public static void ResetRunState()
     {
+        Sealed = false;
         MiniWhirlwindDamageBonus = 0f;
         GrapePoisonExplodeOnDeath = false;
         GrapeExplodeRadiusMult = 1f;
@@ -355,7 +359,7 @@ public class PlayerSkills : MonoBehaviour
         // 레벨업·보물·진화·ESC 창이 떠 있는 동안엔 스킬이 나가지 않는다.
         // Update는 timeScale 0에도 계속 돌아서, 쿨이 차 있던 스킬이 카드 뒤에서 발동돼 버렸다
         // (자동시전 스나이핑도 같은 이유로 매 프레임 나갔다).
-        if (ModalPause.IsPaused) return;
+        if (ModalPause.IsPaused || Sealed) return;
 
         globalCooldownTimer -= Time.deltaTime;
         if (shotgunTimer > 0f) shotgunTimer -= Time.deltaTime;
@@ -422,6 +426,7 @@ public class PlayerSkills : MonoBehaviour
             ExtraProjectiles = GetBaseProjectiles(id),
         });
         CollectionSave.DiscoverActive(id); // 컬렉션(도감) 발견 기록 — 판을 넘어 남는다
+        if (HasMaxSkills) Achievements.OnActiveSlotsFull();
     }
 
     // 만렙(MaxSkillLevel)에 닿으면 더 이상 레벨업 후보로 뜨지 않는다 — 진화해서 Lv.1로 리셋해야 다시 큰다.
@@ -435,6 +440,7 @@ public class PlayerSkills : MonoBehaviour
         skill.Level++;
         skill.TotalLevel++;
         ApplyUpgradeEffect(skill, skill.Level);
+        if (skill.Level >= BalanceConstants.MaxSkillLevel) Achievements.OnSkillMaxLevel();
     }
 
     // 스킬트리 메타: 특정 스킬을 시작부터 지정 레벨로(진화 게이트 무시). 레벨업 효과를 순서대로 적용.
@@ -636,6 +642,7 @@ public class PlayerSkills : MonoBehaviour
         skill.Route = route;
         skill.EvolutionStage = newTier;
         CollectionSave.DiscoverActiveEvo(id, route, newTier); // 컬렉션(도감) 발견 기록
+        Achievements.OnEvolved(newTier);
         SfxPlayer.Play(SfxId.Evolution);
 
         // 기본 스탯 도약 + 레벨 표시 리셋(누적 레벨 TotalLevel은 유지 — 다음 진화 게이트 기준).
@@ -1097,7 +1104,7 @@ public class PlayerSkills : MonoBehaviour
                 StartCoroutine(BasicAttackBurst(skill, damage, critChance, pierce, allowBonusShot));
         }
 
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
         return true;
     }
 
@@ -1367,7 +1374,7 @@ public class PlayerSkills : MonoBehaviour
         int eagleTargets = skill.PathTier[1] >= 3 ? 8 : 4;
         float eagleRatio = skill.PathTier[1] >= 3 ? 0.6f : 0.4f;
 
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
         int shots = SnipingBaseShots + skill.ExtraProjectiles; // 레벨업 보조축: 대상당 연사 수
         foreach (Enemy target in chosen)
             StartCoroutine(SnipeTarget(target, damage, critChance, eagleSplash, eagleRatio, eagleTargets, shots, skill.Scale,
@@ -1564,7 +1571,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[1] >= 3)
         {
             FireSuperRocket(missileDamage, critChance, skill);
-            animator.SetTrigger("AttackBody");
+            TriggerAttackBody();
             return true;
         }
 
@@ -1607,7 +1614,7 @@ public class PlayerSkills : MonoBehaviour
             // 여기서 스나이핑 이펙트를 물리지 않는다.
             m.Init(dir);
         }
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
         return true;
     }
 
@@ -1628,7 +1635,7 @@ public class PlayerSkills : MonoBehaviour
         if (!megaBuff) FireShotgunPellets(damage, critChance, skill);
         // 🔴 공격 모션은 `FireVolley` 안에 있다 — 발사를 건너뛰면 **시전해도 화면에 아무 일도 안 일어난다.**
         //    이 스킬이 예전에 겪었던 바로 그 문제라(위 주석) 여기서 모션만 따로 튼다.
-        else animator.SetTrigger("AttackBody");
+        else TriggerAttackBody();
 
         // 🔴 **버프는 집중 산탄 루트를 골랐을 때만 켜진다**(사용자 결정 2026-09-02 — 8/27 QA "산탄 구조 개편").
         //    화면의 "루트 1"(= route 0, 스나이핑 연계 · 집중 산탄)이 그 루트다.
@@ -1727,7 +1734,7 @@ public class PlayerSkills : MonoBehaviour
     // (폭발·기절)만은 Enemy가 읽어야 해서 static으로 넘긴다.
     private void FireGrapeToss(float damage, EquippedSkill skill)
     {
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
         PlayCastSfx(grapeTossCastSfx, castSfxVolume);
 
         int balls = GrapeBaseBalls + skill.ExtraProjectiles;
@@ -2010,6 +2017,22 @@ public class PlayerSkills : MonoBehaviour
     //      `Attack`     = Pinapple_Attack.anim      — 본체 + Hammer 곡선. **FireSwing만** 쏜다.
     //      `AttackBody` = Pinapple_AttackBody.anim  — 본체 곡선만. 나머지 스킬 전부가 쏜다.
     //    본체 곡선은 망치 변종 네 클립이 전부 같아서 본체 전용 클립 하나로 커버된다(진화해도 그대로).
+    // 🔴 `AttackBody`는 **파인애플 컨트롤러에만 있다** — 딸기(Player.controller)·포도(Grape.controller)는
+    //    `Attack` 하나뿐이라 없는 트리거를 쏘면 경고만 찍히고 공격 모션이 안 나온다. 없으면 `Attack`으로 대신 쏜다.
+    private RuntimeAnimatorController attackBodyCheckedFor;
+    private bool hasAttackBody;
+    private void TriggerAttackBody()
+    {
+        RuntimeAnimatorController ctrl = animator.runtimeAnimatorController;
+        if (ctrl != attackBodyCheckedFor) // 진화하면 컨트롤러가 바뀐다(망치 오버라이드) — 바뀔 때만 다시 센다
+        {
+            attackBodyCheckedFor = ctrl;
+            hasAttackBody = false;
+            foreach (AnimatorControllerParameter p in animator.parameters)
+                if (p.name == "AttackBody") { hasAttackBody = true; break; }
+        }
+        animator.SetTrigger(hasAttackBody ? "AttackBody" : "Attack");
+    }
 
     // 🔴 적 발밑 그림자(Enemy.BuildShadowSprite)는 16×8px · Point 필터다. 범위 그림자는 그걸 10배 이상
     //    늘려 쓰므로 픽셀이 그대로 커져 각져 보였다(2026-09-20 사용자: "완전 각져있잖아").
@@ -2265,7 +2288,7 @@ public class PlayerSkills : MonoBehaviour
         if (rewindVfx != null)
             ObjectPool.Instance.Spawn(rewindVfx, transform.position + Vector3.up * RewindVfxHeight, Quaternion.identity);
 
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
     }
 
     // 되감기 R1(가속 되감기, path2)이 전역 쿨타임(GCD)을 줄인다. 1차 = 절반, 2차 = **아예 없앤다**.
@@ -2618,7 +2641,7 @@ public class PlayerSkills : MonoBehaviour
             pellet.Init(dir, pelletDamage, false);
         }
 
-        animator.SetTrigger("AttackBody");
+        TriggerAttackBody();
     }
 
     // 총구 화염. 알을 따라가지 않고 정면(왼쪽)을 향한다.
@@ -3021,16 +3044,18 @@ public class PlayerSkills : MonoBehaviour
         {
             List<Enemy> enemies = new List<Enemy>(Enemy.Active); // 복사본 — 아래에서 피해를 주면 활성 목록이 바뀐다
 
+            // 🔴 피해는 **독수리가 닿는 순간** 들어간다(2026-09-21 사용자: 예전엔 시전 즉시 맞고 그림만 늦게 떨어졌다).
+            //    독수리는 떨어지는 내내 그 적을 따라간다 — 떨어지는 동안 적이 걸어가서 뒤에 꽂히던 것을 없앤다.
             foreach (Enemy enemy in enemies)
             {
-                if (enemy == null) continue;
-                Vector3 pos = enemy.transform.position;
-                enemy.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
-
-                if (bombEagle) EagleBombExplode(pos, damage * bombRatio, critChance, bombRadius, enemy, skill.Scale);
-                if (spawnMiniWhirlwind) SpawnWhirlwind(pos, damage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
-
-                StartCoroutine(MeteorImpact(pos, skill.Scale));
+                if (enemy == null || !enemy.IsAlive) continue;
+                Enemy target = enemy;
+                StartCoroutine(MeteorImpact(target.transform.position, skill.Scale, target, (pos, stillOnTarget) =>
+                {
+                    if (stillOnTarget) target.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
+                    if (bombEagle) EagleBombExplode(pos, damage * bombRatio, critChance, bombRadius, target, skill.Scale);
+                    if (spawnMiniWhirlwind) SpawnWhirlwind(pos, damage * miniWhirlwindDamageMult * (1f + MiniWhirlwindDamageBonus), critChance, skill.Scale * MiniWhirlwindScale, false, false, maxHitCount: miniWhirlwindMaxHits, isMini: true);
+                }));
             }
 
             yield return new WaitForSeconds(interval);
@@ -3316,12 +3341,20 @@ public class PlayerSkills : MonoBehaviour
         }
     }
 
-    private IEnumerator MeteorImpact(Vector3 targetPos, float scale)
+    // follow: 떨어지는 내내 그 적을 따라간다(독수리 투하 기본형). onLand(적 발밑 위치, 끝까지 그 적이었나)는 닿는 순간 불린다.
+    // ⚠️ 적은 풀링된다 — 낙하 중에 한 번이라도 죽으면 추적을 끊는다. 같은 오브젝트가 새 적으로 재활용돼도 따라가지 않게.
+    private IEnumerator MeteorImpact(Vector3 targetPos, float scale, Enemy follow = null, System.Action<Vector3, bool> onLand = null)
     {
-        if (eagleDropPrefab == null) yield break;
+        if (eagleDropPrefab == null)
+        {
+            onLand?.Invoke(targetPos, follow != null && follow.IsAlive);
+            yield break;
+        }
 
         const float fallAngleFromVertical = 15f;
-        Vector3 landPos = targetPos + new Vector3(0.4f, 0.6f, 0f);
+        // x 0.4 = 떨어지는 동안 적이 걸어갈 몫을 앞질러 짚던 값. 따라가는 독수리는 앞지를 필요가 없다.
+        Vector3 landOffset = new Vector3(follow != null ? 0f : 0.4f, 0.6f, 0f);
+        Vector3 landPos = targetPos + landOffset;
 
         // 🔴 **낙하 시작점은 화면 위 바깥이어야 한다**(2026-09-19 사용자: "우주 같은 큰 맵에서는 하늘에서
         //    떨어지는 게 아니라 그냥 중간에 생성되어 떨어지는 것처럼 보인다").
@@ -3351,6 +3384,12 @@ public class PlayerSkills : MonoBehaviour
         float t = 0f;
         while (t < duration)
         {
+            if (follow != null)
+            {
+                if (follow.IsAlive) targetPos = follow.transform.position;
+                else follow = null; // 죽었으면 마지막 자리로 마저 떨어진다
+                landPos = targetPos + landOffset;
+            }
             eagle.transform.position = Vector3.Lerp(start, landPos, t / duration);
             t += Time.deltaTime;
             yield return null;
@@ -3363,6 +3402,8 @@ public class PlayerSkills : MonoBehaviour
             impact.transform.localScale = Vector3.one * 0.25f * scale;
             ObjectPool.Instance.Despawn(impact, 2f);
         }
+
+        onLand?.Invoke(targetPos, follow != null && follow.IsAlive);
     }
 
     private static float GetDefaultCooldown(ActiveSkillId id)

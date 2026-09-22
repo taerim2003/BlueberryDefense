@@ -23,6 +23,18 @@ public static class CollectionSave
     public static bool HasActiveEvo(ActiveSkillId id, int route, int stage) => Has($"{ActiveToken(id)}:{route}:{stage}");
     public static bool HasPassiveEvo(PassiveSkillId id, int route, int stage) => Has($"{PassiveToken(id)}:{route}:{stage}");
 
+    // 기록된 진화 중 티어가 minTier 이상인 것의 수(업적 판정용). 진화 토큰만 "종류:id:루트:티어" 네 조각이다.
+    public static int CountEvolutions(int minTier)
+    {
+        int n = 0;
+        foreach (string token in SaveStore.GetString(Key, "").Split(','))
+        {
+            string[] parts = token.Split(':');
+            if (parts.Length == 4 && int.TryParse(parts[3], out int tier) && tier >= minTier) n++;
+        }
+        return n;
+    }
+
     // 토큰끼리 접두사가 겹치므로("A:Whirlwind"는 "A:Whirlwind:0:1"의 접두사) 구분자째로 찾는다.
     private static bool Has(string token) => Csv().Contains("," + token + ",");
 

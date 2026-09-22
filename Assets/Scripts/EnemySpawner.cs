@@ -79,6 +79,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         if (gm != null && gm.IsSpawningPaused) return; // 스테이지 전환 텀: 스폰 정지
+        if (gm != null && gm.IsEnding) return;         // 엔딩: 블루베리 군집체만 남는다
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
         if (pendingAmbushes.Count > 0) return;          // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
@@ -171,8 +172,11 @@ public class EnemySpawner : MonoBehaviour
         // 보스 블루베리: 보스 스테이지의 마지막 물량으로 1회 등장(그 뒤 잔몹 + 분출 블루베리까지 잡아야 클리어).
         // 🔴 상자까지 **먹고 난 빈 화면**에서 등장한다(2026-09-20 사용자). 안 그러면 상자와 보스가 같은 순간에 떠서
         //    "상자 먼저 = 보스 직전 파워 스파이크"라는 이 구간의 의도가 사라진다.
-        if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1 && Enemy.Active.Count == 0)
+        if (isBossStage && !bossSpawnedThisStage && SpawnedThisStage >= SpawnTarget - 1)
         {
+            // 빈 화면이 될 때까지 **기다린다**. 이 조건을 위 if에 붙여 두면 거짓일 때 아래 else로 새서 일반 몹이 나오고,
+            // 그 한 마리가 보스 칸을 먹어 StageSpawnComplete가 되어 **보스가 영영 안 나온다**(9/21 봇: 15·20층 75판 중 보스 5판).
+            if (Enemy.Active.Count > 0) return;
             // 승천 티어별 전용 보스. 꽂혀 있으면 그걸 쓰고, 비어 있으면 bossEnemyPrefab으로 떨어진다
             // (= 안 꽂은 맵은 종전과 완전히 같다. MapDefinition 주석 참고).
             prefabToSpawn = map.bossEnemyPrefab;
@@ -321,6 +325,13 @@ public class EnemySpawner : MonoBehaviour
             if (map.hopperEnemyPrefab != null && Random.value < stage.hopperChance) return map.hopperEnemyPrefab;
         }
         return map.enemyPrefab;
+    }
+
+    // 엔딩의 블루베리 군집체 — 방금 잡은 최종 보스와 같은 배율(스테이지·승천)을 받는다.
+    public void ApplyCurrentStageScaling(Enemy enemy)
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm != null) ApplyStageScaling(enemy, gm.CurrentStageData, gm.CurrentStage);
     }
 
     private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage)

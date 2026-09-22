@@ -241,6 +241,7 @@ public class PlayerPassives : MonoBehaviour
         passive.Level++;
         passive.TotalLevel++;
         ApplyPassiveLevelEffect(passive);
+        if (passive.Level >= BalanceConstants.MaxSkillLevel) Achievements.OnSkillMaxLevel();
     }
 
     private void ApplyPassiveLevelEffect(EquippedPassive passive)
@@ -416,6 +417,7 @@ public class PlayerPassives : MonoBehaviour
         passive.Route = route;
         passive.EvolutionStage = newTier;
         CollectionSave.DiscoverPassiveEvo(id, route, newTier); // 컬렉션(도감) 발견 기록
+        Achievements.OnEvolved(newTier);
 
         // 패시브의 "기본 스탯 도약" = 레벨업 1회분을 한 번 더 얹는 것(스킬의 피해 ×1.5에 해당).
         ApplyPassiveLevelEffect(passive);

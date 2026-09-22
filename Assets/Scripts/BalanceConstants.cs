@@ -26,7 +26,7 @@ public static class BalanceConstants
     //   레벨업(Prog_Orb의 관통 대상 +5 × 3단계)과 합쳐 만렙 25가 된다.
     public const int OrbBaseTargets = 10;
     public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
-    public const int EagleBaseDrops = 5;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3, 9/17 버프로 5)
+    public const int EagleBaseDrops = 3;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3, 9/17 버프로 5), 9/21 3으로(레벨업 +1×3 → 10렙 6회)
     public const int ShotgunBasePellets = 12;     // 산탄 알 수. 9/14 3→6, 9/17 12
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
 

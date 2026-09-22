@@ -987,6 +987,7 @@ public class Enemy : MonoBehaviour
         {
             isDead = true;
             BotInput.OnEnemyKilled?.Invoke(this); // 봇 플레이테스트 관측(평소 null)
+            Achievements.OnEnemyKilled(isTreasure);
             SfxPlayer.Play(SfxId.EnemyDeath);
 
             // 생화학 루트 2차 — 중독된 채 죽으면 터진다. isDead를 세운 뒤라 이 적은 다시 안 죽는다.

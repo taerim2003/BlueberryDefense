@@ -38,7 +38,7 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
+        if (GameManager.Instance != null && (GameManager.Instance.IsGameOver || GameManager.Instance.IsEnding)) return;
 
         // 방어 패시브: 들어온 피해를 먼저 깎고, 남은 것만 보호막·체력이 받는다.
         // 최소 1은 남긴다 — 감소율이 커져도 완전 무적이 되지 않게.

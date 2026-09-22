@@ -105,7 +105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11e221868ebdf3244b675611dc8fc9fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartPickup
-  healAmount: 20
+  healAmount: 15
   delayBeforeHoming: 0.3
   homingSpeed: 8
   homingAcceleration: 10

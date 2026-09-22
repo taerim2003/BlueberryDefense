@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// 타이틀 씬의 메인 메뉴. Play/업그레이드/컬렉션/설정/종료.
+// 타이틀 씬의 메인 메뉴. Play/업그레이드/컬렉션/설정/종료 + 크레딧(블루베리 버튼).
 public class TitleController : MonoBehaviour
 {
     [SerializeField] private Button playButton;
@@ -9,7 +9,9 @@ public class TitleController : MonoBehaviour
     [SerializeField] private Button collectionButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button quitButton;
+    [SerializeField] private Button creditsButton;
     [SerializeField] private SkillTreeUI skillTree;
+    [SerializeField] private CreditsUI credits;
     [SerializeField] private MapSelectUI mapSelect;
     [SerializeField] private CharacterSelectUI characterSelect;
 
@@ -24,6 +26,7 @@ public class TitleController : MonoBehaviour
         if (collectionButton != null) collectionButton.onClick.AddListener(OpenCollection);
         if (settingsButton != null) settingsButton.onClick.AddListener(OpenSettings);
         if (quitButton != null) quitButton.onClick.AddListener(Quit);
+        if (creditsButton != null && credits != null) creditsButton.onClick.AddListener(credits.Open);
 
         if (OpenSkillTreeOnStart)
         {

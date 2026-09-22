@@ -3,7 +3,8 @@ using UnityEngine;
 using Steamworks;
 #endif
 
-// Steam 연동의 단일 창구. 지금 하는 일은 하나뿐 — **게임을 켜면 첫 실행 업적을 깬다.**
+// Steam 연동의 단일 창구. 하는 일 = **업적 전달** + 이 게임의 Steam 언어 읽기(`GameLanguage`).
+// 어떤 업적을 언제 깨는지는 `Achievements`가 정한다.
 //
 // 🔴 세이브는 여기를 지나지 않는다. 클라우드 동기화는 Steamworks 쪽 **Auto-Cloud 설정**이 하고,
 //    게임은 그냥 `SaveStore`로 파일을 쓸 뿐이다(`SaveStore.cs` 머리말 참고). SDK는 업적 때문에만 들어왔다.
@@ -20,20 +21,33 @@ public class SteamBootstrap : MonoBehaviour
     // 채워 넣으면 exe를 직접 켠 사람도 Steam을 거쳐 다시 켜진다(권장).
     private const uint AppId = 0;
 
-    // Steamworks > 실적 페이지에 **이 문자열 그대로** API 이름을 만들어야 한다. 한 글자만 달라도 조용히 무시된다.
-    private const string AchFirstLaunch = "ACH_FIRST_LAUNCH";
-
     private const bool RunInEditor = false;
 
     private static SteamBootstrap instance;
 
 #if !DISABLESTEAMWORKS
     private static bool running;
+    private static bool storePending;   // 한 프레임에 여러 업적이 풀려도 StoreStats는 한 번만(소급 판정이 한꺼번에 푼다)
+    public static bool Running => running;
+#else
+    public static bool Running => false;
 #endif
 
     // Steam 라이브러리에서 이 게임에 고른 언어("koreana"·"english"·"schinese"…). Steam이 안 떴으면 null.
     // 여기선 기억만 한다 — 적용은 `Loc.RestoreSaved`가 **저장된 언어가 없을 때만** 한다(사용자 선택이 이긴다).
     public static string GameLanguage { get; private set; }
+
+    // Achievements.Unlock만 부른다.
+    public static void SetAchievement(string api)
+    {
+#if !DISABLESTEAMWORKS
+        if (!running) return;
+        // 이미 깬 사람에게 다시 쏘지 않는다 — Steam이 알림을 또 띄운다.
+        if (SteamUserStats.GetAchievement(api, out bool achieved) && achieved) return;
+        if (SteamUserStats.SetAchievement(api)) storePending = true;
+        else Debug.LogWarning("[Steam] 업적 '" + api + "' 설정 실패 — Steamworks에 그 API 이름이 있는지 확인.");
+#endif
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Boot()
@@ -81,18 +95,19 @@ public class SteamBootstrap : MonoBehaviour
 
         // 실적은 따로 요청하지 않는다 — Steam 클라이언트가 **게임 프로세스가 뜨기 전에** 이미 동기화해 둔다
         // (`RequestCurrentStats`는 최신 SDK에서 없어졌다). 그래서 Init 직후 바로 읽고 쓸 수 있다.
-        // 이미 깬 사람에게 다시 쏘지 않는다 — Steam이 알림을 또 띄운다.
-        if (SteamUserStats.GetAchievement(AchFirstLaunch, out bool achieved) && achieved) return;
-
-        if (SteamUserStats.SetAchievement(AchFirstLaunch))
-            SteamUserStats.StoreStats();   // 저장해야 Steam 서버로 올라가고 알림이 뜬다
-        else
-            Debug.LogWarning("[Steam] 업적 '" + AchFirstLaunch + "' 설정 실패 — Steamworks에 그 API 이름이 있는지 확인.");
+        Achievements.Unlock(Achievements.FirstLaunch);
+        Achievements.SyncSave();   // 소급 — 패치 전 세이브·Steam 없이 깬 것
     }
 
     private void Update()
     {
-        if (running) SteamAPI.RunCallbacks();
+        if (!running) return;
+        SteamAPI.RunCallbacks();
+        if (storePending)
+        {
+            storePending = false;
+            SteamUserStats.StoreStats();   // 저장해야 Steam 서버로 올라가고 알림이 뜬다
+        }
     }
 
     private void OnDestroy()

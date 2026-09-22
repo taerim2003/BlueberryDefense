@@ -771,7 +771,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 2
-    cost: 26
+    cost: 13
     effect: 0
     perLevel: 0
     maxLevel: 1
