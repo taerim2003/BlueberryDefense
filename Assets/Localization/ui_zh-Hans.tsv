@@ -1,0 +1,12 @@
+KEY	ZH
+ui.options.title	设置
+ui.options.master	主音量
+ui.options.bgm	背景音乐
+ui.options.sfx	音效
+ui.options.fullscreen	全屏
+ui.options.resolution	分辨率
+ui.options.language	语言
+ui.options.close	关闭
+ui.options.reset	重置存档
+ui.options.reset_confirm	确定吗？再点击一次
+ui.options.reset_done	存档已重置

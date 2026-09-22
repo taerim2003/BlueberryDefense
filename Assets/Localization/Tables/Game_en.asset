@@ -255,7 +255,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983088
-    m_Localized: <Orb> can now appear as a skill choice.
+    m_Localized: <Orb> can now appear as a skill choice
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983089
@@ -263,7 +263,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983090
-    m_Localized: <Lightning> can now appear as a skill choice.
+    m_Localized: <Lightning> can now appear as a skill choice
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983091
@@ -271,7 +271,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983092
-    m_Localized: <Homing Missile> can now appear as a skill choice.
+    m_Localized: <Homing Missile> can now appear as a skill choice
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983093
@@ -279,7 +279,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983094
-    m_Localized: <Buckshot Blast> can now appear as a skill choice.
+    m_Localized: <Buckshot Blast> can now appear as a skill choice
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983095
@@ -287,7 +287,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983096
-    m_Localized: <Rewind> can now appear as a skill choice.
+    m_Localized: <Rewind> can now appear as a skill choice
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983097
@@ -298,7 +298,7 @@ MonoBehaviour:
     m_Localized: 'Rewind winds back the blueberries'' time as well,
 
       slowing
-      every blueberry on the field.'
+      every blueberry on the field'
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983101
@@ -309,7 +309,7 @@ MonoBehaviour:
     m_Localized: 'Every 20 uses of Homing Missile
 
       adds one more missile per
-      volley.'
+      volley'
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983103
@@ -317,7 +317,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983104
-    m_Localized: Sniping targets one additional enemy.
+    m_Localized: Sniping targets one additional enemy
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983105
@@ -803,19 +803,19 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873155
-    m_Localized: Critical chance +{0}%p
+    m_Localized: Critical chance +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873156
-    m_Localized: Cooldown reset chance +{0}%p
+    m_Localized: Cooldown reset chance +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873157
-    m_Localized: Damage taken -{0}%p
+    m_Localized: Damage taken -{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873158
-    m_Localized: All skill cooldowns -{0}%p
+    m_Localized: All skill cooldowns -{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873159
@@ -831,7 +831,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873162
-    m_Localized: All damage has a {0}% chance to deal triple
+    m_Localized: All damage has a {0}% chance to deal triple damage
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873163
@@ -951,7 +951,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873196
-    m_Localized: Proc chance +{0}%p
+    m_Localized: Trigger chance +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873197
@@ -967,7 +967,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873200
-    m_Localized: Hit interval {0}% faster
+    m_Localized: Hits {0}% faster
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873201
@@ -1123,7 +1123,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873239
-    m_Localized: Continuing the path you chose at tier 1
+    m_Localized: Continuing the path you chose for Evolution 1
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873240
@@ -1323,7 +1323,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 4204751576834053
-    m_Localized: Route {0}
+    m_Localized: Path {0}
     m_Metadata:
       m_Items: []
   - m_Id: 4204751576834054
@@ -1335,7 +1335,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 4532112721649664
-    m_Localized: Arrow rain +{0} wave
+    m_Localized: Arrow Rain waves +{0}
     m_Metadata:
       m_Items: []
   - m_Id: 4598347408809984
@@ -1393,11 +1393,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 9432851369631744
-    m_Localized: "Evolves at Lv.{0} \u2014 needs {1}"
+    m_Localized: "Evolves at Lv.{0} \xB7 Synergy: {1}"
     m_Metadata:
       m_Items: []
   - m_Id: 9432851445129216
-    m_Localized: nothing
+    m_Localized: None
     m_Metadata:
       m_Items: []
   - m_Id: 9432851445129217
@@ -1516,11 +1516,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 9649662912569344
-    m_Localized: Homing Missile kills grant {0}x experience
+    m_Localized: Experience x{0} on Homing Missile kills
     m_Metadata:
       m_Items: []
   - m_Id: 9649662912569345
-    m_Localized: Crit chance cap {0}%
+    m_Localized: Critical chance cap {0}%
     m_Metadata:
       m_Items: []
   - m_Id: 9649662912569346
@@ -1748,7 +1748,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594544
-    m_Localized: Skills can now make their first evolution
+    m_Localized: Skills can now reach Evolution 1
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594545
@@ -1836,7 +1836,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594566
-    m_Localized: While you have <Vitality>, healing items restore twice as much
+    m_Localized: While you have <Vitality>, health pickups restore twice as much
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594567
@@ -1914,11 +1914,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594585
-    m_Localized: Unlock 2nd Evolution
+    m_Localized: Unlock Evolution 2
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594586
-    m_Localized: Skills can now make their second evolution
+    m_Localized: Skills can now reach Evolution 2
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594587
@@ -1970,7 +1970,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 13070686563803136
-    m_Localized: Seeking orbs +{0}
+    m_Localized: Seeking Orbs +{0}
     m_Metadata:
       m_Items: []
   - m_Id: 13070686651883520
@@ -2006,27 +2006,161 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866304
-    m_Localized: Lightning rod radius +{0}%
+    m_Localized: Lightning Rod radius +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866305
-    m_Localized: "+{0} volley"
+    m_Localized: Volleys +{0}
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866306
-    m_Localized: "[linked: '{0}']"
+    m_Localized: '[Synergy: ''{0}'']'
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866307
-    m_Localized: "[linked: '{0}' evolved]"
+    m_Localized: '[Synergy: ''{0}'' evolved]'
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866310
-    m_Localized: "Flight III"
+    m_Localized: Anti-Air III
     m_Metadata:
       m_Items: []
   - m_Id: 13076071072866311
-    m_Localized: "+30% damage to flying enemies"
+    m_Localized: +30% damage to flying enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804121439379456
+    m_Localized: Orb Hits Flyers
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804121573597184
+    m_Localized: The basic orb can now hit flying enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804121573597185
+    m_Localized: Close Aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804121573597186
+    m_Localized: 'Buckshot-buffed attacks hit nearby enemies
+
+      2 extra times.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098688
+    m_Localized: Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098689
+    m_Localized: Design & Development
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098690
+    m_Localized: Art
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098691
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098692
+    m_Localized: Sound Effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098693
+    m_Localized: Visual Effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098694
+    m_Localized: Fonts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098695
+    m_Localized: Tools
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098696
+    m_Localized: Special Thanks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14804126506098697
+    m_Localized: Thank you for playing!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14817320016486400
+    m_Localized: Here stands the union of every blueberry...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14817320033263616
+    m_Localized: You have defeated the union of every blueberry,
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14817320033263617
+    m_Localized: and saved the world from the blueberry invasion!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14817320033263618
+    m_Localized: Game Cleared!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830537841254400
+    m_Localized: Recovery I
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538013220864
+    m_Localized: Recovery II
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538013220865
+    m_Localized: Recovery III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538013220866
+    m_Localized: All damage increased by {0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538013220867
+    m_Localized: Max health increased by {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538013220868
+    m_Localized: All skill cooldowns -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609472
+    m_Localized: Experience gain +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609473
+    m_Localized: Essence gain +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609474
+    m_Localized: Critical chance increased by {0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609475
+    m_Localized: Bonus damage to flying enemies +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609476
+    m_Localized: Critical damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609477
+    m_Localized: Damage to bosses +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609478
+    m_Localized: +{0} reroll per run
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830538021609479
+    m_Localized: Health pickups restore an extra {0}% of max health
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14830546141782016
+    m_Localized: Skill Evolution
     m_Metadata:
       m_Items: []
   references:

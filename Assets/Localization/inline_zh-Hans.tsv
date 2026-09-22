@@ -1,0 +1,164 @@
+KEY	ZH
+passive.lvl.Strength	伤害提高{0}%
+passive.lvl.Health	最大生命值提高{0}
+passive.lvl.Knowledge	经验获取提高{0}%
+passive.lvl.Assassinate	暴击率提高{0}%
+passive.lvl.Refresh	冷却重置几率提高{0}%
+passive.lvl.Defense	受到的伤害降低{0}%
+passive.lvl.Accel	所有技能冷却缩短{0}%
+passive.acq.Strength	伤害提高{0}%
+passive.acq.Health	最大生命值提高{0}
+passive.acq.Knowledge	经验获取提高{0}%
+passive.acq.Assassinate	所有伤害有{0}%几率变为3倍
+passive.acq.Refresh	使用技能时有{0}%几率重置冷却
+passive.acq.Defense	受到的伤害降低{0}%
+passive.acq.Accel	所有技能冷却缩短{0}%
+passive.cur.Strength.dmg	总伤害 +{0}%
+passive.cur.Strength.qfallback	Q技能
+passive.cur.Strength.q	Q（{0}）伤害 +{1}%
+passive.cur.Health.max	最大生命值 {0}
+passive.cur.Health.heartDrop	生命恢复道具掉落率 x{0}
+passive.cur.Knowledge.xp	经验获取 +{0}%
+passive.cur.Knowledge.treasure	蓝莓有{0}%几率以宝箱形态出现
+passive.cur.Knowledge.homingXp	追踪导弹击杀时经验 x{0}
+passive.cur.Assassinate.chance	暴击率 {0}%
+passive.cur.Assassinate.mult	暴击伤害倍率 x{0}
+passive.cur.Assassinate.critCap	暴击率上限 {0}%
+passive.cur.Assassinate.killXp	暴击击杀时经验 x{0}
+passive.cur.Refresh.reset	使用技能时有{0}%几率重置冷却
+passive.cur.Refresh.heal	每次重置时恢复{0}点生命值
+passive.cur.Refresh.buffCd	增益类技能（霰弹·落雷）冷却 -{0}%
+passive.cur.Refresh.lightningCd	落雷触发时有{0}%几率使所有冷却 -0.5秒
+passive.cur.Defense.reduce	受到的伤害 -{0}%
+passive.cur.Defense.autoSwing	受击时自动发动挥击（伤害{0}%）
+passive.cur.Defense.retaliate	受击时将所受伤害的{0}%反弹给所有敌人
+passive.cur.Accel.cd	所有技能冷却 -{0}%
+passive.cur.Accel.cutOnHit	受击时所有冷却 -{0}秒
+step.Damage.mul	伤害提高{0}%
+step.Damage.add	伤害提高{0}
+step.Cooldown.mul	冷却时间缩短{0}%
+step.Cooldown.add	冷却时间缩短{0}秒
+step.ProjectileSpeed	投射物速度提高{0}%
+step.Pierce	额外穿透{0}次
+step.ProjectileCount	投射物 +{0}
+step.ProjectileCount.arrowrain	箭雨 +{0}波
+step.ProcChance	触发几率提高{0}%
+step.Duration	持续时间延长{0}秒
+step.Scale	大小增加{0}%
+step.RewindAmount	回溯时间延长{0}秒
+step.TickRate	攻击间隔缩短{0}%
+step.MaxTargets.orb	穿透目标 +{0}
+step.MaxTargets	同时攻击目标 +{0}
+step.MaxTargets.homingOrb	追踪法球 +{0}个
+step.ProjectileCount.sniping	连射 +{0}次
+step.ProjectileCount.eagle	空投次数 +{0}
+step.TickRate.eagle	空投间隔缩短{0}%
+step.Duration.deferred	持续时间延长{0}秒（进化后生效）
+step.Scale.cloud	毒雾范围扩大{0}%
+step.Scale.cloudExplosion	毒雾·爆炸范围扩大{0}%
+step.Scale.explosion	爆炸范围扩大{0}%
+step.Scale.eagleRain	老鹰体型增大{0}%
+step.Scale.lightningRod	避雷针范围扩大{0}%
+ui.badge.active	主动
+ui.badge.passive	被动
+ui.levelup.evoHeader	进化！
+ui.levelup.evoFallbackHeader	没有可进化的技能——改为升级
+ui.levelup.treasureHeader	发现宝藏！！
+ui.levelup.reroll	重抽
+ui.levelup.rerollLeft	剩余{0}次
+ui.levelup.tagNew	新！
+ui.levelup.tagEvolve	进化！
+ui.levelup.level	等级：{0}
+ui.levelup.essenceTitle	获得精华
+ui.levelup.essenceDesc	精华 +{0}
+ui.levelup.evoStage	{0}阶进化
+ui.levelup.levelRange	等级：{0} → {1}
+ui.levelup.instantLevels	立即提升{0}级
+ui.levelup.routeChoice	选择路线：{0}
+ui.treasure.boxTitle	宝箱
+ui.treasure.boxDesc	随机技能升级1~5次
+ui.treasure.evoTitle	进化
+ui.treasure.evoCount	进化！可进化{0}个
+ui.treasure.evoDesc	选择一个技能进行进化
+ui.evotree.header	{0}进化——Lv.{1}
+ui.evotree.allDone	已完成全部进化
+ui.evotree.pickRoute	请选择一条路线——选择后无法更改
+ui.evotree.continueRoute	沿用一阶进化时选择的路线
+ui.evotree.abandoned	[已放弃的路线]
+ui.evotree.lockedPrereq	[未解锁——需要「{0}」]
+ui.evotree.lockedKey	[未解锁——需要进化「{0}」]
+ui.evotree.locked	[未解锁]
+ui.essence	{0}精华
+ui.tree.cost	{0}精华
+ui.tree.clickUnlock	  > 点击解锁
+ui.tree.maxed	（满级）
+ui.tree.unlocked	已解锁
+ui.tree.next	  · 下一级 {0}精华
+ui.tree.click	  > 点击
+ui.difficulty.0	简单
+ui.difficulty.1	普通
+ui.difficulty.2	困难
+ui.difficulty.plus	{0} +{1}
+ui.ascension.base	基础难度
+ui.ascension.stats	敌人生命值 +{0}\n移动速度 +{1}\n伤害 +{2}
+ui.ascension.essence	精华获取 +{0}
+ui.ascension.nextUnlock	通关后解锁下一难度
+ui.pause.title	暂停
+ui.pause.giveUp	返回标题画面
+ui.pause.hint	ESC——继续游戏
+ui.pause.activeHeader	主动
+ui.pause.passiveHeader	被动
+ui.result.other	其他
+ui.result.earned	获得精华：{0}
+ui.result.total	总伤害：{0}
+ui.result.gameOver	游戏结束
+ui.result.gameClear	游戏通关
+ui.hud.stage	关卡 {0}/{1}
+ui.hud.stageBanner	第{0}关
+ui.hud.levelSuffix	{0}级
+unlock.essence	精华 {0} / {1}
+unlock.clearMap	以{1}难度通关{0}
+ui.levelup.header	升级！
+ui.title.play	开始游戏
+ui.title.upgrade	强化
+ui.title.collection	图鉴
+ui.title.quit	退出
+ui.tree.title	技能树
+ui.charselect.title	角色
+ui.mapselect.title	地图
+ui.mapselect.locked	未解锁
+ui.mapselect.changeChar	更换角色
+ui.common.close	关闭
+ui.common.back	返回
+ui.common.select	选择
+ui.result.toTitle	返回标题
+ui.result.retry	再来一局
+ui.result.upgrade	强化
+ui.treasure.header	获得宝藏！
+ui.treasure.continue	点击继续
+ui.collection.title	图鉴
+ui.collection.progress	已发现 {0} / {1}
+ui.collection.active	主动
+ui.collection.passive	被动
+ui.collection.unknown	???
+ui.collection.hint	尚未遇到的技能
+ui.collection.route	路线{0}
+ui.collection.prereq	{0} 联动
+ui.collection.notFound	尚未见过这个进化
+ui.levelup.evoHint	进化条件：Lv.{0} · 联动：{1}
+ui.levelup.evoHintNone	无
+ui.evotree.sealed	???
+ui.evotree.sealedDesc	[未解锁——在技能树中开放]
+step.VolleyCount	发射次数 +{0}
+ui.evotree.prereq	[「{0}」联动]
+ui.evotree.keyPrereq	[「{0}」进化联动]
+ui.credits.title	制作人员
+credits.dev	策划与开发
+credits.art	美术
+credits.thanks	特别鸣谢
+credits.playerThanks	感谢你的游玩！
+ending.intro	所有蓝莓的集合体就在这里……
+ending.story1	你击败了所有蓝莓的集合体，
+ending.story2	从蓝莓的袭击中拯救了世界！
+ending.cleared	Game Cleared!
+ui.evotree.title	技能进化

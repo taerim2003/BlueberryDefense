@@ -521,9 +521,9 @@ public class SkillTreeUI : MonoBehaviour
                 int nextCost = SkillTreeSave.NextLevelCost(tree, n);
 
                 if (lv >= max)
-                    tooltipCost.text = max > 1 ? "Lv " + lv + "/" + max + " " + Loc.T("ui.tree.maxed") : Loc.T("ui.tree.unlocked");
+                    tooltipCost.text = max > 1 ? "Lv." + lv + "/" + max + " " + Loc.T("ui.tree.maxed") : Loc.T("ui.tree.unlocked");
                 else
-                    tooltipCost.text = "Lv " + lv + "/" + max + Loc.F("ui.tree.next", nextCost) + (canUp ? Loc.T("ui.tree.click") : "");
+                    tooltipCost.text = "Lv." + lv + "/" + max + Loc.F("ui.tree.next", nextCost) + (canUp ? Loc.T("ui.tree.click") : "");
             }
         }
 

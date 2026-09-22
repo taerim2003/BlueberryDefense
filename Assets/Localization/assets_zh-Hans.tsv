@@ -1,0 +1,147 @@
+KEY	ZH
+tree.name.atk_1	攻击力 I
+tree.name.atk_2	攻击力 II
+tree.name.hp_1	生命 I
+tree.name.hp_2	生命 II
+tree.name.New_Reroll	解锁重抽
+tree.desc.New_Reroll	解锁每局可重抽1次升级选项的功能
+tree.name.reroll_2	重抽 I
+tree.name.crit_1	暴击 I
+tree.name.crit_2	暴击 II
+tree.name.exp_1	经验 I
+tree.name.exp_2	经验 II
+tree.name.gold_1	富饶 I
+tree.name.gold_2	富饶 II
+tree.name.arrow_StartLev	箭矢精通
+tree.desc.arrow_StartLev	（选择草莓时）箭矢射击以3级开始
+tree.name.fly_1	对空 I
+tree.name.eagle_fly	老鹰对空伤害
+tree.desc.eagle_fly	老鹰空投对飞行敌人的额外伤害 +30%
+tree.name.fly_2	对空 II
+tree.name.cool_1	冷却 I
+tree.name.cool_2	冷却 II
+tree.name.tornado_CoolDownBonus	迅捷旋风
+tree.desc.tornado_CoolDownBonus	旋风获得的所有冷却缩短效果变为1.5倍
+tree.name.thunder_Cooldown	落雷冷却缩短
+tree.desc.thunder_Cooldown	每次落雷时，落雷冷却 -0.01秒
+tree.name.atk_3	攻击力 III
+tree.name.gold_3	富饶 III
+tree.name.Root_Skilltree	解锁技能树！
+tree.desc.Root_Skilltree	解锁技能树！
+tree.name.New_Orb	解锁法球
+tree.desc.New_Orb	<法球>技能现在可能出现
+tree.name.New_Lightning	解锁落雷
+tree.desc.New_Lightning	<落雷>技能现在可能出现
+tree.name.New_Homing	解锁追踪导弹
+tree.desc.New_Homing	<追踪导弹>技能现在可能出现
+tree.name.New_Shotgun	解锁霰弹
+tree.desc.New_Shotgun	<霰弹射击>技能现在可能出现
+tree.name.New_Rewind	解锁回溯
+tree.desc.New_Rewind	<回溯>技能现在可能出现
+tree.name.Rewind_Slow	蓝莓减速
+tree.desc.Rewind_Slow	使用回溯时，蓝莓的时间也会缓缓倒流，\n使所有蓝莓减速
+tree.name.Homing_MissileNum	更多轰炸
+tree.desc.Homing_MissileNum	每使用20次追踪导弹，\n发射的导弹数量增加1枚
+tree.name.Sniping_TwoTarget	一箭双雕
+tree.desc.Sniping_TwoTarget	狙击额外瞄准一个敌人
+tree.name.swing_StartLev	挥击精通
+tree.desc.swing_StartLev	（选择菠萝时）挥击以3级开始
+tree.name.tornado_Fly	旋风对空
+tree.desc.tornado_Fly	旋风对飞行敌人的额外伤害 +30%
+tree.name.cool_3	冷却 III
+tree.name.cool_4	冷却 IV
+tree.name.cool_5	冷却 V
+tree.name.accel_BaseCool	加速修炼
+tree.desc.accel_BaseCool	获得<加速>时，基础冷却缩短 +5%
+tree.name.accel_FastSkillDmg	快手
+tree.desc.accel_FastSkillDmg	拥有<加速>时，冷却时间4秒及以下的技能伤害 +30%
+tree.name.critdmg_1	暴击伤害 I
+tree.name.critdmg_2	暴击伤害 II
+tree.name.critdmg_3	暴击伤害 III
+tree.name.assassin_BaseCrit	暗杀修炼
+tree.desc.assassin_BaseCrit	获得<暗杀>时，基础暴击率 +10%
+tree.name.assassin_FullCritHit	补刀
+tree.desc.assassin_FullCritHit	拥有<暗杀>时，暴击率100%的技能攻击次数 +1
+tree.name.reroll_3	重抽 II
+tree.name.reroll_4	重抽 III
+tree.name.reroll_5	重抽 IV
+tree.name.orb_BasicSlow	黏黏法球
+tree.desc.orb_BasicSlow	被法球击中的敌人会减速
+tree.name.orb_Pierce	法球穿透
+tree.desc.orb_Pierce	法球可抓住的敌人数量 +3
+tree.name.eagle_DropNum	老鹰编队
+tree.desc.eagle_DropNum	老鹰空投次数 +1
+tree.name.shotgun_BonusHit	追加装填
+tree.desc.shotgun_BonusHit	进化为「附加弹药装填」的霰弹射击，攻击次数增益 +1
+tree.name.shotgun_Crit	要害霰弹
+tree.desc.shotgun_Crit	霰弹射击的暴击率 +30%
+tree.name.exp_3	经验 III
+tree.name.exp_4	经验 IV
+tree.name.exp_5	经验 V
+tree.name.knowledge_BaseXp	知识修炼
+tree.desc.knowledge_BaseXp	获得<知识>时，基础经验获取 +10%
+tree.name.knowledge_EvoHint	进化的预感
+tree.desc.knowledge_EvoHint	拥有<知识>时，升级选项中会显示已有技能的进化条件
+tree.name.New_Evolution	解锁进化
+tree.desc.New_Evolution	技能可以进行一阶进化
+tree.name.arrow_Pierce	穿透之箭
+tree.desc.arrow_Pierce	箭矢射击的基础穿透 +1
+tree.name.swing_Knockback	沉重挥击
+tree.desc.swing_Knockback	挥击的击退距离变为1.5倍
+tree.name.gold_4	富饶 IV
+tree.name.gold_5	富饶 V
+tree.name.rewind_NoGcd	无缝回溯
+tree.desc.rewind_NoGcd	回溯不再触发公共冷却
+tree.name.thunder_Stack	蓄电
+tree.desc.thunder_Stack	落雷增益叠加得越多，伤害越高
+tree.name.hp_3	生命 III
+tree.name.hp_4	生命 IV
+tree.name.sniping_Crit	要害狙击
+tree.desc.sniping_Crit	狙击的暴击率 +30%
+tree.name.health_BaseHp	体魄修炼
+tree.desc.health_BaseHp	获得<体魄>时，基础最大生命值 +30
+tree.name.health_HealItem	营养满分
+tree.desc.health_HealItem	拥有<体魄>时，生命恢复道具的恢复量变为2倍
+tree.name.hp_5	生命 V
+tree.name.defense_BaseReduce	防御修炼
+tree.desc.defense_BaseReduce	获得<防御>时，基础受到伤害降低 +10%
+tree.name.defense_Revive	不死
+tree.desc.defense_Revive	拥有<防御>时，死亡后会以最大生命值的一半复活一次
+tree.name.hp_6	生命 VI
+tree.name.homing_Cooldown	快速装填
+tree.desc.homing_Cooldown	追踪导弹的基础冷却 -1秒
+tree.name.atk_4	攻击力 IV
+tree.name.atk_5	攻击力 V
+tree.name.strength_BaseDmg	力量修炼
+tree.desc.strength_BaseDmg	获得<力量>时，基础伤害 +5%
+tree.name.strength_SlowSkill	一击之力
+tree.desc.strength_SlowSkill	<力量>的伤害加成对冷却时间5秒及以上的技能生效2倍
+tree.name.New_Evolution2	解锁二阶进化
+tree.desc.New_Evolution2	技能可以进行二阶进化
+tree.name.atk_6	攻击力 VI
+tree.name.boss_1	猎杀首领 I
+tree.name.boss_2	猎杀首领 II
+tree.name.boss_3	猎杀首领 III
+tree.name.boss_4	猎杀首领 IV
+tree.name.boss_5	猎杀首领 V
+char.name.Char_Pineapple	菠萝
+char.name.Char_Slot3	葡萄
+char.name.Char_Strawberry	草莓
+map.name.Map_BlueberryField	蓝莓田
+map.name.Map_Wide15	海岸
+map.name.Map_Wide20	广袤宇宙
+tree.name.fly_3	对空 III
+tree.name.heal_1	恢复 I
+tree.name.heal_2	恢复 II
+tree.name.heal_3	恢复 III
+tree.effect.Attack	所有伤害提高{0}%
+tree.effect.Health	最大生命值提高{0}
+tree.effect.Cooldown	所有技能冷却 -{0}%
+tree.effect.Xp	经验获取 +{0}%
+tree.effect.Wealth	精华获取 +{0}%
+tree.effect.Crit	暴击率提高{0}%
+tree.effect.FlyDamage	对飞行敌人的额外伤害 +{0}%
+tree.effect.CritDamage	暴击伤害 +{0}%
+tree.effect.BossDamage	对首领的伤害 +{0}%
+tree.effect.Reroll	每局重抽次数 +{0}
+tree.effect.HealItem	生命恢复道具额外恢复最大生命值的{0}%

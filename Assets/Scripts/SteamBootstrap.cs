@@ -31,6 +31,10 @@ public class SteamBootstrap : MonoBehaviour
     private static bool running;
 #endif
 
+    // Steam 라이브러리에서 이 게임에 고른 언어("koreana"·"english"·"schinese"…). Steam이 안 떴으면 null.
+    // 여기선 기억만 한다 — 적용은 `Loc.RestoreSaved`가 **저장된 언어가 없을 때만** 한다(사용자 선택이 이긴다).
+    public static string GameLanguage { get; private set; }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Boot()
     {
@@ -72,6 +76,8 @@ public class SteamBootstrap : MonoBehaviour
             enabled = false;
             return;
         }
+
+        GameLanguage = SteamApps.GetCurrentGameLanguage();
 
         // 실적은 따로 요청하지 않는다 — Steam 클라이언트가 **게임 프로세스가 뜨기 전에** 이미 동기화해 둔다
         // (`RequestCurrentStats`는 최신 SDK에서 없어졌다). 그래서 Init 직후 바로 읽고 쓸 수 있다.

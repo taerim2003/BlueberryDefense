@@ -107,7 +107,7 @@
 | **맵의 레인 높이(화면 안 위치)** | `MapDefinition.cameraYLift` (데이터). `RunBootstrap.ApplyMap`이 **카메라와 배경을 같이 위로** 올려서 레인이 화면 아래쪽으로 내려간 것처럼 보이게 한다. ⚠️ **월드 좌표는 일부러 안 건드린다** — 절대 y를 쓰는 것들(회오리 착지선 `groundY=0`)이 어긋나기 때문. 대신 카메라 기준 값(UFO 고도·강하 높이)은 자동으로 따라 올라간다 |
 | **새 맵 / 맵 필드 크기** | `MapDefinition` 에셋 하나 (코드 X). `fieldScale`이 플레이 영역 배율 — `RunBootstrap.ApplyFieldScale`이 판 시작 시 카메라 ortho·플레이어/스포너 좌표에 곱한다. **캐릭터·적 크기는 안 변하므로 필드가 넓을수록 화면에서 작아 보인다.** 배경 그림도 같은 배율(PPU 18 기준 1배=320×180px)이어야 가장자리가 안 빈다. 만든 뒤 Title 씬 `MapSelectUI.maps` 배열에 추가 |
 | **새 진화 티어 효과** | 영구 스탯이면 `PlayerSkills.ApplyPathTierEffect`/`PlayerPassives.ApplyPassivePathTierEffect`, 실시간 기믹(관통·분열·재귀 등)이면 해당 `Fire*`/`TakeDamage`에서 `PathTier` 직접 읽기 + `DescribePathEffect`. 표시 텍스트만 바꿀 땐 번역 표의 `evo.*` 키(→ 「문구」 행) |
-| **화면 문구** | 씬 TMP에 직접 쓰지 말 것 — 코드가 덮어쓴다. `Assets/Localization/*_ko.tsv`·`*_en.tsv` 수정 → `Window > Blueberry Defense > 번역 - 모든 TSV를 표에 적재`. 노션에서 고친 문구는 `.claude/scripts/notion-loc-apply.js` |
+| **화면 문구** | 씬 TMP에 직접 쓰지 말 것 — 코드가 덮어쓴다. `Assets/Localization/*_ko.tsv`·`*_en.tsv`·`*_zh-Hans.tsv` 수정 → `Window > Blueberry Defense > 번역 - 모든 TSV를 표에 적재`. 스킬트리 **일반 노드 설명**은 노드별 키가 아니라 `tree.effect.{효과}` + `perLevel`이다. 노션에서 고친 문구는 `.claude/scripts/notion-loc-apply.js` |
 | **새 HUD 버프 표시** | 발생측에서 `BuffTracker.Set(key,...)` 호출 + `HUDController.GetBuffIcon`에 key→아이콘 한 줄 (슬롯은 자동 채워짐) |
 | **레벨업 선택지 부족 시 대체 보상** | 레벨업 가능한 후보가 3개 미만이면 `LevelUpUI`가 '정수 +10' 선택지를 하나 끼우고, 그래도 모자라면 선택지 자체가 1~2개만 뜸. 지급량은 `LevelUpUI.EssenceReward` |
 | **새 VFX/파티클** | 프리팹 준비 후 `ObjectPool.Instance.Spawn/Despawn` 호출 (풀링·오디오 자동 처리) |

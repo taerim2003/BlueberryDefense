@@ -47,7 +47,11 @@ public class SkillNode
     // 표시 문구는 표에서 읽는다. 키는 노드 id에서 파생 — 노드를 추가하면 키도 저절로 는다.
     // 표에 없으면 에셋에 적힌 값이 그대로 나오므로, 번역이 덜 채워져도 화면이 비지 않는다.
     public string Name => Loc.TOr("tree.name." + id, displayName);
-    public string Desc => Loc.TOr("tree.desc." + id, description);
+    // 🔴 일반 노드의 설명은 노드별 문구가 아니라 **효과 축 문장 + perLevel**로 짓는다(`tree.effect.{effect}` = "모든 피해가 {0}% 증가").
+    //    노드별로 숫자를 적어 두면 밸런스 조정으로 perLevel이 바뀔 때 문구만 낡는다(2026-09-22 실측 47개 중 11개가 틀린 숫자를 보여줬다).
+    public string Desc => type == SkillNodeType.Normal && Loc.Has("tree.effect." + effect)
+        ? Loc.F("tree.effect." + effect, perLevel)
+        : Loc.TOr("tree.desc." + id, description);
 }
 
 [CreateAssetMenu(fileName = "SkillTreeData", menuName = "Blueberry Defense/Skill Tree Data")]

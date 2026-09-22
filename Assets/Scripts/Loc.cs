@@ -11,8 +11,11 @@ using UnityEngine.Localization.Tables;
 // HUD처럼 매 프레임 도는 자리에서 쓰면 비싸다 — 테이블을 잡아두고 엔트리만 읽는다.
 //
 // 🧰 번역 시스템 소유권:
-//  - 🔴 **TSV가 원본**(`Assets/Localization/*_ko.tsv`·`*_en.tsv`). 표(`Tables/Game`)를 손으로 편집하면 되돌릴 수 없다.
+//  - 🔴 **TSV가 원본**(`Assets/Localization/*_ko.tsv`·`*_en.tsv`·`*_zh-Hans.tsv`). 표(`Tables/Game`)를 손으로 편집하면 되돌릴 수 없다.
 //    적재는 `Window > Blueberry Defense > 번역 - 모든 TSV를 표에 적재` 하나로 끝난다(파일명 접미사가 곧 로케일).
+//  - 중국어 도트 폰트(`ZLabsRoundPix_16px_M_CN SDF`, pixelroborobo의 폴백)는 **Face Info의 Scale = 16/15**다.
+//    한자가 15도트 정사각형이라 16도트 한글 옆에서 작아 보였다. 🔴 세로 위치는 손대지 말 것 — 글리프 사각형 중심을
+//    한글과 맞추면 이 폰트는 잉크가 아래로 치우쳐 제목이 6px 가라앉는다. 손대지 않은 상태가 잉크로 1px 이내다(2026-09-22 캡처).
 //    ⚠️ 그 도구는 추가·갱신만 한다 — TSV에서 키를 지워도 표에는 남는다(안 읽으면 무해).
 //  - 🔴 **표시 문구를 SO에서 직접 읽지 말 것.** `SkillNode.Name` 같은 프로퍼티가 `Loc.TOr` 창구다.
 //    UI 문구를 `const string`으로 두지 말 것.
@@ -23,11 +26,14 @@ public static class Loc
 
     private static StringTable table;         // 지금 언어의 표
     private static StringTable fallbackTable; // 한국어 표 — 영어가 덜 채워진 자리를 메운다
+    private static StringTable midTable;      // 영어 표 — ko·en이 아닌 언어(zh 등)의 1차 폴백. 빈 칸에 한국어 대신 영어가 뜬다
     private static Locale tableLocale;
     private static bool initialized;
 
     // 개발 언어 = 한국어. 번역이 비면 언제나 여기로 떨어진다.
     public const string SourceLocale = "ko";
+    // 한국어를 못 읽는 언어 사용자에겐 빈 칸을 영어로 메운다(순서: 선택 언어 → en → ko).
+    public const string MidLocale = "en";
 
     // 언어가 바뀌면 화면에 이미 그려진 글자를 다시 그려야 한다.
     // 런타임에 글자만 다시 채우는 화면(OptionsMenu·PauseMenu)은 이걸 구독해 스스로 갱신하고,
@@ -37,6 +43,11 @@ public static class Loc
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Hook()
     {
+        // 숫자 서식을 PC 지역 설정과 떼어 놓는다 — CurrentCulture를 따르면 독일어 윈도에서 "1.5"가 "1,5"로 찍힌다.
+        // 게임 문구의 숫자는 언어가 아니라 게임이 정하는 표기다.
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+
         LocalizationSettings.SelectedLocaleChanged -= OnLocaleChanged;
         LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
     }
@@ -48,7 +59,7 @@ public static class Loc
     }
 
     // 표 자체가 바뀌었을 때(에디터에서 번역을 다시 밀어넣은 직후) 캐시를 버린다.
-    public static void Invalidate() { table = null; fallbackTable = null; tableLocale = null; }
+    public static void Invalidate() { table = null; fallbackTable = null; midTable = null; tableLocale = null; }
 
     // 🔴 LocalizationSettings 초기화는 **지연**이다. 첫 조회가 초기화 전에 들어오면 표를 못 찾아
     //    화면에 키('skill.name.Whirlwind')가 그대로 뜬다. 한 번만 끝까지 기다린다.
@@ -77,6 +88,10 @@ public static class Loc
         //    표를 잡아두는 대신 폴백을 여기서 직접 처리한다.
         if (fallbackTable == null || fallbackTable.LocaleIdentifier.Code != SourceLocale)
             fallbackTable = LocalizationSettings.StringDatabase.GetTable(Table, LocaleFor(SourceLocale));
+
+        string code = sel != null ? sel.Identifier.Code : SourceLocale;
+        Locale mid = code != SourceLocale && code != MidLocale ? LocaleFor(MidLocale) : null;
+        midTable = mid != null ? LocalizationSettings.StringDatabase.GetTable(Table, mid) : null;
     }
 
     private static Locale LocaleFor(string code)
@@ -101,7 +116,7 @@ public static class Loc
     {
         if (string.IsNullOrEmpty(key)) return "";
         Refresh();
-        return Raw(table, key) ?? Raw(fallbackTable, key) ?? key;
+        return Raw(table, key) ?? Raw(midTable, key) ?? Raw(fallbackTable, key) ?? key;
     }
 
     // 수치가 끼는 문장 — 번역문은 "{0}% 증가" 꼴로 저장하고 인자를 나중에 채운다.
@@ -119,7 +134,7 @@ public static class Loc
     {
         if (string.IsNullOrEmpty(key)) return false;
         Refresh();
-        return Raw(table, key) != null || Raw(fallbackTable, key) != null;
+        return Raw(table, key) != null || Raw(midTable, key) != null || Raw(fallbackTable, key) != null;
     }
 
     // 표에 없으면 폴백 문자열을 쓴다 (enum 이름 등 번역 대상이 아닌 자리)
@@ -154,13 +169,27 @@ public static class Loc
 
     public const string PrefKey = "loc.locale";
 
+    // Steam API 언어 이름 → 로케일 코드. 우리가 지원하는 언어만 — 나머지는 null(시스템 언어로).
+    private static string FromSteamLanguage(string steam)
+    {
+        switch (steam)
+        {
+            case "koreana": return "ko";
+            case "english": return "en";
+            case "schinese": return "zh-Hans";
+            default: return null;
+        }
+    }
+
     // 저장된 언어 복원. Unity Localization의 기본 LocaleSelector는 시스템 언어를 보는데,
     // 사용자가 고른 값이 있으면 그게 이긴다.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void RestoreSaved()
     {
         string code = SaveStore.GetString(PrefKey, "");
-        if (string.IsNullOrEmpty(code)) return;   // 저장된 게 없으면 시스템 언어 선택기에 맡긴다
+        // 저장된 게 없으면 Steam에서 고른 언어 → 그것도 없으면 시스템 언어 선택기에 맡긴다. 여기선 저장하지 않는다.
+        if (string.IsNullOrEmpty(code)) code = FromSteamLanguage(SteamBootstrap.GameLanguage);
+        if (string.IsNullOrEmpty(code)) return;
         foreach (Locale l in Locales)
             if (l.Identifier.Code == code) { LocalizationSettings.SelectedLocale = l; return; }
     }
