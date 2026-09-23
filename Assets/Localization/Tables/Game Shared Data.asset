@@ -2139,6 +2139,18 @@ MonoBehaviour:
     m_Key: ui.evotree.title
     m_Metadata:
       m_Items: []
+  - m_Id: 14848567660978176
+    m_Key: tutorial.skills
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14848567770030080
+    m_Key: tutorial.evolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15035493462515712
+    m_Key: tree.effect.Regen
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

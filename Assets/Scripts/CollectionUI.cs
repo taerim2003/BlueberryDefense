@@ -323,14 +323,16 @@ public class CollectionUI : MonoBehaviour
             detailName.text = selectedIsPassive
                 ? PlayerSkills.GetPassiveSkillName((PassiveSkillId)selectedId)
                 : PlayerSkills.GetActiveSkillName((ActiveSkillId)selectedId);
-            detailSub.text = selectedIsPassive
-                ? PlayerSkills.PassiveTypeBadge
-                : PlayerSkills.ActiveTypeBadge;
+            // 부제 줄(`Sub`)은 9/22에 프리팹에서 빠졌다 — 배선이 없으면 건너뛴다(없는 채로 쓰면 도감이 안 열린다).
+            if (detailSub != null)
+                detailSub.text = selectedIsPassive
+                    ? PlayerSkills.PassiveTypeBadge
+                    : PlayerSkills.ActiveTypeBadge;
         }
         else
         {
             detailName.text = unknown;
-            detailSub.text = Loc.T("ui.collection.hint");
+            if (detailSub != null) detailSub.text = Loc.T("ui.collection.hint");
         }
 
         for (int route = 0; route < 2; route++)

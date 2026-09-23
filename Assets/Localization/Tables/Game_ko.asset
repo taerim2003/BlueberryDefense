@@ -2260,6 +2260,21 @@ MonoBehaviour:
     m_Localized: "\uC2A4\uD0AC \uC9C4\uD654"
     m_Metadata:
       m_Items: []
+  - m_Id: 14848567660978176
+    m_Localized: "QWER\uB85C \uC2A4\uD0AC\uC744 \uC0AC\uC6A9\uD574 \uBAB0\uB824\uC624\uB294
+      \uBE14\uB8E8\uBCA0\uB9AC\uB4E4\uC744 \uC4F8\uC5B4\uBC84\uB9AC\uC138\uC694!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14848567770030080
+    m_Localized: "\uC774\uC81C \uC9C4\uD654\uD560 \uC218 \uC788\uC5B4\uC694!\n\uC2A4\uD0AC\uC744
+      \uB808\uBCA8 10\uAE4C\uC9C0 \uC62C\uB9AC\uACE0 \uC5F0\uACC4 \uC2A4\uD0AC\uC744
+      \uAC16\uCD94\uBA74 \uB354 \uAC15\uD55C \uC2A4\uD0AC\uB85C \uC9C4\uD654\uD569\uB2C8\uB2E4."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15035493462515712
+    m_Localized: "5\uCD08\uB9C8\uB2E4 \uCCB4\uB825\uC744 {0} \uD68C\uBCF5"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

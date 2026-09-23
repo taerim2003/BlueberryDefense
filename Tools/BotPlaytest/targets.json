@@ -60,8 +60,8 @@
   "orderStrictGap": 0.05,
   "orderLooseGap": -0.02,
   "playtimeMinutes": [
-    200,
-    300
+    180,
+    260
   ],
   "secondsPerPick": 3,
   "secondsBetweenRuns": 30,
@@ -75,11 +75,18 @@
   "skillTopThird": true,
   "cooldownCap": 15,
   "noiseMinSamples": 2,
-  "attemptsPerGoal": [
-    2,
-    4
-  ],
-  "attemptsPerGoalNote": "목표 하나를 깨기까지의 트라이 판수(정주행). **중앙 3판**이 목표다(사용자 결정 2026-09-18). 9목표 × 3판 = 27판이고, 판당 약 9분이면 4시간(240분)에 맞는다.",
+  "attemptsPerGoalNote": "목표 하나를 깨기까지의 트라이 판수(정주행). 2026-09-23 사용자 결정: 목표 1~5는 1.5~3, 목표 6~9는 2~3.5. earlyGoalCount가 경계.",
   "clearVsAllNodesGapMax": 30,
-  "cooldownCapAudit": false
+  "cooldownCapAudit": false,
+  "attemptsPerGoalEarly": [
+    1.5,
+    3
+  ],
+  "attemptsPerGoalLate": [
+    2,
+    3.5
+  ],
+  "earlyGoalCount": 5,
+  "treeOwnedAtFinalGoalMin": 0.95,
+  "treeOwnedNote": "G1 완화(2026-09-23 사용자 결정): \"한 판에 전 노드 해금\" 대신 마지막 목표 클리어 시점에 트리 95% 이상."
 }

@@ -104,7 +104,7 @@ public class Whirlwind : MonoBehaviour
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
             if (impactVfxPrefab != null)
-                ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2f);
+                ObjectPool.Instance.SpawnImpactVfx(impactVfxPrefab, enemy.transform.position, ObjectPool.ImpactVfxLifetime);
 
             if (MaxHitCount > 0 && ++hitCount >= MaxHitCount)
             {

@@ -226,8 +226,21 @@ public class LevelUpUI : MonoBehaviour
 
     public void Show()
     {
+        if (RunOver) return;
         if (isOpen) { pendingLevelUps++; return; }
         ShowLevelUp();
+    }
+
+    // 판이 끝난 뒤(게임오버·클리어·엔딩)엔 새 창을 열지 않는다. "타이틀로"를 누르면 timeScale이 1로 돌아와
+    // 페이드아웃 동안 날아오던 경험치 보석이 레벨업을 일으키는데, 그 창이 ModalPause를 쌓은 채 타이틀까지 따라갔다
+    // (9/22 QA — 타이틀이 timeScale=0으로 떴다).
+    private static bool RunOver
+    {
+        get
+        {
+            GameManager gm = GameManager.Instance;
+            return gm != null && (gm.IsGameOver || gm.IsGameClear || gm.IsEnding);
+        }
     }
 
     private void ShowLevelUp()
@@ -481,6 +494,7 @@ public class LevelUpUI : MonoBehaviour
         // 에스컬레이션 없는 평범한 카드부터 고르게 된다(= 보물 보너스가 안 터지는 것처럼 보임).
         // 그래서 아직 아무것도 안 고른 레벨업 모달은 뒤로 미루고 보물 보상을 먼저 띄운다.
         // 갈림길 패널이 이미 떠 있으면 그대로 대기열로 — 새 상자가 지금 고르는 화면을 덮으면 안 된다.
+        if (RunOver) return;
         if (choiceOpen) { pendingTreasures++; return; }
         if (isOpen)
         {

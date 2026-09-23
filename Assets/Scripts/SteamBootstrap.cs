@@ -53,11 +53,16 @@ public class SteamBootstrap : MonoBehaviour
     private static void Boot()
     {
         if (Application.isEditor && !RunInEditor) return;
+#if BOT_QA
+        return; // QA 빌드(봇 여러 개가 무인으로 돈다)는 진짜 업적을 건드리면 안 된다
+#endif
+#pragma warning disable CS0162
         if (instance != null) return;
 
         var go = new GameObject("[SteamBootstrap]");
         DontDestroyOnLoad(go);
         instance = go.AddComponent<SteamBootstrap>();
+#pragma warning restore CS0162
     }
 
 #if DISABLESTEAMWORKS

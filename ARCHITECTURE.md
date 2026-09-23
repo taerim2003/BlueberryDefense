@@ -23,7 +23,10 @@
 | 폴더 | 책임 | 새 코드는 어디로 |
 |---|---|---|
 | `Assets/Scripts/` | **모든 게임플레이 코드.** 매니저·플레이어 시스템·적/전투 오브젝트·UI 컨트롤러·static 상태 홀더·ScriptableObject 정의가 전부 여기 평면적으로 있음 (하위 폴더는 봇 플레이테스트용 `Bot/` 하나) | 런타임 로직 전부 |
-| `Assets/Editor/` | 에디터 전용 툴 (`CheatWindow` 치트 · `SkillTreeEditorWindow` · 번역 수확/적재 · 아이콘 배선/굽기 · 봇 실행) | 에디터 툴·인스펙터 |
+| `Assets/Editor/` | 에디터 전용 툴 (`CheatWindow` 치트 · `SkillTreeEditorWindow` · 번역 수확/적재 · 아이콘 배선/굽기 · 봇 실행 · QA 빌드 `QABuild`) | 에디터 툴·인스펙터 |
+
+> **봇(`Assets/Scripts/Bot/`)은 에디터와 QA 빌드(`BOT_QA`)에만 컴파일된다.** 릴리스 빌드에 남는 건 `BotInput`(훅·플래그)뿐이라,
+> 게임 코드는 `BotPilot` 같은 봇 타입을 직접 참조하지 말고 `BotInput`을 거친다. QA 구성은 `qa-loop` 스킬.
 | `Assets/JuicyUI/` | 서드파티 UI 연출 플러그인 (`JuicyButton`, `UITransition`, `JuicyHealthBar`, 옵션 패널). 우리 코드는 `UITransition`만 참조 | 손대지 말 것 (외부) |
 | `Assets/Plugins/Demigiant/DOTween/` | 트위닝 라이브러리 | 손대지 말 것 (외부) |
 | `Assets/Vefects/` | 픽셀 VFX 프리팹 팩 (`VFX_2D_*`) | 손대지 말 것 (외부) |

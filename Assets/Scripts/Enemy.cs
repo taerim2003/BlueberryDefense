@@ -652,7 +652,7 @@ public class Enemy : MonoBehaviour
             BotInput.OnPlayerHit?.Invoke(this, hit); // 봇 플레이테스트 관측(평소 null)
 
             if (playerCollisionVfxPrefab != null)
-                ObjectPool.Instance.SpawnTimed(playerCollisionVfxPrefab, transform.position, 2f);
+                ObjectPool.Instance.SpawnImpactVfx(playerCollisionVfxPrefab, transform.position, ObjectPool.ImpactVfxLifetime);
             SpawnHitParticles(hit);
         }
 
@@ -1171,9 +1171,14 @@ public class Enemy : MonoBehaviour
     {
         if (damageNumberPrefab == null) return;
 
-        GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
+        // 🔴 대조 스위치는 **난수를 뽑은 뒤에** 건다. 먼저 빠져나가면 Random 흐름이 달라져 판이 통째로 갈라지고,
+        //    그러면 "연출을 껐더니 렉이 줄었다"가 아니라 "다른 판을 쟀다"가 된다(2026-09-23 실측으로 걸림).
         Vector3 offset = new Vector3(Random.Range(-DamageNumberJitterX, DamageNumberJitterX),
                                      DamageNumberBaseHeight, 0f);
+        if (BotInput.SuppressDamageNumbers) return; // QA 렉 실험용(평소 false)
+        if (DamageNumber.Live >= DamageNumber.MaxLive) return; // 동시 숫자 상한 — DamageNumber.MaxLive 주석
+
+        GameObject obj = ObjectPool.Instance.Spawn(damageNumberPrefab, transform.position, Quaternion.identity);
         var num = obj.GetComponent<DamageNumber>();
         if (num == null) return;
         num.Init(amount, isCrit, offset, hitIndex * DamageNumberStaggerDelay);
@@ -1280,10 +1285,13 @@ public class Enemy : MonoBehaviour
         count = Mathf.Min(count, HitParticle.MaxLive - HitParticle.Live); // 동시 파편 상한 — HitParticle.MaxLive 주석
         for (int i = 0; i < count; i++)
         {
-            GameObject p = ObjectPool.Instance.Spawn(hitParticlePrefab, transform.position, Quaternion.identity);
+            // 대조 스위치는 난수를 다 뽑은 뒤에 건다(SpawnDamageNumber의 같은 주석 참고).
             Sprite sprite = hitParticleSprites[Random.Range(0, hitParticleSprites.Length)];
             Vector2 dir = new Vector2(Random.Range(-1f, 1f), Random.Range(0.6f, 1f)).normalized;
             float speed = Random.Range(4f, 8f);
+            if (BotInput.SuppressHitParticles) continue; // QA 렉 실험용(평소 false)
+
+            GameObject p = ObjectPool.Instance.Spawn(hitParticlePrefab, transform.position, Quaternion.identity);
             p.GetComponent<HitParticle>().Init(sprite, dir * speed);
         }
     }

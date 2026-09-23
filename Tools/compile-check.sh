@@ -2,7 +2,11 @@
 # Unity 에디터를 건드리지 않고 Assembly-CSharp을 진짜로 컴파일해 본다.
 # 병렬 세션·봇 플레이테스트가 에디터를 쓰는 중에도 안전하다(도메인 리로드를 강요하지 않는다).
 #
-# 쓰는 법: 프로젝트 루트에서  bash Tools/compile-check.sh
+# 쓰는 법: 프로젝트 루트에서  bash Tools/compile-check.sh [editor|qa|release]
+#   editor(기본) = 에디터 컴파일 그대로
+#   qa           = UNITY_EDITOR* define을 빼고 BOT_QA를 넣는다 → QA 빌드(Assets/Editor/QABuild.cs) 구성
+#   release      = UNITY_EDITOR* define을 뺀다 → 릴리스 빌드 구성(봇 코드가 빠져도 컴파일되는지)
+#   ⚠️ qa/release도 참조 DLL은 에디터 것 그대로라 "빌드에 없는 API"는 못 잡는다 — define 분기만 검사한다.
 #
 # ⚠️ rsp의 소스 목록은 Unity가 마지막으로 컴파일한 시점 것이다.
 #    `.cs` 파일을 **추가·삭제**했으면 이 검사는 무효다(내용 수정만 유효) — 그땐 에디터 컴파일이 필요하다.
@@ -17,7 +21,9 @@ OUT_DIR="${TMPDIR:-/tmp}/bbd-compile-check"
 mkdir -p "$OUT_DIR"
 OUT_WIN=$(cd "$OUT_DIR" && pwd -W 2>/dev/null || echo "$OUT_DIR")
 
-RSP=$(ls -t Library/Bee/artifacts/*.dag/Assembly-CSharp.rsp 2>/dev/null | head -1)
+# 🔴 **에디터 rsp만 고른다.** 플레이어 빌드(QA 빌드 포함)도 같은 폴더에 rsp를 남기는데(`*P.dag`·`*PDevDbg.dag`),
+#    그게 최신이 되면 "에디터 검사"가 조용히 플레이어 구성을 검사한다. UNITY_EDITOR define 줄이 있는 것만 후보다.
+RSP=$(grep -l '^-define:UNITY_EDITOR$' Library/Bee/artifacts/*.dag/Assembly-CSharp.rsp 2>/dev/null | xargs -r ls -t 2>/dev/null | head -1)
 if [ -z "$RSP" ]; then
   echo "FAIL: Assembly-CSharp.rsp를 못 찾았다. Unity가 한 번은 컴파일한 적이 있어야 한다."
   exit 2
@@ -30,6 +36,16 @@ rm -f "$OUT_DIR/check.dll"
 sed -e "s|^-out:.*|-out:\"$DLL\"|" -e "s|^-refout:.*||" "$RSP" > "$CHECK_RSP"
 # 🔴 원본 rsp는 **마지막 줄에 개행이 없다** — 그냥 append하면 마지막 옵션에 들러붙어 조용히 무시된다.
 printf '\n' >> "$CHECK_RSP"
+
+MODE="${1:-editor}"
+if [ "$MODE" = "qa" ] || [ "$MODE" = "release" ]; then
+  BEFORE=$(grep -c '^-define:UNITY_EDITOR' "$CHECK_RSP")
+  sed -i '/^-define:UNITY_EDITOR/d' "$CHECK_RSP"
+  [ "$MODE" = "qa" ] && echo "-define:BOT_QA" >> "$CHECK_RSP"
+  # 🔴 뺀 개수를 센다 — 0이면 rsp 형식이 바뀐 것이고, 이 모드는 에디터 구성을 한 번 더 검사한 것뿐이다.
+  echo "mode=$MODE: UNITY_EDITOR* define ${BEFORE}개 제거$( [ "$MODE" = "qa" ] && echo ', BOT_QA 추가')"
+  if [ "$BEFORE" -lt 1 ]; then echo "FAIL: rsp에서 UNITY_EDITOR define을 못 찾았다"; exit 2; fi
+fi
 
 # rsp의 소스 목록은 Unity가 마지막으로 컴파일한 시점 것이라 **새로 만든 .cs가 빠져 있다.**
 # 그대로 두면 새 타입을 참조하는 파일이 "없는 타입"으로 실패하거나, 반대로 새 파일의 오류를 놓친다.

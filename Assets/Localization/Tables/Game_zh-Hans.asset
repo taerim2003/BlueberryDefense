@@ -1888,6 +1888,19 @@ MonoBehaviour:
     m_Localized: "\u5B58\u6863\u5DF2\u91CD\u7F6E"
     m_Metadata:
       m_Items: []
+  - m_Id: 14848567660978176
+    m_Localized: "\u7528 QWER \u91CA\u653E\u6280\u80FD\uFF0C\u6A2A\u626B\u8702\u62E5\u800C\u6765\u7684\u84DD\u8393\u5427\uFF01"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14848567770030080
+    m_Localized: "\u73B0\u5728\u53EF\u4EE5\u8FDB\u5316\u4E86\uFF01\n\u5C06\u6280\u80FD\u5347\u5230
+      10 \u7EA7\u5E76\u62E5\u6709\u8054\u52A8\u6280\u80FD\uFF0C\u5373\u53EF\u8FDB\u5316\u4E3A\u66F4\u5F3A\u7684\u6280\u80FD\u3002"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15035493462515712
+    m_Localized: "\u6BCF5\u79D2\u6062\u590D {0} \u751F\u547D"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -80,6 +80,30 @@ public class ObjectPool : MonoBehaviour
     public void SpawnTimed(GameObject prefab, Vector3 position, float seconds) =>
         Despawn(Spawn(prefab, position, Quaternion.identity), seconds);
 
+    // 🔴 **타격 충돌 이펙트 전용 입구**(2026-09-23 후반 렉 대책 — 사용자 결정).
+    //    이 이펙트는 VFX 팩 프리팹이라 하나에 ParticleSystem이 두 개씩 들어 있다. 타격마다 띄우면 광역기가 적 수백을
+    //    때릴 때 한 틱에 수백 개가 생기고, 수명 동안 쌓여서 **살아 있는 ParticleSystem 수가 프레임 비용을 지배한다**
+    //    (QA 실측 3,233표본: VFX 0~50 → CPU 1.1ms · 300~1000 → 3.1ms · 1000+ → 14.5ms. 같은 조건에서 적 150~400마리는 0.4ms,
+    //     스프라이트 파편은 1,200개에 +0.7ms로 싸다 — 비싼 건 이것 하나다. 실측 최대 6,898개).
+    //    그래서 **프레임당 개수**로 묶는다: 몰아친 타격은 그 프레임에 몇 개만 보여주고 나머지는 생략한다
+    //    (상한을 살아 있는 총량으로 걸면, 오래 사는 이펙트가 예산을 다 먹고 새 타격이 통째로 안 보인다).
+    private const int MaxImpactVfxPerFrame = 8;   // 60fps · 수명 1.2초면 동시 최대 약 576개 → CPU 3ms 아래
+    // 충돌 이펙트 수명(초). 2.0 → 1.2로 줄였다(사용자 결정 2026-09-23) — 동시 개수는 생성 속도 × 수명이라 수명도 같이 준다.
+    // 🔴 밸런스 지문에 들어가는 BalanceConstants가 아니라 여기 둔다. 연출 값이라 밸런스 데이터 묶음을 흔들면 안 된다.
+    public const float ImpactVfxLifetime = 1.2f;
+    private int impactVfxFrame, impactVfxThisFrame;
+
+    public void SpawnImpactVfx(GameObject prefab, Vector3 position, float seconds)
+    {
+        if (prefab == null) return;
+        if (Time.frameCount != impactVfxFrame) { impactVfxFrame = Time.frameCount; impactVfxThisFrame = 0; }
+        // QA 빌드가 상한을 바꿔 가며 같은 장면을 찍어 비교할 수 있게(평소엔 0이라 아래 기본값을 쓴다).
+        int cap = BotInput.ImpactVfxPerFrameOverride > 0 ? BotInput.ImpactVfxPerFrameOverride : MaxImpactVfxPerFrame;
+        if (impactVfxThisFrame >= cap) return;
+        impactVfxThisFrame++;
+        SpawnTimed(prefab, position, seconds);
+    }
+
     public void Despawn(GameObject obj, float delay = 0f)
     {
         if (obj == null) return;

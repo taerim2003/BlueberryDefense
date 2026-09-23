@@ -1,16 +1,20 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BOT_QA
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // 봇 플레이테스트 본체. `BotRuns/active/session.json`이 있을 때만 플레이모드 시작에 생성된다(BotLauncher가 만든다).
+// QA 빌드(`BOT_QA`, `Assets/Editor/QABuild.cs`)에서는 `-botConfig <session.json>` 인자가 있을 때만 생성되고,
+// 없으면 평범한 게임으로 뜬다. 러너는 `Tools/QA/qa-runner.js`, 절차는 `.claude/skills/qa-loop`.
 //
 // 정책(사용자 지정 — 바꾸면 이전 측정과 비교할 수 없게 되므로 `balance` 스킬부터 볼 것):
 //   · QWER 꾹(BotInput.HoldSkills) · 레벨업 카드는 우선순위(2차 열쇠 → 1차 열쇠 → 보유 스킬 레벨업 → 아무거나,
@@ -38,10 +42,20 @@ public class BotPilot : MonoBehaviour
     private const string TitleScene = "Title";
     private const string BattleScene = "Battle";
 
+    private QAErrorLog errors;
+    private QAInvariants invariants;
+
+    // QAErrorLog·QAInvariants가 오류 기록에 붙일 문맥.
+    public BotChaos Chaos { get; private set; }
+    public Dictionary<string, object> RunHeader { get; private set; }
+    public float RunGameTime => recorder != null && recorder.Active ? recorder.GameTime : 0f;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Boot()
     {
         BotInput.HoldSkills = false;
+        BotInput.SkipEnding = false;
+#if UNITY_EDITOR
         cfg = BotConfig.LoadActive();
         if (cfg == null)
         {
@@ -49,10 +63,34 @@ public class BotPilot : MonoBehaviour
             return;
         }
         SaveStore.UseProfile("bot");
+#else
+        cfg = LoadFromCommandLine();
+        if (cfg == null) return; // 인자가 없으면 평범한 게임 — QA 빌드를 손으로 해 봐도 된다
+        BotConfig.RunsRootOverride = cfg.runsRoot;
+        BotConfig.YieldPathOverride = Path.Combine(cfg.sessionDir, "stop");
+        SaveStore.UseProfile("qa_" + (string.IsNullOrEmpty(cfg.instance) ? "0" : cfg.instance));
+#endif
+        BotInput.SkipEnding = cfg.skipEnding;
+        BotInput.SuppressDamageNumbers = cfg.noDamageNumbers;
+        BotInput.SuppressHitParticles = cfg.noHitParticles;
+        BotInput.ImpactVfxPerFrameOverride = cfg.impactVfxPerFrame;
         var go = new GameObject("[BotPilot]");
         DontDestroyOnLoad(go);
         go.AddComponent<BotPilot>();
     }
+
+#if !UNITY_EDITOR
+    private static BotConfig LoadFromCommandLine()
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        int i = Array.IndexOf(args, "-botConfig");
+        if (i < 0 || i + 1 >= args.Length) return null;
+        BotConfig c = BotConfig.LoadFrom(args[i + 1]);
+        if (c == null || string.IsNullOrEmpty(c.sessionDir)) { Debug.LogError("[Bot] -botConfig가 비었거나 sessionDir이 없다: " + args[i + 1]); return null; }
+        Directory.CreateDirectory(c.sessionDir);
+        return c;
+    }
+#endif
 
     private void Awake()
     {
@@ -61,9 +99,28 @@ public class BotPilot : MonoBehaviour
         recorder = new BotRecorder(cfg.sessionDir);
         Time.captureDeltaTime = Mathf.Max(0f, cfg.simStep);
         Application.runInBackground = true;
+#if !UNITY_EDITOR
+        // 고정 스텝(captureDeltaTime)이라 프레임이 빠를수록 게임 시간도 빨리 간다 — 수직 동기를 풀어 최대 속도로 돌린다.
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = -1;
+        // 창 없이(-batchmode -nographics) 뜨면 키보드 장치가 없어 `Keyboard.current`가 null이다. 게임은 PC라 키보드를 전제하고
+        // (PlayerSkills가 HoldSkills가 꺼진 프레임에 `Keyboard.current[...]`를 읽는다) 그 가정은 맞다 — 봇 쪽 환경을 맞춘다.
+        if (UnityEngine.InputSystem.Keyboard.current == null) UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+#endif
         Application.logMessageReceived += OnLog;
+        errors = gameObject.AddComponent<QAErrorLog>();
+        errors.Init(cfg, this);
+        invariants = gameObject.AddComponent<QAInvariants>();
+        invariants.Init(cfg, this);
+        gameObject.AddComponent<QAFrameStats>().Init(cfg, this);
+        if (cfg.chaos)
+        {
+            Chaos = gameObject.AddComponent<BotChaos>();
+            Chaos.Init(cfg);
+        }
         status["label"] = cfg.label;
         status["mode"] = cfg.mode;
+        if (!string.IsNullOrEmpty(cfg.kind)) { status["kind"] = cfg.kind; status["buildId"] = cfg.buildId; status["instance"] = cfg.instance; }
         status["startedUtc"] = DateTime.UtcNow.ToString("o");
         lastMainTickReal = Time.realtimeSinceStartup;
     }
@@ -76,6 +133,16 @@ public class BotPilot : MonoBehaviour
         recorder?.Unsubscribe();
         BotInput.HoldSkills = false;
         Time.captureDeltaTime = 0f;
+    }
+
+    // 세션 끝: 에디터는 플레이모드를 끄고(BotLauncher가 뒷정리), 빌드는 프로세스를 끝낸다(러너가 다음 세션을 띄운다).
+    private static void StopPlay()
+    {
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void OnLog(string msg, string stack, LogType type)
@@ -96,7 +163,7 @@ public class BotPilot : MonoBehaviour
                 File.WriteAllText(Path.Combine(active.sessionDir, "status.json"),
                     "{\"state\":\"error\",\"error\":\"플레이 중 스크립트 재컴파일로 봇 상태가 초기화됨 — 세션 도중 .cs를 고치지 말 것\",\"heartbeatUtc\":\""
                     + DateTime.UtcNow.ToString("o") + "\"}");
-            EditorApplication.isPlaying = false;
+            StopPlay();
             return;
         }
 
@@ -104,7 +171,10 @@ public class BotPilot : MonoBehaviour
         if (now - lastStatusReal > 5f) WriteStatus();
         // 메인 코루틴이 예외로 죽으면 Unity는 조용히 멈춘다 — 심장박동이 끊긴 것으로 잡는다.
         if (!finished && now - lastMainTickReal > Mathf.Max(90f, cfg.stuckRealSeconds * 1.5f))
+        {
+            errors.Record("BotDied", "[Bot] 메인 코루틴이 멈췄다" + (lastException != null ? ": " + lastException : ""));
             Finish("error", "메인 코루틴이 멈췄다" + (lastException != null ? ": " + lastException : ""));
+        }
     }
 
     // ───────────────────────── 세션 ─────────────────────────
@@ -338,6 +408,28 @@ public class BotPilot : MonoBehaviour
     {
         // 🔴 2026-09-18 정지 3건이 전부 이 메서드 안에서 났다(trace.log 마지막 줄이 세 번 다 "enterRun 시작").
         //    정상 전환은 3.5초다. 어느 문장인지 좁히려고 단계마다 도장을 찍는다 — 다음 정지 때 trace.log가 답을 준다.
+        // chaos: 결과 화면에서 스킬트리로 가기·다시 하기 같은 다른 출구를 먼저 탄다.
+        if (Chaos != null && SceneManager.GetActiveScene().name == BattleScene && GameManager.Instance != null)
+        {
+            Trace("  chaos 결과 화면");
+            yield return Chaos.StartCoroutine(Chaos.Guarded("result_phase", Chaos.ResultBody()));
+        }
+        // 판이 아직 진행 중이면(양보·chaos 다시 하기 직후) **사람과 같은 길로** 나간다: 일시정지 → 포기 → 결과 화면.
+        // 진행 중에 ReturnToTitle을 직접 부르면 페이드아웃 동안 판이 계속 돌다 GameOver가 timeScale=0을 세운 채
+        // 타이틀이 뜬다 — 사람은 도달할 수 없는 상태라 가짜 버그가 된다(2026-09-22 title-paused).
+        GameManager live = GameManager.Instance;
+        if (SceneManager.GetActiveScene().name == BattleScene && live != null && !live.IsGameOver && !live.IsGameClear && !live.IsEnding)
+        {
+            PauseMenu pm = FindAnyObjectByType<PauseMenu>();
+            if (pm != null)
+            {
+                Trace("  진행 중인 판 포기(일시정지 → 포기)");
+                if (!Get<bool>(pm, "paused")) Call(pm, "PauseAndShow");
+                yield return null;
+                Call(pm, "GiveUpToTitle");
+                yield return WaitReal(() => GameManager.Instance == null || GameManager.Instance.IsGameOver, 10f, "포기 후 게임오버");
+            }
+        }
         if (SceneManager.GetActiveScene().name != TitleScene)
         {
             Trace("  타이틀 복귀 요청 전");
@@ -345,10 +437,30 @@ public class BotPilot : MonoBehaviour
             else SceneFade.LoadScene(TitleScene);
             Trace("  타이틀 복귀 요청 후");
         }
-        yield return WaitReal(() => SceneManager.GetActiveScene().name == TitleScene && FindAnyObjectByType<TitleController>() != null, 60f, "타이틀 로드");
+        // SceneFade는 페이드 도중의 로드 요청을 **무시**한다(두 번 로드 방지). 판이 페이드인(0.45초) 안에 끝나면
+        // 위 요청이 먹혀서 영원히 기다리게 된다 — 3초마다 다시 요청한다.
+        float nextRetry = Time.realtimeSinceStartup + 3f;
+        yield return WaitReal(() =>
+        {
+            if (SceneManager.GetActiveScene().name == TitleScene && FindAnyObjectByType<TitleController>() != null) return true;
+            if (Time.realtimeSinceStartup > nextRetry && SceneManager.GetActiveScene().name != TitleScene)
+            {
+                nextRetry = Time.realtimeSinceStartup + 3f;
+                Trace("  타이틀 복귀 재요청");
+                if (GameManager.Instance != null) GameManager.Instance.ReturnToTitle();
+                else SceneFade.LoadScene(TitleScene);
+            }
+            return false;
+        }, 60f, "타이틀 로드");
         Trace("  타이틀 로드됨");
         yield return new WaitForSecondsRealtime(1.2f);
         Tick();
+        if (Chaos != null)
+        {
+            Trace("  chaos 타이틀");
+            yield return Chaos.StartCoroutine(Chaos.Guarded("title_phase", Chaos.TitleBody()));
+            Tick();
+        }
 
         TitleController title = FindAnyObjectByType<TitleController>();
         Get<Button>(title, "playButton").onClick.Invoke();
@@ -362,6 +474,7 @@ public class BotPilot : MonoBehaviour
         if (ci < 0) Fail("CharacterSelectUI.characters에 " + ch.name + " 없음");
         Call(cs, "Pick", ci);
         if (cs.Selected != chars[ci]) Fail("캐릭터 선택이 거부됨(잠김?): " + ch.name);
+        if (cfg.captureSelectScreens) yield return CaptureSelect("char");
         Get<Button>(cs, "confirmButton").onClick.Invoke();
         Trace("  캐릭터 확정");
         yield return new WaitForSecondsRealtime(0.4f);
@@ -376,6 +489,7 @@ public class BotPilot : MonoBehaviour
         if (maxAsc < goal.ascension) Fail($"{goal.map} 난이도 {goal.ascension}이 아직 잠김(최대 {maxAsc})");
         SetField(ms, "ascensionLevel", goal.ascension);
         Call(ms, "RefreshAscension");
+        if (cfg.captureSelectScreens) yield return CaptureSelect("map");
         Button start = Get<Button>(ms, "startButton");
         if (!start.interactable) Fail("시작 버튼 비활성: " + goal.map);
         start.onClick.Invoke();
@@ -384,26 +498,60 @@ public class BotPilot : MonoBehaviour
         yield return WaitReal(() => SceneManager.GetActiveScene().name == BattleScene && GameManager.Instance != null
                                      && FindAnyObjectByType<PlayerSkills>() != null, 60f, "전투 로드");
         Trace("  전투 로드됨");
-        yield return new WaitForSecondsRealtime(0.3f);
+        // 🔴 여기서 **실시간**을 기다리면 안 된다. 게임 시간은 프레임당 simStep으로 고정이라, 프레임이 빠를수록
+        //    실시간 0.3초 동안 게임 시간이 더 흐르고 그동안 봇은 스킬을 안 누른다(HoldSkills는 PlayBattle에서 켠다).
+        //    창 없는 QA 빌드에선 그 틈이 게임 시간 수십 초가 되어 시작 체력 242 중 224를 공짜로 맞았다(2026-09-22).
+        //    초기화(Start·첫 Update)만 끝나면 되므로 프레임 수로 기다린다 — 게임 시간 약 0.1초.
+        for (int f = 0; f < 3; f++) yield return null;
         if (RunConfig.Map == null || RunConfig.Map.name != goal.map || RunConfig.AscensionLevel != goal.ascension
             || RunConfig.Character == null || RunConfig.Character.name != ch.name)
             Fail("RunConfig가 요청과 다름 — 선택 화면 흐름이 바뀌었는지 확인");
+    }
+
+    // 선택 연출(팝·페이드)이 가라앉은 뒤 찍는다. 파일 이름에 해상도를 넣어 해상도별로 나란히 비교할 수 있게.
+    private int captureCount;
+
+    private IEnumerator CaptureSelect(string screen)
+    {
+        yield return new WaitForSecondsRealtime(0.8f);
+        Tick();
+        string png = Path.Combine(cfg.sessionDir, "sel_" + screen + "_" + Screen.width + "x" + Screen.height + "_" + (captureCount++) + ".png");
+        ScreenCapture.CaptureScreenshot(png);
+        yield return null;
     }
 
     // ───────────────────────── 전투 ─────────────────────────
     private IEnumerator PlayBattle(Dictionary<string, object> header, Action<Dictionary<string, object>> done)
     {
         header["seed"] = cfg.seed;
+        if (!string.IsNullOrEmpty(cfg.kind)) { header["kind"] = cfg.kind; header["buildId"] = cfg.buildId; header["instance"] = cfg.instance; }
+        RunHeader = header;
         recorder.BeginRun(header);
+        errors.TakeRunCounts();
+        invariants.TakeRunSummary();
+        // Chaos 기록은 여기서 비우지 않는다 — 판 직전 타이틀·결과 화면에서 한 행동도 이 판의 chaosActions에 들어가야 한다.
         float runStartReal = Time.realtimeSinceStartup;
         float lastProgressReal = runStartReal;
         float lastGameTime = 0f;
+        GameManager startGm = GameManager.Instance;
         string result;
 
         while (true)
         {
             Tick();
             GameManager gm = GameManager.Instance;
+            // 엔딩(skipEnding=false일 때만 탄다)은 끝까지 보고 타이틀로 돌아오면 클리어로 친다. 엔딩에서 멈추면 WaitReal이 실패로 잡는다.
+            if (gm != null && gm.IsEnding)
+            {
+                // 🔴 스킬을 놓지 말 것 — 엔딩 한가운데 마지막 보스전(블루베리 군집체)이 있고, 그걸 잡아야 엔딩이 이어진다.
+                //    연출 구간의 봉인은 게임이 PlayerSkills.Sealed로 한다. 놓았더니 군집체를 못 잡아 240초 대기로 끝났다(9/23 QA).
+                BotInput.HoldSkills = true;
+                yield return WaitReal(() => SceneManager.GetActiveScene().name == TitleScene, 240f, "엔딩 끝");
+                result = "clear";
+                break;
+            }
+            // chaos가 판 도중 타이틀로 나가거나 다시 하기를 눌렀다 — 오류가 아니라 버려진 판이다.
+            if (Chaos != null && (gm == null || gm != startGm)) { result = "abandoned"; break; }
             if (gm == null) { result = "error"; lastException = "전투 중 GameManager가 사라짐"; break; }
             if (gm.IsGameClear) { result = "clear"; break; }
             if (gm.IsGameOver) { result = "dead"; break; }
@@ -411,20 +559,46 @@ public class BotPilot : MonoBehaviour
 
             BotInput.HoldSkills = true;
             recorder.Tick();
-            bool acted = HandleModals();
+            if (Chaos != null) Chaos.BattleActive = true;
+            // 일시정지·옵션 창이 떠 있으면 사람은 그 너머의 레벨업 카드를 못 누른다 — 봇도 기다린다.
+            bool acted = Chaos != null && Chaos.OverlayOpen ? false : HandleModals();
 
             float now = Time.realtimeSinceStartup;
             if (acted || recorder.GameTime > lastGameTime + 0.0001f) { lastProgressReal = now; lastGameTime = recorder.GameTime; }
             if (now - lastProgressReal > cfg.stuckRealSeconds) { result = "stuck"; DumpStuck(); break; }
             if (now - runStartReal > cfg.maxRunRealSeconds) { result = "timeout"; break; }
+            if (cfg.qaSelfTest && !selfTested && recorder.GameTime > 5f) SelfTest();
             if (GameManager.Instance != null) Set("stage", GameManager.Instance.CurrentStage);
             yield return null;
         }
 
+        if (Chaos != null) Chaos.BattleActive = false;
         BotInput.HoldSkills = false;
+        if (result == "stuck" || result == "timeout")
+            errors.Record(result == "stuck" ? "Stuck" : "Timeout", "[QA-INV] " + result + ": 판이 " + (result == "stuck" ? cfg.stuckRealSeconds + "초 동안 진행 없음" : "실시간 상한 초과"));
         Dictionary<string, object> run = recorder.EndRun(result);
+        if (!string.IsNullOrEmpty(cfg.kind))
+        {
+            Dictionary<string, object> qa = invariants.TakeRunSummary();
+            qa["errors"] = errors.TakeRunCounts();
+            run["qa"] = qa;
+            if (Chaos != null) run["chaosActions"] = Chaos.TakeRunLog();
+        }
+        RunHeader = null;
         if (result == "error") Fail(lastException);
+        if (result == "abandoned") yield return new WaitForSecondsRealtime(2f); // 진행 중인 씬 전환이 끝나게 둔다
         done(run);
+    }
+
+    // 오류 수집 대조군 — 수집이 실제로 잡는지 보려고 일부러 예외 1개·LogError 1개를 낸다(cfg.qaSelfTest, 세션당 1회).
+    private bool selfTested;
+
+    private void SelfTest()
+    {
+        selfTested = true;
+        Debug.LogError("[QA-SELFTEST] 일부러 낸 LogError");
+        try { throw new InvalidOperationException("[QA-SELFTEST] 일부러 낸 예외"); }
+        catch (Exception e) { Debug.LogException(e); }
     }
 
     // 떠 있는 모달 하나를 처리했으면 true. 연출이 한 프레임 늦게 붙는 걸 감안해 실시간 0.12초 간격으로만 누른다.
@@ -764,12 +938,16 @@ public class BotPilot : MonoBehaviour
         if (cfg == null || string.IsNullOrEmpty(cfg.sessionDir)) return;
         status["heartbeatUtc"] = DateTime.UtcNow.ToString("o");
         status["realElapsed"] = Time.realtimeSinceStartup;
+#if !UNITY_EDITOR
+        status["audioVolume"] = AudioListener.volume; // QA 빌드 음소거 확인용(QAMute가 0으로 누른다)
+#endif
         string path = Path.Combine(cfg.sessionDir, "status.json");
         try
         {
+            // Replace는 원자적이다 — Delete→Move 사이 몇 ms 동안 파일이 없으면, 그 순간 읽은 감시자(QA 러너)가 무응답으로 오판한다.
             File.WriteAllText(path + ".tmp", BotJson.Write(status));
-            if (File.Exists(path)) File.Delete(path);
-            File.Move(path + ".tmp", path);
+            if (File.Exists(path)) File.Replace(path + ".tmp", path, null);
+            else File.Move(path + ".tmp", path);
         }
         catch (Exception e) { Debug.LogWarning("[Bot] status 쓰기 실패: " + e.Message); }
     }
@@ -792,7 +970,7 @@ public class BotPilot : MonoBehaviour
         Set("finishedUtc", DateTime.UtcNow.ToString("o"));
         WriteStatus();
         Time.captureDeltaTime = 0f;
-        EditorApplication.isPlaying = false;
+        StopPlay();
     }
 
     private IEnumerator WaitReal(Func<bool> cond, float timeout, string what)

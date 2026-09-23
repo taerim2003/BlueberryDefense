@@ -144,11 +144,20 @@ function campaignMetrics(campaigns, runs) {
           pass: play.length > 0 && median(play) >= targets.playtimeMinutes[0] && median(play) <= targets.playtimeMinutes[1] },
     // G3 = 난이도 밸런스의 본체. 균일성(변동계수)만 보면 "다 똑같이 10판"도 통과하므로 **절대 범위**를 같이 본다(사용자 지시 2026-09-18).
     G3: (() => {
-      const band = targets.attemptsPerGoal || null;
-      const outOfBand = band ? perGoal.filter(g => g.meanAttempts != null && (g.meanAttempts < band[0] || g.meanAttempts > band[1])) : [];
+      // 밴드가 구간별로 나뉜다(사용자 결정 2026-09-23): 앞 earlyGoalCount개는 Early, 나머지는 Late.
+      // 옛 단일 밴드(attemptsPerGoal)는 폴백으로 남긴다.
+      const early = targets.attemptsPerGoalEarly || targets.attemptsPerGoal || null;
+      const late = targets.attemptsPerGoalLate || targets.attemptsPerGoal || null;
+      const split = targets.earlyGoalCount != null ? targets.earlyGoalCount : perGoal.length;
+      const bandOf = i => (i < split ? early : late);
+      const outOfBand = perGoal.filter((g, i) => {
+        const b = bandOf(i);
+        return b && g.meanAttempts != null && (g.meanAttempts < b[0] || g.meanAttempts > b[1]);
+      });
       return {
         value: round(cv, 3), target: targets.attemptsCvMax, goalsMeasured: att.length,
-        band, outOfBand: outOfBand.map(g => ({ name: g.name, attempts: g.meanAttempts })),
+        band: early, bandEarly: early, bandLate: late, earlyGoalCount: split,
+        outOfBand: outOfBand.map((g) => ({ name: g.name, attempts: g.meanAttempts, band: bandOf(perGoal.indexOf(g)) })),
         meanAttempts: round(mean(att), 2),
         pass: cv != null && cv <= targets.attemptsCvMax && outOfBand.length === 0,
       };
@@ -367,23 +376,28 @@ function analyze() {
   return out;
 }
 
-const data = analyze();
-const reportDir = path.join(ROOT, 'report');
-fs.mkdirSync(reportDir, { recursive: true });
-fs.writeFileSync(path.join(reportDir, 'data.json'), JSON.stringify(data, null, 1));
+// Tools/QA/qa-analyze.js가 지표 함수를 재사용한다(require할 때는 아래 실행부가 돌지 않는다).
+module.exports = { campaignMetrics, skillMetrics, deathMetrics, fingerprintDiff, goalKey, goalName, progressOf, targets, mean, median, std, round };
 
-const tpl = path.join(__dirname, 'report.html');
-if (fs.existsSync(tpl)) {
-  const html = fs.readFileSync(tpl, 'utf8').replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
-  fs.writeFileSync(path.join(reportDir, 'index.html'), html);
-}
+if (require.main === module) {
+  const data = analyze();
+  const reportDir = path.join(ROOT, 'report');
+  fs.mkdirSync(reportDir, { recursive: true });
+  fs.writeFileSync(path.join(reportDir, 'data.json'), JSON.stringify(data, null, 1));
 
-if (!QUIET) {
-  const last = data.iterations[data.iterations.length - 1];
-  console.log(`sessions=${data.sessions.length} iterations=${data.iterations.length}`);
-  if (last) {
-    console.log(`iteration ${last.iteration}: runs=${last.runCount} results=${JSON.stringify(last.results)}`);
-    for (const [k, v] of Object.entries(last.scoreboard)) console.log(`  ${k}: value=${JSON.stringify(v.value)} pass=${v.pass}`);
+  const tpl = path.join(__dirname, 'report.html');
+  if (fs.existsSync(tpl)) {
+    const html = fs.readFileSync(tpl, 'utf8').replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
+    fs.writeFileSync(path.join(reportDir, 'index.html'), html);
   }
-  console.log('→ ' + path.join(reportDir, 'data.json'));
+
+  if (!QUIET) {
+    const last = data.iterations[data.iterations.length - 1];
+    console.log(`sessions=${data.sessions.length} iterations=${data.iterations.length}`);
+    if (last) {
+      console.log(`iteration ${last.iteration}: runs=${last.runCount} results=${JSON.stringify(last.results)}`);
+      for (const [k, v] of Object.entries(last.scoreboard)) console.log(`  ${k}: value=${JSON.stringify(v.value)} pass=${v.pass}`);
+    }
+    console.log('→ ' + path.join(reportDir, 'data.json'));
+  }
 }

@@ -50,6 +50,15 @@ public class DamageNumber : MonoBehaviour
     private float popAmount;
     private float appliedAlpha; // 지금 colorGradient에 들어가 있는 알파
 
+    // 동시에 떠 있을 수 있는 숫자 수(파편의 HitParticle.MaxLive와 같은 장치, 2026-09-23 후반 렉 대책).
+    // 하나하나가 월드 공간 TMP라 스폰마다 메시를 새로 만든다 — 상한이 없어 실측 3,388개까지 떴다.
+    // 상한에 닿으면 **새 타격의 숫자만** 생략된다(이미 뜬 것은 그대로 올라간다 — Enemy.SpawnDamageNumber).
+    public const int MaxLive = 800;
+    public static int Live { get; private set; }
+
+    private void OnEnable() => Live++;
+    private void OnDisable() => Live--;
+
     private void Awake()
     {
         text = GetComponent<TMPro.TextMeshPro>();

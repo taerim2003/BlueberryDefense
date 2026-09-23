@@ -120,7 +120,7 @@ public class SmallOrb : MonoBehaviour
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)
-            ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2.2f);
+            ObjectPool.Instance.SpawnImpactVfx(impactVfxPrefab, enemy.transform.position, ObjectPool.ImpactVfxLifetime);
 
         // 저글러: **첫 명중과 동시에 복귀로 전환**한다(2026-09-19 사용자 "한번 맞춘 후 다시 캐릭터 쪽으로 돌아와").
         // 돌아오는 길에 닿는 적도 때려야 해서 hitEnemies를 비운다 — 안 비우면 왔던 길의 적이 전부 면역이 된다.

@@ -136,6 +136,7 @@ tree.name.heal_2	Recovery II
 tree.name.heal_3	Recovery III
 tree.effect.Attack	All damage increased by {0}%
 tree.effect.Health	Max health increased by {0}
+tree.effect.Regen	Restores {0} health every 5 seconds
 tree.effect.Cooldown	All skill cooldowns -{0}%
 tree.effect.Xp	Experience gain +{0}%
 tree.effect.Wealth	Essence gain +{0}%

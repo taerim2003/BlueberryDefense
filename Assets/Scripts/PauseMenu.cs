@@ -111,6 +111,10 @@ public class PauseMenu : MonoBehaviour
     private bool CanPause()
     {
         if (Object.FindAnyObjectByType<PlayerSkills>() == null) return false; // 인게임(플레이어 존재)에서만
+        // 레벨업·보물·진화 창이 떠 있으면 일시정지를 열지 않는다(사용자 결정 2026-09-23). 그 위에 겹쳐 열면
+        // 포기를 눌렀을 때 일시정지 몫만 닫혀 아래 창의 ModalPause가 남는다(9/22 QA title-paused).
+        // 이미 게임은 멈춰 있으니 일시정지로 얻을 게 없다 — 선택을 마치면 ESC가 다시 먹는다.
+        if (ModalPause.IsPaused) return false;
         var gm = GameManager.Instance;
         return gm == null || (!gm.IsGameOver && !gm.IsGameClear);
     }

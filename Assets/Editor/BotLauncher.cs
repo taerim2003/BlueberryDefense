@@ -145,8 +145,8 @@ public static class BotLauncher
         Debug.Log("[BotLauncher] 봇 세션 종료: " + cfg.sessionDir);
     }
 
-    // 밸런스에 영향을 주는 파일의 해시. 세션 사이에 무엇이 바뀌었는지 분석기가 diff한다.
-    private static string Fingerprint()
+    // 밸런스에 영향을 주는 파일의 해시. 세션 사이에 무엇이 바뀌었는지 분석기가 diff한다. QABuild도 빌드 지문으로 쓴다.
+    internal static string Fingerprint()
     {
         string root = BotConfig.ProjectRoot;
         var files = Directory.GetFiles(Path.Combine(root, "Assets", "Data"), "*.asset", SearchOption.AllDirectories)

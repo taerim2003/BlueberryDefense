@@ -152,7 +152,9 @@ public class GameManager : MonoBehaviour
     // 게임오버/클리어 패널의 "타이틀로" 버튼이 호출
     public void ReturnToTitle()
     {
-        Time.timeScale = 1f;
+        // timeScale만이 아니라 모달 카운트도 비운다 — 타이틀엔 게임을 멈추는 모달이 없는데, 보물·레벨업 창이 떠 있는 채로
+        // 판이 끝나면(창 위에서 ESC → 일시정지 → 포기) 그 창의 Push가 타이틀까지 남았다(9/22 QA title-paused).
+        ModalPause.ResetRunState();
         SceneFade.LoadScene("Title");
     }
 

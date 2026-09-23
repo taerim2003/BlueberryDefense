@@ -1,7 +1,9 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BOT_QA
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 // 봇의 스킬트리·세이브 조작. 구매는 전부 게임과 같은 `SkillTreeSave.CanUpgrade/TryUpgrade`를 거친다(클릭과 같은 판정).
@@ -15,20 +17,32 @@ public static class BotTree
         {
             if (tree != null) return tree;
             // MetaRunApplier가 배선한 것과 같은 에셋. 백업(MainSkillTree_Backup)을 집지 않게 이름으로 고정한다.
+#if UNITY_EDITOR
             tree = AssetDatabase.LoadAssetAtPath<SkillTreeData>("Assets/SkillTree/MainSkillTree.asset");
-            if (tree == null) Debug.LogError("[Bot] Assets/SkillTree/MainSkillTree.asset 을 못 찾음");
+#else
+            tree = LoadByName<SkillTreeData>("MainSkillTree");
+#endif
+            if (tree == null) Debug.LogError("[Bot] MainSkillTree 에셋을 못 찾음");
             return tree;
         }
     }
 
     public static T LoadByName<T>(string assetName) where T : Object
     {
+#if UNITY_EDITOR
         foreach (string guid in AssetDatabase.FindAssets(assetName + " t:" + typeof(T).Name))
         {
             T a = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid));
             if (a != null && a.name == assetName) return a;
         }
         return null;
+#else
+        // 빌드엔 AssetDatabase가 없다. 씬(MetaRunApplier·CharacterSelectUI·MapSelectUI)이 참조하는 에셋은
+        // 타이틀이 뜨면 이미 메모리에 있으니 로드된 것 중에서 이름으로 찾는다.
+        foreach (T a in Resources.FindObjectsOfTypeAll<T>())
+            if (a != null && a.name == assetName) return a;
+        return null;
+#endif
     }
 
     // 전 노드를 만렙까지 사는 데 드는 총 정수.

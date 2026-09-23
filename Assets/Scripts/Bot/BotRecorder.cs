@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BOT_QA
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

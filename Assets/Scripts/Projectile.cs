@@ -162,7 +162,7 @@ public class Projectile : MonoBehaviour
         OnHitBonus?.Invoke(enemy, isCrit);
 
         if (impactVfxPrefab != null)
-            ObjectPool.Instance.SpawnTimed(impactVfxPrefab, transform.position, 2f);
+            ObjectPool.Instance.SpawnImpactVfx(impactVfxPrefab, transform.position, ObjectPool.ImpactVfxLifetime);
 
         // 방패 블루베리는 관통을 끊는다 — 남은 관통 횟수와 무관하게 여기서 소멸(뒤에 있는 적은 못 맞힘).
         // 예외: PiercesShields(검은 화살)는 그대로 지나간다 — 방패를 뚫는 것이 그 진화의 값이다.

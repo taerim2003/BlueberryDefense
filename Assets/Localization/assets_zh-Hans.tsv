@@ -136,6 +136,7 @@ tree.name.heal_2	恢复 II
 tree.name.heal_3	恢复 III
 tree.effect.Attack	所有伤害提高{0}%
 tree.effect.Health	最大生命值提高{0}
+tree.effect.Regen	每5秒恢复 {0} 生命
 tree.effect.Cooldown	所有技能冷却 -{0}%
 tree.effect.Xp	经验获取 +{0}%
 tree.effect.Wealth	精华获取 +{0}%

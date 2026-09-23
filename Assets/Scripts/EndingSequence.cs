@@ -50,7 +50,7 @@ public class EndingSequence : MonoBehaviour
     {
         return RunConfig.Map != null && RunConfig.Map.name == EndingMapName
             && RunConfig.AscensionLevel >= EndingAscension
-            && FindAnyObjectByType<BotPilot>() == null; // 봇 측정은 판 결과만 필요하다 — 엔딩에 걸려 멈추면 안 된다
+            && !BotInput.SkipEnding; // 봇 측정은 판 결과만 필요하다(BotPilot은 릴리스 빌드에 없어서 플래그로 본다)
     }
 
     public static void Play()

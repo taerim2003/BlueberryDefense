@@ -1,0 +1,386 @@
+<title>블루베리 QA 벤치</title>
+<meta name="description" content="QA 빌드 봇이 잡은 오류와 빌드별 밸런스 데이터">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 토큰은 Tools/BotPlaytest/report.html(밸런스 랩)과 같다 — 두 보고서가 한 계열로 보이게. */
+:root {
+  color-scheme: light;
+  --page: #f5f6fa; --surface: #fcfcfd; --surface-2: #eef0f6;
+  --ink: #16172c; --ink-2: #4b4d6a; --muted: #85879e; --hair: #e0e2ec; --axis: #c3c5d4;
+  --accent: #3e45b5; --accent-wash: rgba(62, 69, 181, 0.08);
+  --good: #0ca30c; --good-ink: #006300; --warning: #fab219; --warning-ink: #8a5a00;
+  --serious: #ec835a; --serious-ink: #a8431c; --critical: #d03b3b; --critical-ink: #b12a2a;
+  --seq-0: #f0f1f6; --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95;
+  --bar: #3987e5; --band: rgba(12, 163, 12, 0.12);
+  --code-bg: #eef0f6;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0e0f1c; --surface: #16172a; --surface-2: #1f2136;
+    --ink: #f2f2fa; --ink-2: #c1c2d8; --muted: #8a8ca6; --hair: #2a2c43; --axis: #3a3c56;
+    --accent: #9096f2; --accent-wash: rgba(144, 150, 242, 0.12);
+    --good-ink: #3fcf3f; --warning-ink: #fab219; --serious-ink: #ec835a; --critical-ink: #ef6b6b;
+    --seq-0: #1f2136; --seq-1: #104281; --seq-2: #184f95; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec; --seq-6: #b7d3f6;
+    --bar: #3987e5; --band: rgba(12, 163, 12, 0.18); --code-bg: #1b1c30;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0e0f1c; --surface: #16172a; --surface-2: #1f2136;
+  --ink: #f2f2fa; --ink-2: #c1c2d8; --muted: #8a8ca6; --hair: #2a2c43; --axis: #3a3c56;
+  --accent: #9096f2; --accent-wash: rgba(144, 150, 242, 0.12);
+  --good-ink: #3fcf3f; --warning-ink: #fab219; --serious-ink: #ec835a; --critical-ink: #ef6b6b;
+  --seq-0: #1f2136; --seq-1: #104281; --seq-2: #184f95; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec; --seq-6: #b7d3f6;
+  --bar: #3987e5; --band: rgba(12, 163, 12, 0.18); --code-bg: #1b1c30;
+}
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.55; padding-inline: 16px; padding-block: 20px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; font-weight: 600; margin: 0; color: var(--ink-2); }
+.num, td.n, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+.runner { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
+.runner b { color: var(--ink); font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--muted); }
+.dot.on { background: var(--good); } .dot.off { background: var(--axis); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.tile .k { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
+.tile .v { font-family: var(--mono); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tile .sub { font-size: 12px; color: var(--ink-2); }
+
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--hair); }
+nav.tabs button { font: inherit; font-weight: 600; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 14px; color: var(--muted); cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+nav.tabs .count { font-family: var(--mono); font-weight: 500; font-size: 12px; color: var(--muted); margin-left: 6px; }
+
+section.panel { display: flex; flex-direction: column; gap: 18px; }
+.block { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.block-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.note { font-size: 12.5px; color: var(--ink-2); background: var(--accent-wash); border-radius: 6px; padding: 8px 12px; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.st-new { color: var(--critical-ink); } .st-regressed { color: var(--critical-ink); background: rgba(208, 59, 59, 0.08); }
+.st-bug { color: var(--serious-ink); } .st-fixing { color: var(--warning-ink); }
+.st-fixed { color: var(--good-ink); } .st-bot, .st-env, .st-wontfix { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 11.5px; padding: 1px 8px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); font-family: var(--mono); }
+
+.errlist { display: flex; flex-direction: column; gap: 0; }
+details.err { border-top: 1px solid var(--hair); }
+details.err:first-child { border-top: 0; }
+details.err > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: baseline; padding: 10px 2px; }
+details.err > summary::-webkit-details-marker { display: none; }
+.err-msg { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.err-meta { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.err-count { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px; text-align: right; }
+.err-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 14px; padding: 4px 2px 16px; }
+.err-body pre { margin: 0; background: var(--code-bg); border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 11.5px; line-height: 1.5; overflow-x: auto; white-space: pre; max-height: 260px; }
+.err-body img { width: 100%; border-radius: 6px; border: 1px solid var(--hair); image-rendering: pixelated; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12.5px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+@media (max-width: 720px) { .err-body { grid-template-columns: 1fr; } }
+
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11.5px; padding: 6px 8px; border-bottom: 1px solid var(--axis); white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--hair); vertical-align: baseline; }
+td.n, th.n { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+
+/* 목표별 첫 클리어까지 판 수 — 한 계열 막대 + 목표 대역 */
+.bars { display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 12.5px; }
+.bar-track { position: relative; height: 18px; background: var(--surface-2); border-radius: 4px; }
+.bar-band { position: absolute; top: 0; bottom: 0; background: var(--band); border-left: 1px dashed var(--good); border-right: 1px dashed var(--good); }
+.bar-fill { position: absolute; left: 0; top: 3px; bottom: 3px; background: var(--bar); border-radius: 0 4px 4px 0; }
+.bar-row .v { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.axis-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) 64px; gap: 10px; font-size: 11px; color: var(--muted); }
+.axis-ticks { position: relative; height: 14px; }
+.axis-ticks span { position: absolute; transform: translateX(-50%); font-family: var(--mono); }
+@media (max-width: 560px) { .bar-row, .axis-row { grid-template-columns: 96px minmax(0, 1fr) 52px; } }
+
+/* 스테이지별 사망률 히트맵 */
+.heat { display: grid; gap: 2px; font-size: 11px; }
+.heat .cell { height: 22px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); color: var(--ink); }
+.heat .lab { display: flex; align-items: center; font-size: 12px; white-space: nowrap; padding-right: 8px; }
+.heat .col { text-align: center; color: var(--muted); font-family: var(--mono); }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.legend i { width: 18px; height: 10px; border-radius: 2px; display: inline-block; }
+
+select { font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--axis); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
+.tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--page); font-size: 12px; padding: 6px 9px; border-radius: 6px; max-width: 280px; }
+.empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>블루베리 QA 벤치</h1>
+      <div class="small muted" id="gen"></div>
+    </div>
+    <div class="runner" id="runner"></div>
+  </header>
+  <div class="tiles" id="tiles"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-errors" aria-selected="true" aria-controls="p-errors">오류<span class="count" id="c-errors"></span></button>
+    <button role="tab" id="tab-balance" aria-selected="false" aria-controls="p-balance">밸런스 데이터<span class="count" id="c-balance"></span></button>
+  </nav>
+  <section class="panel" id="p-errors" role="tabpanel" aria-labelledby="tab-errors"></section>
+  <section class="panel" id="p-balance" role="tabpanel" aria-labelledby="tab-balance" hidden></section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (v, d = 0) => v == null || !isFinite(v) ? '–' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (v) => v == null ? '–' : Math.round(v * 100) + '%';
+const when = (iso) => { if (!iso) return '–'; const d = new Date(iso); return d.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const STATUS = { new: '새 오류', regressed: '재발', bug: '버그 확인', fixing: '고치는 중', fixed: '고침', bot: '봇 문제', env: '환경', wontfix: '보류' };
+const KIND = { balance: '정주행', chaos: '엣지 케이스', editor: '에디터' };
+const RESULT = { clear: '클리어', dead: '사망', abandoned: '버림', stuck: '멈춤', timeout: '시간 초과', error: '오류', yielded: '양보' };
+
+// ── 툴팁 ──
+const tip = $('tip');
+document.addEventListener('mousemove', (e) => {
+  const t = e.target.closest('[data-tip]');
+  if (!t) { tip.hidden = true; return; }
+  tip.textContent = t.dataset.tip; tip.hidden = false;
+  const x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+});
+
+function header() {
+  $('gen').textContent = '생성 ' + when(DATA.generatedUtc);
+  const r = DATA.runner;
+  const running = r && !r.finishedUtc && r.heartbeatUtc && (Date.now() - new Date(r.heartbeatUtc)) < 5 * 60e3;
+  const parts = [`<span><span class="dot ${running ? 'on' : 'off'}"></span><b>${running ? '러너 도는 중' : '러너 멈춤'}</b></span>`];
+  if (r) {
+    parts.push(`<span>마감 <b>${when(r.deadline)}</b></span>`);
+    parts.push(`<span>인스턴스 <b>${(r.slots || []).length}</b> <span class="muted">(${(r.slots || []).map(s => KIND[s.kind] || s.kind).join(' · ')})</span></span>`);
+    parts.push(`<span>세션 <b class="num">${r.sessionsStarted}</b>/<span class="num">${r.maxSessions}</span></span>`);
+  }
+  const b = DATA.builds[DATA.builds.length - 1];
+  if (b) parts.push(`<span>최신 빌드 <b class="mono">${esc(b.buildId)}</b></span>`);
+  if (DATA.buildStatus && DATA.buildStatus.state !== 'done') parts.push(`<span>빌드 <b>${esc(DATA.buildStatus.state)}</b></span>`);
+  $('runner').innerHTML = parts.join('');
+
+  const t = DATA.totals, e = DATA.errors;
+  const open = (e.statusCounts.new || 0) + (e.statusCounts.regressed || 0) + (e.statusCounts.bug || 0);
+  $('tiles').innerHTML = [
+    ['돌린 판', fmt(t.runs), `세션 ${fmt(t.sessions)}개 · ${fmt(t.realHours, 1)}시간`],
+    ['열린 오류', fmt(open), `새 ${fmt(e.statusCounts.new || 0)} · 재발 ${fmt(e.statusCounts.regressed || 0)}`],
+    ['고친 오류', fmt((e.statusCounts.fixed || 0) + (e.statusCounts.fixing || 0)), `확인 대기 ${fmt(e.statusCounts.fixing || 0)}`],
+    ['크래시 · 멈춤', `${fmt(e.crashes.length)} · ${fmt(e.hangs.length)}`, '프로세스가 끝을 못 적음 · 5분 무응답'],
+    ['빌드', fmt(DATA.builds.length), DATA.builds.length ? '최근 ' + when(DATA.builds[DATA.builds.length - 1].builtUtc) : '아직 없음'],
+  ].map(([k, v, s]) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="sub">${esc(s)}</span></div>`).join('');
+  $('c-errors').textContent = e.rows.length;
+  $('c-balance').textContent = DATA.balance.reduce((a, g) => a + g.runs, 0);
+}
+
+// ───────── 오류 탭 ─────────
+function errorsTab() {
+  const e = DATA.errors;
+  const rows = e.rows;
+  const byBuild = (r) => Object.entries(r.perBuild).map(([b, v]) => `<span class="chip" data-tip="${esc(b)}: ${v.count}번 / ${v.runs}판">${esc(b.split('_')[0].slice(4))} ${v.per100Runs != null ? v.per100Runs + '/100판' : v.count}</span>`).join('');
+  const item = (r) => `
+    <details class="err">
+      <summary>
+        <span class="pill st-${esc(r.status)}">${STATUS[r.status] || esc(r.status)}</span>
+        <span class="err-msg">${esc(r.message)}</span>
+        <span class="err-count" data-tip="모든 세션 합계">×${fmt(r.count)}</span>
+        <span class="err-meta">
+          <span>${esc(r.type)} · ${r.source === 'game' ? '게임' : r.source === 'bot' ? '봇' : '불변식'}</span>
+          <span>${fmt(r.sessions)}개 세션</span>
+          <span>${Object.entries(r.kinds).map(([k, n]) => (KIND[k] || k) + ' ' + n).join(' · ')}</span>
+          <span>마지막 ${when(r.lastUtc)}</span>
+          ${r.lastAction.length ? `<span>직전 행동 ${r.lastAction.map(([a, n]) => esc(a) + '×' + n).join(', ')}</span>` : ''}
+        </span>
+      </summary>
+      <div class="err-body">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          ${r.triageNote || r.cause ? `<div class="note">${r.cause ? '<b>원인</b> ' + esc(r.cause) + '<br>' : ''}${esc(r.triageNote || '')}${r.fixedIn ? ' · 고친 빌드 <span class="mono">' + esc(r.fixedIn) + '</span>' : ''}</div>` : ''}
+          <div class="chips">${byBuild(r)}</div>
+          <pre>${esc(r.frame ? r.frame + '\n\n' : '')}${esc(r.stack || '(스택 없음)')}</pre>
+          ${r.sample && r.sample.lastActions && r.sample.lastActions.length ? `<pre>${esc(r.sample.lastActions.join('\n'))}</pre>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          ${r.screenshot ? `<img src="${esc(r.screenshot)}" alt="첫 발생 순간의 화면" loading="lazy">` : ''}
+          <dl class="kv">
+            <dt>sig</dt><dd>${esc(r.sig)}</dd>
+            ${r.sample ? `<dt>장면</dt><dd>${esc(r.sample.scene)} · ${esc(r.sample.map || '–')} 난이도${esc(r.sample.ascension ?? '–')} · ${esc(r.sample.stage)}층</dd>
+            <dt>캐릭터</dt><dd>${esc(r.sample.character || '–')}</dd>
+            <dt>게임 시간</dt><dd>${fmt(r.sample.gameTime, 1)}초 · timeScale ${esc(r.sample.timeScale)} · 모달 ${r.sample.modalPaused ? '열림' : '없음'}</dd>
+            <dt>세션</dt><dd>${esc(r.sample.session)} · ${esc(r.sample.run ?? '–')}판</dd>` : ''}
+            <dt>처음</dt><dd>${when(r.firstUtc)}</dd>
+          </dl>
+        </div>
+      </div>
+    </details>`;
+
+  const crashRows = e.crashes.map(c => `<tr><td>${when(c.utc)}</td><td class="mono">${esc(c.buildId)}</td><td>${KIND[c.kind] || c.kind}</td><td class="n">${esc(c.exitCode)}</td><td><details><summary class="small">player.log 끝</summary><pre style="white-space:pre-wrap;font-size:11px">${esc(c.logTail)}</pre></details></td></tr>`).join('');
+  const hangRows = e.hangs.map(h => `<tr><td>${when(h.utc)}</td><td class="mono">${esc(h.buildId)}</td><td>${KIND[h.kind] || h.kind}</td><td class="n">${fmt(h.stage)}</td><td class="mono small">${esc((h.traceTail || '').split('\n').filter(Boolean).slice(-1)[0] || '')}</td></tr>`).join('');
+  const perfB = Object.entries(e.perf.byBuild).map(([b, p]) => `<tr><td class="mono">${esc(b)}</td><td class="n">${fmt(p.spikes)}</td><td class="n">${fmt(p.runs)}</td><td class="n">${fmt(p.worstMs)}ms</td></tr>`).join('');
+  const perfW = e.perf.worst.slice(0, 10).map(p => `<tr><td class="n">${fmt(p.ms)}ms</td><td>${esc(p.scene)} ${fmt(p.stage)}층</td><td class="n">${fmt(p.enemies)}</td><td class="mono small">${esc((p.lastActions || []).slice(-1)[0] || '')}</td></tr>`).join('');
+  const actions = Object.entries(DATA.chaosActions).sort((a, b) => b[1] - a[1]).map(([a, n]) => `<span class="chip">${esc(a)} ${n}</span>`).join('');
+
+  $('p-errors').innerHTML = `
+    <div class="block">
+      <div class="block-head"><h2>오류 목록</h2><span class="small muted">같은 오류는 메시지 첫 줄(숫자 제외) + 첫 게임 프레임으로 묶었다 · 재발과 새 오류가 위</span></div>
+      <div class="errlist">${rows.length ? rows.map(item).join('') : '<div class="empty">아직 잡힌 오류가 없다.</div>'}</div>
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>크래시</h2><span class="small muted">봇이 끝을 적지 못하고 프로세스가 사라진 세션</span></div>
+      ${crashRows ? `<div class="tbl-wrap"><table><thead><tr><th>시각</th><th>빌드</th><th>종류</th><th class="n">종료 코드</th><th>로그</th></tr></thead><tbody>${crashRows}</tbody></table></div>` : '<div class="empty">없음</div>'}
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>멈춤</h2><span class="small muted">상태 파일이 5분 동안 안 바뀌어 러너가 끊은 세션 · 마지막 단계는 trace.log 끝줄</span></div>
+      ${hangRows ? `<div class="tbl-wrap"><table><thead><tr><th>시각</th><th>빌드</th><th>종류</th><th class="n">층</th><th>마지막 단계</th></tr></thead><tbody>${hangRows}</tbody></table></div>` : '<div class="empty">없음</div>'}
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>렉</h2><span class="small muted">한 프레임이 250ms를 넘은 횟수(씬 로드 직후 제외) · 빌드에서만 잰다</span></div>
+      <div class="note">🔴 <b>창 모드로 돌린 세션의 렉 수치는 게임의 렉이 아니다.</b> 가려진 창은 화면 제출이 초당 1회로 억제되어
+        프레임이 0.5초씩 끊긴다(같은 판을 <code>-batchmode -nographics</code>로 돌리면 250ms 넘는 프레임 0개, 창 모드는 153개 — 9/23 실측).
+        게임 쪽 렉을 보려면 headless 세션의 수치만 쓸 것.</div>
+      ${perfB ? `<div class="tbl-wrap"><table><thead><tr><th>빌드</th><th class="n">렉 프레임</th><th class="n">판</th><th class="n">최악</th></tr></thead><tbody>${perfB}</tbody></table></div>
+      ${(e.perf.frameCost || []).length ? `<h3>프레임 비용 — FrameTimingManager (창을 띄운 인스턴스)</h3>
+      <div class="small muted">벽시계가 아니라 Unity가 재는 CPU·GPU 시간이다. 창이 가려져 생기는 화면 제출 대기는 여기 안 들어간다.
+        표본 ${fmt(e.perf.frameSamples)}개(2초에 한 줄) · 전투 중만 · 16.7ms = 60fps</div>
+      <div class="tbl-wrap"><table><thead><tr><th>해상도</th><th>살아 있는 풀 오브젝트</th><th class="n">표본</th><th class="n">CPU 중앙</th><th class="n">CPU p95</th><th class="n">GPU 중앙</th><th class="n">fps 중앙</th><th class="n">파티클</th><th class="n">피해 숫자</th></tr></thead><tbody>
+        ${e.perf.frameCost.map(r => `<tr><td class="mono">${esc(r.screen)}</td><td>${esc(r.pooled)}</td><td class="n">${fmt(r.n)}</td><td class="n">${fmt(r.cpuMs, 1)}ms</td><td class="n">${fmt(r.cpuMsP95, 1)}ms</td><td class="n">${fmt(r.gpuMs, 1)}ms</td><td class="n">${fmt(r.fps)}</td><td class="n">${fmt(r.particleSystems)}</td><td class="n">${fmt(r.damageNumbers)}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+      ${Object.keys(e.perf.byEnemies || {}).length ? `<h3 class="muted">참고: 벽시계 기준 옛 표 — 창 억제가 섞여 있어 판단에 쓰지 말 것</h3>
+      <div class="small muted">엣지 케이스 판의 렉은 대부분 봇이 만든다(언어 전환·해상도 변경 직후) → 제외. 렉이 난 정주행 판 ${fmt(e.perf.balanceRunsWithSpikes)}개 / 전체 ${fmt(e.perf.balanceRuns)}판</div>
+      <div class="tbl-wrap"><table><thead><tr><th>살아 있는 적</th><th class="n">렉 프레임</th><th class="n">중앙값</th><th class="n">최악</th></tr></thead><tbody>
+        ${['<50', '50-149', '150-249', '250+'].filter(k => e.perf.byEnemies[k]).map(k => { const b = e.perf.byEnemies[k]; return `<tr><td>${k}</td><td class="n">${fmt(b.spikes)}</td><td class="n">${fmt(b.medianMs)}ms</td><td class="n">${fmt(b.worstMs)}ms</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>목표</th><th class="n">렉 난 판</th><th class="n">렉 프레임</th><th class="n">적 최대</th></tr></thead><tbody>
+        ${Object.entries(e.perf.byGoal || {}).sort((a, b) => b[1].spikes - a[1].spikes).map(([k, g]) => `<tr><td>${esc(k)}</td><td class="n">${fmt(g.runs)}</td><td class="n">${fmt(g.spikes)}</td><td class="n">${fmt(g.peak)}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+      <h3>가장 긴 프레임 10개</h3><div class="tbl-wrap"><table><thead><tr><th class="n">길이</th><th>장면</th><th class="n">적 수</th><th>직전 행동</th></tr></thead><tbody>${perfW}</tbody></table></div>` : '<div class="empty">없음</div>'}
+    </div>
+    ${actions ? `<div class="block"><div class="block-head"><h2>엣지 케이스 행동 횟수</h2><span class="small muted">chaos 인스턴스가 판 안에서 한 것</span></div><div class="chips">${actions}</div></div>` : ''}`;
+}
+
+// ───────── 밸런스 탭 ─────────
+let fpIndex = 0;
+try { const v = localStorage.getItem('qa-fp'); if (v != null) fpIndex = +v; } catch {}
+
+function balanceTab() {
+  const groups = DATA.balance;
+  const el = $('p-balance');
+  if (!groups.length) { el.innerHTML = '<div class="block"><div class="empty">정주행(balance) 인스턴스의 판이 아직 없다.</div></div>'; return; }
+  if (fpIndex >= groups.length || fpIndex < 0) fpIndex = groups.length - 1;
+  const g = groups[fpIndex];
+  const band = g.attemptsBand || [2, 4];
+
+  const opts = groups.map((x, i) => `<option value="${i}" ${i === fpIndex ? 'selected' : ''}>밸런스 ${esc(x.fingerprint)} · ${x.runs}판 · 빌드 ${x.builds.map(b => b.split('_')[0]).join(', ')}</option>`).join('');
+  const results = Object.entries(g.results).map(([k, n]) => `<span class="chip">${RESULT[k] || esc(k)} ${n}</span>`).join('');
+
+  // 목표별 평균 시도 판 수
+  const goals = g.campaign.perGoal;
+  const maxA = Math.max(band[1] * 2, ...goals.map(x => x.meanAttempts || 0), 1);
+  const X = (v) => (100 * v / maxA).toFixed(2) + '%';
+  const ticks = [0, band[0], band[1], Math.round(maxA)].filter((v, i, a) => a.indexOf(v) === i);
+  const barRows = goals.map(x => `
+    <div class="bar-row">
+      <span>${esc(x.name)}</span>
+      <div class="bar-track" data-tip="${esc(x.name)}: 평균 ${x.meanAttempts ?? '–'}판 (표준편차 ${x.attemptsStd ?? '–'}) · 깬 캠페인 ${x.clearedCampaigns}/${x.campaigns} · 깬 판 평균 ${x.clearRunGameMinutes ?? '–'}분">
+        <div class="bar-band" style="left:${X(band[0])};width:calc(${X(band[1])} - ${X(band[0])})"></div>
+        ${x.meanAttempts != null ? `<div class="bar-fill" style="width:${X(x.meanAttempts)}"></div>` : ''}
+      </div>
+      <span class="v">${x.meanAttempts != null ? fmt(x.meanAttempts, 1) : '<span class="muted">–</span>'} <span class="muted small">n${x.clearedCampaigns}</span></span>
+    </div>`).join('');
+  const axis = `<div class="axis-row"><span></span><div class="axis-ticks">${ticks.map(t => `<span style="left:${X(t)}">${t}</span>`).join('')}</div><span></span></div>`;
+
+  // 스테이지별 사망률
+  const maxStage = Math.max(1, ...g.deaths.map(d => d.finalStage || 0));
+  const seq = (v) => v == null ? 'transparent' : `var(--seq-${Math.min(6, Math.round(v * 6 / 0.6))})`;
+  const heat = `<div class="heat" style="grid-template-columns: minmax(96px, auto) repeat(${maxStage}, minmax(22px, 1fr))">
+      <span></span>${Array.from({ length: maxStage }, (_, i) => `<span class="col">${i + 1}</span>`).join('')}
+      ${g.deaths.map(d => `<span class="lab">${esc(d.name)}</span>` + Array.from({ length: maxStage }, (_, i) => {
+        const s = i + 1, rate = d.deathRate[s], reached = d.reached[s] || 0, dead = d.deaths[s] || 0;
+        return s > (d.finalStage || 0) ? '<span></span>' : `<span class="cell" style="background:${reached ? seq(rate) : 'var(--surface-2)'}" data-tip="${esc(d.name)} ${s}층: 도달 ${reached}판 중 ${dead}판 사망${reached ? ' (' + pct(rate) + ')' : ''}">${dead || ''}</span>`;
+      }).join('')).join('')}
+    </div>
+    <div class="legend">사망률 <i style="background:var(--seq-0)"></i>0% <i style="background:var(--seq-2)"></i>20% <i style="background:var(--seq-4)"></i>40% <i style="background:var(--seq-6)"></i>60%+ · 칸의 숫자 = 사망 판 수</div>`;
+  const causes = g.deaths.map(d => {
+    const top = Object.entries(d.causes).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    return top.length ? `<tr><td>${esc(d.name)}</td><td>${top.map(([c, n]) => `<span class="chip">${esc(c)} ${n}</span>`).join(' ')}</td></tr>` : '';
+  }).join('');
+
+  const chars = g.characters.map(c => `<tr><td>${esc(c.character)}</td><td class="n">${c.n}</td><td class="n">${pct(c.clearRate)}</td><td class="n muted">${c.ci ? pct(c.ci[0]) + '–' + pct(c.ci[1]) : '–'}</td><td class="n">${fmt(c.meanProgress, 2)}</td></tr>`).join('');
+
+  const win = Object.fromEntries(g.skillWin.map(w => [w.skill, w]));
+  const skills = g.skills.map(s => {
+    const w = win[s.skill] || {};
+    const route = s.evoStage > 0 ? ` <span class="muted">${s.evoStage}차 R${s.route}</span>` : '';
+    return `<tr><td>${esc(s.skill)}${route}</td><td class="n">${s.n}</td><td class="n">${fmt(s.power, 2)}</td><td class="n">${fmt(s.dps, 0)}</td><td class="n">${fmt(s.antiAir, 0)}</td><td class="n">${fmt(s.boss, 0)}</td><td class="n">${s.offeredNew ? pct(s.pickedNew / s.offeredNew) : '–'}</td><td class="n">${s.evoStage === 0 && w.withN ? pct(w.withClear) + ' <span class="muted">/ ' + pct(w.withoutClear) + '</span>' : ''}</td></tr>`;
+  }).join('');
+
+  const pm = g.campaign.playMinutes;
+  el.innerHTML = `
+    <div class="block">
+      <div class="block-head">
+        <h2>빌드별 밸런스</h2>
+        <select id="fp" aria-label="밸런스 지문 고르기">${opts}</select>
+      </div>
+      <div class="note">정주행 인스턴스(에디터 봇과 같은 정책)의 판만 모았다. 엣지 케이스 인스턴스의 판은 스테이지 건너뛰기 같은 치트성 행동이 섞여서 뺐다.
+        밸런스 에셋의 지문이 같은 빌드는 한 묶음이다. 판정·추천은 넣지 않았다 — 표본 수(n)와 구간을 보고 결정할 것.</div>
+      <div class="tiles">
+        <div class="tile"><span class="k">판</span><span class="v">${fmt(g.runs)}</span><span class="sub">${g.sessions}개 세션 · ${fmt(g.realHours, 1)}시간</span></div>
+        <div class="tile"><span class="k">추정 플레이타임(중앙값)</span><span class="v">${pm.median != null ? fmt(pm.median, 0) + '분' : '–'}</span><span class="sub">목표 ${pm.target ? pm.target.join('–') + '분' : '–'} · 끝난 캠페인 ${pm.complete}/${pm.total}</span></div>
+        <div class="tile"><span class="k">결과</span><span class="v" style="font-size:14px;display:flex;flex-wrap:wrap;gap:4px;padding-top:6px">${results}</span></div>
+      </div>
+      ${g.changedFromPrev.length ? `<div class="small"><span class="muted">이전 묶음에서 바뀐 파일</span> <span class="chips" style="display:inline-flex">${g.changedFromPrev.map(f => `<span class="chip">${esc(f.replace(/^Assets\//, ''))}</span>`).join('')}</span></div>` : ''}
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>목표별 첫 클리어까지 판 수</h2><span class="small muted">초록 띠 = 목표 ${band[0]}–${band[1]}판 · n = 그 목표를 깬 캠페인 수</span></div>
+      <div class="bars">${barRows}${axis}</div>
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>어느 층에서 죽나</h2><span class="small muted">도달한 판 중 그 층에서 죽은 비율</span></div>
+      <div class="tbl-wrap">${heat}</div>
+      ${causes ? `<h3>막타를 친 적(목표별 상위 4)</h3><div class="small muted">막타 기준이라 흔한 적이 많이 잡힌다 — 한 건당 피해는 아래 표가 아니라 판 기록의 byEnemy로 볼 것</div><div class="tbl-wrap"><table><tbody>${causes}</tbody></table></div>` : ''}
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>캐릭터</h2><span class="small muted">구간 = 클리어율의 95% 윌슨 구간 · 진행률 = 끝낸 층 비율(클리어 1)</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>캐릭터</th><th class="n">판</th><th class="n">클리어율</th><th class="n">구간</th><th class="n">평균 진행률</th></tr></thead><tbody>${chars}</tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="block-head"><h2>스킬</h2><span class="small muted">정의는 밸런스 랩과 같다 · 가진 판 / 안 가진 판 클리어율은 목표를 섞은 단순 비교</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>스킬 · 진화</th><th class="n">판</th><th class="n">화력 비중</th><th class="n">DPS</th><th class="n">대공</th><th class="n">보스</th><th class="n">픽률</th><th class="n">가진 판 / 없는 판 클리어</th></tr></thead><tbody>${skills}</tbody></table></div>
+    </div>`;
+  $('fp').addEventListener('change', (ev) => { fpIndex = +ev.target.value; try { localStorage.setItem('qa-fp', fpIndex); } catch {} balanceTab(); });
+}
+
+// ── 탭 ──
+const tabs = [['tab-errors', 'p-errors'], ['tab-balance', 'p-balance']];
+function show(tabId) {
+  for (const [t, p] of tabs) { $(t).setAttribute('aria-selected', t === tabId); $(p).hidden = t !== tabId; }
+  try { localStorage.setItem('qa-tab', tabId); } catch {}
+}
+for (const [t] of tabs) $(t).addEventListener('click', () => show(t));
+
+if (!DATA) {
+  document.querySelector('.wrap').insertAdjacentHTML('beforeend', '<div class="block"><div class="empty">데이터가 없다 — node Tools/QA/qa-analyze.js 로 만든 index.html을 열 것.</div></div>');
+} else {
+  header(); errorsTab(); balanceTab();
+  try { const t = localStorage.getItem('qa-tab'); if (t && $(t)) show(t); } catch {}
+}
+</script>

@@ -153,7 +153,7 @@ public class Orb : MonoBehaviour
             consumed = true;
             enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Orb);
             if (impactVfxPrefab != null)
-                ObjectPool.Instance.SpawnTimed(impactVfxPrefab, enemy.transform.position, 2.2f);
+                ObjectPool.Instance.SpawnImpactVfx(impactVfxPrefab, enemy.transform.position, ObjectPool.ImpactVfxLifetime);
             Destroy(gameObject);
             return;
         }

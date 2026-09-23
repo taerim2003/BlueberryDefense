@@ -32,9 +32,10 @@ public static class SaveStore
     private static readonly Dictionary<string, string> map = new Dictionary<string, string>();
     private static bool loaded;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BOT_QA
     // 봇 플레이테스트 전용 세이브 분리(`save_<name>.json`). 봇이 사용자의 에디터 세이브를 오염시키지 않게 한다.
-    // 에디터에서만 존재 — 빌드의 `save.json`(Steam Cloud)은 이 경로에 절대 닿지 않는다.
+    // 에디터와 QA 빌드(`BOT_QA`, productName도 BlueberryDefense_QA로 따로)에만 존재 —
+    // 릴리스 빌드의 `save.json`(Steam Cloud)은 이 경로에 절대 닿지 않는다.
     // 부르면 메모리 캐시를 비워 다음 접근에 새 파일을 읽는다. null이면 기본 파일로 돌아간다.
     private static string profileFileName;
 

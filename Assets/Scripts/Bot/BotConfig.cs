@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BOT_QA
 using System;
 using System.IO;
 using UnityEngine;
@@ -80,6 +80,23 @@ public class BotConfig
     // 런처가 채운다
     public string sessionDir;
 
+    // ── QA 빌드(`Tools/QA/qa-runner.js`가 채운다 — 에디터 세션에서는 비어 있다) ──
+    public string runsRoot;               // 세션 폴더들의 부모. resumeFrom을 여기서 찾는다. 비면 <프로젝트>/BotRuns
+    public string kind;                   // "balance"(정책 그대로) | "chaos"(엣지 케이스 행동을 섞는다)
+    public string instance;               // 러너의 인스턴스 번호 — 세이브 프로필 이름(save_qa_<instance>.json)
+    public string buildId;                // QARuns/builds/<buildId> — runs·errors에 그대로 찍힌다
+    public bool chaos;                    // BotChaos를 켠다
+    public float chaosMinInterval = 3f;   // 전투 중 행동 간격(실시간 초)
+    public float chaosMaxInterval = 20f;
+    public bool skipEnding = true;        // false면 엔딩 연출까지 탄다(chaos)
+    public bool qaSelfTest;               // 오류 수집 대조군: 세션 첫 판에 일부러 예외 1개·LogError 1개를 낸다
+    public bool captureSelectScreens;     // 캐릭터·맵 선택 화면을 판마다 찍는다(sel_<화면>_<가로>x<세로>_<판>.png) — 해상도별 UI 확인용
+    // 렉 원인 분리 실험(perf): 같은 시드로 하나씩 꺼 보고 렉이 사라지는지 본다. 평소 세션에서는 false.
+    public bool noDamageNumbers;
+    public bool noHitParticles;
+    public int impactVfxPerFrame;        // 충돌 이펙트 프레임당 상한 덮어쓰기(0=게임 기본값 8). 상한별 화면 비교용
+    public bool qaLightweight;            // 1초 검사·렉 상세 기록을 끈다(계측기 자신이 렉의 원인인지 가르기)
+
     public static readonly BotGoal[] DefaultGoals =
     {
         new BotGoal { map = "Map_BlueberryField", ascension = 1 },
@@ -97,18 +114,27 @@ public class BotConfig
 
     // ── 경로 ──
     public static string ProjectRoot => Directory.GetParent(Application.dataPath).FullName;
-    public static string RunsRoot => Path.Combine(ProjectRoot, "BotRuns");
+    // QA 빌드에서는 BotPilot.Boot이 설정 파일의 runsRoot/sessionDir로 덮어쓴다(빌드 폴더엔 BotRuns가 없다).
+    public static string RunsRootOverride;
+    public static string YieldPathOverride;
+    public static string RunsRoot => RunsRootOverride ?? Path.Combine(ProjectRoot, "BotRuns");
     public static string ActivePath => Path.Combine(RunsRoot, "active", "session.json");
     public static string RequestPath => Path.Combine(RunsRoot, "request.json");
     // 🔴 교통정리: 다른 세션이 Unity가 필요하면 이 파일을 만든다. 봇은 판 경계에서 멈추고(내용에 "now"가 있으면 즉시)
     //    진행 상태를 resume.json에 남긴 채 Unity를 비운다. 쓰고 나면 만든 쪽이 지운다 → 루프가 이어서 돌린다.
-    public static string YieldPath => Path.Combine(RunsRoot, "yield");
+    //    QA 빌드에서는 세션 폴더의 `stop` 파일이다(러너가 새 빌드로 갈아탈 때·마감 때 쓴다).
+    public static string YieldPath => YieldPathOverride ?? Path.Combine(RunsRoot, "yield");
 
     public static BotConfig LoadActive()
     {
         if (!File.Exists(ActivePath)) return null;
-        try { return JsonUtility.FromJson<BotConfig>(File.ReadAllText(ActivePath)); }
-        catch (Exception e) { Debug.LogWarning("[Bot] session.json 읽기 실패: " + e.Message); return null; }
+        return LoadFrom(ActivePath);
+    }
+
+    public static BotConfig LoadFrom(string path)
+    {
+        try { return JsonUtility.FromJson<BotConfig>(File.ReadAllText(path)); }
+        catch (Exception e) { Debug.LogWarning("[Bot] 설정 읽기 실패: " + path + " — " + e.Message); return null; }
     }
 }
 #endif

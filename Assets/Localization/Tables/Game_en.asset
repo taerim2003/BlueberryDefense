@@ -2163,6 +2163,26 @@ MonoBehaviour:
     m_Localized: Skill Evolution
     m_Metadata:
       m_Items: []
+  - m_Id: 14848567660978176
+    m_Localized: 'Use Q, W, E, R to cast skills
+
+      and sweep away the swarming
+      blueberries!'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14848567770030080
+    m_Localized: 'You can now evolve skills!
+
+      Raise a skill to Lv.10 and own
+      its Synergy skill
+
+      to evolve it into something stronger.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15035493462515712
+    m_Localized: Restores {0} health every 5 seconds
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

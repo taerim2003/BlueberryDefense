@@ -354,7 +354,7 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 2.112
   - stageNumber: 18
-    spawnCount: 74
+    spawnCount: 55
     duration: 15
     spawnInterval: 0.247
     burstSize: 0
@@ -429,8 +429,8 @@ MonoBehaviour:
     riderChance: 0.021
     hopperChance: 0.185
     surferChance: 0
-    airshipChance: 0.17
-    enemyHpMultiplier: 933.66
+    airshipChance: 0.11
+    enemyHpMultiplier: 600
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 2.394
   - stageNumber: 22
@@ -469,8 +469,8 @@ MonoBehaviour:
     riderChance: 0.021
     hopperChance: 0.185
     surferChance: 0
-    airshipChance: 0.17
-    enemyHpMultiplier: 1400.49
+    airshipChance: 0.11
+    enemyHpMultiplier: 950
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 2.52
   - stageNumber: 24
@@ -509,8 +509,8 @@ MonoBehaviour:
     riderChance: 0.021
     hopperChance: 0.185
     surferChance: 0
-    airshipChance: 0.17
-    enemyHpMultiplier: 2113.02
+    airshipChance: 0.11
+    enemyHpMultiplier: 1450
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 2.706
   extendedHpGrowth: 1.28

@@ -16,6 +16,7 @@ public class RunBootstrap : MonoBehaviour
         RunConfig.HasPlayedThisSession = true; // 타이틀로 돌아갔을 때 TitleBgm이 복귀곡을 틀 근거
         ApplyCharacterVisuals();
         ApplyMap();
+        TutorialHint.TryShow();
     }
 
     // 캐릭터 외형만 여기서 적용(스탯=시작스킬/체력은 플레이어 컴포넌트가 자기 Awake에서 직접 읽음).

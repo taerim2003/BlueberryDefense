@@ -4,7 +4,7 @@
 // - uGUI `Outline`은 메쉬를 (±d,±d) 네 방향으로 복제할 뿐이라 곡선·모서리에서 두께가 어긋난다.
 // - 판 그림을 확대해 뒤에 까는 방법도 안 된다 — 확대는 중심에서 먼 쪽이 더 벌어져서
 //   가로로 긴 판은 좌우 테가 상하 테보다 두꺼워진다(실측 12.6px vs 4.7px).
-// 여기서는 실루엣 밖 픽셀마다 "반경 _OutlineWidth(화면 px) 안에 실루엣이 있는가"를 직접 물어본다.
+// 여기서는 실루엣 밖 픽셀마다 "반경 _OutlineWidth(1080p 기준 화면 px, 해상도 따라 캔버스와 같이 늘고 준다) 안에 실루엣이 있는가"를 직접 물어본다.
 // 거리로 판정하므로 두께가 방향과 무관하게 일정하다.
 //
 // 판 그림(`..._색칠`)은 둘레에 투명 여백이 있어(좌우 26px·위 14px·아래 22px) 테가 그 안에 그려진다 —
@@ -17,8 +17,8 @@ Shader "UI/SelectOutline"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _OutlineWidth ("Outline Width (screen px)", Range(0, 32)) = 20
-        _OutlineSoftness ("Outline Softness (screen px)", Range(0, 16)) = 3
+        _OutlineWidth ("Outline Width (px at 1920x1080)", Range(0, 32)) = 20
+        _OutlineSoftness ("Outline Softness (px at 1920x1080)", Range(0, 16)) = 3
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -131,6 +131,14 @@ Shader "UI/SelectOutline"
                 float2 duvdx = ddx(IN.texcoord);
                 float2 duvdy = ddy(IN.texcoord);
 
+                // 🔴 두께를 **캔버스와 같은 배율**로 줄이고 늘린다. 화면 px 고정이면 UI는 CanvasScaler가 줄이는데 테만 그대로라
+                //    640×360 창에서 카드는 1/3인데 테는 같은 12px → 상대 두께 3배(9/22 QA 창에서 보임). 4K에선 반대로 얇아진다.
+                //    배율 = CanvasScaler(기준 1920×1080 · Match 0.5)와 같은 식 √(가로/1920 × 세로/1080) — 1080p에서 정확히 1이라 기준 모습은 그대로다.
+                //    ⚠️ 캔버스 기준 해상도·Match를 바꾸면 여기도 같이 바꿀 것.
+                float uiScale = sqrt((_ScreenParams.x / 1920.0) * (_ScreenParams.y / 1080.0));
+                float outlineWidth = _OutlineWidth * uiScale;
+                float outlineSoftness = _OutlineSoftness * uiScale;
+
                 // 판 안쪽은 그릴 게 없다. 여기서 먼저 버려야 아래 이중 루프를 테 둘레에서만 돈다.
                 clip(0.5 - Solid(IN.texcoord));
 
@@ -140,7 +148,7 @@ Shader "UI/SelectOutline"
                 for (int r = 1; r <= OUTLINE_RINGS; r++)
                 {
                     float f = (float)r / (float)OUTLINE_RINGS;
-                    float px = _OutlineWidth * f;   // 화면 픽셀 반경
+                    float px = outlineWidth * f;   // 화면 픽셀 반경
                     float hit = 0.0;
                     [unroll]
                     for (int i = 0; i < OUTLINE_DIRS; i++)
@@ -153,9 +161,9 @@ Shader "UI/SelectOutline"
                 }
 
                 // 안쪽은 꽉 찬 노랑, 바깥 _OutlineSoftness 구간만 서서히 사라진다.
-                float dist = nearest * _OutlineWidth;
+                float dist = nearest * outlineWidth;
                 fixed4 color = IN.color;
-                color.a *= 1.0 - smoothstep(max(_OutlineWidth - _OutlineSoftness, 0.0), _OutlineWidth, dist);
+                color.a *= 1.0 - smoothstep(max(outlineWidth - outlineSoftness, 0.0), outlineWidth, dist);
 
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
