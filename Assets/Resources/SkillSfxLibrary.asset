@@ -143,7 +143,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d7253a324891aaf42bddafd6614d0cb8, type: 3}
     - {fileID: 8300000, guid: a949ed0b98c0e144fad09c357c988b17, type: 3}
     chosen: 3
-    volume: 0.066
+    volume: 0.3
   - id: GrapeToss.cast
     label: "\uD3EC\uB3C4 \uD22C\uCC99 \u2014 \uB358\uC9C0\uB294 \uC21C\uAC04"
     note: "\uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB \uCE78)."

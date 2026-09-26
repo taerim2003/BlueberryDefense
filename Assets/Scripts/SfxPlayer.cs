@@ -9,7 +9,11 @@ using UnityEngine;
 //  - 스킬 효과음: **`Assets/Resources/SkillSfxLibrary.asset`**(2026-09-27에 `PlayerSkills` 인스펙터에서 옮겼다).
 //    슬롯마다 후보 4개를 담고 `Window > Blueberry Defense > 스킬 효과음 고르기`에서 들어 보고 고른다.
 //    울릴 때는 `SkillSfx.Play("<슬롯 id>")` — 스로틀·볼륨이 그 안에 들어 있다(중복 배선 금지).
-//  - BGM: `MapDefinition.bgm`.
+//  - BGM: `MapDefinition.bgm`. 기준 게인은 `VolumeSettings.BgmBaseGain`(슬라이더는 사용자 설정이라 건드리지 말 것).
+//  🔴 **적 사망음은 경로가 둘이다 — 한쪽만 고치면 체감이 안 바뀐다.** `SfxLibrary.enemyDeath`(여기서 재생) +
+//     적 16종의 `deathVfxPrefab`(= `VFX_2D_Vanish_01_Color_Bunch_1s`)에 **직접 붙은 AudioSource**.
+//     후자는 `ObjectPool.Spawn`이 `프리팹 볼륨 × VolumeSettings.Sfx`로 울리므로 `MasterVolume`(1.3)을 안 거친다 —
+//     즉 같은 "1.0"이라도 이쪽이 더 크게 들린다. 사망음을 조절하라는 요청이 오면 **두 값을 같은 비율로** 움직일 것.
 //  ⚠️ `JuicyButton`은 별도 어셈블리(`JuicyUI.Runtime`)라 이 클래스를 **못 부른다.** 어셈블리 참조가 단방향이라
 //     `JuicyButton.Clicked` static 이벤트를 이쪽에서 **역방향으로 구독**한다 — 직접 호출로 되돌리면 컴파일이 깨진다.
 //  ⚠️ 승리는 `GameOver()`를 안 거친다 — `GameClear()`에 따로 배선돼 있다. 한쪽만 고치면 승리 때 소리가 안 난다.

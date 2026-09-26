@@ -17,7 +17,7 @@ MonoBehaviour:
     volume: 0.3
   enemyDeath:
     clip: {fileID: 8300000, guid: 7c4614d668ff24e49a269f33c2b531ca, type: 3}
-    volume: 0.8
+    volume: 0.48
   playerHit:
     clip: {fileID: 8300000, guid: f2e253532f0c40a4a84f37526a6e91d4, type: 3}
     volume: 1

@@ -351,7 +351,10 @@ public class HUDController : MonoBehaviour
         if (stageTextBaseScale == Vector3.zero) stageTextBaseScale = rect.localScale;
         rect.DOKill();
         rect.localScale = stageTextBaseScale * 1.7f;
-        rect.DOScale(stageTextBaseScale, 0.55f).SetEase(Ease.OutCubic);
+        // 2026-09-27 사용자 "바운스 시간을 더 늘려서 진짜 눈에 잘 띄도록" → 0.55초에서 1.2초로.
+        // ⚠️ 이징은 OutCubic을 유지한다 — 위 주석의 결정대로 **진동이 아니라** "커졌다 천천히 작아짐"이다.
+        //    OutCubic은 앞 0.36초에 축소의 2/3를 끝내고 남은 1/3을 길게 끌어서, 커진 상태가 더 오래 눈에 남는다.
+        rect.DOScale(stageTextBaseScale, 1.2f).SetEase(Ease.OutCubic);
     }
 
     private static void PunchIcon(RectTransform rect)

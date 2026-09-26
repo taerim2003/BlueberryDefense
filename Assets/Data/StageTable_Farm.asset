@@ -16,7 +16,7 @@ MonoBehaviour:
   - stageNumber: 1
     spawnCount: 5
     duration: 10
-    spawnInterval: 0.66
+    spawnInterval: 0.2541
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -36,7 +36,7 @@ MonoBehaviour:
   - stageNumber: 2
     spawnCount: 11
     duration: 11
-    spawnInterval: 0.42000002
+    spawnInterval: 0.1617
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -56,9 +56,9 @@ MonoBehaviour:
   - stageNumber: 3
     spawnCount: 20
     duration: 12
-    spawnInterval: 0.072000004
+    spawnInterval: 0.02772
     burstSize: 5
-    burstRest: 1.6800001
+    burstRest: 0.6468
     eliteChance: 0.04
     evolutionItemDrops: 0
     ambushCount: 1
@@ -76,7 +76,7 @@ MonoBehaviour:
   - stageNumber: 4
     spawnCount: 29
     duration: 13
-    spawnInterval: 0.3
+    spawnInterval: 0.1155
     burstSize: 0
     burstRest: 0
     eliteChance: 0.07
@@ -96,7 +96,7 @@ MonoBehaviour:
   - stageNumber: 5
     spawnCount: 51
     duration: 14
-    spawnInterval: 0.39000002
+    spawnInterval: 0.15015
     burstSize: 0
     burstRest: 0
     eliteChance: 0.06
@@ -116,7 +116,7 @@ MonoBehaviour:
   - stageNumber: 6
     spawnCount: 66
     duration: 15
-    spawnInterval: 0.39000002
+    spawnInterval: 0.15015
     burstSize: 0
     burstRest: 0
     eliteChance: 0.105
@@ -136,7 +136,7 @@ MonoBehaviour:
   - stageNumber: 7
     spawnCount: 22
     duration: 15
-    spawnInterval: 0.546
+    spawnInterval: 0.21021
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -156,9 +156,9 @@ MonoBehaviour:
   - stageNumber: 8
     spawnCount: 48
     duration: 14
-    spawnInterval: 0.093600005
+    spawnInterval: 0.036036
     burstSize: 8
-    burstRest: 1.2
+    burstRest: 0.462
     eliteChance: 0.051
     evolutionItemDrops: 0
     ambushCount: 1
@@ -176,7 +176,7 @@ MonoBehaviour:
   - stageNumber: 9
     spawnCount: 26
     duration: 13
-    spawnInterval: 0.54600006
+    spawnInterval: 0.21021003
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -196,7 +196,7 @@ MonoBehaviour:
   - stageNumber: 10
     spawnCount: 118
     duration: 13
-    spawnInterval: 0.26520002
+    spawnInterval: 0.102102004
     burstSize: 0
     burstRest: 0
     eliteChance: 0.059
@@ -216,7 +216,7 @@ MonoBehaviour:
   - stageNumber: 11
     spawnCount: 133
     duration: 15
-    spawnInterval: 0.2184
+    spawnInterval: 0.084084
     burstSize: 0
     burstRest: 0
     eliteChance: 0.034
@@ -236,9 +236,9 @@ MonoBehaviour:
   - stageNumber: 12
     spawnCount: 74
     duration: 15
-    spawnInterval: 0.08580001
+    spawnInterval: 0.033033002
     burstSize: 12
-    burstRest: 1.44
+    burstRest: 0.5544
     eliteChance: 0.093
     evolutionItemDrops: 0
     ambushCount: 2
@@ -256,7 +256,7 @@ MonoBehaviour:
   - stageNumber: 13
     spawnCount: 10
     duration: 15
-    spawnInterval: 0.858
+    spawnInterval: 0.33032998
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -276,9 +276,9 @@ MonoBehaviour:
   - stageNumber: 14
     spawnCount: 70
     duration: 15
-    spawnInterval: 0.078
+    spawnInterval: 0.03003
     burstSize: 14
-    burstRest: 1.5600001
+    burstRest: 0.6006
     eliteChance: 0.055
     evolutionItemDrops: 0
     ambushCount: 2
@@ -296,7 +296,7 @@ MonoBehaviour:
   - stageNumber: 15
     spawnCount: 75
     duration: 15
-    spawnInterval: 0.321
+    spawnInterval: 0.123585
     burstSize: 0
     burstRest: 0
     eliteChance: 0.09
@@ -316,7 +316,7 @@ MonoBehaviour:
   - stageNumber: 16
     spawnCount: 52
     duration: 15
-    spawnInterval: 0.321
+    spawnInterval: 0.123585
     burstSize: 0
     burstRest: 0
     eliteChance: 0.25
@@ -336,7 +336,7 @@ MonoBehaviour:
   - stageNumber: 17
     spawnCount: 44
     duration: 15
-    spawnInterval: 0.845
+    spawnInterval: 0.325325
     burstSize: 0
     burstRest: 0
     eliteChance: 0.225
@@ -356,7 +356,7 @@ MonoBehaviour:
   - stageNumber: 18
     spawnCount: 55
     duration: 15
-    spawnInterval: 0.304
+    spawnInterval: 0.11703999
     burstSize: 0
     burstRest: 0
     eliteChance: 0.25
@@ -376,7 +376,7 @@ MonoBehaviour:
   - stageNumber: 19
     spawnCount: 29
     duration: 15
-    spawnInterval: 0.439
+    spawnInterval: 0.169015
     burstSize: 0
     burstRest: 0
     eliteChance: 0
@@ -396,7 +396,7 @@ MonoBehaviour:
   - stageNumber: 20
     spawnCount: 28
     duration: 15
-    spawnInterval: 0.304
+    spawnInterval: 0.11703999
     burstSize: 0
     burstRest: 0
     eliteChance: 0.25
@@ -416,9 +416,9 @@ MonoBehaviour:
   - stageNumber: 21
     spawnCount: 73
     duration: 15
-    spawnInterval: 0.1
+    spawnInterval: 0.0385
     burstSize: 16
-    burstRest: 1.8
+    burstRest: 0.69299996
     eliteChance: 0.45
     evolutionItemDrops: 0
     ambushCount: 4
@@ -436,7 +436,7 @@ MonoBehaviour:
   - stageNumber: 22
     spawnCount: 12
     duration: 15
-    spawnInterval: 1.1
+    spawnInterval: 0.4235
     burstSize: 0
     burstRest: 0
     eliteChance: 0.2
@@ -456,7 +456,7 @@ MonoBehaviour:
   - stageNumber: 23
     spawnCount: 77
     duration: 15
-    spawnInterval: 0.16
+    spawnInterval: 0.061599996
     burstSize: 0
     burstRest: 0
     eliteChance: 0.45
@@ -476,9 +476,9 @@ MonoBehaviour:
   - stageNumber: 24
     spawnCount: 27
     duration: 15
-    spawnInterval: 0.13
+    spawnInterval: 0.050049998
     burstSize: 10
-    burstRest: 2
+    burstRest: 0.77
     eliteChance: 0
     evolutionItemDrops: 1
     ambushCount: 2
@@ -496,7 +496,7 @@ MonoBehaviour:
   - stageNumber: 25
     spawnCount: 101
     duration: 15
-    spawnInterval: 0.16
+    spawnInterval: 0.061599996
     burstSize: 0
     burstRest: 0
     eliteChance: 0.3

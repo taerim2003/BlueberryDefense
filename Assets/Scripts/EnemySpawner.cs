@@ -23,6 +23,10 @@ public class EnemySpawner : MonoBehaviour
 
     private const int TreasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
 
+    // 🔴 마지막 일반 몹을 쏟고 나서 상자를 내보내기까지 두는 템포(2026-09-27 사용자: "마지막 유닛과 함께 겹쳐서 나온다").
+    //    마지막 스폰 시점 기준이다 — **잔몹이 죽기를 기다리는 게 아니다**(그 대기는 같은 날 지루하다고 없앤 것이다).
+    private const float TreasureSpawnGap = 1.2f;
+
     private float timer;
     private int treasureSpawnedForStage = 0;
     private int stageBeingCounted = -1;
@@ -112,14 +116,19 @@ public class EnemySpawner : MonoBehaviour
         ComputeStageSlots(map, gm, currentStage,
             out bool isBossStage, out bool treasureStage, out int reservedTail);
 
-        // 스테이지 종료 보물상자: 마지막 일반 몹을 쏟은 **바로 다음 프레임에** 등장한다.
+        // 스테이지 종료 보물상자: 마지막 일반 몹을 쏟고 TreasureSpawnGap초 뒤에 등장한다.
         // 🔴 2026-09-27 사용자: 잔몹을 다 잡고 상자를 기다리는 시간이 지루하다 → 물량 끝에 그냥 붙인다.
         //    (종전엔 "잔몹이 다 죽은 뒤 2.5초"였다. 그 대기가 판마다 붙어 전체 플레이타임을 늘리고 있었다.)
         //    잔몹이 살아 있는 중에 상자를 잡으면 전투 중에 보상 모달이 뜬다 — 그것까지 감수한 결정이다.
+        // 🔴 같은 날 추가: 바로 다음 프레임에 붙였더니 **마지막 유닛과 겹쳐서** 나왔다 → 한 템포만 둔다.
+        //    timer는 마지막 일반 몹을 스폰할 때 0으로 리셋되므로 그대로 "마지막 스폰 이후 경과"로 쓸 수 있다.
         if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - reservedTail)
         {
+            timer += Time.deltaTime;
+            if (timer < TreasureSpawnGap) return; // 마지막 유닛이 먼저 걸어 들어오게 비켜 준다
             SpawnEnemies(map.treasureEnemyPrefab, TreasureCount, stage, currentStage);
             treasureSpawnedForStage = currentStage;
+            timer = 0f;
             return;
         }
 
