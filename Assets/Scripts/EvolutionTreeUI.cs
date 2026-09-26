@@ -65,6 +65,9 @@ public class EvolutionTreeUI : MonoBehaviour
     // 씬에 배치된 노드의 원래 자리. 패시브(1차뿐)일 때 남은 칸을 가운데로 옮겼다가 되돌리려면 필요하다.
     // 🔴 **Awake에서 한 번만** 읽는다 — 옮긴 뒤에 다시 읽으면 가운데 좌표가 "원래 자리"가 되어 창을 열 때마다 밀린다.
     private Vector2[] nodeHome;
+    // 씬에 잡아 둔 카드·아이콘 크기. 코드가 연출로 localScale을 덮어쓰기 때문에 여기서 기억해야 한다.
+    private Vector3[] nodeBaseScale;
+    private Vector3 skillIconBaseScale = Vector3.one;
 
     private void Awake()
     {
@@ -90,9 +93,18 @@ public class EvolutionTreeUI : MonoBehaviour
         }
 
         nodeHome = new Vector2[nodes != null ? nodes.Length : 0];
+        nodeBaseScale = new Vector3[nodeHome.Length];
         for (int i = 0; i < nodeHome.Length; i++)
             if (nodes[i] != null && nodes[i].button != null)
-                nodeHome[i] = ((RectTransform)nodes[i].button.transform).anchoredPosition;
+            {
+                RectTransform rt = (RectTransform)nodes[i].button.transform;
+                nodeHome[i] = rt.anchoredPosition;
+                // 🔴 카드 크기는 **씬 값**이 정한다(2026-09-27에 1.4 → 1.82로 키웠다). 여기서 기억해 두지 않으면
+                //    AnimateNode가 1.0 기준으로 덮어써서 씬에서 키워도 창을 열 때 되돌아간다.
+                nodeBaseScale[i] = rt.localScale;
+            }
+
+        if (skillIcon != null) skillIconBaseScale = skillIcon.rectTransform.localScale;
 
         if (backButton != null) backButton.onClick.AddListener(Cancel);
     }
@@ -150,8 +162,13 @@ public class EvolutionTreeUI : MonoBehaviour
         SetIcon(skillIcon, CurrentIcon());
         if (!alreadyOpen && skillIcon != null)
         {
-            skillIcon.rectTransform.localScale = Vector3.one;
-            nodeTweens.Add(skillIcon.rectTransform.DOPunchScale(Vector3.one * 0.4f, 0.26f, 8, 0.5f).SetUpdate(true));
+            // 🔴 씬 값(0.55)으로 되돌린다 — Vector3.one으로 덮으면 아이콘이 SkillBox rect를 꽉 채우고,
+            //    그 판 그림은 둘레에 투명 여백(좌26·우20·상13·하18px)이 있어 **보이는 판 밖으로 나간다**
+            //    (2026-09-27 사용자 "스킬 아이콘이 칸을 벗어나고"). 펀치 강도도 0.4 → 0.25로 낮춘다 —
+            //    0.4면 순간 1.4배까지 튀어 그 여백을 다시 넘는다.
+            skillIcon.rectTransform.localScale = skillIconBaseScale;
+            nodeTweens.Add(skillIcon.rectTransform
+                .DOPunchScale(skillIconBaseScale * 0.25f, 0.26f, 8, 0.5f).SetUpdate(true));
         }
 
         for (int route = 0; route < 2; route++)
@@ -220,7 +237,9 @@ public class EvolutionTreeUI : MonoBehaviour
 
                 if (node.button == null) continue;
                 node.button.interactable = available;
-                AnimateNode((RectTransform)node.button.transform, route * 2 + tierIdx, available, alreadyOpen);
+                int nodeIdx = route * 2 + tierIdx;
+                AnimateNode((RectTransform)node.button.transform, nodeIdx, available, alreadyOpen,
+                            nodeBaseScale != null && nodeIdx < nodeBaseScale.Length ? nodeBaseScale[nodeIdx] : Vector3.one);
             }
 
             // 화살표는 T1→T2를 잇는 선이다 — 2차가 없으면(패시브) 이을 데가 없어 LayoutNodes가 통째로 껐다.
@@ -263,8 +282,9 @@ public class EvolutionTreeUI : MonoBehaviour
 
     // 차수 수에 맞춰 칸을 켜고 끈다. 2차가 없으면(패시브) T2 칸과 화살표를 끄고,
     // 남은 T1 칸을 **창 한가운데**로 옮긴다.
-    // 🔴 두 칸의 중점이 아니라 **창 중심**이다. 4칸 배치 자체가 창 중심보다 74px 왼쪽에 있어서
-    //    중점으로 맞추면 제목 박스와 어긋나 보인다(실측 2026-09-08: 칸 886 vs 제목 960).
+    // 🔴 두 칸의 중점이 아니라 **창 중심**이다. 지금은 4칸 배치도 창 중심(960)에 맞춰 놓았으므로 둘이 같다.
+    //    (2026-09-08까지는 4칸 배치가 창 중심보다 74px 왼쪽이라 중점으로 맞추면 제목 박스와 어긋났다 —
+    //     2026-09-27에 사용자 지적으로 배치를 대칭으로 고쳤다. 씬의 Node_* x는 960 ± 400이다.)
     // ⚠️ anchoredPosition은 앵커 기준 오프셋이라 앵커가 어디든 맞도록 부모 rect로 역산한다 —
     //    지금 노드는 앵커가 (0,1)(좌상단)이라 "960"을 손으로 박으면 앵커를 바꾸는 순간 틀어진다.
     private void LayoutNodes(int maxTier)
@@ -325,22 +345,23 @@ public class EvolutionTreeUI : MonoBehaviour
     }
 
     // 카드 등장 pop-in(스태거) + 진화 가능 노드 강조 펄스. Time.timeScale=0(모달 일시정지) 중에도 돌도록 SetUpdate(true).
-    private void AnimateNode(RectTransform rt, int order, bool available, bool alreadyOpen)
+    // baseScale: 씬에 잡아 둔 카드 크기. 🔴 1.0을 기준으로 삼으면 씬에서 카드를 키워도 창을 열 때 되돌아간다.
+    private void AnimateNode(RectTransform rt, int order, bool available, bool alreadyOpen, Vector3 baseScale)
     {
         if (rt == null) return;
-        rt.localScale = Vector3.one;
+        rt.localScale = baseScale;
 
         float pulseDelay = 0f;
         if (!alreadyOpen)
         {
             float delay = order * 0.03f;
-            rt.localScale = Vector3.one * 0.5f;
-            nodeTweens.Add(rt.DOScale(1f, 0.2f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true));
+            rt.localScale = baseScale * 0.5f;
+            nodeTweens.Add(rt.DOScale(baseScale, 0.2f).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true));
             pulseDelay = delay + 0.2f;
         }
 
         if (available)
-            nodeTweens.Add(rt.DOScale(1.07f, 0.55f).SetDelay(pulseDelay).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true));
+            nodeTweens.Add(rt.DOScale(baseScale * 1.07f, 0.55f).SetDelay(pulseDelay).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true));
     }
 
     private void KillNodeTweens()

@@ -4387,7 +4387,7 @@ RectTransform:
   m_GameObject: {fileID: 492216614}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.68, y: 1.68, z: 1.68}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1133024987}
@@ -4397,7 +4397,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1206.5, y: -589.5}
+  m_AnchoredPosition: {x: 1360, y: -628}
   m_SizeDelta: {x: 373, y: 195}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &492216616
@@ -6401,7 +6401,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -350}
+  m_AnchoredPosition: {x: 0, y: -414.5}
   m_SizeDelta: {x: 80, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &704095409
@@ -8098,7 +8098,7 @@ RectTransform:
   m_GameObject: {fileID: 912964577}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.68, y: 1.68, z: 1.68}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1734036269}
@@ -8108,7 +8108,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 565.5, y: -858.5}
+  m_AnchoredPosition: {x: 560, y: -923}
   m_SizeDelta: {x: 373, y: 195}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &912964579
@@ -8868,6 +8868,7 @@ GameObject:
   - component: {fileID: 995296824}
   - component: {fileID: 995296823}
   - component: {fileID: 995296822}
+  - component: {fileID: 995296826}
   m_Layer: 0
   m_Name: ChoiceBackButton
   m_TagString: Untagged
@@ -8894,7 +8895,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -8977,6 +8978,40 @@ RectTransform:
   m_AnchoredPosition: {x: -450, y: 355}
   m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &995296826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995296821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
+  visualRoot: {fileID: 995296825}
+  hoverScale: 1.06
+  squashX: 1
+  squashDuration: 0.02
+  hoverDuration: 0.09
+  hoverReturnDuration: 0.1
+  pressScale: 0.95
+  pressDuration: 0.03
+  shakeOnHover: 0
+  shakeStrength: 7
+  colorOnHover: 0
+  targetGraphic: {fileID: 0}
+  colorDuration: 0.15
+  hoverColor: {r: 1, g: 1, b: 0.85, a: 1}
+  pressColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  idleDim: 1
+  idleScale: 0.92
+  idleTint: {r: 0.55, g: 0.55, b: 0.62, a: 1}
+  dimDuration: 0.15
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &995771081
 GameObject:
   m_ObjectHideFlags: 0
@@ -9366,6 +9401,7 @@ GameObject:
   - component: {fileID: 1053147463}
   - component: {fileID: 1053147462}
   - component: {fileID: 1053147461}
+  - component: {fileID: 1053147465}
   m_Layer: 0
   m_Name: BackButton
   m_TagString: Untagged
@@ -9392,7 +9428,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -9475,6 +9511,40 @@ RectTransform:
   m_AnchoredPosition: {x: -450, y: 442.5}
   m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1053147465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053147460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2797f1b71a6ad0343bf5e3db1db3d2ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: JuicyUI.Runtime::JuicyButton
+  visualRoot: {fileID: 1053147464}
+  hoverScale: 1.06
+  squashX: 1
+  squashDuration: 0.02
+  hoverDuration: 0.09
+  hoverReturnDuration: 0.1
+  pressScale: 0.95
+  pressDuration: 0.03
+  shakeOnHover: 0
+  shakeStrength: 7
+  colorOnHover: 0
+  targetGraphic: {fileID: 0}
+  colorDuration: 0.15
+  hoverColor: {r: 1, g: 1, b: 0.85, a: 1}
+  pressColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  idleDim: 1
+  idleScale: 0.92
+  idleTint: {r: 0.55, g: 0.55, b: 0.62, a: 1}
+  dimDuration: 0.15
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1058269848
 GameObject:
   m_ObjectHideFlags: 0
@@ -12156,7 +12226,7 @@ RectTransform:
   m_GameObject: {fileID: 1236877107}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.68, y: 1.68, z: 1.68}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1983286708}
@@ -12166,7 +12236,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 565.5, y: -589.5}
+  m_AnchoredPosition: {x: 560, y: -628}
   m_SizeDelta: {x: 373, y: 195}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1236877109
@@ -13258,7 +13328,7 @@ RectTransform:
   m_GameObject: {fileID: 1355777171}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.68, y: 1.68, z: 1.68}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1274429629}
@@ -13268,7 +13338,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1207.5, y: -858.5}
+  m_AnchoredPosition: {x: 1360, y: -923}
   m_SizeDelta: {x: 373, y: 195}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1355777173
@@ -15915,7 +15985,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -82}
+  m_AnchoredPosition: {x: 0, y: -120.5}
   m_SizeDelta: {x: 80, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1617238091

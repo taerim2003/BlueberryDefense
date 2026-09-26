@@ -55,6 +55,7 @@ public class RunBootstrap : MonoBehaviour
         if (spawner != null) spawner.ActiveMap = map;
 
         ApplyFieldScale(map.fieldScale, spawner);
+        TrimCameraForShake();
 
         // 배경 — 컷이 2장 이상이면 돌리고(BackgroundAnimator가 첫 컷을 바로 깐다), 아니면 기존처럼 정지 한 장.
         GameObject bg = GameObject.Find("Background");
@@ -118,6 +119,21 @@ public class RunBootstrap : MonoBehaviour
 
         muffleBlend = BgmMuffle.Advance(muffleBlend, ended);
         BgmMuffle.Apply(bgmSource, bgmLowPass, muffleBlend);
+    }
+
+    // 🔴 화면을 배경보다 **조금 좁게** 잡는다(2026-09-27 사용자: 휘두르기 셰이크 때 배경 밖이 보인다).
+    //    배경 그림이 화면과 **정확히 같은 크기**(오차 0)라서 — 농장 400x225 · 해변 480x270 · 우주 576x324 @PPU18 —
+    //    ScreenShake가 x·y로 최대 0.12유닛 흔들면 그만큼 사방이 빈다.
+    // 🔴 **세로가 빡빡한 쪽이다**(ortho가 세로를 고정하므로). 실측:
+    //    농장 ortho 6.25 · 배경 반높이 6.25 → 2%면 여유 0.125로 흔들림 0.12와 거의 같다(슬랙 0.005).
+    //    3%면 여유가 농장 0.19 · 해변 0.23 · 우주 0.27로 넉넉해진다 — 그래서 0.97이다.
+    // ⚠️ ortho만 줄인다. Widen(플레이어·스포너 좌표)에 이 값을 곱하면 안 된다 — 레인 위치가 틀어진다.
+    // ⚠️ PPU 정수 배율이 깨져 도트가 약간 뭉갤 수 있다. 정석은 배경을 조금 크게 다시 그리는 것이다.
+    private const float ShakeTrim = 0.97f;
+    private static void TrimCameraForShake()
+    {
+        Camera cam = Camera.main;
+        if (cam != null && cam.orthographic) cam.orthographicSize *= ShakeTrim;
     }
 
     // 필드 확장 = 카메라 줌아웃 + 절대 좌표를 같은 비율로 벌리기. 캐릭터/적 스케일은 손대지 않는다.

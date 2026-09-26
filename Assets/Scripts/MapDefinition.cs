@@ -86,4 +86,13 @@ public class MapDefinition : ScriptableObject
     public GameObject bossEnemyPrefab;
     public GameObject bossEnemyPrefabEasy;
     public GameObject bossEnemyPrefabHard;
+
+    // 🔴 보스를 잡을 때 흩뿌려지는 적들(2026-09-27 사용자: "UFO는 나오지 않도록"). **맵마다 달라야 한다** —
+    //    보스 프리팹 3종은 세 맵이 **공유**하므로 프리팹의 deathSpawnPrefabs를 고치면 세 맵이 같이 움직인다.
+    //    비어 있으면 보스 프리팹의 deathSpawnPrefabs로 떨어진다(= 안 꽂은 맵은 종전과 같다).
+    // ⚠️ 마리마다 이 배열에서 **균등 추첨**한다(Enemy.SpawnDeathBurst) — 특정 종류의 비중을 낮추려면
+    //    흔하게 낼 쪽(일반 블루베리)을 여러 칸에 넣어 가중치를 만든다.
+    // 🔴 캐리어(UFO)를 넣지 말 것: 분출로 생기면 화면 위로 상승 퇴장하는데 그동안 Enemy.Active에 남아
+    //    GameManager의 "잔몹 0" 클리어 조건이 안 채워진다 → 판이 끝나지 않는다.
+    public GameObject[] bossDeathSpawnPrefabs;
 }

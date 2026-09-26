@@ -196,6 +196,16 @@ ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .rel .op { font-family: var(--mono); color: var(--ink-2); padding-left: 2.2em; }
 
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+/* 맵/난이도 평균 판수 — QA 벤치 보고서와 같은 형식(밴드 구간을 배경으로 깔고 막대를 겹친다) */
+.bar-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 12.5px; }
+.bar-track { position: relative; height: 18px; background: var(--surface-2); border-radius: 4px; }
+.bar-band { position: absolute; top: 0; bottom: 0; background: var(--band); border-left: 1px dashed var(--good); border-right: 1px dashed var(--good); }
+.bar-fill { position: absolute; left: 0; top: 3px; bottom: 3px; background: #3987e5; border-radius: 0 4px 4px 0; }
+.bar-row .v { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.axis-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) 64px; gap: 10px; font-size: 11px; color: var(--muted); }
+.axis-ticks { position: relative; height: 14px; }
+.axis-ticks span { position: absolute; transform: translateX(-50%); font-family: var(--mono); }
+@media (max-width: 560px) { .bar-row, .axis-row { grid-template-columns: 96px minmax(0, 1fr) 52px; } }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); align-items: center; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .empty { padding: 18px; color: var(--muted); background: var(--surface); border: 1px dashed var(--axis); border-radius: 10px; font-size: 13px; }
@@ -300,7 +310,8 @@ function inkOn(v) { return v != null && v > 0.55 ? '#ffffff' : 'var(--ink)'; }
 // 내용은 BotRuns/loop_state.json의 insights[]에서 온다 — 루프가 이터레이션마다 갱신한다.
 // 여기서 만들어내지 않는다: 판단은 한 곳(loop_state)에만 두고 보고서는 그리기만 한다.
 // 루프 종합 — 사용자 요청 2026-09-18: "루프가 끝날 때 각 이터레이션 보고서를 모두 수합해 정리".
-// 읽는 사람은 사용자다. 세 가지가 나와야 한다: ① N회를 거쳐 뭐가 좋아졌나 ② 이터레이션별로 뭘 했나 ③ 남은 문제는 뭔가.
+// 읽는 사람은 사용자다. 두 가지가 나와야 한다: ① N회를 거쳐 뭐가 좋아졌나 ② 남은 문제는 뭔가.
+// (이터레이션별 기록은 2026-09-26에 뺐다 — 과거 회차는 BotRuns/iterations/NN.json이 원본이다.)
 // 전부 data.json에서 만든다 — 손으로 쓴 요약을 여기 두면 다음 이터레이션에 낡는다.
 const GOAL_LABEL = { G1: '플레이타임', G2: '난이도 서열', G3: '목표별 판수', G4: '풀트리 우주 어려움', G5: '스킬 밸런스', G6: '캐릭터 편차' };
 const GOAL_ORDER = ['G2', 'G3', 'G6', 'G4', 'G5', 'G1'];   // balance 스킬 §1의 다룰 순서
@@ -349,45 +360,10 @@ function wrapupSection(iters) {
       })))));
   }
 
-  // ── ② 난이도 D가 목표별로 어떻게 움직였나
-  const names = (last.probe && last.probe.perGoal || []).map(g => g.name);
-  if (names.length) {
-    sec.append(h('h3', {}, '② 난이도 D 추이 — 9개 목표'));
-    sec.append(h('div', { class: 'scroll' }, h('table', {},
-      h('thead', {}, h('tr', {}, h('th', {}, '목표'), ...measured.map(x => h('th', { class: 'r' }, `이터 ${x.iteration}`)), h('th', { class: 'r' }, '변화'))),
-      h('tbody', {}, names.map(n => {
-        const vals = measured.map(x => { const g = (x.probe && x.probe.perGoal || []).find(y => y.name === n); return g ? g.D : null; });
-        const a = vals.find(v => v != null), b = [...vals].reverse().find(v => v != null);
-        const d = a != null && b != null ? b - a : null;
-        return h('tr', {}, h('td', {}, n),
-          ...vals.map(v => h('td', { class: 'cell', style: `background:${seqColor(v)};color:${inkOn(v)}` }, v == null ? '—' : fmt(v, 2))),
-          h('td', { class: 'r num' }, d == null ? '—' : (d >= 0 ? '+' : '') + fmt(d, 2)));
-      })))));
-  }
-
-  // ── ③ 이터레이션별로 뭘 했나
-  sec.append(h('h3', {}, '③ 이터레이션별로 한 일'));
-  sec.append(h('div', { class: 'scroll' }, h('table', {},
-    h('thead', {}, h('tr', {}, h('th', {}, '이터'), h('th', {}, '겨냥'), h('th', { class: 'r' }, '변경'), h('th', {}, '바꾼 것'), h('th', { class: 'r' }, '판'), h('th', {}, '판정'))),
-    h('tbody', {}, iters.map(x => {
-      const p = x.plan || {};
-      const ch = p.changes || [];
-      const files = [...new Set(ch.map(c => String(c.file).split('/').pop().replace(/\.(asset|prefab|cs).*$/, '')))];
-      const v = p.verdict;
-      const vv = VERDICT[v] || null;
-      return h('tr', {},
-        h('td', { class: 'num' }, x.iteration),
-        h('td', {}, p.target ? String(p.target).slice(0, 46) + (String(p.target).length > 46 ? '…' : '') : (x.iteration === 0 ? '기준선' : '—')),
-        h('td', { class: 'r num' }, ch.length || '—'),
-        h('td', {}, files.length ? files.slice(0, 5).join(' · ') + (files.length > 5 ? ` 외 ${files.length - 5}` : '') : '—'),
-        h('td', { class: 'r num' }, x.runCount || '—'),
-        h('td', {}, vv ? chip(vv[1], vv[0]) : chip('', '—')));
-    })))));
-
-  // ── ④ 남은 문제
+  // ── ② 남은 문제
   const fails = GOAL_ORDER.map(k => ({ k, m: (last.scoreboard || {})[k] || {} })).filter(x => x.m.value != null && !x.m.pass);
   const blockers = ((DATA.loop || {}).insights || []).filter(x => x.status === 'blocker');
-  sec.append(h('h3', {}, '④ 남은 문제'));
+  sec.append(h('h3', {}, '② 남은 문제'));
   if (!fails.length && !blockers.length) sec.append(h('div', { class: 'empty' }, '측정된 목표가 전부 통과했다.'));
   else {
     const ul = h('ul', { class: 'plain' });
@@ -411,11 +387,10 @@ function wrapupSection(iters) {
     ],
     fix: [
       fails.length ? [`남은 미달 ${fails.length}개는 **${fails[0].k} ${GOAL_LABEL[fails[0].k]}**부터 푼다(balance 스킬 §1의 다룰 순서). `,
-        `위 ②표에서 그 목표의 D가 이터레이션마다 어떻게 움직였는지 보면, 지금까지의 손잡이가 먹혔는지 아닌지가 바로 보인다.`] : '측정되지 않은 목표를 채우는 것이 다음 할 일이다.',
-      `③표에서 **변경 수가 1~2건인 이터레이션은 대부분 판정이 불확실**로 끝났다 — 다음 루프에서는 지표가 갈라지는 덩어리를 여러 개 넣는다.`,
+        `회차별 가설·판정·되돌릴 곳은 **BotRuns/iterations/NN.json**이 원본이다.`] : '측정되지 않은 목표를 채우는 것이 다음 할 일이다.',
     ],
     goal: [
-      `다음 루프의 목표는 ④의 항목이 줄어드는 것이다. 특히 **확인된 가설 수가 0에서 벗어나는 것** — 그게 안 되면 변경이 아니라 측정 설계를 먼저 고쳐야 한다는 신호다.`,
+      `다음 루프의 목표는 ②의 항목이 줄어드는 것이다. 특히 **확인된 가설 수가 늘어나는 것** — 안 늘면 변경이 아니라 측정 설계를 먼저 고쳐야 한다는 신호다.`,
     ],
   }));
   return sec;
@@ -905,19 +880,22 @@ function render(idx) {
       h('span', { class: 'muted num' }, '갱신 ' + new Date(DATA.generatedUtc).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })),
       sel)));
 
+  // 🔴 핵심과 통계만 남긴다(사용자 결정 2026-09-26). 빼기로 한 것:
+  //    · leverGuideSection / approachSection — 손잡이·절차 설명문. 스킬 문서(balance)에 있어 중복이다.
+  //    · timeline — 이터레이션별 기록. 과거 회차는 iterations/NN.json이 원본이다.
+  //    · paceSection — 측정 속도. 밸런스가 아니라 운영 지표다.
+  //    · wrapupSection의 이터레이션별 표 — 같은 이유. 남은 문제 목록만 쓴다.
+  //    되살리려면 이 줄에 함수를 다시 넣으면 된다(함수 본문은 아래에 그대로 있다).
   app.append(summarySection(iters, idx));
-  put(app, leverGuideSection());
-  put(app, approachSection());
-  put(app, wrapupSection(iters));
   app.append(scoreboard(iters, idx));
-  app.append(timeline(iters, idx));
+  app.append(attemptsChartSection(it));
   app.append(goalsSection(it, iters[idx - 1]));
-  app.append(paceSection(iters, idx));
   app.append(characterSection(it));
   app.append(skillSection(it));
   // 쿨타임 섹션 제거 — C1은 사소한 항목이라 보고서에서 뺐다(사용자 결정 2026-09-18). 되살리려면 이 줄과 스코어보드 C1 타일을 복구한다.
   app.append(progressSection(it));
   app.append(deathSection(it));
+  put(app, wrapupSection(iters));
 }
 
 function sectionHead(title, note) {
@@ -1049,6 +1027,60 @@ function dExplainer(it) {
 }
 
 // 9개 목표
+// 맵/난이도 평균 판수 — QA 벤치 보고서와 같은 형식.
+// 목표 1~5와 6~9의 허용 밴드가 다르므로(targets.json) 행마다 그 목표의 밴드를 깐다.
+function attemptsChartSection(it) {
+  const T = DATA.targets;
+  const early = T.attemptsPerGoalEarly || [1.5, 3], late = T.attemptsPerGoalLate || [2, 3.5];
+  const cut = T.earlyGoalCount == null ? 5 : T.earlyGoalCount;
+  const goals = it.campaign.perGoal || [];
+  const sec = h('section', {}, sectionHead('맵 · 난이도별 평균 판수',
+    `목표 하나를 깨기까지 쓴 판 수. 초록 구간이 허용 범위 — 목표 1~${cut}은 ${early[0]}~${early[1]}판, ${cut + 1}~${goals.length}은 ${late[0]}~${late[1]}판`));
+  if (!goals.length) { sec.append(h('div', { class: 'empty' }, '정주행(campaign) 측정이 아직 없습니다.')); return sec; }
+
+  const maxA = Math.max(late[1] * 2, ...goals.map(x => x.meanAttempts || 0), 1);
+  const X = v => (100 * v / maxA).toFixed(2) + '%';
+  const wrap = h('div', { class: 'card', style: 'display:grid;gap:6px' });
+  goals.forEach((g, i) => {
+    const band = i < cut ? early : late;
+    const inBand = g.meanAttempts != null && g.meanAttempts >= band[0] && g.meanAttempts <= band[1];
+    const track = h('div', { class: 'bar-track' },
+      h('div', { class: 'bar-band', style: `left:${X(band[0])};width:calc(${X(band[1])} - ${X(band[0])})` }),
+      g.meanAttempts == null ? null : h('div', { class: 'bar-fill', style: `width:${X(g.meanAttempts)}` }));
+    const row = h('div', { class: 'bar-row' }, h('span', {}, g.name), track,
+      h('span', { class: 'v' }, g.meanAttempts == null ? '—' : fmt(g.meanAttempts, 1),
+        h('span', { class: 'muted', style: 'font-size:11px' }, ' n' + g.clearedCampaigns)));
+    hover(row, `${g.name}: 평균 ${fmt(g.meanAttempts, 1)}판 (편차 ${fmt(g.attemptsStd, 1)}) · 허용 ${band[0]}~${band[1]} → ${inBand ? '범위 안' : (g.meanAttempts < band[0] ? '너무 쉬움' : '너무 어려움')} · 깬 캠페인 ${g.clearedCampaigns}/${g.campaigns} · 깬 판 평균 ${g.clearRunGameMinutes == null ? '—' : fmt(g.clearRunGameMinutes, 1) + '분'}`);
+    wrap.append(row);
+  });
+  const ticks = [0, early[0], late[1], Math.round(maxA)].filter((v, i, a) => a.indexOf(v) === i);
+  wrap.append(h('div', { class: 'axis-row' }, h('span', {}), h('div', { class: 'axis-ticks' },
+    ticks.map(t => h('span', { style: `left:${X(t)}` }, String(t)))), h('span', {})));
+  sec.append(wrap);
+
+  const outs = goals.filter((g, i) => {
+    const b = i < cut ? early : late;
+    return g.meanAttempts != null && (g.meanAttempts < b[0] || g.meanAttempts > b[1]);
+  });
+  const outDesc = outs.map(g => {
+    const i = goals.indexOf(g), b = i < cut ? early : late;
+    return `${g.name} ${fmt(g.meanAttempts, 1)}판(${g.meanAttempts < b[0] ? '너무 쉬움' : '너무 어려움'})`;
+  }).join(' · ');
+  sec.append(prose({
+    now: [[bold(`${goals.length - outs.length}/${goals.length} 목표가 허용 범위 안`), '이다.',
+      outs.length ? ` 벗어난 것: ${outDesc}.` : '']],
+    fix: [outs.length
+      ? ['벗어난 목표의 **층별 사망률**(맨 아래 표)에서 사망이 몰린 층을 찾아 그 층의 구성부터 고친다. ',
+        '무리 스폰 층(`burstSize` > 1)에서는 물량이 곧 압박이므로 물량보다 `burstSize`·`burstRest`를 먼저 본다.']
+      : '유지.'],
+    goal: [outs.length
+      ? [`벗어난 ${outs.length}개를 범위 안으로. `, bold('판정은 판수가 아니라 바꾼 층의 사망률로 한다'),
+        ' — 판수는 캠페인별 편차가 ±2판이라 그보다 작은 변화를 못 가른다.']
+      : '전 목표 범위 유지.']
+  }));
+  return sec;
+}
+
 function goalsSection(it, prev) {
   const sec = h('section', {}, sectionHead('9개 목표', '판수·시간은 정주행, 난이도 점수 D는 고정 트리 측정(0 = 전부 클리어, 1 = 첫 스테이지에서 전멸)'));
   put(sec, dExplainer(it));
@@ -1068,9 +1100,19 @@ function goalsSection(it, prev) {
       h('span', {}, rel.gap == null ? h('span', { class: 'muted' }, '측정 전') : [chip(rel.pass ? 'pass' : 'fail', rel.pass ? '서열 맞음' : '서열 어긋남'), h('span', { class: 'muted num', style: 'margin-left:8px' }, `D차 ${fmt(rel.gap, 3)} (필요 ≥ ${rel.need})`)])));
   });
   const table = h('div', { class: 'scroll' }, h('table', {},
-    h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, '평균 판수'), h('th', { class: 'r' }, '판수 편차'), h('th', { class: 'r' }, '클리어 판 길이'), h('th', { class: 'r' }, '클리어한 캠페인'))),
-    h('tbody', {}, camp.map(g => h('tr', {}, h('td', {}, g.name), h('td', { class: 'r' }, fmt(g.meanAttempts, 1)), h('td', { class: 'r' }, fmt(g.attemptsStd, 1)),
-      h('td', { class: 'r' }, g.clearRunGameMinutes == null ? '—' : fmt(g.clearRunGameMinutes, 1) + '분'), h('td', { class: 'r' }, `${g.clearedCampaigns}/${g.campaigns}`))))));
+    h('thead', {}, h('tr', {}, h('th', {}, '목표'), h('th', { class: 'r' }, '평균 판수'), h('th', { class: 'r' }, '판수 편차'),
+      h('th', { class: 'r' }, '전투 시간'), h('th', { class: 'r' }, '체감 판 길이'), h('th', { class: 'r' }, '클리어한 캠페인'))),
+    h('tbody', {}, camp.map(g => {
+      // 체감 판 길이 = 전투 시간 + 레벨업 선택 시간. 목표(쉬움 10 / 보통 15 / 어려움 20분) 대비 색을 입힌다.
+      const t = g.runMinutesTarget, v = g.clearRunPlayMinutes;
+      const over = t != null && v != null && v > t;
+      return h('tr', {}, h('td', {}, g.name), h('td', { class: 'r' }, fmt(g.meanAttempts, 1)), h('td', { class: 'r' }, fmt(g.attemptsStd, 1)),
+        h('td', { class: 'r' }, g.clearRunGameMinutes == null ? '—' : fmt(g.clearRunGameMinutes, 1) + '분'),
+        h('td', { class: 'r' }, v == null ? '—' : [
+          h('span', over ? { style: 'color:var(--bad)' } : {}, fmt(v, 1) + '분'),
+          t == null ? null : h('span', { class: 'muted', style: 'display:block;font-size:11px;line-height:1.2' }, `목표 ${t}분 · ${Math.round(v / t * 100)}%`)]),
+        h('td', { class: 'r' }, `${g.clearedCampaigns}/${g.campaigns}`));
+    }))));
   sec.append(h('div', { class: 'two' }, hasD ? ladder : h('div', { class: 'empty' }, '난이도 측정(probe) 세션이 아직 없습니다.'), table));
   put(sec, goalsNote(it, prev));
   return sec;

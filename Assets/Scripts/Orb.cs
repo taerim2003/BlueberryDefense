@@ -7,7 +7,6 @@ public class Orb : MonoBehaviour
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float slowMultiplier = 0.8f; // 이동속도 배율(20% 감속). 실제 값은 Orb_Skill·BigOrb_Skill 프리팹
     [SerializeField] private float slowDuration = 2f;
-    [SerializeField] private float lifetime = 5f;
     [SerializeField] private float tickInterval = 0.3f;
     [SerializeField] private GameObject impactVfxPrefab;
 
@@ -19,9 +18,6 @@ public class Orb : MonoBehaviour
     public bool SlowsEnemies { get; set; }
     public float SlowMultiplierBonus { get; set; } // 뺄셈 (0~slowMultiplier)
     public float SlowDurationBonus { get; set; } // 덧셈(초)
-    // 이 오브가 **평생** 붙잡을 수 있는 적 수(레벨업 주 성장축). FireOrb가 세팅.
-    // 매 틱 리셋되는 동시 타격 한도가 아니라 소모성 예산이다 — 다 쓰고 붙잡은 적이 전부 정리되면 오브가 사라진다.
-    public int MaxTargets { get; set; } = 4;
 
     // ── 오브 R0 2차 「초대형 오브」 전용 손잡이 (2026-09-19 사용자 명세) ──────────
     // "모든 것을 관통하는 초대형 오브를 소환해 주위 적들을 끌어당긴다" (노션 UI 문구) +
@@ -39,9 +35,8 @@ public class Orb : MonoBehaviour
 
     private float nextImpactSfxTime;
     private bool consumed; // 방패에 막혀 소멸 확정 — 같은 프레임에 다른 방패와도 겹쳐 있으면 중복 타격되는 것을 막는다
-    private int budgetRemaining = -1;   // 아직 붙잡을 수 있는 적 수. -1 = 미초기화(Start에서 MaxTargets로 채움)
+    private float despawnX; // 이 값보다 왼쪽으로 나가면 소멸(Start에서 카메라로 계산)
     private readonly HashSet<Enemy> overlappingEnemies = new HashSet<Enemy>();
-    private readonly HashSet<Enemy> claimed = new HashSet<Enemy>(); // 예산을 이미 소모한 적 — 얘들은 계속 무료로 간다
     private readonly Dictionary<Enemy, float> nextTickTime = new Dictionary<Enemy, float>();
     // 틱 순서를 정할 버퍼. 매 프레임 새 리스트를 만들면 그대로 GC 연료가 된다 — 비우고 다시 채운다.
     // 정렬 키(거리)는 담을 때 미리 재 둔다(비교 함수 안에서 transform.position을 읽으면 비교 횟수만큼 네이티브 접근이 일어난다).
@@ -52,26 +47,39 @@ public class Orb : MonoBehaviour
 
     private void Start()
     {
-        budgetRemaining = Mathf.Max(1, MaxTargets);
-        // 수명은 보통 **안전망**이다(아무도 못 만난 오브가 영원히 날아가지 않게).
-        // 🔴 단 초대형 오브(LifetimeOverride > 0)에서는 이것이 **주 소멸 조건**이다 — 관통이 무한이라
-        //    예산이 바닥나는 일이 없어서, 여기서 끊지 않으면 화면 끝까지 영원히 간다.
-        float life = LifetimeOverride > 0f ? LifetimeOverride : lifetime;
-        Destroy(gameObject, life * MetaBonuses.DurationMult);
+        // 🔴 기본 오브에는 **수명도 관통 예산도 없다**(2026-09-27 사용자: "지속시간이나 관통력 다 없애고
+        //    그냥 방패 블루베리 아니면 맵 끝까지 무조건 가게"). 소멸 경로는 ① 방패에 막힘 ② 맵 밖으로 나감 둘뿐이다.
+        // 🔴 단 초대형 오브(LifetimeOverride > 0)에서는 지속시간이 **명세된 대가**다("대신 지속시간이 있다").
+        if (LifetimeOverride > 0f) Destroy(gameObject, LifetimeOverride * MetaBonuses.DurationMult);
+
+        // 화면 왼쪽 경계보다 이만큼 더 나가면 소멸. 여유(DespawnMargin)가 필요하다 —
+        // ScreenShake가 카메라 x를 최대 0.12유닛 흔들어서, 딱 경계로 잡으면 화면 안에서 사라지는 프레임이 생긴다.
+        Camera cam = Camera.main;
+        despawnX = cam != null
+            ? cam.transform.position.x - cam.orthographicSize * cam.aspect - DespawnMargin
+            : float.NegativeInfinity;
+
         nextPullTime = Time.time + PullInterval;
     }
+
+    private const float DespawnMargin = 1.5f;
 
     private void Update()
     {
         transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
+
+        // 맵 밖으로 나간 오브는 여기서 사라진다. 수명이 없어졌으므로 이게 기본 오브의 유일한 자연 소멸 경로다 —
+        // 빠뜨리면 아무도 못 만난 오브가 판이 끝날 때까지 쌓여 그대로 후반 렉이 된다.
+        if (transform.position.x < despawnX) { Destroy(gameObject); return; }
+
         TickPull();
 
         // 풀링된 적은 죽어도 null이 되지 않는다 — IsAlive로 걸러야 반납된 적을 계속 붙잡고 있지 않는다.
         overlappingEnemies.RemoveWhere(e => e == null || !e.IsAlive);
 
-        // 겹쳐 있는 적을 전부 갈아버리지 않고 **가까운 순으로** 예산이 닿는 만큼만 붙잡는다.
-        // 예산은 "처음 만난 적"에만 소모되고, 한 번 붙잡은 적은 죽을 때까지 계속 간다.
-        // 레벨업으로 이 예산이 올라가는 게 오브의 주 성장축(BalanceConstants.OrbBaseTargets부터 시작해 만렙까지 오른다).
+        // 겹쳐 있는 적을 **가까운 순으로** 전부 때린다. 종전엔 "평생 붙잡을 적 수" 예산이 있었고 그게 레벨업
+        // 주 성장축이었는데, 2026-09-27에 관통이 무제한이 되면서 예산 자체가 사라졌다(성장축은 쿨·피해·크기로 이전).
+        // 거리 정렬은 그대로 둔다 — 틱 순서가 앞에 있는 적부터가 되어 광역기처럼 튀지 않는다.
         ordered.Clear();
         Vector2 self = transform.position;
         foreach (Enemy e in overlappingEnemies)
@@ -84,17 +92,11 @@ public class Orb : MonoBehaviour
             Enemy enemy = ordered[i].enemy;
             if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
 
-            if (!claimed.Contains(enemy))
-            {
-                if (budgetRemaining <= 0) continue; // 예산 소진 — 새 적은 더 못 잡는다(이미 잡은 적은 아래로 계속 진행)
-                claimed.Add(enemy);
-                budgetRemaining--;
-            }
-
             nextTickTime[enemy] = Time.time + tickInterval;
 
             float baseDamage = Damage;
-            enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb);
+            enemy.TakeSkillHit(baseDamage, CritChance, ActiveSkillId.Orb,
+                SlowsEnemies ? StatusIconLibrary.Slow : ApplyGemVulnerable ? StatusIconLibrary.Vulnerable : null);
             if (SlowsEnemies)
                 enemy.ApplySlow(Mathf.Clamp01(slowMultiplier - SlowMultiplierBonus), slowDuration + SlowDurationBonus);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
@@ -114,11 +116,6 @@ public class Orb : MonoBehaviour
             }
         }
 
-        // 예산을 다 쓰고 붙잡고 있던 적이 전부 정리되면(죽었거나 오브가 지나쳤거나) 임무 완료 — 그 자리에서 사라진다.
-        // 여기서 IsAlive를 빠뜨리면 붙잡은 적이 죽어도 claimed가 안 비어서 **오브가 영영 안 사라진다**.
-        claimed.RemoveWhere(e => e == null || !e.IsAlive);
-        if (budgetRemaining <= 0 && claimed.Count == 0)
-            Destroy(gameObject);
     }
 
     // 주기적으로 주위 적을 오브 쪽으로 끌어당긴다(초대형 오브). PullInterval이 0이면 아무 일도 안 한다.
@@ -167,8 +164,6 @@ public class Orb : MonoBehaviour
         if (enemy != null)
         {
             overlappingEnemies.Remove(enemy);
-            // 오브가 지나쳐버린 적은 더 이상 "갈고 있는 중"이 아니다 — 예산은 이미 썼으니 돌려주지 않는다.
-            claimed.Remove(enemy);
             nextTickTime.Remove(enemy);
         }
     }

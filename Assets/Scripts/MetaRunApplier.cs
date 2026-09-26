@@ -63,12 +63,14 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.RerollCount = totals.RerollCount;
         if (totals.ArrowStartLevel > 1) MetaBonuses.ArrowStartLevel = totals.ArrowStartLevel;
         if (totals.SwingStartLevel > 1) MetaBonuses.SwingStartLevel = totals.SwingStartLevel;
+        if (totals.GrapeStartLevel > 1) MetaBonuses.GrapeStartLevel = totals.GrapeStartLevel;
 
         // ── 스킬 강화 노드(2026-09-03 재설계) ──
         MetaBonuses.ArrowExtraPierce = totals.ArrowPierce;
         MetaBonuses.SwingKnockbackMult = totals.SwingKnockbackMult;
         MetaBonuses.OrbSlowUnlocked = totals.OrbSlowUnlocked;
         MetaBonuses.OrbExtraTargets = totals.OrbTargets;
+        MetaBonuses.OrbPiercesShields = totals.OrbPiercesShields;
         MetaBonuses.EagleExtraDrops = totals.EagleDrops;
         MetaBonuses.ThunderStackable = totals.ThunderStack;
         MetaBonuses.ShotgunExtraBonusHit = totals.ShotgunBonusHit;
@@ -76,6 +78,7 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.SnipingCritBonus = 0.01f * totals.SnipingCritPct;
         MetaBonuses.HomingCooldownCut = totals.HomingCdCut;
         MetaBonuses.RewindSkipsGlobalCooldown = totals.RewindNoGcd;
+        MetaBonuses.GrapeCloudExtraSeconds = totals.GrapeCloudExtra;
 
         MetaBonuses.PassiveBaseStrength = totals.PassiveStrength;
         MetaBonuses.PassiveBaseHealth = totals.PassiveHealth;
@@ -107,12 +110,14 @@ public class MetaRunApplier : MonoBehaviour
         if (exp != null && totals.XpPct > 0f) exp.IncreaseXPMultiplier(0.01f * totals.XpPct);
 
         // 기본공격 시작 레벨 강화 — 스킬 Awake 완료 후(Start) 적용.
-        // 캐릭터마다 기본공격이 달라서 노드도 둘이다(딸기=화살 / 파인애플=휘두르기).
+        // 캐릭터마다 기본공격이 달라서 노드도 셋이다(딸기=화살 / 파인애플=휘두르기 / 포도=포도 투척).
         // 안 쓰는 쪽은 SetSkillStartLevel이 그 스킬을 못 찾아 조용히 넘어간다.
         if (skills != null && MetaBonuses.ArrowStartLevel > 1)
             skills.SetSkillStartLevel(ActiveSkillId.BasicAttack, MetaBonuses.ArrowStartLevel);
         if (skills != null && MetaBonuses.SwingStartLevel > 1)
             skills.SetSkillStartLevel(ActiveSkillId.Swing, MetaBonuses.SwingStartLevel);
+        if (skills != null && MetaBonuses.GrapeStartLevel > 1)
+            skills.SetSkillStartLevel(ActiveSkillId.GrapeToss, MetaBonuses.GrapeStartLevel);
 
         // 레벨업 리롤 횟수(게임당) 초기화 — LevelUpUI.Awake(Instance 세팅) 이후
         if (LevelUpUI.Instance != null) LevelUpUI.Instance.InitRerolls(MetaBonuses.RerollCount);

@@ -156,7 +156,10 @@ public class Projectile : MonoBehaviour
         hitEnemies.Add(enemy);
 
         // 기본공격 멀티히트: baseDamage를 N회로 쪼개 각각 크리 개별 판정(총 데미지 유지). 반환=서브히트 중 크리 있었는지
-        bool isCrit = enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.BasicAttack);
+        // 상태이상을 거는 타격이면 파편이 그 아이콘으로 뜬다(2026-09-27 사용자). 둘 다 걸면 둔화를 보여준다 —
+        // 이동이 느려지는 게 화면에서 더 눈에 띈다.
+        bool isCrit = enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.BasicAttack,
+            ApplyGemSlow ? StatusIconLibrary.Slow : ApplyGemVulnerable ? StatusIconLibrary.Vulnerable : null);
         if (ApplyGemSlow) enemy.ApplySlow(0.3f, 3f);
         if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
         OnHitBonus?.Invoke(enemy, isCrit);

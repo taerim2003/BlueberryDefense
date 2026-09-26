@@ -37,7 +37,8 @@ public class SwingShockwave : MonoBehaviour
         if (enemy == null || !enemy.IsAlive || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
-        enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Swing);
+        enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Swing,
+            VulnerableMultiplier > 0f ? StatusIconLibrary.Vulnerable : null);
         if (Knockback > 0f) enemy.ApplyKnockback(Knockback);
         if (VulnerableMultiplier > 0f) enemy.ApplyVulnerable(VulnerableMultiplier, VulnerableDuration);
 

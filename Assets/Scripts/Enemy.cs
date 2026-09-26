@@ -13,7 +13,18 @@ public class Enemy : MonoBehaviour
     // 쓰임: 군중제어 감쇄. 보스는 둔화·기절·넉백을 BossCrowdControlScale만큼만 받는다 — 안 그러면 넉백·기절을 연달아 걸어
     // 보스가 한 발짝도 못 오는 **무한 스톨링**이 된다(디펜스에서 보스전이 통째로 무력화된다).
     private bool isBoss;
-    public void MarkAsBoss() => isBoss = true;
+    // 보스 사망 분출 풀을 맵이 덮어쓴다(MapDefinition.bossDeathSpawnPrefabs). 보스 프리팹 3종은 세 맵이 공유하므로
+    // 프리팹 배열로는 맵별로 다른 적을 뿌릴 수 없다. null/빈 배열이면 프리팹의 deathSpawnPrefabs를 쓴다.
+    private GameObject[] deathSpawnOverride;
+    // 분출로 태어난 적은 **자기 분출을 하지 않는다**(무한 연쇄 차단). 종전엔 "흩뿌릴 프리팹엔 deathSpawnCount=0"이라는
+    // 프리팹 관례로만 지켰는데, 맵별 풀에 비행선(자기도 10마리를 뿌린다)이 들어가면서 구조로 막아야 했다.
+    private bool suppressDeathBurst;
+    public void SuppressDeathBurst() => suppressDeathBurst = true;
+    public void MarkAsBoss(GameObject[] deathBurstPool = null)
+    {
+        isBoss = true;
+        deathSpawnOverride = deathBurstPool;
+    }
     private const float BossCrowdControlScale = 0.15f; // 보스는 군중제어를 15%만 받는다(사용자 결정 2026-09-18: "아주 강하게")
 
     // 이번에 받을 군중제어 배율. 보스 슬롯 규칙과 종류별 저항(EnemyDefinition.crowdControlResistance) 중 강한 쪽.
@@ -346,6 +357,8 @@ public class Enemy : MonoBehaviour
         appliedHpMult = appliedSpeedMult = appliedDamageMult = 1f;
 
         isDead = false;
+        deathSpawnOverride = null;  // MarkAsBoss가 Spawn 직후에 다시 채운다
+        suppressDeathBurst = false; // 분출로 태어난 적만 Spawn 직후에 다시 켠다
 
         popping = false; popVelY = 0f; popVelX = 0f; popGroundY = 0f;
         // 박치기 타이머를 미리 채운 채로 시작한다 — 덜 채울수록 도착 후 첫 박치기까지 더 기다린다.
@@ -902,7 +915,8 @@ public class Enemy : MonoBehaviour
     //                   공격당 낙뢰 기회를 1회로 유지한다(히트가 쪼개졌다고 낙뢰 빈도가 뻥튀기되지 않게).
     // hitIndex:        멀티히트 서브히트 순번 — 데미지 숫자를 세로로 정렬해 쌓는 데 씀.
     // forceShowNumber: 이미 죽은 뒤의 멀티히트 남은 서브히트도 데미지 숫자만은 띄운다(공격이 항상 같은 타수로 보이게).
-    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0, bool forceShowNumber = false)
+    // statusIcon:      이 타격이 상태이상을 거는 타격이면 그 아이콘 — 타격 파편이 그 그림으로 바뀐다.
+    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0, bool forceShowNumber = false, Sprite statusIcon = null)
     {
         if (popping) return; // 팝콘 등장(튀어오르는) 중엔 무적 — 보스 분출 직후 광역기에 즉사해 "안 튀어나온 것처럼" 보이는 걸 막음
         if (isDead)
@@ -925,7 +939,7 @@ public class Enemy : MonoBehaviour
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
         BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
-        SpawnHitParticles(actualDamage);
+        SpawnHitParticles(actualDamage, statusIcon);
         SfxPlayer.Play(SfxId.EnemyHit); // 광역기로 여러 마리를 동시에 때려도 AudioThrottle이 프레임당 한 번으로 묶는다
 
         // 체인 라이트닝으로 전이된 타격은 연결선(beam)으로 이미 시각화되므로,
@@ -1101,18 +1115,23 @@ public class Enemy : MonoBehaviour
             ObjectPool.Instance.Despawn(vfx, 2f);
         }
 
-        if (deathSpawnPrefabs == null || deathSpawnPrefabs.Length == 0 || deathSpawnCount <= 0) return;
+        // 맵이 꽂은 풀이 있으면 그걸 쓴다(맵별 로스터). 비어 있으면 프리팹 배열로 떨어진다.
+        GameObject[] pool = (deathSpawnOverride != null && deathSpawnOverride.Length > 0)
+            ? deathSpawnOverride : deathSpawnPrefabs;
+        if (suppressDeathBurst) return; // 분출로 태어난 적 — 연쇄를 여기서 끊는다
+        if (pool == null || pool.Length == 0 || deathSpawnCount <= 0) return;
 
         // 레인 기준선(스포너 Y) = 보스는 y로 움직이지 않으므로 자기 위치에서 자기 spawnYOffset을 빼면 역산된다.
         // 각 팝콘은 (기준선 + 그 종류의 spawnYOffset)에 착지 → 레인이 y=0이 아니어도 종류별 자연 높이에 정확히 내려앉는다.
         float laneBaselineY = transform.position.y - appliedSpawnYOffset;
         for (int i = 0; i < deathSpawnCount; i++)
         {
-            GameObject prefab = deathSpawnPrefabs[Random.Range(0, deathSpawnPrefabs.Length)];
+            GameObject prefab = pool[Random.Range(0, pool.Length)];
             if (prefab == null) continue;
             Vector2 offset = Random.insideUnitCircle * deathSpawnRadius;
             Enemy e = Spawn(prefab, transform.position + (Vector3)offset);
             if (e == null) continue;
+            e.SuppressDeathBurst();
             if (deathSpawnInheritsMultipliers) e.ApplyStageMultipliers(appliedHpMult, appliedSpeedMult, appliedDamageMult);
             // 캐리어(UFO)는 팝콘 낙하 대신 보스 죽은 자리에서 등장해 상승 퇴장(플레이어 위로 하강해 확정 피해 주던 문제 제거).
             // 그 외는 팝콘처럼 위로 튀어올랐다가 각 종류의 자연 높이로 착지(종이비행기는 공중, 일반은 바닥) → "둥둥 떠있는" 느낌 제거.
@@ -1126,7 +1145,8 @@ public class Enemy : MonoBehaviour
     // 공격당 타격횟수(멀티히트) 진입점. baseDamage를 hits회로 쪼개 각각 크리를 개별 판정하고
     // 위로 주루룩 데미지 숫자를 띄운다. 기본공격만 hits>1(PlayerSkills.BasicAttackHits), 그 외 스킬은 1회.
     // 반환값 = 서브히트 중 하나라도 치명타였는지(호출부 OnHitBonus 등 크리 연동용).
-    public bool TakeSkillHit(float baseDamage, float critChance, ActiveSkillId source)
+    // statusIcon: 이 타격이 상태이상(둔화·기절 등)을 거는 타격이면 그 아이콘 — 파편이 그 그림으로 뜬다(SpawnHitParticles).
+    public bool TakeSkillHit(float baseDamage, float critChance, ActiveSkillId source, Sprite statusIcon = null)
     {
         int natural = Mathf.Max(1, PlayerSkills.NaturalHits(source)); // 스킬 고유 타수(기본공격=BasicAttackHits, 그 외 1)
         int total = natural + PlayerSkills.GlobalBonusHits(source)     // 산탄(타수) 버프로 추가된 타격 수
@@ -1139,7 +1159,7 @@ public class Enemy : MonoBehaviour
         if (total <= 1)
         {
             float d0 = PlayerPassives.ApplyCrit(per, critChance, out bool c0);
-            TakeDamage(d0, isCrit: c0, source: source);
+            TakeDamage(d0, isCrit: c0, source: source, statusIcon: statusIcon);
             return c0;
         }
 
@@ -1150,7 +1170,8 @@ public class Enemy : MonoBehaviour
             anyCrit |= c;
             // 적이 중간에 죽어도 끊지 않는다 — 남은 서브히트는 데미지만 무효(죽은 상태)이고 숫자는 계속 쌓아
             // "3번 때렸다가 1번 때렸다가" 하는 들쭉날쭉함을 없앤다. 첫 히트만 낙뢰 굴림.
-            TakeDamage(d, isCrit: c, source: source, rollLightning: i == 0, hitIndex: i, forceShowNumber: true);
+            TakeDamage(d, isCrit: c, source: source, rollLightning: i == 0, hitIndex: i, forceShowNumber: true,
+                       statusIcon: statusIcon);
         }
         return anyCrit;
     }
@@ -1277,16 +1298,22 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void SpawnHitParticles(float damage)
+    // statusIcon: 이 타격이 상태이상을 걸었으면 그 아이콘. 그러면 파편 **전부**가 그 그림으로 뜬다
+    // (2026-09-27 사용자: "2~9개가 다 그 상태이상 파티클로 뜨게"). 개수 공식은 그대로 —
+    // 개수를 안 늘리므로 HitParticle.MaxLive 예산(9/23 후반 렉 대책)이 안 깨진다.
+    private void SpawnHitParticles(float damage, Sprite statusIcon = null)
     {
-        if (hitParticlePrefab == null || hitParticleSprites == null || hitParticleSprites.Length == 0) return;
+        if (hitParticlePrefab == null) return;
+        if (statusIcon == null && (hitParticleSprites == null || hitParticleSprites.Length == 0)) return;
 
         int count = Mathf.Clamp(2 + Mathf.FloorToInt(damage / 8f), 2, 9);
         count = Mathf.Min(count, HitParticle.MaxLive - HitParticle.Live); // 동시 파편 상한 — HitParticle.MaxLive 주석
         for (int i = 0; i < count; i++)
         {
             // 대조 스위치는 난수를 다 뽑은 뒤에 건다(SpawnDamageNumber의 같은 주석 참고).
-            Sprite sprite = hitParticleSprites[Random.Range(0, hitParticleSprites.Length)];
+            Sprite sprite = statusIcon != null
+                ? statusIcon
+                : hitParticleSprites[Random.Range(0, hitParticleSprites.Length)];
             Vector2 dir = new Vector2(Random.Range(-1f, 1f), Random.Range(0.6f, 1f)).normalized;
             float speed = Random.Range(4f, 8f);
             if (BotInput.SuppressHitParticles) continue; // QA 렉 실험용(평소 false)

@@ -1753,7 +1753,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594526
-    m_Localized: "\uC624\uBE0C\uAC00 \uBD99\uC7A1\uB294 \uC801 \uC218 +3"
+    m_Localized: "\uC624\uBE0C\uAC00 \uBC29\uD328 \uBE14\uB8E8\uBCA0\uB9AC\uB97C
+      \uAD00\uD1B5\uD55C\uB2E4 \xB7 \uC720\uB3C4 \uC624\uBE0C +3"
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594527
@@ -2265,14 +2266,36 @@ MonoBehaviour:
       \uBE14\uB8E8\uBCA0\uB9AC\uB4E4\uC744 \uC4F8\uC5B4\uBC84\uB9AC\uC138\uC694!"
     m_Metadata:
       m_Items: []
-  - m_Id: 14848567770030080
-    m_Localized: "\uC774\uC81C \uC9C4\uD654\uD560 \uC218 \uC788\uC5B4\uC694!\n\uC2A4\uD0AC\uC744
-      \uB808\uBCA8 10\uAE4C\uC9C0 \uC62C\uB9AC\uACE0 \uC5F0\uACC4 \uC2A4\uD0AC\uC744
-      \uAC16\uCD94\uBA74 \uB354 \uAC15\uD55C \uC2A4\uD0AC\uB85C \uC9C4\uD654\uD569\uB2C8\uB2E4."
-    m_Metadata:
-      m_Items: []
   - m_Id: 15035493462515712
     m_Localized: "5\uCD08\uB9C8\uB2E4 \uCCB4\uB825\uC744 {0} \uD68C\uBCF5"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968906537279488
+    m_Localized: "\uD3EC\uB3C4 \uC219\uB828"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968906759577600
+    m_Localized: "(\uD3EC\uB3C4 \uC120\uD0DD \uC2DC) \uD3EC\uB3C4 \uD22C\uCC99 3\uB808\uBCA8\uB85C
+      \uC2DC\uC791"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968906759577601
+    m_Localized: "\uC9D9\uC740 \uB3C5\uC548\uAC1C"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15968906759577602
+    m_Localized: "\uD3EC\uB3C4 \uD22C\uCC99\uC758 \uB3C5\uC548\uAC1C\uAC00 2\uCD08
+      \uB354 \uC624\uB798 \uB0A8\uB294\uB2E4"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16338893739335680
+    m_Localized: "\uC2A4\uD0AC\uC744 \uC9C4\uD654\uC2DC\uD0AC \uC218 \uC788\uC5B4\uC694!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16338893965828096
+    m_Localized: "\uC2A4\uD0AC\uC744 \uB808\uBCA8 10\uAE4C\uC9C0 \uC62C\uB9AC\uACE0
+      \uC5F0\uACC4 \uC2A4\uD0AC\uC744 \uAC16\uCD94\uBA74\n\uB354 \uAC15\uD55C \uC2A4\uD0AC\uB85C
+      \uC9C4\uD654\uD569\uB2C8\uB2E4."
     m_Metadata:
       m_Items: []
   references:

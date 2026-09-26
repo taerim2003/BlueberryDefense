@@ -68,7 +68,7 @@ tree.name.reroll_5	重抽 IV
 tree.name.orb_BasicSlow	黏黏法球
 tree.desc.orb_BasicSlow	被法球击中的敌人会减速
 tree.name.orb_Pierce	法球穿透
-tree.desc.orb_Pierce	法球可抓住的敌人数量 +3
+tree.desc.orb_Pierce	法球可穿透盾牌蓝莓 · 追踪法球 +3
 tree.name.eagle_DropNum	老鹰编队
 tree.desc.eagle_DropNum	老鹰空投次数 +1
 tree.name.shotgun_BonusHit	追加装填
@@ -146,3 +146,7 @@ tree.effect.CritDamage	暴击伤害 +{0}%
 tree.effect.BossDamage	对首领的伤害 +{0}%
 tree.effect.Reroll	每局重抽次数 +{0}
 tree.effect.HealItem	生命恢复道具额外恢复最大生命值的{0}%
+tree.name.grape_StartLev	葡萄精通
+tree.desc.grape_StartLev	（选择葡萄时）葡萄投掷以3级开始
+tree.name.grape_CloudDuration	浓烈毒雾
+tree.desc.grape_CloudDuration	葡萄投掷的毒雾多残留2秒

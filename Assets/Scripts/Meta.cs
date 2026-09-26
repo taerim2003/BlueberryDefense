@@ -53,6 +53,7 @@ public static class MetaBonuses
     public static bool RewindSlowAll = false;           // 되감기 사용 시 모든 적 둔화
     public static int ArrowStartLevel = 1;              // 기본공격(화살) 시작 레벨
     public static int SwingStartLevel = 1;              // 기본공격(휘두르기) 시작 레벨 — 파인애플용
+    public static int GrapeStartLevel = 1;              // 기본공격(포도 투척) 시작 레벨 — 포도용
     public static int RerollCount = 0;                  // 레벨업 선택지 리롤 가능 횟수(게임당)
 
     // ── 2026-09-03 스킬트리 재설계: 스킬 강화(SkillEnhance) 노드가 켜는 것들 ──
@@ -60,7 +61,10 @@ public static class MetaBonuses
     public static int ArrowExtraPierce = 0;         // 화살: 기본 관통 +N
     public static float SwingKnockbackMult = 1f;    // 휘두르기: 넉백 배율
     public static bool OrbSlowUnlocked = false;     // 오브: 둔화 개방 — 기본 오브는 둔화를 안 건다
-    public static int OrbExtraTargets = 0;          // 오브: 붙잡는 적 수 +N("관통 +3")
+    // 🔴 오브 관통 예산이 없어진 뒤(2026-09-27) 이 값은 **유도 오브(R1 path2)의 개수**에만 쓰인다.
+    //    같은 노드(orb_Pierce)가 아래 OrbPiercesShields도 켠다 — 이름과 달리 두 몫이라 헷갈리기 쉽다.
+    public static int OrbExtraTargets = 0;
+    public static bool OrbPiercesShields = false;   // 오브: 기본 오브가 방패 블루베리를 뚫는다(orb_Pierce 노드)
     public static int EagleExtraDrops = 0;          // 독수리 투하: 투하 횟수 +N
     public static bool ThunderStackable = false;    // 번개: 낙뢰 버프 중첩(스택당 피해 증가) 개방
     public static int ShotgunExtraBonusHit = 0;     // 산탄: 타수 버프가 주는 타수 +N
@@ -68,6 +72,7 @@ public static class MetaBonuses
     public static float SnipingCritBonus = 0f;      // 스나이핑: 이 스킬 전용 치명타 확률 가산
     public static float HomingCooldownCut = 0f;     // 호밍: 기본 쿨타임 -N초(감소율보다 먼저 빠진다)
     public static bool RewindSkipsGlobalCooldown = false; // 되감기: 전역 쿨타임을 트리거하지 않음
+    public static float GrapeCloudExtraSeconds = 0f;// 포도 투척: 독안개가 바닥에 남는 시간 +N초
 
     // 패시브 — "기본값 +N" 은 획득 시 적용되는 baseValue에 얹힌다(PlayerPassives.BaseValue가 읽는다).
     public static float PassiveBaseStrength = 0f;   // 힘: 기본 피해 배율 +N
@@ -121,12 +126,14 @@ public static class MetaBonuses
         RewindSlowAll = false;
         ArrowStartLevel = 1;
         SwingStartLevel = 1;
+        GrapeStartLevel = 1;
         RerollCount = 0;
 
         ArrowExtraPierce = 0;
         SwingKnockbackMult = 1f;
         OrbSlowUnlocked = false;
         OrbExtraTargets = 0;
+        OrbPiercesShields = false;
         EagleExtraDrops = 0;
         ThunderStackable = false;
         ShotgunExtraBonusHit = 0;
@@ -134,6 +141,7 @@ public static class MetaBonuses
         SnipingCritBonus = 0f;
         HomingCooldownCut = 0f;
         RewindSkipsGlobalCooldown = false;
+        GrapeCloudExtraSeconds = 0f;
 
         PassiveBaseStrength = 0f;
         PassiveBaseHealth = 0f;
@@ -235,13 +243,15 @@ public static class SkillEffects
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;      // 화살 시작 레벨(0=미설정)
         public int SwingStartLevel;      // 휘두르기 시작 레벨(0=미설정)
+        public int GrapeStartLevel;      // 포도 투척 시작 레벨(0=미설정)
         public bool SnipingExtraTarget;  // 스나이핑 타겟 +1
         public bool RewindSlow;          // 되감기 시 모든 적 둔화
 
         public int ArrowPierce;          // 화살 기본 관통 +N
         public float SwingKnockbackMult; // 휘두르기 넉백 배율(1=기본)
         public bool OrbSlowUnlocked;     // 오브 둔화 개방
-        public int OrbTargets;           // 오브 붙잡는 적 수 +N
+        public int OrbTargets;           // 유도 오브 개수 +N (예전 "오브 관통 +N")
+        public bool OrbPiercesShields;   // 기본 오브가 방패 블루베리를 뚫는가
         public int EagleDrops;           // 독수리 투하 횟수 +N
         public bool ThunderStack;        // 낙뢰 버프 중첩 개방
         public int ShotgunBonusHit;      // 산탄 타수 버프 +N
@@ -249,6 +259,7 @@ public static class SkillEffects
         public float SnipingCritPct;     // 스나이핑 전용 치명타 확률(%p)
         public float HomingCdCut;        // 호밍 기본 쿨 -N초
         public bool RewindNoGcd;         // 되감기가 전역 쿨타임을 안 건다
+        public float GrapeCloudExtra;    // 포도 독안개 지속 +N초
 
         public float PassiveStrength;    // 힘 기본 피해 배율 +
         public float PassiveHealth;      // 건강 기본 최대체력 +
@@ -313,10 +324,18 @@ public static class SkillEffects
                 case "swing_StartLev": t.SwingStartLevel = 3; break;
                 case "swing_Knockback": t.SwingKnockbackMult = 1.5f; break;
 
+                // ── 포도 투척 ──
+                case "grape_StartLev": t.GrapeStartLevel = 3; break;
+                case "grape_CloudDuration": t.GrapeCloudExtra += 2f; break;
+
                 // ── 오브 ──
                 // 🔴 기본 오브는 둔화를 **안 건다**. 이 노드가 둔화를 켠다(오브 프리팹 slowMultiplier 0.8 / 2초).
                 case "orb_BasicSlow": t.OrbSlowUnlocked = true; break;
-                case "orb_Pierce": t.OrbTargets += 3; break;
+                // 🔴 2026-09-27 사용자: "오브 Pierce 노드는 일반 오브가 방패 블루베리를 관통할 수 있는 능력으로 바꿔줘."
+                //    기본 오브의 관통 예산이 사라져 +3이 효과 0이 됐기 때문이다.
+                // ⚠️ OrbTargets(+3)는 **유도 오브 개수**에도 먹고 있어서 그 몫은 남긴다 — 지우면 요청 밖의
+                //    다른 루트(오브 R1 유도 오브 10→13개)가 조용히 너프된다.
+                case "orb_Pierce": t.OrbPiercesShields = true; t.OrbTargets += 3; break;
 
                 // ── 독수리 투하 ──
                 case "eagle_DropNum": t.EagleDrops += 1; break;

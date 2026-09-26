@@ -116,7 +116,7 @@ public class SmallOrb : MonoBehaviour
         if (enemy == null || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
 
-        enemy.TakeSkillHit(Damage, CritChance, Source);
+        enemy.TakeSkillHit(Damage, CritChance, Source, ApplyVulnerable ? StatusIconLibrary.Vulnerable : null);
         if (ApplyVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 
         if (impactVfxPrefab != null)

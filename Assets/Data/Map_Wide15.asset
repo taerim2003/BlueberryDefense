@@ -44,3 +44,8 @@ MonoBehaviour:
   bossEnemyPrefab: {fileID: 5499205096416923899, guid: 30f671ebf9542c743b1437c6e8609725, type: 3}
   bossEnemyPrefabEasy: {fileID: 5499205096416923899, guid: 21cd878ff7d042b9f048a053e7b9d3ed, type: 3}
   bossEnemyPrefabHard: {fileID: 5499205096416923899, guid: 31ef70a9b08715194162bcfb7dbf2995, type: 3}
+  bossDeathSpawnPrefabs:
+  - {fileID: 2590007705602640116, guid: aca1e7fdf80f4c04f91136455ad76b45, type: 3}
+  - {fileID: 1348368236079402333, guid: 017ef458e4ed6be41aeea56d842438bc, type: 3}
+  - {fileID: 4929157244831216748, guid: 7f6ec0332f1ff8d44b89e740db6b0372, type: 3}
+  - {fileID: 200601693386062424, guid: 5703b8e999276e34a9f16b936ca42d41, type: 3}

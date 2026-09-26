@@ -1270,3 +1270,29 @@ MonoBehaviour:
     prereqIds:
     - critdmg_4
     editorPos: {x: 1980, y: -1080}
+  - id: grape_StartLev
+    displayName: \uD3EC\uB3C4 \uC219\uB828
+    description: (\uD3EC\uB3C4 \uC120\uD0DD \uC2DC) \uD3EC\uB3C4 \uD22C\uCC99 3\uB808\uBCA8\uB85C \uC2DC\uC791
+    type: 2
+    skill: 10
+    tier: 2
+    cost: 120
+    effect: 0
+    perLevel: 0
+    maxLevel: 1
+    prereqIds:
+    - atk_2
+    editorPos: {x: 1660, y: 540}
+  - id: grape_CloudDuration
+    displayName: \uC9D9\uC740 \uB3C5\uC548\uAC1C
+    description: \uD3EC\uB3C4 \uD22C\uCC99\uC758 \uB3C5\uC548\uAC1C\uAC00 2\uCD08 \uB354 \uC624\uB798 \uB0A8\uB294\uB2E4
+    type: 2
+    skill: 10
+    tier: 4
+    cost: 900
+    effect: 0
+    perLevel: 0
+    maxLevel: 1
+    prereqIds:
+    - shotgun_Crit
+    editorPos: {x: -900, y: 810}

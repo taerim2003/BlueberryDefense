@@ -74,7 +74,7 @@ tree.name.reroll_5	Reroll IV
 tree.name.orb_BasicSlow	Sticky Orb
 tree.desc.orb_BasicSlow	Orb hits slow enemies
 tree.name.orb_Pierce	Orb Pierce
-tree.desc.orb_Pierce	Orb holds 3 more enemies
+tree.desc.orb_Pierce	Orbs pierce Shield Blueberries · +3 homing orbs
 tree.name.eagle_DropNum	Eagle Squadron
 tree.desc.eagle_DropNum	Eagle Drop drops 1 more time
 tree.name.shotgun_BonusHit	Extra Load
@@ -146,3 +146,7 @@ tree.effect.CritDamage	Critical damage +{0}%
 tree.effect.BossDamage	Damage to bosses +{0}%
 tree.effect.Reroll	+{0} reroll per run
 tree.effect.HealItem	Health pickups restore an extra {0}% of max health
+tree.name.grape_StartLev	Grape Mastery
+tree.desc.grape_StartLev	(With Grape) Start Grape Toss at level 3
+tree.name.grape_CloudDuration	Thick Toxic Fog
+tree.desc.grape_CloudDuration	Grape Toss toxic fog lingers 2 seconds longer

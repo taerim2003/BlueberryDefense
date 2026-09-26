@@ -21,10 +21,9 @@ public class EnemySpawner : MonoBehaviour
     // 지식 연계 path1: 블루베리 스폰 시 이 확률로 보물상자 블루베리로 대체
     public static float ExtraTreasureChance = 0f;
 
-    private const float TreasureDelay = 2.5f; // 잔몹을 다 잡은 뒤 이 시간만큼 텀을 두고 보물상자 등장. 2026-09-20 사용자 "늦게 나오는 감" → 5에서 절반으로
+    private const int TreasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
 
     private float timer;
-    private float treasureDelayTimer;
     private int treasureSpawnedForStage = 0;
     private int stageBeingCounted = -1;
     private bool bossSpawnedThisStage;
@@ -52,6 +51,12 @@ public class EnemySpawner : MonoBehaviour
         stageBeingCounted = gm != null ? gm.CurrentStage : 1;
         SpawnedThisStage = 0;
         SpawnTarget = stage != null ? stage.spawnCount : Map.defaultSpawnCount;
+        // 🔴 보스 판에는 **잡몹이 안 나온다**(2026-09-27 사용자) — 물량을 예약 칸(상자+보스)으로 덮어쓴다.
+        //    테이블의 spawnCount로는 못 한다: 같은 15층이 승천1에서 최종 판(보스만 = 1칸)이고 승천2·3에서는
+        //    보상 있는 보스 판(상자+보스 = 2칸)이라 한 줄로 두 경우를 동시에 맞출 수 없다. 남는 칸이 있으면
+        //    StageSpawnComplete가 먼저 참이 되어 상자·보스가 영영 안 나온다.
+        ComputeStageSlots(Map, gm, stageBeingCounted, out bool bossStage, out _, out int reserved);
+        if (bossStage) SpawnTarget = reserved;
         treasureSpawnedForStage = 0;
         bossSpawnedThisStage = false;
         evolutionElitesSpawnedThisStage = 0;
@@ -62,7 +67,28 @@ public class EnemySpawner : MonoBehaviour
             if (marker != null) Destroy(marker.gameObject);
         pendingAmbushes.Clear();
         timer = 0f;
-        treasureDelayTimer = 0f;
+    }
+
+    // 이 스테이지의 꼬리 예약 칸을 계산한다. BeginStageCount(물량 확정)와 Update(상자·보스 등장 판정)가 **같은 값**을 봐야 하므로
+    // 한 곳에서만 계산한다 — 어긋나면 상자나 보스가 영영 안 나온다.
+    private void ComputeStageSlots(MapDefinition map, GameManager gm, int currentStage,
+        out bool isBossStage, out bool treasureStage, out int reservedTail)
+    {
+        // 보스는 **승천표가 최종 판으로 삼는 스테이지 전부**(15·20·25)에 나온다 — 이번 판의 최종이 아니어도.
+        // (20판 승천에서도 15판은 보스전이다.) MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백.
+        isBossStage = map.bossEnemyPrefab != null &&
+            (gm != null ? Ascension.IsBossStage(currentStage) : currentStage == map.bossStage);
+        // 이 판을 깨면 게임이 끝나는가(GameManager.AdvanceStage의 클리어 조건과 같은 식).
+        // 최종 판의 보상은 쓸 데가 없으므로 상자도 진화 아이템도 건너뛴다.
+        bool isFinalStage = gm != null && currentStage >= gm.FinalStage;
+        // 보스 판이어도 **뒤에 판이 남아 있으면** 보상을 준다 — 다음 판을 준비할 자원이 필요하다.
+        bool bossStageWithRewards = isBossStage && !isFinalStage;
+        treasureStage = map.treasureEnemyPrefab != null && (!isBossStage || bossStageWithRewards);
+
+        // 물량 꼬리에서 예약해 둬야 하는 칸 수. 보상 있는 보스 판은 상자 + 보스로 2칸이 필요하다.
+        // 🔴 중간 소환도 이 예약분을 침범하면 안 된다(TriggerAmbush에 같은 값을 넘긴다) —
+        //    넘기면 StageSpawnComplete가 먼저 참이 되어 상자/보스가 영영 안 나온다.
+        reservedTail = (isBossStage ? 1 : 0) + (treasureStage ? TreasureCount : 0);
     }
 
     private void Update()
@@ -83,33 +109,16 @@ public class EnemySpawner : MonoBehaviour
         if (StageSpawnComplete) return;                // 이 스테이지 물량 다 스폰함 — 잔몹 처리는 GameManager가 대기
         if (pendingAmbushes.Count > 0) return;          // 중간 소환 예고 중: 정문 스폰을 멈춰 마커에 시선을 몰아준다
 
-        const int treasureCount = 1; // 스테이지 종료 보물상자 블루베리는 모든 스테이지에서 1마리로 통일
-        // 보스는 **승천표가 최종 판으로 삼는 스테이지 전부**(15·20·25)에 나온다 — 이번 판의 최종이 아니어도.
-        // (20판 승천에서도 15판은 보스전이다.) MapDefinition.bossStage는 GameManager가 없는 씬 단독 실행용 폴백.
-        bool isBossStage = map.bossEnemyPrefab != null &&
-            (gm != null ? Ascension.IsBossStage(currentStage) : currentStage == map.bossStage);
-        // 이 판을 깨면 게임이 끝나는가(GameManager.AdvanceStage의 클리어 조건과 같은 식).
-        // 최종 판의 보상은 쓸 데가 없으므로 상자도 진화 아이템도 건너뛴다.
-        bool isFinalStage = gm != null && currentStage >= gm.FinalStage;
-        // 보스 판이어도 **뒤에 판이 남아 있으면** 보상을 준다 — 다음 판을 준비할 자원이 필요하다.
-        bool bossStageWithRewards = isBossStage && !isFinalStage;
-        bool treasureStage = map.treasureEnemyPrefab != null && (!isBossStage || bossStageWithRewards);
+        ComputeStageSlots(map, gm, currentStage,
+            out bool isBossStage, out bool treasureStage, out int reservedTail);
 
-        // 물량 꼬리에서 예약해 둬야 하는 칸 수. 보상 있는 보스 판은 상자 + 보스로 2칸이 필요하다.
-        // 🔴 중간 소환도 이 예약분을 침범하면 안 된다(TriggerAmbush에 같은 값을 넘긴다) —
-        //    넘기면 StageSpawnComplete가 먼저 참이 되어 상자/보스가 영영 안 나온다.
-        int reservedTail = (isBossStage ? 1 : 0) + (treasureStage ? treasureCount : 0);
-
-        // 스테이지 종료 보물상자: 잔몹을 **다 잡은 뒤** TreasureDelay만큼 텀을 두고 등장.
-        // 보스 판에서는 상자가 먼저 나오고(=보스 직전 파워 스파이크) 상자까지 잡으면 보스가 등장한다.
+        // 스테이지 종료 보물상자: 마지막 일반 몹을 쏟은 **바로 다음 프레임에** 등장한다.
+        // 🔴 2026-09-27 사용자: 잔몹을 다 잡고 상자를 기다리는 시간이 지루하다 → 물량 끝에 그냥 붙인다.
+        //    (종전엔 "잔몹이 다 죽은 뒤 2.5초"였다. 그 대기가 판마다 붙어 전체 플레이타임을 늘리고 있었다.)
+        //    잔몹이 살아 있는 중에 상자를 잡으면 전투 중에 보상 모달이 뜬다 — 그것까지 감수한 결정이다.
         if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - reservedTail)
         {
-            // 🔴 **잔몹이 다 죽은 뒤에** 상자가 나온다(2026-09-20 사용자).
-            //    종전 조건은 "마지막 몹이 **스폰**된 뒤 5초"라, 적이 잔뜩 살아 있는데도 상자가 떴다.
-            if (Enemy.Active.Count > 0) { treasureDelayTimer = 0f; return; }
-            treasureDelayTimer += Time.deltaTime;
-            if (treasureDelayTimer < TreasureDelay) return;
-            SpawnEnemies(map.treasureEnemyPrefab, treasureCount, stage, currentStage);
+            SpawnEnemies(map.treasureEnemyPrefab, TreasureCount, stage, currentStage);
             treasureSpawnedForStage = currentStage;
             return;
         }
@@ -139,8 +148,10 @@ public class EnemySpawner : MonoBehaviour
         // 벽 스테이지 진화 엘리트: 확률이 아니라 확정으로, 스테이지 물량을 균등 분할한 지점마다 1마리씩.
         // (2마리면 33%·66% 지점) 이 엘리트만 진화 아이템을 떨군다.
         int evolutionDrops = stage != null ? stage.evolutionItemDrops : 0;
-        // 보상 있는 보스 판은 진화 아이템 1개를 보장한다(테이블에 이미 있으면 그대로) — 판 중반 지점에 나온다.
-        if (bossStageWithRewards) evolutionDrops = Mathf.Max(1, evolutionDrops);
+        // 🔴 보스 판에는 잡몹이 없다(위 BeginStageCount) — 엘리트도 게릴라도 내보내지 않는다.
+        //    내보내면 상자·보스용 예약 칸을 먹어 StageSpawnComplete가 먼저 참이 되고 **보스가 영영 안 나온다.**
+        //    (종전엔 여기서 보스 판에 진화 엘리트 1마리를 보장했다.)
+        if (isBossStage) evolutionDrops = 0;
         if (evolutionDrops > 0 && evolutionElitesSpawnedThisStage < evolutionDrops && map.eliteEnemyPrefab != null)
         {
             int threshold = SpawnTarget * (evolutionElitesSpawnedThisStage + 1) / (evolutionDrops + 1);
@@ -155,7 +166,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // 중간 소환: 진화 엘리트와 같은 균등 분할 지점마다 1회. 예고 마커를 띄우고 그 시간 동안 정문 스폰은 멈춘다.
-        int ambushes = stage != null ? stage.ambushCount : 0;
+        int ambushes = isBossStage ? 0 : (stage != null ? stage.ambushCount : 0);
         if (ambushes > 0 && ambushesTriggeredThisStage < ambushes)
         {
             int threshold = SpawnTarget * (ambushesTriggeredThisStage + 1) / (ambushes + 1);
@@ -353,7 +364,9 @@ public class EnemySpawner : MonoBehaviour
             Enemy enemy = Enemy.Spawn(prefab, spawnPos);
             if (enemy != null)
             {
-                if (isBoss) enemy.MarkAsBoss(); // 군중제어 감쇄 대상 — 프리팹이 아니라 이 슬롯으로 스폰됐는지가 기준
+                // 군중제어 감쇄 대상 — 프리팹이 아니라 이 슬롯으로 스폰됐는지가 기준.
+                // 사망 분출 풀도 여기서 넘긴다(보스 프리팹은 세 맵 공유 — MapDefinition 주석 참고).
+                if (isBoss) enemy.MarkAsBoss(Map.bossDeathSpawnPrefabs);
                 ApplyStageScaling(enemy, stage, currentStage);
             }
         }

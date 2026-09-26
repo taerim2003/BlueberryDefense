@@ -342,8 +342,11 @@ public static class UISkinApply
 
             if (scene.name == "Battle")
             {
+                // 🔴 진화 노드 판은 **베개같이생긴네모**다(씬 값과 일치). 종전엔 여기서 개큰네모(721x289)로
+                //    갈아서, 이 메뉴를 돌리면 373x195 rect에 2.49 비율 그림이 들어가 카드가 찌그러졌다
+                //    (2026-09-27 확인 — 씬은 줄곧 베개네모였고 이 줄만 어긋나 있었다).
                 foreach (var go in FindByPrefix(scene, EvoNodePrefix))
-                    if (SkinOne(go, S(go.name, SBigBox), sb)) graphics++;  // 620x290 (2.14)
+                    if (SkinOne(go, S(go.name, SPillow), sb)) graphics++;  // 373x195 (1.91)
                 InsetGaugeFills(scene, sb);
             }
 

@@ -18,7 +18,9 @@ public static class LightningStorm
     public static float ProcChance = BaseProcChance;
     // 낙뢰 기본 피해. ⚠️ Prog_Lightning.baseDamage(=0)는 무시되고 **이 상수가 실제 시작 피해**다
     // (GetDefaultDamage가 낙뢰만 여기서 읽어감). 시작값 하향 12→6→4(세션16: 1레벨 파워 축소).
-    public const float BaseProcDamage = 4f;
+    // 2026-09-26 4→9: QA 2,366판에서 미진화 낙뢰가 dps 144로 전체 최하(2위 오브 441의 1/3)였고
+    // 진행률도 0.681로 하위권이었다 — 1차 진화 뒤엔 20,292로 최상위라 "진화 전 구간만" 벌이었다.
+    public const float BaseProcDamage = 9f;
     public static float ProcDamage = BaseProcDamage;  // 캐스트마다 배율 적용된 '현재' 피해로 갱신됨
     public static bool RecursiveProcEnabled;
     public static float RecursiveDamageGrowth; // 힘 연계 path0 T3: 재귀 단계마다 이 비율만큼 낙뢰 피해량 누적 증가
@@ -100,6 +102,10 @@ public static class LightningStorm
         HugeBoltVfxPrefab = null;
         hugeBoltReadyAt = 0f;
     }
+
+    // 걸려 있는 낙뢰 버프를 통째로 걷는다. 스택이 0이면 RollProcCount가 0을 돌려주므로 발동 자체가 멈춘다.
+    // 쓰임: 피뢰침(낙뢰 R1 1차)이 기본 낙뢰 버프를 **대체**할 때(PlayerSkills의 Lightning 분기).
+    public static void ClearStacks() => stackEndTimes.Clear();
 
     // 낙뢰 시전: 스택이 켜져 있으면 기존 스택 위에 새 스택을 추가하고, 꺼져 있으면 기존 것을 갈아끼운다.
     public static void AddStack(float duration)

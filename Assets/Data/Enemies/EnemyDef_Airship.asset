@@ -15,7 +15,7 @@ MonoBehaviour:
   moveSpeed: 1.15
   damage: 20
   maxHealth: 280
-  xpValue: 25
+  xpValue: 70
   essenceDropChance: 1
   essenceDropAmount: 5
   crowdControlResistance: 0.5

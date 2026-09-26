@@ -65,6 +65,13 @@
   ],
   "secondsPerPick": 3,
   "secondsBetweenRuns": 30,
+  "runMinutesByTier": {
+    "1": 10,
+    "2": 15,
+    "3": 20
+  },
+  "runMinutesNote": "판 하나의 **사람 체감** 길이 목표(쉬움 10 / 보통 15 / 어려움 20분, 2026-09-27 사용자). 봇의 gameTime은 모달(레벨업 선택) 동안 timeScale=0이라 전투 시간만 재므로, 이 지표는 gameTime + 픽 수 x secondsPerPickHuman으로 낸다. secondsPerPick(3)은 G1 추이가 과거 회차와 끊기지 않게 그대로 둔다.",
+  "secondsPerPickHuman": 6,
   "attemptsCvMax": 0.3,
   "fullTreeClearRateMin": 0.8,
   "characterSpreadMax": 0.08,

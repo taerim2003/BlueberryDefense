@@ -98,7 +98,7 @@ public class HUDController : MonoBehaviour
             {
                 lastSeenStage = stage;
                 ShowStageBanner(stage);
-                PunchIcon(stageText.rectTransform);
+                BounceStageText();
             }
         }
 
@@ -337,6 +337,21 @@ public class HUDController : MonoBehaviour
         stageBannerSeq.Join(rt.DOScale(1f, 0.24f).SetEase(Ease.OutBack));
         stageBannerSeq.AppendInterval(2.2f);
         stageBannerSeq.Append(stageBannerGroup.DOFade(0f, 0.3f));
+    }
+
+    // 🔴 스테이지 텍스트 전용 — **크게 튀었다가 천천히 제자리**(2026-09-27 사용자 "그냥 크기 커졌다 천천히 작아지면 되는건데?").
+    //    종전엔 PunchIcon을 썼는데 그건 본질이 **진동**이다(0.16초에 9번 = 초당 56회) — 눈에는 미세한 지터로만 보여서
+    //    사용자가 "바운스를 본 적이 없다"고 했다. 진동수를 줄이는 건 타협일 뿐이라 DOScale 한 줄로 갈아탔다.
+    // ⚠️ 기준 스케일을 씬 값에서 읽어 기억한다 — PunchIcon처럼 Vector3.one을 하드코딩하면 stageText의 원래
+    //    스케일이 1이 아닐 때 그 크기가 바뀐다.
+    private Vector3 stageTextBaseScale = Vector3.zero;
+    private void BounceStageText()
+    {
+        RectTransform rect = stageText.rectTransform;
+        if (stageTextBaseScale == Vector3.zero) stageTextBaseScale = rect.localScale;
+        rect.DOKill();
+        rect.localScale = stageTextBaseScale * 1.7f;
+        rect.DOScale(stageTextBaseScale, 0.55f).SetEase(Ease.OutCubic);
     }
 
     private static void PunchIcon(RectTransform rect)

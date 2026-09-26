@@ -6,7 +6,9 @@ using UnityEngine;
 //
 // 🧰 사운드 배선 소유권 — **한 곳이 아니다. 새 소리를 꽂기 전에 셋 다 볼 것:**
 //  - 일반 효과음: `Assets/Resources/SfxLibrary.asset`. ⚠️ 꽂아둔 건 후보지 확정이 아니다(듣고 거슬리는 것만 교체).
-//  - 스킬 캐스트음 9종: `SfxLibrary`가 아니라 **`PlayerSkills` 인스펙터**에 슬롯이 따로 있다(중복 배선 금지).
+//  - 스킬 효과음: **`Assets/Resources/SkillSfxLibrary.asset`**(2026-09-27에 `PlayerSkills` 인스펙터에서 옮겼다).
+//    슬롯마다 후보 4개를 담고 `Window > Blueberry Defense > 스킬 효과음 고르기`에서 들어 보고 고른다.
+//    울릴 때는 `SkillSfx.Play("<슬롯 id>")` — 스로틀·볼륨이 그 안에 들어 있다(중복 배선 금지).
 //  - BGM: `MapDefinition.bgm`.
 //  ⚠️ `JuicyButton`은 별도 어셈블리(`JuicyUI.Runtime`)라 이 클래스를 **못 부른다.** 어셈블리 참조가 단방향이라
 //     `JuicyButton.Clicked` static 이벤트를 이쪽에서 **역방향으로 구독**한다 — 직접 호출로 되돌리면 컴파일이 깨진다.

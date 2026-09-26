@@ -188,7 +188,10 @@ public class HomingMissile : MonoBehaviour
             using (Enemy.GetSnapshot(out List<Enemy> enemies))
                 foreach (Enemy o in enemies)
                 {
-                    if (o == null || o == e) continue;
+                    // 🔴 직격한 적(e)도 폭발분을 받는다(2026-09-27 사용자 "폭발데미지 같은게 안느껴져").
+                    //    미사일마다 **다른 적**을 쫓으므로 직격 대상을 빼면, 그 적 주변에 다른 적이 없을 때
+                    //    폭발 피해가 정확히 0이 되어 그림만 떴다. 이미 죽었으면 TakeDamage의 isDead 가드가 막는다.
+                    if (o == null) continue;
                     if (Vector2.Distance(pos, o.transform.position) <= ExplodeRadius)
                         o.TakeSkillHit(Damage * ExplodeRatio, CritChance, ActiveSkillId.Homing);
                 }

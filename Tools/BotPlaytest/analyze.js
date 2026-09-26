@@ -111,6 +111,12 @@ function campaignMetrics(campaigns, runs) {
       attemptsStd: round(std(cleared.map(g => g.attempts)), 2),
       clearedCampaigns: cleared.length, campaigns: rows.length,
       clearRunGameMinutes: round(mean(clearRuns.map(r => r.gameTime / 60)), 1),
+      // 🔴 사람 체감 판 길이(2026-09-27). gameTime은 레벨업 모달 동안 timeScale=0이라 **전투 시간만** 잰다 —
+      //    사람은 그 사이에 카드를 고르고 있으므로 픽 수 x secondsPerPickHuman을 더해야 체감과 맞는다.
+      //    G1(playMinutes)은 secondsPerPick(3)을 계속 써서 과거 회차와의 추이가 끊기지 않게 둔다.
+      clearRunPlayMinutes: round(mean(clearRuns.map(r =>
+        (r.gameTime + (r.picks ? r.picks.length : 0) * (targets.secondsPerPickHuman || targets.secondsPerPick)) / 60)), 1),
+      runMinutesTarget: targets.runMinutesByTier ? (targets.runMinutesByTier[String(t.ascension)] || null) : null,
     };
   });
   // 진행 곡선: 캠페인마다 판이 끝날 때의 (추정 플레이 분, 보유 노드 비율), 목표 첫 클리어 지점 표시.

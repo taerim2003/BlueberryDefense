@@ -37,11 +37,20 @@ public class TutorialHint : MonoBehaviour
 
     private IEnumerator Run(string key)
     {
-        label.text = Loc.T(key);
-        group.alpha = 0f;
-        yield return Fade(1f);
-        yield return new WaitForSeconds(hold);
-        yield return Fade(0f);
+        // 🔴 진화 안내는 **두 장으로 나눠** 띄운다(2026-09-27 사용자 — 영어 문구가 3줄이라 한 장에 너무 많다).
+        //    세이브 플래그 키(EvolutionKey)는 그대로 두고 문구 키만 쪼갠다 — 키를 바꾸면 이미 본 사람이 다시 본다.
+        string[] pages = key == EvolutionKey
+            ? new[] { EvolutionKey + ".1", EvolutionKey + ".2" }
+            : new[] { key };
+
+        foreach (string page in pages)
+        {
+            label.text = Loc.T(page);
+            group.alpha = 0f;
+            yield return Fade(1f);
+            yield return new WaitForSeconds(hold);
+            yield return Fade(0f);
+        }
         Destroy(gameObject);
     }
 

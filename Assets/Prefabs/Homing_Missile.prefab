@@ -195,7 +195,7 @@ MonoBehaviour:
   turnDegPerSec: 360
   lifetime: 2.5
   explodeVfxPrefab: {fileID: 4445664314901236262, guid: d25df58ec7ab40e4d9b55e295d8663a9, type: 3}
-  explodeVfxScale: 2
+  explodeVfxScale: 3
   hitVfxPrefab: {fileID: 4748681987041982144, guid: 52d6661fa75ab2d44b85fd7cbc945860, type: 3}
   hitVfxScale: 0.5
 --- !u!114 &5507217984612618709

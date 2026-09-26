@@ -68,7 +68,7 @@ tree.name.reroll_5	리롤 IV
 tree.name.orb_BasicSlow	끈적한 오브
 tree.desc.orb_BasicSlow	오브가 맞힌 적을 둔화시킨다
 tree.name.orb_Pierce	오브 관통
-tree.desc.orb_Pierce	오브가 붙잡는 적 수 +3
+tree.desc.orb_Pierce	오브가 방패 블루베리를 관통한다 · 유도 오브 +3
 tree.name.eagle_DropNum	독수리 편대
 tree.desc.eagle_DropNum	독수리 투하 횟수 +1
 tree.name.shotgun_BonusHit	추가 장전
@@ -146,3 +146,7 @@ tree.effect.CritDamage	치명타 피해 +{0}%
 tree.effect.BossDamage	보스에게 주는 피해 +{0}%
 tree.effect.Reroll	게임당 리롤 +{0}
 tree.effect.HealItem	체력 회복 아이템이 최대 체력의 +{0}%를 더 회복
+tree.name.grape_StartLev	포도 숙련
+tree.desc.grape_StartLev	(포도 선택 시) 포도 투척 3레벨로 시작
+tree.name.grape_CloudDuration	짙은 독안개
+tree.desc.grape_CloudDuration	포도 투척의 독안개가 2초 더 오래 남는다

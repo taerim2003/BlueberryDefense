@@ -1,0 +1,294 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e06f8ffde0e21743a8b36b68ec93be2, type: 3}
+  m_Name: SkillSfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SkillSfxLibrary
+  slots:
+  - id: BasicAttack.cast
+    label: "\uAE30\uBCF8\uACF5\uACA9 \u2014 \uC2DC\uC804"
+    note: "\uD654\uC0B4 \uD55C \uBC1C. \uCFE8 4\uCD08\uC5D0 \uCFE8\uAC10\uC774 \uC313\uC5EC
+      \uD55C \uD310\uC5D0 \uC218\uBC31 \uBC88 \uB09C\uB2E4. \uAE30\uBCF8\uC740 **\uBB34\uC74C**(\uCCAB
+      \uCE78\uC744 \uBE44\uC6CC \uB480\uB2E4) \u2014 SfxLibrary\uC758 enemyHit\uC774
+      \uC774\uBBF8 \uBA85\uC911\uC74C\uC744 \uB0B8\uB2E4."
+    candidates:
+    - {fileID: 0}
+    - {fileID: 8300000, guid: 9e212a9f0eb4c354ab671da8d364197f, type: 3}
+    - {fileID: 8300000, guid: 5181db74a13e1054d8fc31a6ba09cb5d, type: 3}
+    - {fileID: 8300000, guid: b05dab907a618e14f9a2a8080efebfd6, type: 3}
+    chosen: 1
+    volume: 0.3
+  - id: Whirlwind.cast
+    label: "\uD68C\uC624\uB9AC \u2014 \uC2DC\uC804"
+    note: "\uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB \uCE78). \uBBF8\uB2C8 \uD68C\uC624\uB9AC\uAC00
+      \uC5EC\uB7EC \uAC1C\uBA74 \uAC19\uC740 \uD504\uB808\uC784\uC774\uB77C \uD55C
+      \uBC88\uC73C\uB85C \uBB36\uC778\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: d67f03353b0af11458c48b58c4fb6643, type: 3}
+    - {fileID: 8300000, guid: 50fdf65da2063b447bb35c44061be319, type: 3}
+    - {fileID: 8300000, guid: 42f524ba0faa3a14eaf20a6bc8e1d163, type: 3}
+    - {fileID: 8300000, guid: 08acc66aa576a6147b818de3527b6672, type: 3}
+    chosen: 0
+    volume: 0.4
+  - id: Orb.cast
+    label: "\uC624\uBE0C \u2014 \uC2DC\uC804"
+    note: "\uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB \uCE78). \uC6D0\uBCF8\uC774
+      \uD06C\uAC8C \uB9C8\uC2A4\uD130\uB9C1\uB3FC \uC788\uC5B4 \uBCFC\uB968\uC774
+      \uB0AE\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 8128e2ee266d24e44a191ae9c3c17422, type: 3}
+    - {fileID: 8300000, guid: 373b38ab9d75e884785a82af6f6a6241, type: 3}
+    - {fileID: 8300000, guid: 47f3013330ec80c40a7ce847694a9d4a, type: 3}
+    - {fileID: 8300000, guid: 1e469ba728b371842b6dc4e1e0c2e404, type: 3}
+    chosen: 0
+    volume: 0.37
+  - id: Lightning.cast
+    label: "\uB099\uB8B0 \u2014 \uC2DC\uC804"
+    note: "\uC774 \uC21C\uAC04\uC5D4 **\uB099\uB8B0\uAC00 \uC548 \uB5A8\uC5B4\uC9C4\uB2E4**
+      \u2014 \uBC84\uD504\uB9CC \uAC78\uB9B0\uB2E4. \uBC88\uAC1C \uCE58\uB294 \uC18C\uB9AC\uB97C
+      \uB123\uC73C\uBA74 \uC18C\uB9AC\uB294 \uB098\uB294\uB370 \uD654\uBA74\uC5D4
+      \uC544\uBB34\uAC83\uB3C4 \uC5C6\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: a8646a3cd948e454ca3cef41e6bc3665, type: 3}
+    - {fileID: 8300000, guid: e395c55468552734f87e8b2734cb31b1, type: 3}
+    - {fileID: 8300000, guid: 4d8ff63265886fa4a8f1cfe63e025d66, type: 3}
+    - {fileID: 8300000, guid: dd53a9ff18d0b1244a83d5998e889427, type: 3}
+    chosen: 2
+    volume: 0.5
+  - id: EagleDrop.cast
+    label: "\uB3C5\uC218\uB9AC \uD22C\uD558 \u2014 \uC2DC\uC804"
+    note: "\uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB \uCE78)."
+    candidates:
+    - {fileID: 8300000, guid: 083749770b551ea4788c541137ab631b, type: 3}
+    - {fileID: 8300000, guid: 08acc66aa576a6147b818de3527b6672, type: 3}
+    - {fileID: 8300000, guid: 559137e23447cb9499a9f562104a4e79, type: 3}
+    - {fileID: 8300000, guid: e1e69e49931f12f4eafc73623fcaaff1, type: 3}
+    chosen: 0
+    volume: 0.7
+  - id: Sniping.cast
+    label: "\uC2A4\uB098\uC774\uD551 \u2014 \uC2DC\uC804"
+    note: "\uB300\uC0C1\uB2F9 3\uBC1C \uC5F0\uC0AC\uC9C0\uB9CC \uCE90\uC2A4\uD2B8\uC74C\uC740
+      1\uD68C\uB9CC \uC6B4\uB2E4. \uC124\uBA85 \uBB38\uAD6C\uAC00 \uBB38\uC790 \uADF8\uB300\uB85C
+      \"\uCD1D\uC54C\"\uC774\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 057872e99acfaea48a7154d737053cc4, type: 3}
+    - {fileID: 8300000, guid: 592afdaaa6c3c3c4e859ec70a64e04b8, type: 3}
+    - {fileID: 8300000, guid: b58121ee0cffb104d82b4587b66bae0b, type: 3}
+    - {fileID: 8300000, guid: a09fb76f1f0f6cf4bb35964ba5046c8c, type: 3}
+    chosen: 1
+    volume: 0.5
+  - id: Homing.cast
+    label: "\uD638\uBC0D \uBBF8\uC0AC\uC77C \u2014 \uC2DC\uC804"
+    note: "0.2\uCD08 \uAC04\uACA9\uC73C\uB85C \uC704\uC5D0\uC11C \uC544\uB798\uB85C
+      \uC5F0\uC0AC\uB41C\uB2E4(\uBC1C\uC0AC \uC790\uCCB4\uB294 \uC5EC\uB7EC \uBC88,
+      \uC18C\uB9AC\uB294 \uCE90\uC2A4\uD2B8 1\uD68C)."
+    candidates:
+    - {fileID: 8300000, guid: a09fb76f1f0f6cf4bb35964ba5046c8c, type: 3}
+    - {fileID: 8300000, guid: 8e5b1656a56870849aba3dcbb8f58a90, type: 3}
+    - {fileID: 8300000, guid: 373b38ab9d75e884785a82af6f6a6241, type: 3}
+    - {fileID: 8300000, guid: cd9ad3a7c2a896044aad89ca6c212e73, type: 3}
+    chosen: 0
+    volume: 0.45
+  - id: Shotgun.cast
+    label: "\uC0B0\uD0C4 \u2014 \uC2DC\uC804"
+    note: "\uD55C \uBC88\uC5D0 12\uC54C\uC774 \uBD80\uCC44\uAF34\uB85C \uB098\uAC04\uB2E4.
+      \uC0AC\uC6A9\uC790 \uC694\uCCAD: \uBB35\uC9C1\uD55C \uBC1C\uC0AC\uC74C."
+    candidates:
+    - {fileID: 8300000, guid: fe55bfc5f8c070a4c9ccc6aa45a9e5be, type: 3}
+    - {fileID: 8300000, guid: b58121ee0cffb104d82b4587b66bae0b, type: 3}
+    - {fileID: 8300000, guid: c73f29b4ba960924b9943b28085bbad2, type: 3}
+    - {fileID: 8300000, guid: 025d75cd4ab14094b9460e16a78e0db0, type: 3}
+    chosen: 2
+    volume: 0.7
+  - id: Rewind.cast
+    label: "\uB418\uAC10\uAE30 \u2014 \uC2DC\uC804"
+    note: "\"\uC2DC\uAC04\uC744 \uB418\uAC10\uB294\uB2E4\". \uC2DC\uACC4 \uC18C\uB9AC\uB294
+      \uC2DC\uAC04\uC744 \uB73B\uD574\uB3C4 **\uBC29\uD5A5\uC774 \uC5C6\uB2E4** \u2014
+      \uB418\uAC10\uAE30\uB294 \uBC29\uD5A5\uC774 \uB4E4\uB824\uC57C \uD55C\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 24134adae96bc8a48836dd9874393944, type: 3}
+    - {fileID: 8300000, guid: 4e52283e953292347a8abe93b6c05628, type: 3}
+    - {fileID: 8300000, guid: b7b6a00e6696f4b42b0b4675258e6757, type: 3}
+    - {fileID: 8300000, guid: e2d2ad6220234d14bbd1a0b9a24802c3, type: 3}
+    chosen: 0
+    volume: 0.45
+  - id: Swing.cast
+    label: "\uD718\uB450\uB974\uAE30 \u2014 \uC2DC\uC804(\uC608\uBE44\uB3D9\uC791)"
+    note: "\U0001F534 \uD53C\uD574\xB7\uD654\uBA74\uD754\uB4E4\uB9BC\uC740 **0.225\uCD08
+      \uB4A4**\uB2E4. \uC5EC\uAE30 \uB54C\uB9AC\uB294 \uC18C\uB9AC\uB97C \uB123\uC73C\uBA74
+      \uADF8\uB9BC\uBCF4\uB2E4 \uBE60\uB974\uB2E4 \u2014 \uD718\uB450\uB974\uB294
+      **\uBC14\uB78C\uC18C\uB9AC**\uC5EC\uC57C \uD55C\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: ee8fdf6df0b237c4f9a1016200771392, type: 3}
+    - {fileID: 8300000, guid: 9e212a9f0eb4c354ab671da8d364197f, type: 3}
+    - {fileID: 8300000, guid: 8c051abdabdcc1246ac2b51f2d7263fe, type: 3}
+    - {fileID: 8300000, guid: 559137e23447cb9499a9f562104a4e79, type: 3}
+    chosen: 3
+    volume: 0.55
+  - id: Swing.impact
+    label: "\uD718\uB450\uB974\uAE30 \u2014 \uB0B4\uB824\uCC0D\uB294 \uC21C\uAC04"
+    note: "\uC2DC\uC804 0.225\uCD08 \uB4A4, \uD654\uBA74 \uD754\uB4E4\uB9BC\uACFC
+      \uAC19\uC740 \uD504\uB808\uC784. \uBB34\uAC70\uC6B4 \uD0C0\uACA9\uC74C \uC790\uB9AC\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: fe55bfc5f8c070a4c9ccc6aa45a9e5be, type: 3}
+    - {fileID: 8300000, guid: f9fa17b7b1d893744978244033b7a18f, type: 3}
+    - {fileID: 8300000, guid: d7253a324891aaf42bddafd6614d0cb8, type: 3}
+    - {fileID: 8300000, guid: a949ed0b98c0e144fad09c357c988b17, type: 3}
+    chosen: 3
+    volume: 0.066
+  - id: GrapeToss.cast
+    label: "\uD3EC\uB3C4 \uD22C\uCC99 \u2014 \uB358\uC9C0\uB294 \uC21C\uAC04"
+    note: "\uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB \uCE78)."
+    candidates:
+    - {fileID: 8300000, guid: 16677cc135ee3234ca381f7ad8840bb7, type: 3}
+    - {fileID: 8300000, guid: 9e212a9f0eb4c354ab671da8d364197f, type: 3}
+    - {fileID: 8300000, guid: 192d2db83c0cc0943a157dcdac9eda42, type: 3}
+    - {fileID: 8300000, guid: 5181db74a13e1054d8fc31a6ba09cb5d, type: 3}
+    chosen: 0
+    volume: 0.7
+  - id: GrapeToss.pop
+    label: "\uD3EC\uB3C4 \uD22C\uCC99 \u2014 \uCC29\uD0C4\uD574\uC11C \uD130\uC9D0"
+    note: "\uC54C\uC774 \uC5EC\uB7EC \uAC1C\uC5EC\uB3C4 \uAC19\uC740 \uD504\uB808\uC784\uC774\uB77C
+      \uD55C \uBC88\uC73C\uB85C \uBB36\uC778\uB2E4. \uC9C0\uAE08 \uC4F0\uB294 \uC18C\uB9AC(\uCCAB
+      \uCE78)."
+    candidates:
+    - {fileID: 8300000, guid: 2f3f1a204826fcc4d8250085ee05232c, type: 3}
+    - {fileID: 8300000, guid: 03265139d2a8634409e6c8fca97d5d9c, type: 3}
+    - {fileID: 8300000, guid: 364388749c16c7d428e11f5943909bd6, type: 3}
+    - {fileID: 8300000, guid: 022df24dcc183c24cbe7cf772e20dccb, type: 3}
+    chosen: 0
+    volume: 0.6
+  - id: LightningRod.install
+    label: "\uD53C\uB8B0\uCE68 \u2014 \uAE30\uB465 \uAF42\uAE30"
+    note: "\uB099\uB8B0 R1 1\uCC28. \uC2DC\uC804 \uC21C\uAC04\uC5D4 \uAE30\uB465\uB9CC
+      \uC120\uB2E4 \u2014 \uBC88\uAC1C\uB294 1\uCD08 \uB4A4\uBD80\uD130 \uB530\uB85C
+      \uC6B4\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 1e033d09112925048a215caefeca4128, type: 3}
+    - {fileID: 8300000, guid: e2379452e4db8774a9f184310ef45b21, type: 3}
+    - {fileID: 8300000, guid: 54167954bf1462c49bdda4b078b51256, type: 3}
+    - {fileID: 8300000, guid: d7253a324891aaf42bddafd6614d0cb8, type: 3}
+    chosen: 0
+    volume: 0.55
+  - id: LightningRod.strike
+    label: "\uD53C\uB8B0\uCE68 \u2014 \uBC88\uAC1C \uD55C \uBC29"
+    note: "1\uCD08\uB9C8\uB2E4 \uCD1D 11\uBC88 \uC6B4\uB2E4. \uC7A6\uC73C\uB2C8 \uBCFC\uB968\uC744
+      \uB0AE\uAC8C."
+    candidates:
+    - {fileID: 8300000, guid: b4f6739b9d2b8f44c8f0d442675724ac, type: 3}
+    - {fileID: 8300000, guid: ca683c28c2f30494b977f5fdf957dbf7, type: 3}
+    - {fileID: 8300000, guid: faf59cf8c792bde40a7326498f4cbb3e, type: 3}
+    - {fileID: 8300000, guid: 1e033d09112925048a215caefeca4128, type: 3}
+    chosen: 0
+    volume: 0.2
+  - id: Zeus.install
+    label: "\uC81C\uC6B0\uC2A4\uC758 \uC740\uCD1D \u2014 \uC11D\uC0C1 \uC138\uC6B0\uAE30"
+    note: "\uB099\uB8B0 R1 2\uCC28. \uC11D\uC0C1\uC774 \uC11C\uACE0 0.5\uCD08 \uBAA8\uC558\uB2E4\uAC00
+      \uB0B4\uB9AC\uCE5C\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 42b8cb04bb46c66459e96eca17eae449, type: 3}
+    - {fileID: 8300000, guid: b6a4c220606245a4590ba571463a5a1f, type: 3}
+    - {fileID: 8300000, guid: e2379452e4db8774a9f184310ef45b21, type: 3}
+    - {fileID: 8300000, guid: 47f3013330ec80c40a7ce847694a9d4a, type: 3}
+    chosen: 3
+    volume: 0.55
+  - id: Zeus.strike
+    label: "\uC81C\uC6B0\uC2A4\uC758 \uC740\uCD1D \u2014 \uB0B4\uB9AC\uCE58\uB294
+      \uBC88\uAC1C"
+    note: "1\uCC28\uBCF4\uB2E4 \uC138\uACE0 \uC801\uC744 \uB04C\uC5B4\uB2F9\uAE34\uB2E4.
+      \uC5ED\uC2DC 1\uCD08\uB9C8\uB2E4 \uC6B4\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: ca683c28c2f30494b977f5fdf957dbf7, type: 3}
+    - {fileID: 8300000, guid: b4f6739b9d2b8f44c8f0d442675724ac, type: 3}
+    - {fileID: 8300000, guid: 8fe754fea6a85104694433ee499a6d2c, type: 3}
+    - {fileID: 8300000, guid: a949ed0b98c0e144fad09c357c988b17, type: 3}
+    chosen: 0
+    volume: 0.169
+  - id: MechaBuster.volley
+    label: "\uBA54\uCE74 \uBC84\uC2A4\uD130 \u2014 \uBCFC\uB9AC\uB9C8\uB2E4"
+    note: "\uC0B0\uD0C4 R1 1\uCC28. 1.4\uCD08 \uB3D9\uC548 0.06\uCD08 \uAC04\uACA9\uC73C\uB85C
+      **\uC57D 23\uBC88** \uC6B4\uB2E4(\uBCFC\uB9AC\uB9C8\uB2E4). \uACB9\uCCD0 \uC313\uC774\uBBC0\uB85C
+      \uBCFC\uB968\uC744 \uB0AE\uAC8C \uC7A1\uC544\uC57C \uD55C\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: a09fb76f1f0f6cf4bb35964ba5046c8c, type: 3}
+    - {fileID: 8300000, guid: 2b5d29809a1067044bd67e20c24e9dc2, type: 3}
+    - {fileID: 8300000, guid: fe55bfc5f8c070a4c9ccc6aa45a9e5be, type: 3}
+    - {fileID: 8300000, guid: 004e701b0cccc554b8366be20665064e, type: 3}
+    chosen: 0
+    volume: 0.18
+  - id: FullBurst.install
+    label: "\uC804\uD0C4\uBC1C\uC0AC \u2014 \uAE30\uACC4 \uC138\uC6B0\uAE30"
+    note: "\uC0B0\uD0C4 R1 2\uCC28. \uAE30\uACC4\uB97C \uC138\uC6B0\uACE0 0.05\uCD08
+      \uAC04\uACA9\uC73C\uB85C \uC3DF\uC544\uB0B8\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: e2379452e4db8774a9f184310ef45b21, type: 3}
+    - {fileID: 8300000, guid: 367bec61225066b43aec4bb194977e50, type: 3}
+    - {fileID: 8300000, guid: 0c47954402974d548903ad3d4c3e4511, type: 3}
+    - {fileID: 8300000, guid: 2b5d29809a1067044bd67e20c24e9dc2, type: 3}
+    chosen: 3
+    volume: 0.376
+  - id: FullBurst.volley
+    label: "\uC804\uD0C4\uBC1C\uC0AC \u2014 \uC5F0\uC0AC \uB0B4\uB0B4"
+    note: "\uC0B0\uD0C4 R1 2\uCC28. 3.5\uCD08 \uB3D9\uC548 0.05\uCD08 \uAC04\uACA9\uC73C\uB85C
+      **\uC57D 70\uBC88** \uC6B4\uB2E4. \uAE30\uACC4 \uC138\uC6B0\uB294 \uC18C\uB9AC(FullBurst.install)\uC640
+      \uBCC4\uAC1C\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: a09fb76f1f0f6cf4bb35964ba5046c8c, type: 3}
+    - {fileID: 8300000, guid: b58121ee0cffb104d82b4587b66bae0b, type: 3}
+    - {fileID: 8300000, guid: cd9ad3a7c2a896044aad89ca6c212e73, type: 3}
+    - {fileID: 8300000, guid: fe55bfc5f8c070a4c9ccc6aa45a9e5be, type: 3}
+    chosen: 0
+    volume: 0.12
+  - id: TornadoMaker.install
+    label: "\uD68C\uC624\uB9AC \uC0DD\uC131\uAE30 \u2014 \uAE30\uACC4 \uC124\uCE58"
+    note: "\uD68C\uC624\uB9AC R0 2\uCC28. \uC18C\uD658\uC774 \uC544\uB2C8\uB77C **\uAE30\uACC4
+      \uC124\uCE58**\uB77C \uB098\uBB47\uC78E \uC18C\uB9AC\uAC00 \uC548 \uB9DE\uB294
+      \uC790\uB9AC."
+    candidates:
+    - {fileID: 8300000, guid: 42f524ba0faa3a14eaf20a6bc8e1d163, type: 3}
+    - {fileID: 8300000, guid: 367bec61225066b43aec4bb194977e50, type: 3}
+    - {fileID: 8300000, guid: 2b5d29809a1067044bd67e20c24e9dc2, type: 3}
+    - {fileID: 8300000, guid: 42b8cb04bb46c66459e96eca17eae449, type: 3}
+    chosen: 0
+    volume: 0.55
+  - id: SuperRocket.fire
+    label: "\uCD08\uAC15\uB825 \uC288\uD37C \uB85C\uCF13 \u2014 \uBC1C\uC0AC"
+    note: "\uD638\uBC0D R0 2\uCC28. \uB2E4\uBC1C \uBC1C\uC0AC\uB97C **\uD1B5\uC9F8\uB85C
+      \uB300\uCCB4**\uD558\uB294 \uAC70\uB300 \uD55C \uBC1C."
+    candidates:
+    - {fileID: 8300000, guid: 8e5b1656a56870849aba3dcbb8f58a90, type: 3}
+    - {fileID: 8300000, guid: a09fb76f1f0f6cf4bb35964ba5046c8c, type: 3}
+    - {fileID: 8300000, guid: 38922381de711bf41bfee9bea5d6b48d, type: 3}
+    - {fileID: 8300000, guid: 3bc4908b99f5c8148b39e4b8c57f14d2, type: 3}
+    chosen: 2
+    volume: 0.65
+  - id: Overcharge.apply
+    label: "\uACFC\uCDA9\uC804 \u2014 \uBC84\uD504 \uAC70\uB294 \uC21C\uAC04"
+    note: "\uB418\uAC10\uAE30 R0 2\uCC28. \uB2E4\uC74C \uC2A4\uD0AC 1\uD68C\uC5D0\uB9CC
+      \uAC78\uB9AC\uB294 \uC18C\uBE44\uD615 \uBC84\uD504."
+    candidates:
+    - {fileID: 8300000, guid: 47dffce0021df034b9477e7bf83abbf1, type: 3}
+    - {fileID: 8300000, guid: 4d8ff63265886fa4a8f1cfe63e025d66, type: 3}
+    - {fileID: 8300000, guid: 60669fdc0b066bf47b80556c59630def, type: 3}
+    - {fileID: 8300000, guid: b7b6a00e6696f4b42b0b4675258e6757, type: 3}
+    chosen: 1
+    volume: 0.303
+  - id: Overcharge.consume
+    label: "\uACFC\uCDA9\uC804 \u2014 \uD130\uC9C0\uB294 \uC21C\uAC04"
+    note: "\uBC84\uD504\uAC00 \uC2E4\uC81C\uB85C \uC18C\uBE44\uB418\uB294 \uC2DC\uC804.
+      \uC5EC\uAE30\uAC00 \"\uD55C \uBC29\"\uC774 \uB098\uAC00\uB294 \uC790\uB9AC\uB2E4."
+    candidates:
+    - {fileID: 8300000, guid: 894587be89325b24a9114272c65effe5, type: 3}
+    - {fileID: 8300000, guid: b78eabfa042c5c340a4d1034cf4a772d, type: 3}
+    - {fileID: 8300000, guid: 025d75cd4ab14094b9460e16a78e0db0, type: 3}
+    - {fileID: 8300000, guid: dd53a9ff18d0b1244a83d5998e889427, type: 3}
+    chosen: 3
+    volume: 0.405

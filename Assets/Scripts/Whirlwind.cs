@@ -99,7 +99,8 @@ public class Whirlwind : MonoBehaviour
             if (enemy == null || !enemy.IsAlive || Time.time < nextTickTime.GetValueOrDefault(enemy, 0f)) continue;
             nextTickTime[enemy] = Time.time + tickInterval * TickIntervalMult;
 
-            enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind);
+            enemy.TakeSkillHit(Damage, CritChance, ActiveSkillId.Whirlwind,
+                ApplyGemSlow ? StatusIconLibrary.Slow : ApplyGemVulnerable ? StatusIconLibrary.Vulnerable : null);
             if (ApplyGemSlow) enemy.ApplySlow(0.3f, SlowDuration);
             if (ApplyGemVulnerable) enemy.ApplyVulnerable(1.5f, 3f);
 

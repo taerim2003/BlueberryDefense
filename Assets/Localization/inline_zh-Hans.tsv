@@ -163,4 +163,5 @@ ending.story2	从蓝莓的袭击中拯救了世界！
 ending.cleared	Game Cleared!
 ui.evotree.title	技能进化
 tutorial.skills	用 QWER 释放技能，横扫蜂拥而来的蓝莓吧！
-tutorial.evolution	现在可以进化了！\n将技能升到 10 级并拥有联动技能，即可进化为更强的技能。
+tutorial.evolution.1	现在可以进化技能了！
+tutorial.evolution.2	将技能升到 10 级并拥有联动技能，\n即可进化为更强的技能。
