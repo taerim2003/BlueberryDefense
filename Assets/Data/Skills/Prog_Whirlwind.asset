@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Prog_Whirlwind
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 1
-  baseCooldown: 6
+  baseCooldown: 8.5
   baseDamage: 3.2
   baseDuration: 4
   baseHits: 1

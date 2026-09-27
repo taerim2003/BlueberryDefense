@@ -36,6 +36,7 @@ public class BotRecorder
     }
 
     private readonly string runsPath;
+    private readonly string sessionRoot;
 
     private Dictionary<string, object> header;
     private float gameTime;
@@ -61,6 +62,7 @@ public class BotRecorder
 
     public BotRecorder(string sessionDir)
     {
+        sessionRoot = sessionDir;
         runsPath = Path.Combine(sessionDir, "runs.jsonl");
     }
 
@@ -313,6 +315,13 @@ public class BotRecorder
     public void WriteRun(Dictionary<string, object> run)
     {
         File.AppendAllText(runsPath, BotJson.Write(run) + "\n");
+    }
+
+    // 시험장(gym)은 같은 지표를 다른 파일에 쌓는다 — 정주행과 섞으면 분석기가 한 판과 한 셀을 같은 표에 넣는다.
+    // 🔴 **지표 정의는 건드리지 않는다.** 정주행과 같은 정의로 재야 두 측정을 나란히 놓을 수 있다.
+    public void WriteRunTo(string fileName, Dictionary<string, object> run)
+    {
+        File.AppendAllText(Path.Combine(sessionRoot, fileName), BotJson.Write(run) + "\n");
     }
 
     // 세션이 중간에 끊겨도 훅이 남지 않게.

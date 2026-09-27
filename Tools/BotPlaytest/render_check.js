@@ -47,11 +47,20 @@ try {
     for (const b of bad) console.log('   …' + b.replace(/\s+/g, ' ') + '…');
   } else console.log('null/undefined/NaN 누출 없음');
   // 새로 넣은 것들이 실제로 그려졌는지
-  // 해설 블록은 prose()가 그리는 세 칸 라벨로 센다 — 예전 문구('이 표가 말하는 것')는 더 이상 안 쓴다.
-  for (const [name, needle] of [['핵심 결론', '핵심 결론'], ['해설 블록(현재 상황)', '현재 상황'], ['해설 블록(개선안)', '개선안'], ['해설 블록(기대 목표)', '기대 목표']]) {
-    const n = (txt.match(new RegExp(needle, 'g')) || []).length;
-    console.log(`${name}: ${n}개 ${n ? '렌더됨' : '🔴 안 나옴'}`);
+  // 기대 문자열은 인자로 받는다 — 보고서가 둘이고(난이도 index.html · 스킬 skills.html) 각자 다른 라벨을 쓴다.
+  //   node render_check.js <html> [--expect "문구1,문구2,…"]
+  // 안 주면 난이도 보고서의 기본 라벨을 본다(그쪽이 기존 호출부다).
+  const i = process.argv.indexOf('--expect');
+  const needles = i > 0 && process.argv[i + 1]
+    ? process.argv[i + 1].split(',').map(s => s.trim()).filter(Boolean)
+    : ['핵심 결론', '현재 상황', '개선안', '기대 목표'];
+  let missing = 0;
+  for (const needle of needles) {
+    const n = txt.split(needle).length - 1;
+    if (!n) missing++;
+    console.log(`  ${needle}: ${n}개 ${n ? '렌더됨' : '🔴 안 나옴'}`);
   }
+  if (missing) { console.log('🔴 기대 문구 ' + missing + '건이 화면에 없다'); process.exit(1); }
 } catch (e) {
   console.log('🔴 렌더 실패 — ' + e.message);
   console.log((e.stack || '').split('\n').slice(0, 4).join('\n'));

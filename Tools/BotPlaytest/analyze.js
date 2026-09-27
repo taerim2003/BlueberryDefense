@@ -43,6 +43,7 @@ function loadSessions() {
         cooldowns: readJson(path.join(dir, 'cooldowns.json'), null),
         runs: readJsonl(path.join(dir, 'runs.jsonl')),
         campaigns: readJsonl(path.join(dir, 'campaigns.jsonl')),
+        gym: readJsonl(path.join(dir, 'gym.jsonl')),   // 스킬 시험장 셀 — 한 줄이 한 셀(스킬×상태×레벨×트리×시나리오)
       };
     });
 }
@@ -302,6 +303,273 @@ function skillMetrics(runs, enemyTypes) {
   return { rows, groups, G5: { value: `${measured.filter(g => g.pass).length}/${measured.length} 그룹`, pass: measured.length > 0 && measured.every(g => g.pass) } };
 }
 
+// ───────── G5 스킬 시험장 (gym) ─────────
+// 실전 로그(위 skillMetrics)와 달리 **상태를 강제**해서 재므로 2차 진화까지 표본이 고르게 찬다.
+// 🔴 판정 전에 셀 품질을 먼저 본다. 셋 중 하나라도 걸린 셀은 **숫자가 있어도 못 쓴다**:
+//    ① rigOk=false          상태 강제가 실패했다(그 조합이 도달 불가거나 릭이 깨졌다)
+//    ② residualAtStart>0    측정 시작에 앞 셀의 것이 남아 있었다 = **진짜 오염.** 같은 스킬끼리의 오염도 여기서만 잡힌다
+//                           (실측 2026-09-27: 오브 제단 OrbAltar가 다음 오브 셀로 넘어갔다)
+//    ③ arenaLimited         무대가 천장이었다 — 더 센 스킬도 같은 숫자를 낸다
+//
+// 🔴 **`foreignDamage > 0`은 오염이 아니다** — 그걸로 걸러내면 멀쩡한 칸 57개를 버린다(실측 2026-09-27).
+//    게임은 딜 출처를 **오브젝트 종류로** 태그한다: `Whirlwind.cs`가 `ActiveSkillId.Whirlwind`를 하드코딩하고,
+//    독수리투하 R1은 자기 진화 효과로 **미니 회오리를 뿜는다**(PlayerSkills.cs의 SpawnWhirlwind(isMini:true)).
+//    그래서 독수리 셀에 "회오리 딜"이 찍히는데, 그건 **독수리가 낸 딜**이다(residual = 0이 그 증거다).
+//    → 단독 릭은 로드아웃에 스킬이 하나뿐이므로 **셀의 전체 딜이 곧 그 스킬의 출력**이다. 판정은 dpsAll로 한다.
+//    ⚠️ 같은 귀속 규칙이 실전 로그(skillMetrics)에도 적용된다 — 거기서는 회오리 지분이 독수리 R1의 몫을 흡수해 왔다.
+function gymMetrics(cells) {
+  if (!cells.length) return null;
+
+  // 셀 품질. arenaLimited = 처리량 무대인데 끝에 생존 수가 상한에 한참 못 미친다 = 스킬이 무대를 앞질렀다.
+  // 🔴 `carrier`는 예외다 — UFO는 투하를 마치면 **스스로 화면 밖으로 빠져나간다**(escape). 그래서 스킬이 세든
+  //    약하든 끝 생존 수가 상한에 한참 못 미치고, 이 판정식이 전부 "무대 한계"로 오인한다(실측: 111칸 중 67칸).
+  //    carrier의 지표는 처리량이 아니라 **escapes**(투하 전에 못 잡은 몫)다.
+  const escapeBased = new Set(['carrier']);
+  const limited = c => c.arenaKind === 'throughput' && !escapeBased.has(c.scenario)
+    && c.maxAlive > 0 && c.aliveAtEnd < c.maxAlive * 0.8;
+  for (const c of cells) {
+    c.arenaLimited = limited(c);
+    c.usable = c.rigOk !== false && !(c.residualAtStart > 0) && !c.arenaLimited;
+    c.own = (c.skills || []).filter(s => s.owned);
+    c.testSkill = c.own.find(s => s.id === c.skill) || null;
+    // 이 셀에서 스킬로 귀속된 전체 딜(이름이 달라도 포함). 단독 릭에서는 곧 시험 대상의 출력이다.
+    c.allSkillDamage = (c.skills || []).filter(s => s.id !== 'Other').reduce((a, s) => a + s.effDamage, 0);
+  }
+  const quality = {
+    cells: cells.length,
+    rigFailed: cells.filter(c => c.rigOk === false).map(c => ({ cell: c.cellKey, error: c.rigError })),
+    // 🔴 진짜 오염. 같은 스킬끼리의 오염도 여기서만 잡힌다.
+    residual: cells.filter(c => c.residualAtStart > 0)
+      .map(c => ({ cell: c.cellKey, residual: c.residualAtStart, names: c.residualNames || null })),
+    // 정보용 — 오염이 아니라 **귀속**이다. 그 스킬이 다른 스킬 이름으로 낸 딜.
+    crossTagged: cells.filter(c => c.foreignDamage > 0 && !(c.residualAtStart > 0)).map(c => ({
+      cell: c.cellKey, underOtherName: round(c.foreignDamage),
+      share: c.allSkillDamage > 0 ? round(c.foreignDamage / c.allSkillDamage, 2) : null,
+      names: (c.skills || []).filter(s => !s.owned && s.id !== 'Other' && s.effDamage > 0).map(s => s.id),
+    })),
+    arenaLimited: cells.filter(c => c.arenaLimited).map(c => c.cellKey),
+    usable: cells.filter(c => c.usable).length,
+  };
+
+  // 같은 셀을 격자 앞뒤에 두 번 넣었으면(gymRepeats>1) 그 차이가 **이 측정의 노이즈 폭**이다.
+  // 🔴 이 값을 모르면 셀 사이 차이를 해석할 수 없다(balance-loop §3①과 같은 규칙).
+  const byKey = {};
+  for (const c of cells) (byKey[c.cellKey] = byKey[c.cellKey] || []).push(c);
+  const reps = Object.values(byKey).filter(v => v.length > 1).map(v => {
+    const e = v.map(c => c.allSkillDamage);
+    const m = mean(e);
+    return m > 0 ? (Math.max(...e) - Math.min(...e)) / m : 0;
+  });
+  const noise = { pairs: reps.length, maxSpread: reps.length ? round(Math.max(...reps), 3) : null, meanSpread: reps.length ? round(mean(reps), 3) : null };
+
+  // 셀 집계(반복 평균). dps 무대 = 단일 대상 DPS, 처리량 무대 = 초당 처리 체력.
+  const rows = Object.entries(byKey).map(([key, v]) => {
+    const f = v[0];
+    const t = c => Math.max(1, c.cellGameTime || c.window || 1);
+    const mine = c => (c.testSkill ? c.testSkill.effDamage : 0);
+    return {
+      cellKey: key, skill: f.skill, evoStage: f.evoStage, route: f.evoStage > 0 ? f.route : -1,
+      level: f.askLevel, treeMode: f.treeMode, rig: f.rig, scenario: f.scenario,
+      growthCasts: f.growthCasts || 0, arenaKind: f.arenaKind, n: v.length,
+      usable: v.every(c => c.usable),
+      // 🔴 판정에 쓰는 값. 단독 릭은 로드아웃이 스킬 하나뿐이라 셀의 전체 딜이 곧 그 스킬의 출력이다 —
+      //    이름이 다른 딜(독수리 R1의 미니 회오리 등)까지 포함해야 그 스킬을 옳게 잰다.
+      dps: round(mean(v.map(c => c.allSkillDamage / t(c))), 1),
+      // 그중 **자기 이름으로** 찍힌 몫. 낮으면 그 스킬의 출력이 남의 이름으로 집계된다는 신호다(실전 로그 해석에 필요).
+      dpsOwnName: round(mean(v.map(c => mine(c) / t(c))), 1),
+      ownNameShare: round(mean(v.map(c => (c.allSkillDamage > 0 ? mine(c) / c.allSkillDamage : 1))), 2),
+      dpsAll: round(mean(v.map(c => c.allSkillDamage / t(c))), 1),   // 동반 릭에서 baseline과 비교할 값
+      kills: round(mean(v.map(c => c.kills)), 1),
+      // 🔴 접촉선 처치·오버킬도 **스킬로 귀속된 전체**를 센다 — 자기 이름 몫만 세면 독수리 R1처럼
+      //    출력의 절반 이상이 다른 이름으로 찍히는 스킬을 절반만 재게 된다.
+      contactKills: round(mean(v.map(c => (c.skills || []).filter(s => s.id !== 'Other')
+        .reduce((a, s) => a + (s.contactKills || 0), 0))), 1),
+      escapes: round(mean(v.map(c => c.escapes || 0)), 1),
+      damageTaken: round(mean(v.map(c => c.damageTaken)), 0), // 못 막은 몫 — 체력을 잠갔으니 죽음 대신 이걸 본다
+      overkill: round(mean(v.map(c => {
+        const rows2 = (c.skills || []).filter(s => s.id !== 'Other');
+        const raw = rows2.reduce((a, s) => a + s.rawDamage, 0);
+        return raw > 0 ? rows2.reduce((a, s) => a + s.overkill, 0) / raw : 0;
+      })), 3),
+      // 발동 수는 시전(TryUseSkill) 기준이라 자기 이름 그대로가 맞다 — 미니 회오리는 시전이 아니다.
+      casts: round(mean(v.map(c => (c.testSkill ? c.testSkill.casts : 0))), 1),
+      baseCd: f.gotBaseCooldown, saturation: round(mean(v.map(c => c.saturation || 0)), 2),
+      aliveEnd: round(mean(v.map(c => c.aliveAtEnd)), 0), maxAlive: f.maxAlive || 0,
+      enhanceNodes: f.enhanceNodes || [],
+    };
+  });
+
+  const solo = rows.filter(r => r.rig === 'solo' && r.growthCasts === 0);
+  const scenarios = [...new Set(solo.map(r => r.scenario))].sort();
+
+  // 🔴 **동반 릭으로 재는 스킬은 단독 판정에서 뺀다.** 되감기는 남의 쿨을 당기고, 낙뢰·집중산탄은 버프기라
+  //    혼자 두면 딜이 0에 가깝다 — 그걸 단독 표에 넣으면 "무강점"·"지배당함"이 **구조적으로 보장**되어
+  //    매번 같은 실패가 뜨고 손쓸 곳이 없다(실측 2026-09-27: 그룹1 지배 56쌍 중 대부분이 이 셋 때문이었다).
+  //    이 셋의 판정은 아래 `companionVerdict`가 따로 한다 — baseline 대비 전체 딜 증가분이 그 스킬의 값이다.
+  //    (`SKILL_AXES`의 "근거리는 지분이 아니라 contactPerMin으로 본다"와 같은 원칙: 스킬마다 맞는 축이 다르다.)
+  //    목록의 원본은 `BotPilot.CompanionTestSkills`이고 셀 헤더의 `companionPool`로 실려 온다 — 여기 또 적지 않는다
+  //    (동반 셀은 격자 맨 뒤라, 돌아온 셀만 보고 유도하면 그 전까지 판정이 틀린다).
+  const companionMeasured = new Set(
+    cells.flatMap(c => String(c.companionPool || '').split(',').filter(Boolean))
+      .concat(rows.filter(r => r.rig === 'companion').map(r => r.skill)));
+  const soloJudged = solo.filter(r => !companionMeasured.has(r.skill));
+
+  // 🔴 G5 판정은 **같은 진화 차수 안에서** 한다(사용자 요구: 기본끼리·1차끼리·2차끼리).
+  //    시나리오마다 따로 판정한다 — "무리에선 세지만 대공은 못 한다"가 정상이고, 그게 장단점이다.
+  const groups = {};
+  for (const g of [0, 1, 2]) {
+    const perScenario = {};
+    for (const scn of scenarios) {
+      const m = soloJudged.filter(r => r.evoStage === g && r.scenario === scn && r.usable && r.level === 10);
+      if (m.length < 3) { perScenario[scn] = { members: m.length, note: '표본 부족' }; continue; }
+      const med = median(m.map(r => r.dps));
+      for (const r of m) r.norm = med > 0 ? round(r.dps / med, 2) : null;
+      const band = targets.skillPowerBand;
+      perScenario[scn] = {
+        members: m.length, median: round(med, 1),
+        top: m.slice().sort((a, b) => b.dps - a.dps).slice(0, 3).map(r => ({ skill: r.skill, route: r.route, dps: r.dps, norm: r.norm })),
+        bottom: m.slice().sort((a, b) => a.dps - b.dps).slice(0, 3).map(r => ({ skill: r.skill, route: r.route, dps: r.dps, norm: r.norm })),
+        outOfBand: m.filter(r => r.norm != null && (r.norm < band[0] || r.norm > band[1]))
+          .map(r => ({ state: `${r.skill}/${r.route}`, norm: r.norm })),
+      };
+    }
+    // G5a 지배 금지 — 한 상태가 **모든 시나리오에서** 다른 상태보다 높으면 장단점이 없다.
+    const states = [...new Set(soloJudged.filter(r => r.evoStage === g && r.usable && r.level === 10).map(r => `${r.skill}/${r.route}`))];
+    const dpsOf = (st, scn) => {
+      const r = soloJudged.find(x => `${x.skill}/${x.route}` === st && x.scenario === scn && x.usable && x.level === 10);
+      return r ? r.dps : null;
+    };
+    const dominance = [];
+    for (const a of states) for (const b of states) {
+      if (a === b) continue;
+      const pairs = scenarios.map(s => [dpsOf(a, s), dpsOf(b, s)]).filter(([x, y]) => x != null && y != null);
+      if (pairs.length >= 3 && pairs.every(([x, y]) => x > y)) dominance.push({ dominant: a, dominated: b, scenarios: pairs.length });
+    }
+    // G5b 쓸모 보장 — 모든 상태가 시나리오 하나 이상에서 상위 1/3이어야 한다.
+    const noStrength = states.filter(st => !scenarios.some(scn => {
+      const vals = states.map(s => dpsOf(s, scn)).filter(v => v != null).sort((x, y) => y - x);
+      if (vals.length < 3) return false;
+      const cut = vals[Math.max(0, Math.ceil(vals.length / 3) - 1)];
+      const v = dpsOf(st, scn);
+      return v != null && v >= cut;
+    }));
+    groups[g] = {
+      states: states.length, perScenario, dominance, noStrength,
+      excluded: [...companionMeasured],   // 동반 릭으로 따로 판정하는 스킬 — 단독 표에 넣으면 구조적으로 실패한다
+      pass: states.length >= 3 && dominance.length === 0 && noStrength.length === 0,
+    };
+  }
+
+  // 성장률 — 사용자 요구: Lv1과 Lv10을 같이 본다. 상황마다 성장 폭이 다른 게 요점이다.
+  const growth = [];
+  for (const r10 of solo.filter(r => r.level === 10)) {
+    const r1 = solo.find(r => r.level === 1 && r.skill === r10.skill && r.evoStage === r10.evoStage
+      && r.route === r10.route && r.scenario === r10.scenario && r.treeMode === r10.treeMode);
+    if (!r1) continue;
+    growth.push({
+      skill: r10.skill, evoStage: r10.evoStage, route: r10.route, scenario: r10.scenario,
+      lv1: r1.dps, lv10: r10.dps, ratio: r1.dps > 0 ? round(r10.dps / r1.dps, 2) : null,
+      usable: r1.usable && r10.usable,
+    });
+  }
+
+  // 강화 노드 2개(은별+금별)의 값 = full − bare. 시나리오마다 다르다(비행 보너스는 공중 무대에서만 드러난다).
+  const treeDelta = [];
+  for (const full of solo.filter(r => r.treeMode === 'full')) {
+    const bare = solo.find(r => r.treeMode === 'bare' && r.skill === full.skill && r.evoStage === full.evoStage
+      && r.route === full.route && r.scenario === full.scenario && r.level === full.level);
+    if (!bare) continue;
+    treeDelta.push({
+      skill: full.skill, evoStage: full.evoStage, route: full.route, scenario: full.scenario, level: full.level,
+      nodes: full.enhanceNodes, bare: bare.dps, full: full.dps,
+      gain: bare.dps > 0 ? round(full.dps / bare.dps - 1, 3) : null,
+      usable: full.usable && bare.usable,
+    });
+  }
+
+  // 생애 사슬 — 진화 전이 약해도 진화체가 강하면 납득할 구조다(SKILL_AXES 원칙 3 · G5c 생애 보상).
+  const lifetime = [];
+  for (const skill of [...new Set(solo.map(r => r.skill))].sort())
+    for (const route of [0, 1])
+      for (const scn of scenarios) {
+        const at = st => solo.find(r => r.skill === skill && r.evoStage === st && r.scenario === scn
+          && r.level === 10 && r.treeMode === 'full' && (st === 0 ? true : r.route === route));
+        const [a, b, c] = [at(0), at(1), at(2)];
+        if (!a || !b || !c) continue;
+        lifetime.push({ skill, route, scenario: scn, pre: a.dps, t1: b.dps, t2: c.dps,
+          usable: a.usable && b.usable && c.usable });
+      }
+
+  // 호밍의 누적 스택 곡선. 실제로 몇 스택까지 가는지는 정주행의 skills[].casts가 답한다 — 둘을 곱해야 실전 파워다.
+  const growthCurve = rows.filter(r => r.growthCasts > 0 || (r.skill === 'Homing' && r.rig === 'solo'))
+    .map(r => ({ skill: r.skill, evoStage: r.evoStage, route: r.route, scenario: r.scenario,
+      level: r.level, casts: r.growthCasts, dps: r.dps, usable: r.usable }))
+    .sort((a, b) => a.scenario.localeCompare(b.scenario) || a.casts - b.casts);
+
+  // 동반 릭 — 되감기·산탄·낙뢰는 혼자 두면 딜이 0이다. baseline 대비 전체 딜 증가분이 그 스킬의 값이다.
+  const companion = [];
+  for (const r of rows.filter(r => r.rig === 'companion')) {
+    // 🔴 baseline은 **같은 시나리오 + 같은 진화 차수**의 것만 쓴다. 차수마다 무대 세기가 다르므로
+    //    (GymArena.GroupHpScale ×1/×3/×9) 차수가 다른 baseline과 비교하면 무대 차이가 스킬 효과로 읽힌다.
+    const base = rows.find(b => b.rig === 'baseline' && b.scenario === r.scenario && b.evoStage === r.evoStage);
+    if (!base) continue;
+    companion.push({ skill: r.skill, evoStage: r.evoStage, route: r.route, scenario: r.scenario,
+      baseline: base.dpsAll, withSkill: r.dpsAll,
+      gain: base.dpsAll > 0 ? round(r.dpsAll / base.dpsAll - 1, 3) : null,
+      ownShare: r.dpsAll > 0 ? round(r.dps / r.dpsAll, 3) : null, usable: r.usable && base.usable });
+  }
+
+  // 🔴 동반 릭으로 재는 스킬(되감기·낙뢰·집중산탄)의 판정. 값 = baseline 대비 **전체 딜 증가분**.
+  //    기준: 기준 3스킬에 넣어서 전체 딜이 **늘어야** 쓸모가 있다. 줄면 슬롯을 먹고 손해를 끼친 것이다
+  //    (`balance` §2의 "한 스킬이 발동을 독점하면 버그"가 여기서 숫자로 보인다).
+  // 🔴 **DPS 무대(표적 1마리)는 동반 판정에 쓰지 않는다.** 실측(2026-09-27): 되감기 진화 전이
+  //    처리량 무대에서 swarm +16% · mix_ground +14%인데 tank −60% · airship −94%였다.
+  //    표적이 한 마리면 그 한 마리의 스폰 위치·경로 난수 하나가 전체 딜을 좌우해서, 반복 없이는 판정이 안 된다.
+  //    (셋을 평균 내면 −25%가 나와 "되감기가 파티에 해롭다"는 잘못된 결론에 닿는다 — 실제로 한 번 닿았다.)
+  //    DPS 무대 칸은 `dpsArenaCells`로 따로 세어 두고, 반복(`gymRepeats` ≥ 2)이 붙으면 그때 판정에 넣는다.
+  const companionVerdict = {};
+  for (const skill of [...companionMeasured].sort()) {
+    const all = companion.filter(c => c.skill === skill && c.usable && c.gain != null);
+    const mine = all.filter(c => (rows.find(r => r.rig === 'companion' && r.skill === skill
+      && r.scenario === c.scenario && r.evoStage === c.evoStage) || {}).arenaKind !== 'dps');
+    if (!mine.length) { companionVerdict[skill] = { cells: 0, dpsArenaCells: all.length - mine.length, note: '처리량 무대 표본 없음' }; continue; }
+    const byState = {};
+    for (const c of mine) {
+      const k = c.evoStage ? `R${c.route} ${c.evoStage}차` : '진화 전';
+      (byState[k] = byState[k] || []).push(c.gain);
+    }
+    // 🔴 상태당 시나리오가 1개뿐이면 판정하지 않는다 — 한 칸으로는 노이즈와 신호를 못 가른다.
+    const states = Object.entries(byState).map(([k, v]) => ({ state: k, gain: round(mean(v), 3), n: v.length }));
+    const judged = states.filter(s => s.n >= 2);
+    const harmful = judged.filter(s => s.gain < 0);
+    companionVerdict[skill] = {
+      cells: mine.length, dpsArenaCells: all.length - mine.length, states,
+      judgedStates: judged.length,
+      bestGain: judged.length ? round(Math.max(...judged.map(s => s.gain)), 3) : null,
+      worstGain: judged.length ? round(Math.min(...judged.map(s => s.gain)), 3) : null,
+      harmful: harmful.map(s => s.state),
+      // 통과 = 판정 가능한 상태 중 전체 딜을 떨어뜨리는 것이 없고, 하나 이상이 노이즈 폭을 넘어 올린다.
+      pass: judged.length === 0 ? null
+        : harmful.length === 0 && judged.some(s => s.gain > (noise.maxSpread || 0.05)),
+    };
+  }
+
+  const measured = [0, 1, 2].filter(g => groups[g].states >= 3);
+  return {
+    quality, noise, rows, scenarios, groups, growth, treeDelta, lifetime, growthCurve, companion, companionVerdict,
+    G5: {
+      value: measured.length
+        ? `${measured.filter(g => groups[g].pass).length}/${measured.length} 그룹`
+          + (Object.keys(companionVerdict).length ? ` · 동반 ${Object.values(companionVerdict).filter(v => v.pass).length}/${Object.keys(companionVerdict).length}` : '')
+          + ` · 쓸 수 있는 셀 ${quality.usable}/${quality.cells}`
+        : '표본 없음',
+      pass: measured.length > 0 && measured.every(g => groups[g].pass)
+        && Object.values(companionVerdict).every(v => v.pass !== false)
+        && quality.residual.length === 0 && quality.rigFailed.length === 0,
+    },
+  };
+}
+
 // ───────── 사망·피격 ─────────
 function deathMetrics(runs) {
   const byGoal = {};
@@ -363,17 +631,28 @@ function analyze() {
     const probe = probeMetrics(runs);
     const skills = skillMetrics(runs, enemyTypes);
     const cool = cooldownMetrics(cd);
+    // 🔴 시험장이 돈 이터레이션은 **G5를 시험장으로 판정한다**(analyze.js의 옛 주석대로 교체).
+    //    실전 로그 쪽(skills)은 계속 계산해 둔다 — 실전에서 그 스킬이 실제로 얼마나 뽑히는지는 거기만 안다.
+    const gym = gymMetrics(ss.flatMap(s => s.gym));
     out.iterations.push({
       iteration: it.iteration, sessions: it.sessions, synthetic: !!it.synthetic,
       plan: it.synthetic ? null : { target: it.target, symptom: it.symptom, axisAnalysis: it.axisAnalysis, chosenAxis: it.chosenAxis, rejected: it.rejected,
-        hypothesis: it.hypothesis, changes: it.changes, prediction: it.prediction, passCriterion: it.passCriterion, verdict: it.verdict, verdictNote: it.verdictNote, nextToVerify: it.nextToVerify, codeSuggestions: it.codeSuggestions },
+        hypothesis: it.hypothesis, changes: it.changes, prediction: it.prediction, passCriterion: it.passCriterion, verdict: it.verdict, verdictNote: it.verdictNote, nextToVerify: it.nextToVerify, codeSuggestions: it.codeSuggestions,
+        // 제안 에이전트들의 회의 기록. 보고서의 회의록 절이 이걸 그대로 읽는다(사용자 요청 2026-09-27).
+        minutes: it.minutes || null },
       runCount: runs.length,
+      // 🔴 시험장 셀은 `gym.jsonl`에 쌓이므로 runCount(runs.jsonl)에 안 들어간다.
+      //    보고서의 "측정이 있는 이터레이션" 판정이 runCount만 보면 gym 회차를 통째로 건너뛴다(실제로 그랬다).
+      gymCells: gym ? gym.quality.cells : 0,
+      // 🔴 셀 수만으로는 "끝까지 돈 회차"를 못 가른다 — 격자를 좁혀 도는 회차가 있고(변경 확인용),
+      //    중간에 양보/중단된 회차도 있다. 보고서가 기본으로 열 회차를 고를 때 이 상태를 본다.
+      sessionStates: ss.map(s => (s.status && s.status.state) || null),
       // 이 이터레이션이 실제로 잡아먹은 측정 시간(실시간). 루프 종합에서 "몇 시간 써서 뭘 얻었나"를 말할 때 쓴다.
       realMinutes: round(runs.reduce((a, r) => a + (r.realTime || 0), 0) / 60, 1),
       // C2(진화하면 쿨이 길어진다)는 목표에서 뺐다 — 사용자 결정 2026-09-18.
       // 되살리려면 `C2: cool.C2`를 다시 넣고 report.html의 C2 타일·칩 주석을 푼다. cool.C2는 계속 계산된다.
-      scoreboard: { G1: camp.G1, G2: probe.G2, G3: camp.G3, G4: probe.G4, G5: skills.G5, G6: probe.G6, C1: cool.C1 },
-      campaign: camp, probe, skills, deaths: deathMetrics(runs), cooldowns: cool,
+      scoreboard: { G1: camp.G1, G2: probe.G2, G3: camp.G3, G4: probe.G4, G5: gym ? gym.G5 : skills.G5, G6: probe.G6, C1: cool.C1 },
+      campaign: camp, probe, skills, gym, deaths: deathMetrics(runs), cooldowns: cool,
       changedFiles: fingerprintDiff(prevFp, fp),
       results: Object.fromEntries(['clear', 'dead', 'stuck', 'timeout', 'error'].map(k => [k, runs.filter(r => r.result === k).length])),
     });
@@ -383,7 +662,7 @@ function analyze() {
 }
 
 // Tools/QA/qa-analyze.js가 지표 함수를 재사용한다(require할 때는 아래 실행부가 돌지 않는다).
-module.exports = { campaignMetrics, skillMetrics, deathMetrics, fingerprintDiff, goalKey, goalName, progressOf, targets, mean, median, std, round };
+module.exports = { campaignMetrics, skillMetrics, gymMetrics, deathMetrics, fingerprintDiff, goalKey, goalName, progressOf, targets, mean, median, std, round };
 
 if (require.main === module) {
   const data = analyze();
@@ -391,10 +670,14 @@ if (require.main === module) {
   fs.mkdirSync(reportDir, { recursive: true });
   fs.writeFileSync(path.join(reportDir, 'data.json'), JSON.stringify(data, null, 1));
 
-  const tpl = path.join(__dirname, 'report.html');
-  if (fs.existsSync(tpl)) {
-    const html = fs.readFileSync(tpl, 'utf8').replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
-    fs.writeFileSync(path.join(reportDir, 'index.html'), html);
+  // 보고서 둘. `index.html` = 난이도 루프의 이력 보고서 · `skills.html` = **스킬 밸런스 전용 판독지**.
+  // 스킬 쪽을 따로 둔 이유: 난이도 보고서의 양식(이터레이션 타임라인·9목표 사다리)은 스킬을 읽는 데 안 맞는다(사용자 결정 2026-09-27).
+  const payload = JSON.stringify(data).replace(/</g, '\\u003c');
+  for (const [tplName, outName] of [['report.html', 'index.html'], ['skill_report.html', 'skills.html']]) {
+    const tpl = path.join(__dirname, tplName);
+    if (!fs.existsSync(tpl)) continue;
+    fs.writeFileSync(path.join(reportDir, outName),
+      fs.readFileSync(tpl, 'utf8').replace('/*__DATA__*/null', payload));
   }
 
   if (!QUIET) {

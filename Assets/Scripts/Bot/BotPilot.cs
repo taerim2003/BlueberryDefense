@@ -183,6 +183,7 @@ public class BotPilot : MonoBehaviour
         Set("state", "running");
         if (cfg.mode == "campaign") yield return Campaigns();
         else if (cfg.mode == "probe") yield return Probe();
+        else if (cfg.mode == "gym") yield return Gym();
         else if (cfg.mode != "audit") Fail("알 수 없는 mode: " + cfg.mode);
         Finish("done", null);
     }
@@ -388,6 +389,262 @@ public class BotPilot : MonoBehaviour
             if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png 참고");
         }
     }
+
+    // ───────────────────────── 스킬 시험장 (gym) ─────────────────────────
+    // 격자 한 칸 = 한 셀. 셀은 45~60 게임초라 정주행(판 10~20분)과 달리 **판을 새로 열지 않고** 무대만 비워 이어 돈다.
+    // 그래서 셀 경계 양보가 거의 즉시다(`BotRuns/yield`를 쓰면 몇 초 안에 Unity가 빈다).
+    //
+    // 🔴 판정에 쓰는 지표는 정주행과 **같은 정의**다(BotRecorder를 그대로 쓴다) — 정의가 갈리면 두 측정을 못 붙인다.
+    //    다른 것은 무대(시나리오가 적을 선언)와 로드아웃(GymRig이 상태를 강제)뿐이다.
+    private IEnumerator Gym()
+    {
+        List<GymRig.Cell> cells = BuildGymCells();
+        Set("gymCells", cells.Count);
+        Trace("gym 격자 " + cells.Count + "셀");
+
+        BotResumeState st = LoadResume("gym");
+        GymArena arena = null;
+        int sinceReload = 0;
+
+        for (int i = st.nextGymIndex; i < cells.Count; i++)
+        {
+            if (YieldRequested()) { st.nextGymIndex = i; Yield(st); yield break; }
+            GymRig.Cell c = cells[i];
+
+            bool needStage = arena == null
+                || (cfg.gymReloadEveryCells > 0 && sinceReload >= cfg.gymReloadEveryCells);
+            if (needStage)
+            {
+                Trace("gym 무대 진입 (셀 " + i + ")");
+                yield return EnterGymStage();
+                arena = new GymArena();
+                if (!arena.TakeOver()) Fail("시험장 무대 준비 실패 — EnemySpawner를 못 찾았다");
+                // 🔴 프리팹을 못 찾은 시나리오는 **조용히 빈 칸**이 된다. 세션 시작에 한 번 세어 status에 남긴다.
+                if (arena.MissingPrefabs.Count > 0)
+                    Set("gymMissingPrefabs", string.Join(",", arena.MissingPrefabs));
+                // 발생기 필드 이름이 바뀌면 오염이 조용히 돌아온다 — 이름을 못 찾았으면 여기 뜬다.
+                if (arena.MissingEmitterFields.Count > 0)
+                    Set("gymMissingEmitterFields", string.Join(",", arena.MissingEmitterFields));
+                sinceReload = 0;
+            }
+
+            var header = BotJson.Obj();
+            header["mode"] = "gym"; header["label"] = cfg.label; header["run"] = i; header["cells"] = cells.Count;
+            header["map"] = cfg.gymMap; header["ascension"] = cfg.gymAscension; header["character"] = GymCharacter;
+            header["skill"] = c.skill.ToString(); header["evoStage"] = c.stage;
+            header["route"] = c.stage > 0 ? c.route : -1;
+            header["askLevel"] = c.level; header["treeMode"] = c.treeMode; header["rig"] = c.rig;
+            header["scenario"] = c.scenario; header["growthCasts"] = c.growthCasts; header["repeat"] = c.repeat;
+            header["cellKey"] = c.Key; header["stateKey"] = c.StateKey;
+            // 🔴 동반 릭으로 재는 스킬 목록을 **모든 셀에** 적는다. 분석기가 이 목록을 단독 판정에서 빼야 하는데,
+            //    동반 셀은 격자 맨 뒤라 "데이터에 있는 rig=companion"으로 유도하면 그 셀이 돌기 전까지 판정이 틀린다.
+            //    목록을 분석기에 또 적으면 사본이 둘이 되어 한쪽만 낡는다(CLAUDE.md §7) → 여기서 한 번만 내보낸다.
+            header["companionPool"] = cfg.gymCompanion
+                ? string.Join(",", CompanionTestSkills.Select(s => s.ToString())) : "";
+
+            Set("gymCell", i); Set("gymCellKey", c.Key); WriteStatus();
+
+            Dictionary<string, object> run = null;
+            yield return PlayGymCell(c, arena, header, x => run = x);
+            if ((string)run["result"] == "yielded") { st.nextGymIndex = i; Yield(st); yield break; }
+
+            recorder.WriteRunTo("gym.jsonl", run);
+            sinceReload++;
+            st.nextGymIndex = i + 1;
+            SaveResume(st);
+        }
+        Trace("gym 격자 완료");
+    }
+
+    private const string GymCharacter = "Char_Strawberry";
+
+    // 무대 진입. 시험장은 체력을 잠그고 스킬을 강제하므로 캐릭터·맵은 **무대의 크기와 레인**만 제공한다.
+    // 🔴 GymRig가 셀마다 세이브를 비우므로(맵 해금도 같이 지워진다) 진입 직전에 반드시 다시 열어야 한다.
+    private IEnumerator EnterGymStage()
+    {
+        string[] mapNames = BotConfig.DefaultGoals.Select(g => g.map).Distinct().ToArray();
+        BotTree.BuildReferenceSave(0f, mapNames);   // 빈 트리 + 맵·난이도 해금
+        CharacterDefinition ch = BotTree.LoadByName<CharacterDefinition>(GymCharacter);
+        if (ch == null) Fail("캐릭터 에셋 없음: " + GymCharacter);
+        yield return EnterRun(new BotGoal { map = cfg.gymMap, ascension = cfg.gymAscension }, ch);
+    }
+
+    // 한 셀: 무대 비우기 → 정착 → 로드아웃 강제 → 고정 창만큼 측정.
+    private IEnumerator PlayGymCell(GymRig.Cell c, GymArena arena,
+        Dictionary<string, object> header, Action<Dictionary<string, object>> done)
+    {
+        GymArena.Def sc = GymArena.Find(c.scenario);
+        if (sc == null) Fail("시나리오가 표에 없다: " + c.scenario);
+
+        // ① 앞 셀의 적과 **깔아 둔 지속 오브젝트**를 치우고 정착 시간을 둔다.
+        //    🔴 `PlayerSkills.Sealed`를 켜는 이유: 자동 시전 스킬(스나이핑 R1 2차·화살 R2 3차는 `IsAutoCastOnly`)은
+        //       HoldSkills를 꺼도 스스로 발동해 정착 중에 **새 지속 오브젝트를 다시 깐다.** Sealed는 쿨도 멈춘다.
+        //    아직 recorder를 켜지 않았으므로 이 구간의 타격은 어느 셀에도 안 들어간다.
+        BotInput.HoldSkills = false;
+        PlayerSkills.Sealed = true;
+        arena.Clear();
+        float settle = 0f;
+        while (settle < cfg.gymSettleSeconds)
+        {
+            Tick();
+            settle += Time.deltaTime;
+            yield return null;
+        }
+        // 🔴 정착 중에 새로 생긴 것(자동 시전·발생기 잔재)을 한 번 더 치운다. Destroy는 프레임 끝에 실행되므로
+        //    한 번만 치우고 바로 재면 그 프레임에 태어난 것이 살아남는다 — 실측으로 오염이 계속 1칸 남았다.
+        arena.Clear();
+        for (int f = 0; f < 3; f++) { Tick(); yield return null; }
+        PlayerSkills.Sealed = false;
+
+        // ② 로드아웃 강제. 실패하면 그 셀은 에러로 기록하고 넘어간다(세션을 멈추지 않는다 —
+        //    한 조합이 안 되는 것과 격자 전체가 못 도는 것은 다르다).
+        GymRig.Result rig = GymRig.Apply(c);
+        header["rigOk"] = rig.ok;
+        header["rigError"] = rig.error;
+        header["gotStage"] = rig.stage; header["gotRoute"] = rig.route; header["gotLevel"] = rig.level;
+        header["gotGrowthStacks"] = rig.growthStacks;
+        header["gotBaseCooldown"] = rig.baseCooldown; header["gotBaseDamage"] = rig.baseDamage;
+        header["enhanceNodes"] = rig.enhanceNodes;
+        header["loadout"] = rig.loadout;
+
+        // ③ 측정
+        recorder.BeginRun(header);
+        // 🔴 무대 세기는 진화 차수에 따라 커진다(GymArena.GroupHpScale) — 한 무대로 250배 파워 범위를 담을 수 없다.
+        //    그래서 처리량 무대의 숫자는 **그룹 안에서만** 비교한다. 차수 간 비교는 dps 무대와 생애 사슬로 한다.
+        arena.Begin(sc, GymArena.GroupHpScale(c.stage));
+        int residual = arena.Residual();   // 0이 아니면 Clear가 못 치운 것이 있다 — 원인 쪽 지표
+        float t = 0f;
+        float realCap = Time.realtimeSinceStartup + Mathf.Max(60f, sc.window * 6f);
+        string result = "cell";
+        while (rig.ok && t < sc.window)
+        {
+            Tick();
+            GameManager gm = GameManager.Instance;
+            if (gm == null) { result = "error"; lastException = "시험장 중 GameManager가 사라짐"; break; }
+            if (gm.IsGameOver) { result = "dead"; break; }      // 체력을 잠갔으니 나면 잠금이 깨진 것이다
+            if (gm.IsGameClear) { result = "cleared"; break; }   // 스테이지가 넘어갔다 = 스포너 인수가 풀렸다
+            if (YieldNow()) { result = "yielded"; break; }
+            if (Time.realtimeSinceStartup > realCap) { result = "timeout"; break; }
+
+            BotInput.HoldSkills = true;
+            recorder.Tick();
+            arena.Tick(Time.deltaTime);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        if (!rig.ok) result = "rigFailed";
+        BotInput.HoldSkills = false;
+
+        Dictionary<string, object> run = recorder.EndRun(result);
+        run["window"] = sc.window;
+        run["cellGameTime"] = t;
+        run["residualAtStart"] = residual;
+        // 무엇이 남았는지 이름으로 남긴다 — 개수만으로는 무대 청소에 무엇을 더해야 하는지 알 수 없다.
+        run["residualNames"] = residual > 0 ? string.Join(",", arena.ResidualNames) : null;
+        run["spawned"] = arena.Spawned;
+        run["spawnedHp"] = arena.SpawnedHp;
+        run["aliveAtEnd"] = arena.Alive;
+        run["scenarioNote"] = sc.note;
+        run["hpMult"] = arena.EffectiveHpMult;   // 시나리오 기본값 × 차수 배율 — 그룹 간 비교를 막는 근거가 이 값이다
+        run["hpMultBase"] = sc.hpMult;
+        run["hpGroupScale"] = GymArena.GroupHpScale(c.stage);
+        run["arenaKind"] = sc.Dps ? "dps" : "throughput";
+        run["maxAlive"] = sc.maxAlive;
+        int kills = ((List<object>)run["stages"]).Cast<Dictionary<string, object>>().Sum(s => Convert.ToInt32(s["kills"]));
+        run["kills"] = kills;
+        run["killRate"] = arena.Spawned > 0 ? (float)kills / arena.Spawned : 0f;
+        // 🔴 **포화율** — 판정 전에 반드시 보는 값. 이 셀의 총 유효딜 ÷ 무대가 내보낸 총 체력.
+        //    1에 가까우면 스킬이 무대를 비워 버린 것이고, 그 셀은 더 센 스킬과 **같은 숫자**를 낸다(아무것도 못 가른다).
+        //    throughput 무대는 0.9 미만, dps 무대는 표적이 안 죽었으므로 구조적으로 작다.
+        var skillRows = ((List<object>)run["skills"]).Cast<Dictionary<string, object>>().ToList();
+        float totalEff = skillRows.Sum(s => Convert.ToSingle(s["effDamage"]));
+        run["saturation"] = arena.SpawnedHp > 0f ? totalEff / arena.SpawnedHp : 0f;
+        // 🔴 **오염 감시** — 로드아웃에 없는(owned=false) 출처가 낸 딜. 앞 셀의 지속 오브젝트가 살아남으면 여기 잡힌다.
+        //    0이 아니면 그 셀은 판정에 쓸 수 없다. 분석기가 이 값으로 셀을 걸러낸다.
+        run["foreignDamage"] = skillRows
+            .Where(s => !Convert.ToBoolean(s["owned"]) && s["id"] as string != "Other")
+            .Sum(s => Convert.ToSingle(s["effDamage"]));
+        if (result == "error") Fail(lastException);
+        done(run);
+    }
+
+    // 격자 만들기. 축 순서가 곧 도는 순서다 — 같은 상태의 시나리오들이 붙어 돌아 오염이 있으면 눈에 띈다.
+    private List<GymRig.Cell> BuildGymCells()
+    {
+        var skills = (cfg.gymSkills != null && cfg.gymSkills.Length > 0
+                ? cfg.gymSkills.Select(s => (ActiveSkillId)Enum.Parse(typeof(ActiveSkillId), s, true))
+                : Enum.GetValues(typeof(ActiveSkillId)).Cast<ActiveSkillId>()).ToArray();
+        string[] scenarios = cfg.gymScenarios != null && cfg.gymScenarios.Length > 0
+            ? cfg.gymScenarios : GymArena.Table.Select(d => d.id).ToArray();
+        int[] levels = cfg.gymLevels != null && cfg.gymLevels.Length > 0 ? cfg.gymLevels : GymArena.DefaultLevels;
+        string[] treeModes = cfg.gymTreeModes != null && cfg.gymTreeModes.Length > 0
+            ? cfg.gymTreeModes : new[] { GymRig.TreeFull };
+
+        // 상태 = 진화 전 + 루트{0,1} × 차수{1,2}. 문자열 이름은 요청·보고서가 쓰는 좌표다.
+        var states = new List<(string name, int stage, int route)> { ("pre", 0, -1) };
+        for (int route = 0; route < 2; route++)
+            for (int stage = 1; stage <= EvolutionRoutes.MaxStage; stage++)
+                states.Add(($"r{route}t{stage}", stage, route));
+        if (cfg.gymStates != null && cfg.gymStates.Length > 0)
+            states = states.Where(s => cfg.gymStates.Contains(s.name)).ToList();
+
+        var cells = new List<GymRig.Cell>();
+        for (int rep = 0; rep < Mathf.Max(1, cfg.gymRepeats); rep++)
+        {
+            foreach (ActiveSkillId skill in skills)
+                foreach (var st in states)
+                    foreach (string tree in treeModes)
+                        foreach (int level in levels)
+                        {
+                            // 호밍만 누적 스택 축을 돈다 — 다른 스킬은 판 중에 세지지 않으므로 0 하나면 충분하다.
+                            int[] growth = GymRig.GrowsDuringRun(skill) && cfg.gymGrowthCasts != null
+                                            && cfg.gymGrowthCasts.Length > 0
+                                ? cfg.gymGrowthCasts : new[] { 0 };
+                            foreach (int g in growth)
+                                foreach (string scn in scenarios)
+                                    cells.Add(new GymRig.Cell
+                                    {
+                                        skill = skill, stage = st.stage, route = st.route, level = level,
+                                        treeMode = tree, scenario = scn, growthCasts = g, repeat = rep,
+                                    });
+                        }
+
+            // Rig 2(동반) — 되감기·산탄·낙뢰는 혼자 두면 딜이 0이다. 기준 3스킬과 함께 넣고 baseline과의 차이를 본다.
+            if (!cfg.gymCompanion) continue;
+            string[] compScenarios = GymArena.Table.Where(d => d.companion).Select(d => d.id)
+                .Where(id => scenarios.Contains(id)).ToArray();
+            foreach (string scn in compScenarios)
+                foreach (var st in states)
+                {
+                    // 🔴 baseline은 **그 상태와 같은 무대**에서 재야 한다. 무대 세기가 진화 차수로 정해지므로
+                    //    (GymArena.GroupHpScale — 차수마다 ×1·×3·×9) baseline을 stage 0 하나로 두면
+                    //    진화 상태 동반 셀은 9배 단단한 적을 상대하고, 그 차이가 "스킬 덕에 딜이 늘었다"로 잘못 읽힌다.
+                    //    (실측 2026-09-27: 되감기 R0 2차가 +126%로 나왔는데 전부 무대 차이였다.)
+                    //    baseline은 rig가 "baseline"이라 시험 대상을 안 넣으므로 로드아웃은 stage와 무관하게 기준 3개 그대로다.
+                    cells.Add(new GymRig.Cell
+                    {
+                        skill = ActiveSkillId.BasicAttack, rig = "baseline", stage = st.stage, route = st.route,
+                        level = BalanceConstants.MaxSkillLevel, treeMode = GymRig.TreeBare,
+                        scenario = scn, repeat = rep,
+                    });
+                    foreach (ActiveSkillId util in CompanionTestSkills)
+                    {
+                        if (!skills.Contains(util)) continue;
+                        cells.Add(new GymRig.Cell
+                        {
+                            skill = util, rig = "companion", stage = st.stage, route = st.route,
+                            level = BalanceConstants.MaxSkillLevel, treeMode = GymRig.TreeFull,
+                            scenario = scn, repeat = rep,
+                        });
+                    }
+                }
+        }
+        return cells;
+    }
+
+    // 혼자서는 딜이 거의 0인 것들 — 되감기(남의 쿨을 당긴다) · 산탄(집중 산탄 루트는 버프기) · 낙뢰(IsBuffSkill).
+    private static readonly ActiveSkillId[] CompanionTestSkills =
+        { ActiveSkillId.Rewind, ActiveSkillId.Shotgun, ActiveSkillId.Lightning };
 
     private CharacterDefinition NextCharacter(ref string last)
     {

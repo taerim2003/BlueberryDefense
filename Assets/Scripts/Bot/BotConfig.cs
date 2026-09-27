@@ -28,6 +28,7 @@ public class BotResumeState
     public string mode;
     public string campaignKeyPrefix;   // 최초 세션 id — 여러 세션에 걸친 캠페인을 분석기가 하나로 묶는 키
     public int nextProbeIndex;
+    public int nextGymIndex;           // 시험장: 다음에 돌 셀 번호(셀은 초 단위라 경계에서 거의 즉시 비킨다)
     public int campaign;
     public bool campaignStarted;
     public int[] attempts;
@@ -45,6 +46,7 @@ public class BotConfig
 {
     public string label = "run";
     // campaign = 빈 세이브에서 정주행 · probe = 고정 트리에서 목표×캐릭터 측정 · audit = 쿨 감사만
+    // gym = 스킬 시험장(고정 상태 × 고정 시나리오로 스킬끼리 비교. G5 전용 — 난이도는 안 잰다)
     public string mode = "campaign";
 
     // ── campaign ──
@@ -66,6 +68,26 @@ public class BotConfig
     //    정주행보다 항상 낮게 나온다(그게 낮아 보이던 이유이지 버그가 아니다).
     public int fullTreeRuns = 0;
     public string[] probeGoalFilter;                  // 비면 9개 전부. "Map_Wide20:3" 형식
+
+    // ── gym (스킬 시험장) ──
+    // 격자 = 스킬 × 진화상태 × 레벨 × 트리모드 × 시나리오 (+ 호밍의 누적 스택). 빈 배열 = 그 축을 전부 돈다.
+    // 🔴 부분 격자로 먼저 돌려 보고 본 측정에 넣는다(`balance-loop`의 "작은 확인 세션부터").
+    public string[] gymSkills;        // 에셋 이름 아닌 ActiveSkillId 이름("Whirlwind"). 비면 11종 전부
+    public string[] gymScenarios;     // GymArena.Table의 id. 비면 전부
+    public string[] gymStates;        // "pre" · "r0t1" · "r1t1" · "r0t2" · "r1t2". 비면 전부
+    // 🔴 Lv1·Lv10을 **둘 다** 돈다(사용자 지시 2026-09-27) — 성장률은 상황마다 달라서 Lv10만 보면 같아 보인다.
+    public int[] gymLevels = { 1, 10 };
+    // 🔴 기본 기준은 full = **은별+금별 강화 보유**(사용자 지시 2026-09-27). bare는 대조군 —
+    //    full과의 차이가 곧 "그 스킬 강화 노드 2개의 값"이다.
+    public string[] gymTreeModes = { "full" };
+    // 호밍 전용: 판 중 누적되는 성장 스택을 미리 채운 셀. 0 = 판 시작 상태. 다른 스킬은 0 하나만 돈다.
+    public int[] gymGrowthCasts = { 0, 150, 450 };
+    public bool gymCompanion = true;      // Rig 2(동반) — 되감기·산탄·낙뢰처럼 혼자서는 딜이 0인 것들
+    public int gymRepeats = 1;            // >1이면 같은 셀을 순서의 앞뒤에 넣어 셀 간 오염을 본다
+    public float gymSettleSeconds = 1.5f; // 셀 사이 정착(게임초). 앞 셀의 투사체가 수명을 마칠 시간
+    public int gymReloadEveryCells = 0;   // >0이면 N셀마다 씬을 다시 로드해 누수를 떨어낸다(0 = 안 함)
+    public string gymMap = "Map_Wide15";  // 무대. 적 세기는 시나리오가 선언하므로 맵은 크기·레인만 준다
+    public int gymAscension = 1;
 
     // ── 공통 ──
     public bool runAudit = true;          // 세션 시작에 쿨 감사(cooldowns.json)를 같이 뽑는다

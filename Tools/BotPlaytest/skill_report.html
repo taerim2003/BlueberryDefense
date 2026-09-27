@@ -1,0 +1,1021 @@
+<title>스킬 시험장 판독지</title>
+<meta name="description" content="블루베리 디펜스 스킬 시험장 — 진화 스킬끼리의 파워 서열과 진화가 실제로 주는 값">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 계측기 판독지 — 정밀함이 정체성이다. 장식 없는 헤어라인, 모노 숫자, 블루베리 보라 하나만 구조에 쓴다. */
+:root {
+  color-scheme: light;
+  --ground: #f6f4fa;
+  --surface: #ffffff;
+  --surface-2: #efecf7;
+  --ink: #191527;
+  --ink-2: #514b6b;
+  --muted: #8b85a3;
+  --hair: #e2ddee;
+  --rule: #cec7e0;
+  --accent: #6b3fa0;
+  --bar: #2f6fb5;
+  --bar-soft: rgba(47, 111, 181, .16);
+  --good: #0e7a4f;
+  --warn: #b8860b;
+  --bad: #c2472e;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #131120; --surface: #1c1930; --surface-2: #252142;
+    --ink: #f0eef8; --ink-2: #b9b3cd; --muted: #837d9c;
+    --hair: #2e2949; --rule: #3d3663;
+    --accent: #a184d8;
+    --bar: #4d8fd6; --bar-soft: rgba(77, 143, 214, .22);
+    --good: #2fa06e; --warn: #b8891f; --bad: #d96a4f;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #131120; --surface: #1c1930; --surface-2: #252142;
+  --ink: #f0eef8; --ink-2: #b9b3cd; --muted: #837d9c;
+  --hair: #2e2949; --rule: #3d3663;
+  --accent: #a184d8;
+  --bar: #4d8fd6; --bar-soft: rgba(77, 143, 214, .22);
+  --good: #2fa06e; --warn: #b8891f; --bad: #d96a4f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 400 15px/1.62 var(--sans);
+  padding-inline: 16px; padding-block: 30px 72px;
+}
+.wrap { max-width: 1020px; margin: 0 auto; display: grid; gap: 44px; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.012em; text-wrap: balance; }
+h1 { font-size: 27px; line-height: 1.22; font-weight: 700; }
+h2 { font-size: 19px; line-height: 1.3; }
+p { margin: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+
+header.top { display: grid; gap: 13px; border-bottom: 2px solid var(--rule); padding-bottom: 20px; }
+header.top .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.verdict { font-size: 18px; line-height: 1.5; max-width: 66ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+  padding: 4px 9px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 1px; background: var(--muted); }
+.chip.good { color: var(--good); } .chip.good::before { background: var(--good); }
+.chip.warn { color: var(--warn); } .chip.warn::before { background: var(--warn); }
+.chip.bad  { color: var(--bad);  } .chip.bad::before  { background: var(--bad); }
+
+section { display: grid; gap: 15px; }
+.sec-head { display: grid; gap: 4px; border-bottom: 1px solid var(--rule); padding-bottom: 9px; }
+.sec-head .n { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: .1em; }
+.sec-head p { font-size: 13px; color: var(--muted); max-width: 78ch; }
+
+/* 측정 방법 — 데이터 위에 놓인다 */
+.method { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--hair); border-radius: 5px; }
+.method .m { display: grid; grid-template-columns: 8.5em 1fr; gap: 4px 14px; padding: 10px 15px; align-items: start; }
+.method .m + .m { border-top: 1px solid var(--hair); }
+.method .k { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--muted); padding-top: 3px; }
+.method .v { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); max-width: 74ch; }
+.method .v strong { color: var(--ink); font-weight: 600; }
+.method code { font-family: var(--mono); font-size: 12px; background: var(--surface-2); padding: 1px 4px; border-radius: 2px; }
+@media (max-width: 560px) { .method .m { grid-template-columns: 1fr; gap: 2px; } }
+
+.bars { display: grid; gap: 3px; }
+.bar-row { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 6em; gap: 12px; align-items: center; padding: 3px 0; font-size: 13.5px; }
+.bar-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row .name small { color: var(--muted); font-family: var(--mono); font-size: 11px; margin-left: 4px; }
+.track { position: relative; height: 15px; background: var(--surface-2); border-radius: 2px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar); border-radius: 2px 4px 4px 2px; min-width: 2px; }
+.fill.is-bad { background: var(--bad); } .fill.is-good { background: var(--good); }
+.bar-row .v { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; font-size: 13px; }
+.scale { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 6em; gap: 12px; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.scale .ticks { position: relative; height: 13px; }
+.scale .ticks span { position: absolute; transform: translateX(-50%); }
+@media (max-width: 560px) { .bar-row, .scale { grid-template-columns: 6.2em minmax(0, 1fr) 4.8em; gap: 8px; } }
+
+.chain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.chain { background: var(--surface); border: 1px solid var(--hair); border-radius: 5px; padding: 12px 13px 10px; display: grid; gap: 9px; }
+.chain .t { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.chain .t .nm { font-weight: 600; font-size: 14px; }
+.chain .t .x { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.chain .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; align-items: end; height: 54px; }
+.chain .steps i { display: block; background: var(--bar-soft); border-top: 3px solid var(--bar); min-height: 3px; border-radius: 1px 1px 0 0; }
+.chain .lbl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-family: var(--mono); font-size: 9.5px; color: var(--muted); text-align: center; }
+
+h3.grp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 10px; font-size: 14px; margin-top: 4px; }
+h3.grp small { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--muted); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 5px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 7px 11px; border-bottom: 1px solid var(--hair); }
+th { font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: .04em; color: var(--muted);
+  background: var(--surface-2); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+td.r { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td.cell { text-align: center; font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 46px; padding: 5px 4px; }
+
+.readout { display: grid; background: var(--surface); border: 1px solid var(--hair); border-left: 3px solid var(--accent); border-radius: 4px; }
+.readout .rd { display: grid; grid-template-columns: 6.8em 1fr; gap: 5px 14px; padding: 11px 15px; align-items: start; }
+.readout .rd + .rd { border-top: 1px solid var(--hair); }
+.readout .lbl { font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; padding-top: 3px; color: var(--muted); }
+.readout .rd.did .lbl { color: var(--accent); }
+.readout .rd.next .lbl { color: var(--good); }
+.readout .body { display: grid; gap: 6px; min-width: 0; }
+.readout p { font-size: 13.5px; line-height: 1.68; color: var(--ink-2); max-width: 74ch; }
+.readout p strong { color: var(--ink); font-weight: 600; }
+.readout code { font-family: var(--mono); font-size: 12px; background: var(--surface-2); padding: 1px 4px; border-radius: 2px; }
+@media (max-width: 560px) { .readout .rd { grid-template-columns: 1fr; gap: 2px; } }
+
+.empty { padding: 16px; color: var(--muted); font-size: 13px; background: var(--surface); border: 1px dashed var(--rule); border-radius: 5px; }
+details { background: var(--surface); border: 1px solid var(--hair); border-radius: 5px; }
+details > summary { cursor: pointer; padding: 11px 15px; font-size: 13.5px; font-weight: 500; }
+details[open] > summary { border-bottom: 1px solid var(--hair); }
+details .in { padding: 12px 15px 15px; display: grid; gap: 10px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#tip { position: fixed; pointer-events: none; z-index: 20; background: var(--ink); color: var(--ground);
+  font: 400 12px/1.5 var(--mono); padding: 6px 9px; border-radius: 4px; max-width: 290px; white-space: pre-line; }
+</style>
+
+<div class="wrap" id="app"></div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+const el = (tag, attrs, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null) continue;
+    if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
+    else if (k === 'class') n.className = v; else n.setAttribute(k, v);
+  }
+  for (const k of kids.flat(9)) {
+    if (k == null || k === false) continue;
+    n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  }
+  return n;
+};
+// **굵게** 와 `코드` 를 실제 노드로 만든다. innerHTML을 쓰지 않는 이유가 둘이다:
+// 데이터가 섞인 문자열을 HTML로 해석시키지 않고, 렌더 검사가 textContent로 내용을 읽을 수 있게 한다.
+const rich = t => String(t).split(/(\*\*[^*]+\*\*|`[^`]+`)/).filter(Boolean).map(s =>
+  s.startsWith('**') && s.endsWith('**') ? el('strong', {}, s.slice(2, -2))
+    : s.startsWith('`') && s.endsWith('`') ? el('code', {}, s.slice(1, -1))
+      : s);
+const fmt = (v, d = 0) => v == null || Number.isNaN(v) ? '—'
+  : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: d });
+const pct = v => v == null ? '—' : (v >= 0 ? '+' : '') + Math.round(v * 100) + '%';
+const chip = (s, t) => el('span', { class: 'chip ' + (s || '') }, t);
+
+const tip = document.getElementById('tip');
+function hover(node, text) {
+  if (!text) return node;
+  const move = e => {
+    const x = e.clientX, y = e.clientY;
+    tip.style.left = Math.min(x + 12, innerWidth - tip.offsetWidth - 8) + 'px';
+    tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px';
+  };
+  node.addEventListener('pointerenter', e => { tip.textContent = text; tip.hidden = false; move(e); });
+  node.addEventListener('pointermove', move);
+  node.addEventListener('pointerleave', () => { tip.hidden = true; });
+  node.tabIndex = 0;
+  node.addEventListener('focus', () => { tip.textContent = text; tip.hidden = false; });
+  node.addEventListener('blur', () => { tip.hidden = true; });
+  return node;
+}
+
+const SKILL = {
+  BasicAttack: '화살 쏘기', Whirlwind: '회오리', Orb: '오브', Lightning: '피뢰침', EagleDrop: '독수리 투하',
+  Sniping: '스나이핑', Homing: '호밍 미사일', Shotgun: '산탄', Rewind: '되감기', Swing: '휘두르기', GrapeToss: '포도 투척',
+};
+const sk = k => SKILL[k] || k;
+const SCN = {
+  swarm: '지상 무리', air_slow: '느린 비행', carrier: 'UFO 캐리어', shield: '방패', hopper: '콩콩이',
+  rider: '고속 돌진', elite: '엘리트 물량', late: '후반 고체력', mix_ground: '지상 혼합', mix_air: '공중 혼합',
+  mix_wall: '벽(방패와 엘리트)', tank: '단일 대상 지상', airship: '단일 대상 비행선', boss: '보스',
+};
+const scn = k => SCN[k] || k;
+const STATES = [[0, -1, '기본'], [1, 0, 'R0 1차'], [2, 0, 'R0 2차'], [1, 1, 'R1 1차'], [2, 1, 'R1 2차']];
+
+function readout(rows) {
+  const box = el('div', { class: 'readout' });
+  for (const [cls, label, items] of rows) {
+    const list = (items || []).filter(Boolean);
+    if (!list.length) continue;
+    box.append(el('div', { class: 'rd ' + cls }, el('span', { class: 'lbl' }, label),
+      el('div', { class: 'body' }, list.map(t => el('p', {}, rich(t))))));
+  }
+  return box;
+}
+// 절 머리말도 rich()를 거친다 — 그러지 않으면 굵게 표시가 별표 그대로 화면에 찍힌다.
+const head = (n, title, note) =>
+  el('div', { class: 'sec-head' }, el('div', { class: 'n' }, n), el('h2', {}, title), note ? el('p', {}, rich(note)) : null);
+
+function bars(items, opts) {
+  const o = opts || {};
+  const max = Math.max(1, ...items.map(i => Math.abs(i.value) || 0));
+  const box = el('div', { class: 'bars' });
+  for (const i of items) {
+    const fill = el('span', { class: 'fill' + (i.tone === 'bad' ? ' is-bad' : i.tone === 'good' ? ' is-good' : '') });
+    fill.style.width = ((Math.abs(i.value) / max) * 100).toFixed(2) + '%';
+    const row = el('div', { class: 'bar-row' },
+      el('div', { class: 'name' }, i.label, i.sub ? el('small', {}, i.sub) : null),
+      el('div', { class: 'track' }, fill),
+      el('div', { class: 'v' }, i.text != null ? i.text : fmt(i.value)));
+    hover(row, i.tip);
+    box.append(row);
+  }
+  if (o.ticks) {
+    const t = el('div', { class: 'ticks' });
+    for (const v of o.ticks) {
+      const s = el('span', {}, o.tickText ? o.tickText(v) : fmt(v));
+      s.style.left = ((v / max) * 100).toFixed(2) + '%';
+      t.append(s);
+    }
+    box.append(el('div', { class: 'scale' }, el('span', {}, o.axis || ''), t, el('span', {}, '')));
+  }
+  return box;
+}
+
+const app = document.getElementById('app');
+const IT = (() => {
+  const its = (DATA && DATA.iterations) || [];
+  const withGym = its.filter(x => x.gym && x.gym.quality.cells > 0);
+  if (!withGym.length) return null;
+  // 🔴 "셀이 가장 많은 회차"로 고르면 **격자를 좁힌 최신 회차가 옛 전체 격자에 가려진다.**
+  //    변경을 확인하는 회차는 건드린 스킬만 좁게 돌기 때문에 셀 수로는 늘 지고,
+  //    그러면 방금 적용한 변경이 보고서에 한 번도 안 나온다.
+  //    → 끝까지 돈(state가 done) 회차 중 **가장 최신**을 고르고, 끝난 회차가 없을 때만 셀이 가장 많은 것으로 물러선다
+  //      (중간에 양보·중단된 반쯤 찬 회차를 기본으로 열지 않기 위한 가드).
+  // 한 이터레이션에 세션이 여럿일 수 있다 — 중간에 양보·중단하고 다시 띄우면 그 회차의 세션이 둘이 된다.
+  // 그래서 "전부 done"이 아니라 **도는 것이 없고 끝난 것이 하나라도 있으면** 끝난 회차로 본다.
+  const done = withGym.filter(x => {
+    const st = x.sessionStates || [];
+    return st.length && !st.includes('running') && st.includes('done');
+  });
+  if (done.length) return done.reduce((a, b) => (b.iteration >= a.iteration ? b : a));
+  return withGym.reduce((a, b) => (b.gym.quality.cells >= a.gym.quality.cells ? b : a));
+})();
+
+if (!IT) {
+  app.append(el('header', { class: 'top' }, el('h1', {}, '스킬 시험장 판독지'),
+    el('div', { class: 'empty' }, '시험장 측정이 아직 없습니다. mode를 gym으로 둔 봇 세션을 요청한 뒤 분석기를 다시 돌리세요.')));
+} else {
+  const G = IT.gym, Q = G.quality;
+  const excluded = new Set((G.groups[0] && G.groups[0].excluded) || []);
+  const solo = G.rows.filter(r => r.rig === 'solo' && r.level === 10 && r.growthCasts === 0);
+  const at = (skill, stage, route, scenario) => solo.find(r => r.skill === skill && r.scenario === scenario
+    && r.evoStage === stage && (stage === 0 || r.route === route));
+  const dpsScn = G.scenarios.includes('tank') ? 'tank'
+    : G.scenarios.find(s => G.rows.some(r => r.scenario === s && r.arenaKind === 'dps'));
+  const attackSkills = [...new Set(solo.map(r => r.skill))].filter(s => !excluded.has(s)).sort();
+  const best2 = (skill, scenario) => [at(skill, 2, 0, scenario), at(skill, 2, 1, scenario)]
+    .filter(c => c && c.usable).sort((a, b) => b.dps - a.dps)[0];
+  const rank = attackSkills.map(s => {
+    const c = best2(s, dpsScn), pre = at(s, 0, -1, dpsScn);
+    return c ? { skill: s, dps: c.dps, route: c.route, pre: pre && pre.usable ? pre.dps : null } : null;
+  }).filter(Boolean).sort((a, b) => b.dps - a.dps);
+
+  // 🔴 **머리 문장은 단일 대상 서열로 쓰지 않는다.** 그 한 무대의 숫자는 "얼마나 센가"가 아니라
+  //    "얼마나 단일 대상에 특화됐나"를 잰다. 독수리 투하는 단일 대상 157인데 지상 무리에서는 8,045다 — 광역기라서다.
+  //    스킬끼리 공평하게 비교하려면 **각 스킬이 가장 잘하는 상황에서 그 상황 중앙값을 얼마나 넘는지**를 본다.
+  const scnMedian = {};
+  for (const scName of G.scenarios) {
+    const v = attackSkills.map(x => best2(x, scName)).filter(Boolean).map(c => c.dps);
+    scnMedian[scName] = v.length ? v.slice().sort((a, b) => a - b)[v.length >> 1] : null;
+  }
+  const bestOf = skill => G.scenarios.map(scName => {
+    const c = best2(skill, scName);
+    return c && scnMedian[scName] > 0 ? { scn: scName, nv: c.dps / scnMedian[scName], dps: c.dps } : null;
+  }).filter(Boolean).sort((a, b) => b.nv - a.nv)[0];
+  const strength = attackSkills.map(s => ({ skill: s, best: bestOf(s) })).filter(x => x.best)
+    .sort((a, b) => b.best.nv - a.best.nv);
+  const noStrength = strength.filter(x => x.best.nv <= 1.0);
+
+  // ── 머리 ──
+  app.append(el('header', { class: 'top' },
+    el('div', { class: 'eyebrow' }, '블루베리 디펜스 · 스킬 시험장'),
+    el('h1', {}, '스킬 시험장 판독지'),
+    el('p', { class: 'verdict' }, rich(strength.length
+      ? (noStrength.length
+        ? `2차 진화체 ${strength.length}개 중 **${noStrength.map(x => sk(x.skill)).join(' · ')}** 는 ${fmt(G.scenarios.length)}개 상황 **어디에서도 중앙값을 못 넘습니다.** 나머지는 각자 잘하는 상황이 있고, 가장 뚜렷한 것은 ${sk(strength[0].skill)}입니다. ${scn(strength[0].best.scn)}에서 중앙값의 ${fmt(strength[0].best.nv, 1)}배입니다.`
+        : `2차 진화체 ${strength.length}개가 모두 잘하는 상황을 하나 이상 갖고 있습니다. 가장 뚜렷한 것은 ${sk(strength[0].skill)}이고, ${scn(strength[0].best.scn)}에서 중앙값의 ${fmt(strength[0].best.nv, 1)}배입니다.`)
+      : '2차 진화 비교를 아직 채우지 못했습니다.')),
+    el('div', { class: 'chips' },
+      chip(Q.usable === Q.cells ? 'good' : '', `쓸 수 있는 셀 ${fmt(Q.usable)} / ${fmt(Q.cells)}`),
+      Q.rigFailed.length ? chip('bad', `상태 강제 실패 ${Q.rigFailed.length}`) : chip('good', '상태 강제 실패 없음'),
+      (Q.residual || []).length ? chip('bad', `앞 셀 오염 ${Q.residual.length}`) : chip('good', '앞 셀 오염 없음'),
+      (Q.arenaLimited || []).length ? chip('warn', `무대 천장 ${Q.arenaLimited.length}`) : chip('good', '무대 천장 없음')),
+    el('div', { class: 'meta' },
+      el('span', {}, `이터레이션 ${IT.iteration}`),
+      IT.plan && IT.plan.verdict ? el('span', {}, `판정 ${IT.plan.verdict}`) : null,
+      el('span', {}, `셀 ${fmt(Q.cells)}개`),
+      el('span', {}, new Date(DATA.generatedUtc).toLocaleString('ko-KR')))));
+
+  // ── §00 측정 방법 — 데이터보다 위 ──
+  {
+    const s = el('section', {});
+    s.append(head('00', '이 숫자는 어떻게 나왔는가', '아래 모든 표는 같은 조건에서 나왔습니다. 조건을 모르면 숫자를 잘못 읽습니다.'));
+    const rows = [
+      ['무엇을 재나', '스킬을 **하나만** 들고 고정된 적 구성을 상대합니다. 같은 스킬을 진화 상태마다 따로 재서, 상태끼리 비교할 수 있게 만듭니다.'],
+      ['한 칸의 조건', `스킬 하나 · 진화 상태 하나 · 레벨 하나 · 적 구성 하나. 이 넷을 정해 놓고 **고정된 게임 시간** 동안 돌립니다. 상황마다 45초에서 60초입니다. 그 한 번을 셀이라고 부르고, 이번에는 ${fmt(Q.cells)}칸을 돌렸습니다.`],
+      ['진화 상태', '기본 · R0 1차 · R0 2차 · R1 1차 · R1 2차, 다섯 가지입니다. 진화 조건과 2차 열쇠는 무시하고 상태를 직접 세웁니다. 그래서 실제 게임에서 만들기 어려운 진화체도 똑같이 측정됩니다.'],
+      ['레벨', '**1레벨과 10레벨을 둘 다** 잽니다. 성장 폭이 상황마다 달라서, 10레벨만 재면 그 차이가 보이지 않습니다.'],
+      ['스킬트리', '**그 스킬의 강화 노드 둘만** 켭니다. 은별과 금별입니다. 공격력이나 쿨타임 같은 일반 노드는 모든 스킬에 똑같이 얹혀서 비교를 흐리므로 사지 않습니다. 패시브도 없습니다.'],
+      ['무대', `적 구성은 ${fmt(G.scenarios.length)}가지입니다. 스테이지 표와 난이도 배율을 쓰지 않고 시험장이 적 세기를 직접 정합니다. 그래서 맵 밸런스를 바꿔도 이 숫자는 움직이지 않습니다.`],
+      ['체력 잠금', '플레이어가 죽지 않습니다. 모든 칸이 시간을 끝까지 채워야 서로 비교가 되기 때문입니다. 대신 죽는지는 재지 않고 **받은 피해**와 **놓친 적**으로 읽습니다.'],
+      ['숫자의 뜻', '**초당 유효딜**입니다. 적의 남은 체력을 넘은 몫은 빼고 셉니다. 시험 대상이 만든 딜은 이름이 달라도 모두 더합니다. 게임이 딜 출처를 오브젝트 종류로 적기 때문입니다. 예를 들어 독수리 투하가 뿜는 회오리는 회오리 이름으로 기록됩니다.'],
+      ['비교 범위', '적 체력을 진화 차수마다 다르게 두었습니다. 1배 · 3배 · 9배입니다. 한 무대로는 기본과 2차의 파워 차이를 담을 수 없기 때문입니다. **그래서 차수를 넘는 비교는 적이 죽지 않는 단일 대상 무대에서만** 합니다.'],
+      ['못 재는 것', '되감기 · 피뢰침 · 집중 산탄은 혼자 두면 딜이 거의 없습니다. 남의 쿨타임과 타수를 건드리는 스킬이라 그렇습니다. 이 셋은 06절에서 따로 잽니다.'],
+      ['판정 하한', `같은 칸을 순서의 앞과 뒤에 두 번 넣어 잰 차이가 ${G.noise.maxSpread != null ? '최대 ' + Math.round(G.noise.maxSpread * 100) + '%' : '앞선 회차 기준 4.5%'}입니다. 이보다 작은 차이는 판정하지 않습니다.`],
+    ];
+    const m = el('div', { class: 'method' });
+    for (const [k, v] of rows)
+      m.append(el('div', { class: 'm' }, el('span', { class: 'k' }, k), el('div', { class: 'v' }, rich(v))));
+    s.append(m);
+    app.append(s);
+  }
+
+  // ── §01 전 스킬 × 전 진화 단계 파워 표 ──
+  // 한 절에서 세 가지를 답한다: ① 전 스킬을 진화 단계별로 나란히 놓은 표 ② 목표 밴드 안에 몇 퍼센트가 드는가 ③ 단계별 순위.
+  // 🔴 파워의 정의는 여기 한 곳에만 둔다. 아래 절들은 각자 다른 질문(가장 잘하는 상황 · 진화 배율)을 보므로 숫자가 다르다.
+  const BAND = (DATA.targets && DATA.targets.skillPowerBand) || [0.7, 1.4];
+  const median = a => {
+    const v = a.slice().sort((x, y) => x - y);
+    if (!v.length) return null;
+    return v.length % 2 ? v[v.length >> 1] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+  };
+  // 진화 차수마다 적 체력이 1배·3배·9배로 달라서 차수를 넘는 비교가 안 된다.
+  // 그래서 **그룹 안에서만** 중앙값을 세우고, 그 중앙값 대비 배율로 줄을 세운다.
+  const STAGE_GROUPS = [
+    [0, '기본 — 진화 전', [[0, -1, '']]],
+    [1, '1차 진화', [[1, 0, 'R0'], [1, 1, 'R1']]],
+    [2, '2차 진화', [[2, 0, 'R0'], [2, 1, 'R1']]],
+  ];
+  const powerGroups = STAGE_GROUPS.map(([stage, label, states]) => {
+    const keys = [];
+    for (const s of attackSkills)
+      for (const [st, rt, rl] of states)
+        keys.push({ skill: s, stage: st, route: rt, label: sk(s), sub: rl });
+    const medBy = {};
+    for (const scName of G.scenarios) {
+      const v = keys.map(k => at(k.skill, k.stage, k.route, scName))
+        .filter(c => c && c.usable && c.dps > 0).map(c => c.dps);
+      // 표본이 셋 미만이면 그 상황의 중앙값을 신뢰할 수 없으므로 그 상황을 버린다.
+      medBy[scName] = v.length >= 3 ? median(v) : null;
+    }
+    const rows = keys.map(k => {
+      const per = G.scenarios.map(scName => {
+        const c = at(k.skill, k.stage, k.route, scName);
+        return c && c.usable && medBy[scName] > 0
+          ? { scn: scName, nv: c.dps / medBy[scName], dps: c.dps } : null;
+      }).filter(Boolean);
+      if (per.length < 5) return null;   // 상황 다섯 곳을 못 채운 상태는 줄 세우지 않는다
+      const byNv = per.slice().sort((a, b) => b.nv - a.nv);
+      return Object.assign({}, k, {
+        power: median(per.map(p => p.nv)), top: byNv[0], bot: byNv[byNv.length - 1], n: per.length,
+      });
+    }).filter(Boolean).sort((a, b) => b.power - a.power);
+    const inBand = rows.filter(r => r.power >= BAND[0] && r.power <= BAND[1]);
+    const lo = rows.length ? rows[rows.length - 1].power : null;
+    return {
+      stage, label, rows, inBand: inBand.length,
+      over: rows.filter(r => r.power > BAND[1]).length,
+      under: rows.filter(r => r.power < BAND[0]).length,
+      pctIn: rows.length ? inBand.length / rows.length : null,
+      spread: lo > 0 ? rows[0].power / lo : null,
+    };
+  }).filter(g => g.rows.length);
+
+  {
+    const s = el('section', {});
+    s.append(head('01', '전 스킬 · 전 진화 단계 파워 표',
+      `한 상태의 파워는 그 상황의 중앙값 대비 배율을, 여러 상황에 걸쳐 다시 중앙값 낸 값입니다. `
+      + `1배가 그 단계의 평균이고 목표 밴드는 \`${BAND[0]}\`배에서 \`${BAND[1]}\`배입니다. `
+      + `🔴 **같은 단계끼리만 비교합니다** — 단계마다 적 체력을 1배·3배·9배로 다르게 두었기 때문입니다. `
+      + `중앙값을 세울 때 빼는 것 셋: 쓸 수 없는 칸(앞 셀 오염·무대 천장·상태 강제 실패) · 딜이 0인 칸 · `
+      + `혼자서는 딜이 없는 버프 스킬 세 개. 상황마다 표본이 셋 미만이면 그 상황을 버리고, `
+      + `상황 다섯 곳을 못 채운 상태는 줄을 세우지 않습니다. **이 규칙이 바뀌면 비율도 바뀝니다** — 다른 숫자와 견줄 때 규칙을 먼저 맞추십시오.`));
+
+    if (!powerGroups.length) s.append(el('div', { class: 'empty' }, '파워를 낼 만큼 셀이 모이지 않았습니다.'));
+    else {
+      const allRows = powerGroups.flatMap(g => g.rows);
+      const allIn = powerGroups.reduce((a, g) => a + g.inBand, 0);
+      s.append(el('div', { class: 'chips' },
+        chip(allIn / allRows.length >= 0.7 ? 'good' : allIn / allRows.length >= 0.4 ? 'warn' : 'bad',
+          `전체 밴드 안 ${allIn} / ${allRows.length} (${Math.round(100 * allIn / allRows.length)}%)`),
+        ...powerGroups.map(g => chip(g.pctIn >= 0.7 ? 'good' : g.pctIn >= 0.4 ? 'warn' : 'bad',
+          `${g.label} ${g.inBand}/${g.rows.length} (${Math.round(100 * g.pctIn)}%)`))));
+
+      for (const g of powerGroups) {
+        s.append(el('h3', { class: 'grp' }, g.label,
+          el('small', {}, `상태 ${g.rows.length}개 · 밴드 안 ${g.inBand}개`
+            + ` · 초과 ${g.over}개 · 미달 ${g.under}개`
+            + (g.spread ? ` · 최고÷최저 ${fmt(g.spread, 1)}배` : ' · 최저가 0이라 배율을 못 냄'))));
+        s.append(el('div', { class: 'scroll' }, el('table', {},
+          el('thead', {}, el('tr', {},
+            el('th', { class: 'r' }, '순위'), el('th', {}, '스킬'), el('th', { class: 'r' }, '파워'),
+            el('th', {}, '밴드'), el('th', {}, '가장 센 상황'), el('th', { class: 'r' }, '배율'),
+            el('th', {}, '가장 약한 상황'), el('th', { class: 'r' }, '배율'))),
+          el('tbody', {}, g.rows.map((r, i) => el('tr', {},
+            el('td', { class: 'r mono muted' }, i + 1),
+            el('td', {}, r.label, r.sub ? el('small', { class: 'muted mono' }, ' ' + r.sub) : null),
+            hover(el('td', { class: 'r mono' }, fmt(r.power, 2) + '배'),
+              `${sk(r.skill)}${r.sub ? ' ' + r.sub : ''} · ${g.label}\n`
+              + `상황 ${r.n}곳에서 잰 배율의 중앙값 ${r.power.toFixed(2)}\n`
+              + `가장 센 곳 ${scn(r.top.scn)} ${r.top.nv.toFixed(2)}배 (${fmt(r.top.dps)} dps)\n`
+              + `가장 약한 곳 ${scn(r.bot.scn)} ${r.bot.nv.toFixed(2)}배 (${fmt(r.bot.dps)} dps)`),
+            el('td', {}, r.power > BAND[1] ? chip('bad', '초과')
+              : r.power < BAND[0] ? chip('warn', '미달') : chip('good', '안')),
+            el('td', {}, scn(r.top.scn)),
+            el('td', { class: 'r mono' }, fmt(r.top.nv, 2) + '배'),
+            el('td', {}, scn(r.bot.scn)),
+            el('td', { class: 'r mono' }, fmt(r.bot.nv, 2) + '배')))))));
+      }
+
+      const worst = powerGroups.slice().sort((a, b) => a.pctIn - b.pctIn)[0];
+      const over = allRows.filter(r => r.power > BAND[1]).sort((a, b) => b.power - a.power);
+      const under = allRows.filter(r => r.power < BAND[0]).sort((a, b) => a.power - b.power);
+      const nm = r => sk(r.skill) + (r.sub ? ' ' + r.sub : '');
+      s.append(readout([
+        ['now', '해석', [
+          `밴드 안에 든 것은 전체 ${allRows.length}개 상태 중 **${allIn}개(${Math.round(100 * allIn / allRows.length)}%)** 입니다. `
+          + powerGroups.map(g => `${g.label} ${Math.round(100 * g.pctIn)}%`).join(' · ') + '.',
+          `🔴 **진화를 거칠수록 벌어집니다.** 가장 안 맞는 단계는 **${worst.label}** 로, `
+          + `${worst.rows.length}개 중 ${worst.inBand}개만 밴드 안입니다`
+          + (worst.spread ? ` (최고÷최저 ${fmt(worst.spread, 1)}배)` : ' (최저가 0이라 배율을 못 냅니다)') + '.',
+          over.length
+            ? `밴드를 넘은 것은 ${over.length}개이고 가장 센 것은 **${nm(over[0])}** ${fmt(over[0].power, 2)}배입니다`
+              + (over.length > 1 ? `, 그다음이 ${nm(over[1])} ${fmt(over[1].power, 2)}배입니다.` : '.')
+            : '밴드를 넘은 상태는 없습니다.',
+          under.length
+            ? `밴드에 못 미친 것은 ${under.length}개이고 가장 약한 것은 **${nm(under[0])}** ${fmt(under[0].power, 2)}배입니다.`
+            : '밴드에 못 미친 상태는 없습니다.',
+          '🔴 파워가 모두 같을 필요는 없습니다. 밴드는 **고를 이유가 생기는 구간**이고, 넘으면 다른 선택지를 지우고 못 미치면 그 자신이 지워집니다.',
+        ]],
+        ['did', '내가 만진 것', [
+          '이 표를 이번에 새로 넣었습니다. 전에는 각 스킬이 가장 잘하는 상황만 보여서 **절대 파워가 밴드 안인지**가 안 보였습니다.',
+          '🔴 **순위를 단일 대상 무대의 초당 딜로 세우지 않습니다.** 그 숫자는 "얼마나 센가"가 아니라 "얼마나 단일 대상에 특화됐나"를 잽니다. 광역기가 최하위로 보입니다.',
+          IT.plan && IT.plan.changes && IT.plan.changes.length
+            ? `이번 회차에 데이터 에셋 ${IT.plan.changes.length}묶음을 고쳤습니다. 무엇을 왜 고쳤는지는 마지막 절에 있습니다.`
+            : '이번 회차에는 밸런스 수치를 바꾸지 않았습니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          over.length
+            ? `넘친 쪽부터 줄입니다. **진화 스킬이 강하면 쿨타임부터**(\`Evo_*.baseCooldown\`) 만지고, 그걸로 안 되면 피해를 만집니다.`
+            : '넘친 쪽은 없습니다.',
+          under.length
+            ? `못 미친 쪽은 **가장 덜 뒤진 상황의 축**을 올립니다. 전체 피해를 올리면 순위만 뒤집히고 정체성은 생기지 않습니다. 어느 상황이 덜 뒤졌는지는 이 표의 "가장 센 상황" 칸에 있습니다.`
+            : '못 미친 쪽은 없습니다.',
+          '⚠️ 되감기 · 피뢰침 · 집중 산탄은 이 표에 없습니다. 혼자서는 딜이 거의 없는 스킬이라 파워 배율로 판정할 수 없고, 뒤쪽 동반 릭 절에서 따로 잽니다.',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §02 2차 진화 서열 ──
+  {
+    const s = el('section', {});
+    s.append(head('02', '2차 진화체마다 가장 잘하는 상황', `${fmt(G.scenarios.length)}개 상황 중 그 스킬이 가장 센 곳. 값은 그 상황의 중앙값 대비 배율입니다. 1배가 평균이고, 1배를 못 넘으면 어디에서도 남보다 낫지 않다는 뜻입니다.`));
+    if (!strength.length) s.append(el('div', { class: 'empty' }, '2차 진화 셀이 아직 없습니다.'));
+    else {
+      s.append(bars(strength.map(x => ({
+        label: sk(x.skill), sub: scn(x.best.scn), value: x.best.nv, text: fmt(x.best.nv, 1) + '배',
+        tone: x.best.nv <= 1.0 ? 'bad' : x.best.nv > 5 ? 'good' : null,
+        tip: `${sk(x.skill)} 2차\n가장 센 상황 ${scn(x.best.scn)}\n그 상황 중앙값의 ${x.best.nv.toFixed(2)}배 (${fmt(x.best.dps)} dps)`,
+      })), { axis: '중앙값 대비', ticks: [0, 1, strength[0].best.nv], tickText: v => fmt(v, 1) + '배' }));
+      s.append(readout([
+        ['now', '해석', [
+          noStrength.length
+            ? `**${noStrength.map(x => sk(x.skill)).join(' · ')}** 는 어느 상황에서도 중앙값을 넘지 못합니다. 고를 이유가 없는 진화체입니다.`
+            : '모든 2차 진화체가 잘하는 상황을 하나 이상 갖고 있습니다.',
+          `가장 뚜렷한 특화는 **${sk(strength[0].skill)}** 입니다. ${scn(strength[0].best.scn)}에서 중앙값의 ${fmt(strength[0].best.nv, 1)}배입니다.`,
+          '파워가 같을 필요는 없습니다. 필요한 것은 각자 잘하는 자리가 있는 것입니다.',
+        ]],
+        ['did', '내가 만진 것', [
+          '🔴 **이 절의 기준을 바꿨습니다.** 처음에는 단일 대상 무대의 초당 딜로 서열을 세웠는데, 그 숫자는 "얼마나 센가"가 아니라 "얼마나 단일 대상에 특화됐나"를 잽니다.',
+          '독수리 투하가 그 오독을 드러냈습니다. 단일 대상에서 157인데 지상 무리에서는 8,045입니다. 광역기라서 그렇습니다. 단일 대상 서열로는 이 스킬이 최하위로 보입니다.',
+          '밸런스 수치는 바꾸지 않았습니다. 무엇을 고쳤는지는 08절에 있습니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          noStrength.length
+            ? `**${noStrength.map(x => sk(x.skill)).join(' · ')}** 가 가장 덜 뒤진 상황을 04절에서 찾고, 그 상황의 축을 올립니다. 전체 피해를 올리면 서열만 뒤집히고 정체성은 생기지 않습니다.`
+            : '이 기준은 통과했습니다. 다음은 진화가 값을 주는지(02절)를 봅니다.',
+          '🔴 원인을 진화 에셋의 빈칸으로 단정하지 마십시오. 이번 측정에서 **스나이핑은 에셋이 네 개 다 비어 있는데 엘리트에서 중앙값의 8.3배**이고, **독수리 투하는 네 개 다 채워져 있는데 어디에서도 1배를 못 넘습니다.**',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §03 진화가 값을 주는가 ──
+  {
+    const s = el('section', {});
+    s.append(head('03', '진화가 값을 주는가', '2차 진화의 초당 딜을 기본 상태로 나눈 값. 각 스킬이 **가장 잘하는 상황에서** 재므로 광역기와 단일 대상기를 함께 놓을 수 있습니다. 진화 두 번이 코드에서 주는 기본 도약만으로도 2.25배입니다.'));
+    // 🔴 배율도 단일 대상 무대에서 재면 광역기가 부당하게 낮게 나온다 — 그 스킬이 가장 잘하는 상황에서 잰다.
+    const gain = strength.map(x => {
+      const scName = x.best.scn;
+      const pre = at(x.skill, 0, -1, scName);
+      return pre && pre.usable && pre.dps > 0
+        ? { skill: x.skill, ratio: x.best.dps / pre.dps, route: (best2(x.skill, scName) || {}).route, scn: scName }
+        : null;
+    }).filter(Boolean).sort((a, b) => b.ratio - a.ratio);
+    if (!gain.length) s.append(el('div', { class: 'empty' }, '기본 상태 셀이 없어 배율을 낼 수 없습니다.'));
+    else {
+      s.append(bars(gain.map(x => ({
+        label: sk(x.skill), sub: scn(x.scn), value: x.ratio, text: fmt(x.ratio, 1) + '배',
+        tone: x.ratio < 3 ? 'bad' : null,
+        tip: `${sk(x.skill)} R${x.route}\n${scn(x.scn)} 무대에서 기본에서 2차까지 ${x.ratio.toFixed(1)}배\n코드가 주는 기본 도약은 2.25배`,
+      })), { axis: '배율', ticks: [0, gain[0].ratio / 2, gain[0].ratio], tickText: v => fmt(v) + '배' }));
+      const flat = gain.filter(x => x.ratio < 3);
+      s.append(readout([
+        ['now', '해석', [
+          flat.length
+            ? `**${flat.map(f => sk(f.skill) + ' ' + fmt(f.ratio, 1) + '배').join(' · ')}**. 진화를 두 번 거쳤는데 코드가 공짜로 주는 2.25배에 겨우 붙습니다. 진화가 값을 거의 주지 않고 있다는 뜻입니다.`
+            : '모든 스킬이 기본 도약보다 크게 자랍니다.',
+          `가장 큰 쪽은 **${sk(gain[0].skill)} ${fmt(gain[0].ratio, 1)}배**입니다. 같은 진화 두 번인데 스킬마다 이만큼 벌어집니다.`,
+        ]],
+        ['did', '내가 만진 것', [
+          '진화 에셋 44개를 전부 열어 어느 것이 채워졌는지 셌습니다. 18개가 채워져 있고 26개가 비어 있습니다.',
+          '🔴 그리고 **빈 에셋이 약한 원인이라는 설명을 접었습니다.** 채움 여부와 파워가 맞지 않습니다. 스나이핑은 네 개 모두 비어 있는데 서열 2위이고, 독수리 투하는 네 개 모두 채워져 있는데 아래쪽입니다.',
+          '값은 채우지 않았습니다. 칸반의 「진화 밸런스 — 진화 SO 값 채우기」가 진행 중이라, 작업 중인 설계를 추측으로 덮지 않았습니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '배율이 낮은 스킬이 04절에서 강점을 하나라도 갖는지 봅니다. 가지면 그 스킬은 특화형이고, 배율이 낮은 것 자체는 문제가 아닙니다.',
+          '강점이 하나도 없으면 진화 효과 쪽을 봐야 합니다. 진화 효과의 배수는 코드에 있어서 루프가 고치지 않고 제안만 적습니다.',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §04 스킬별 진화 사슬 ──
+  {
+    const s = el('section', {});
+    s.append(head('04', '스킬 하나가 다섯 상태를 지나는 모양', '막대 높이는 그 스킬 안에서의 상대값입니다. 카드 오른쪽 숫자는 기본에서 2차까지의 배율입니다.'));
+    const grid = el('div', { class: 'chain-grid' });
+    for (const r of rank) {
+      const cs = STATES.map(([st, rt]) => at(r.skill, st, rt, dpsScn));
+      const vals = cs.map(c => (c && c.usable ? c.dps : 0));
+      const mx = Math.max(1, ...vals);
+      const steps = el('div', { class: 'steps' });
+      vals.forEach((v, i) => {
+        const b = el('i', {});
+        b.style.height = Math.max(3, (v / mx) * 54).toFixed(1) + 'px';
+        hover(b, `${sk(r.skill)} · ${STATES[i][2]}\n`
+          + (cs[i] ? fmt(cs[i].dps) + ' dps' + (cs[i].usable ? '' : ' (쓸 수 없는 셀)') : '셀 없음'));
+        steps.append(b);
+      });
+      grid.append(el('div', { class: 'chain' },
+        el('div', { class: 't' }, el('span', { class: 'nm' }, sk(r.skill)),
+          el('span', { class: 'x' }, r.pre && r.pre > 0 ? fmt(r.dps / r.pre, 1) + '배' : '—')),
+        steps,
+        el('div', { class: 'lbl' }, STATES.map(st => el('span', {}, st[2])))));
+    }
+    s.append(grid);
+    const jump = rank.map(r => {
+      const a = at(r.skill, 1, r.route, dpsScn), b = at(r.skill, 2, r.route, dpsScn);
+      return a && b && a.usable && b.usable && a.dps > 0 ? { skill: r.skill, k: b.dps / a.dps } : null;
+    }).filter(Boolean).sort((a, b) => b.k - a.k);
+    s.append(readout([
+      ['now', '해석', [
+        jump.length
+          ? `1차에서 2차로 가는 도약이 가장 큰 쪽은 **${sk(jump[0].skill)} ${fmt(jump[0].k, 1)}배**, 가장 작은 쪽은 **${sk(jump[jump.length - 1].skill)} ${fmt(jump[jump.length - 1].k, 1)}배**입니다.`
+          : '사슬을 채울 셀이 모자랍니다.',
+        '사슬이 어디서 끊기는지가 손잡이를 고릅니다. 1차가 낮으면 진화 시작값을 보고, 2차만 낮으면 2차 전용 효과를 봅니다.',
+        '두 루트가 한 카드에 같이 있습니다. 한쪽 루트만 자라는 스킬은 그 루트가 사실상 유일한 선택지가 됩니다.',
+      ]],
+      ['did', '내가 만진 것', [
+        '적 체력을 진화 차수마다 1배 · 3배 · 9배로 나눴습니다. 한 무대로는 250배 파워 범위를 담을 수 없기 때문입니다.',
+        '그래서 이 사슬은 적이 죽지 않는 단일 대상 무대에서만 그립니다. 다른 무대에서는 차수 간 비교가 성립하지 않습니다.',
+      ]],
+      ['next', '다음에 볼 것', [
+        '사슬이 평평한 스킬부터 고칩니다. 1차와 2차 중 어디가 끊겼는지에 따라 1차 에셋이나 2차 에셋을 고릅니다.',
+      ]],
+    ]));
+    app.append(s);
+  }
+
+  // ── §05 상황별 강점 ──
+  {
+    const s = el('section', {});
+    s.append(head('05', '2차 진화마다 잘하는 상황과 못하는 상황', `${fmt(G.scenarios.length)}개 상황 중 가장 센 곳과 가장 약한 곳. 배율은 그 상황의 중앙값 대비입니다.`));
+    const perScn = {};
+    for (const scName of G.scenarios) {
+      const vals = attackSkills.map(x => best2(x, scName)).filter(Boolean).map(c => c.dps);
+      perScn[scName] = vals.length ? vals.slice().sort((a, b) => a - b)[vals.length >> 1] : null;
+    }
+    const rows = [];
+    for (const r of rank) {
+      const list = G.scenarios.map(scName => {
+        const c = best2(r.skill, scName);
+        return c && perScn[scName] > 0 ? { scn: scName, nv: c.dps / perScn[scName], dps: c.dps } : null;
+      }).filter(Boolean).sort((a, b) => b.nv - a.nv);
+      if (list.length < 3) continue;
+      rows.push({ skill: r.skill, route: r.route, top: list[0], bot: list[list.length - 1] });
+    }
+    if (!rows.length) s.append(el('div', { class: 'empty' }, '상황별 비교를 채울 셀이 모자랍니다.'));
+    else {
+      s.append(el('div', { class: 'scroll' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, '2차 진화'), el('th', {}, '가장 센 상황'), el('th', { class: 'r' }, '배율'),
+          el('th', {}, '가장 약한 상황'), el('th', { class: 'r' }, '배율'))),
+        el('tbody', {}, rows.map(x => el('tr', {},
+          el('td', {}, sk(x.skill), el('small', { class: 'muted mono' }, ' R' + x.route)),
+          el('td', {}, scn(x.top.scn)),
+          hover(el('td', { class: 'r' }, fmt(x.top.nv, 2) + '배'), fmt(x.top.dps) + ' dps'),
+          el('td', {}, scn(x.bot.scn)),
+          hover(el('td', { class: 'r' }, fmt(x.bot.nv, 2) + '배'), fmt(x.bot.dps) + ' dps')))))));
+      const none = rows.filter(x => x.top.nv < 1).map(x => sk(x.skill) + ' R' + x.route);
+      s.append(readout([
+        ['now', '해석', [
+          none.length
+            ? `**${none.join(' · ')}** 는 ${fmt(G.scenarios.length)}개 상황 어디에서도 중앙값을 넘지 못합니다. 집을 이유가 없는 진화체입니다.`
+            : '모든 2차 진화가 적어도 한 상황에서 중앙값을 넘습니다.',
+          '파워가 같을 필요는 없습니다. 초반에 약하면 후반에 강하거나, 비행 유닛을 잘 잡는 식이면 됩니다. 없어야 하는 것은 모든 상황에서 뒤지는 진화체입니다.',
+        ]],
+        ['did', '내가 만진 것', [
+          `상황을 ${fmt(G.scenarios.length)}가지로 나눴습니다. 적 한 종류만 나오는 무대 열 개에 여러 종류가 섞인 무대 셋과 보스를 더했습니다.`,
+          '섞인 무대를 넣은 이유는, 속도가 다른 적이 함께 있을 때 스킬이 무엇을 먼저 때리는지가 한 종류만으로는 안 잡히기 때문입니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '강점이 없는 진화체는 가장 덜 뒤진 상황의 축을 올립니다. 전체 피해를 올리면 서열만 뒤집히고 정체성은 생기지 않습니다.',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §05-B 딜이 0인 칸 — 상성인가 버그인가 ──
+  {
+    const zero = solo.filter(r => r.usable && r.casts > 0 && r.dps === 0 && !excluded.has(r.skill));
+    if (zero.length) {
+      const s = el('section', {});
+      s.append(head('05-B', '발동은 했는데 딜이 0인 칸', '스킬이 나갔는데 아무것도 맞히지 못한 칸입니다. 상성으로 막힌 것과 버그를 갈라야 합니다.'));
+      const byState = {};
+      for (const r of zero) {
+        const k = `${r.skill}|${r.evoStage}|${r.route}`;
+        (byState[k] = byState[k] || []).push(r.scenario);
+      }
+      const rows2 = Object.entries(byState).map(([k, scns]) => {
+        const [skill, st, rt] = k.split('|');
+        // 같은 상태가 딜을 내는 상황이 있는지 — 있으면 상성, 하나도 없으면 스킬 자체가 안 나가는 것이다
+        const works = solo.filter(r => r.skill === skill && String(r.evoStage) === st && String(r.route) === rt
+          && r.usable && r.dps > 0).map(r => r.scenario);
+        return { skill, state: st === '0' ? '기본' : `R${rt} ${st}차`, zero: scns, works };
+      }).sort((a, b) => b.zero.length - a.zero.length);
+      s.append(el('div', { class: 'scroll' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, '스킬'), el('th', {}, '상태'), el('th', { class: 'r' }, '0인 상황'),
+          el('th', {}, '딜이 나오는 상황'))),
+        el('tbody', {}, rows2.map(x => el('tr', {},
+          el('td', {}, sk(x.skill)), el('td', {}, x.state),
+          hover(el('td', { class: 'r' }, fmt(x.zero.length) + ' / ' + fmt(G.scenarios.length)), x.zero.map(scn).join('\n')),
+          el('td', { class: x.works.length ? '' : 'muted' },
+            x.works.length ? x.works.map(scn).join(' · ') : '없음')))))));
+      const partial = rows2.filter(x => x.works.length);
+      const none = rows2.filter(x => !x.works.length);
+      s.append(readout([
+        ['now', '해석', [
+          partial.length
+            ? `**${partial.map(x => sk(x.skill) + ' ' + x.state).join(' · ')}** 는 어떤 상황에서는 딜이 나오고 어떤 상황에서는 0입니다. 스킬이 안 나가는 것이 아니라 **특정 적에게 닿지 못하는** 것입니다.`
+            : null,
+          none.length
+            ? `**${none.map(x => sk(x.skill) + ' ' + x.state).join(' · ')}** 는 어느 상황에서도 딜이 0입니다. 이쪽은 스킬 자체가 목표를 못 찾는 경우입니다.`
+            : null,
+        ]],
+        ['did', '내가 만진 것', [
+          '오브 R0 2차의 원인을 코드에서 찾았습니다. `FireOrb`가 스폰 높이에 `HugeOrbExtraLift` 1.8을 더합니다. 주석대로 **그림이 96픽셀로 커진 것을 보정**하려는 값입니다.',
+          '그런데 오브 프리팹 세 개는 **충돌 판정이 전부 같습니다**. 그래서 그림 보정이 히트박스까지 올려, 아래 가장자리가 적이 걸어오는 높이보다 위로 뜹니다. 공중 적만 맞는 이유입니다.',
+          '고치지는 않았습니다. 게임 로직이라 루프가 손대지 않고 제안만 적었습니다. 올림을 그림에만 주면 됩니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '각 칸에 상성인지 버그인지 라벨을 붙입니다. 의도된 특화라면 노션의 스킬 문구가 그렇게 적혀 있어야 합니다. 지금 초대형 오브 문구는 지상 배제를 말하지 않습니다.',
+        ]],
+      ]));
+      app.append(s);
+    }
+  }
+
+  // ── §06 레벨업 ──
+  {
+    const s = el('section', {});
+    s.append(head('06', '레벨업이 값을 주는가', '10레벨을 1레벨로 나눈 값. 기본 상태에서 잰 것이고, 상황마다 성장 폭이 다르므로 범위로 적습니다.'));
+    const byS = {};
+    for (const x of (G.growth || []).filter(x => x.usable && x.ratio != null && x.evoStage === 0 && !excluded.has(x.skill)))
+      (byS[x.skill] = byS[x.skill] || []).push(x);
+    const items = Object.entries(byS).map(([name, xs]) => {
+      const rs = xs.map(x => x.ratio);
+      return { skill: name, min: Math.min(...rs), max: Math.max(...rs), n: xs.length,
+        maxScn: xs.reduce((a, b) => (b.ratio > a.ratio ? b : a)).scenario,
+        minScn: xs.reduce((a, b) => (b.ratio < a.ratio ? b : a)).scenario };
+    }).sort((a, b) => b.max - a.max);
+    if (!items.length) s.append(el('div', { class: 'empty' }, '1레벨과 10레벨 짝이 맞는 셀이 없습니다.'));
+    else {
+      s.append(bars(items.map(i => ({
+        label: sk(i.skill), sub: `${i.n}상황`, value: i.max, text: `${fmt(i.min, 1)}–${fmt(i.max, 1)}배`,
+        tone: i.max < 2 ? 'bad' : null,
+        tip: `${sk(i.skill)} 기본 상태\n가장 크게 자라는 상황 ${scn(i.maxScn)} ${i.max.toFixed(1)}배\n가장 덜 자라는 상황 ${scn(i.minScn)} ${i.min.toFixed(1)}배`,
+      })), { axis: '배율', ticks: [0, items[0].max / 2, items[0].max], tickText: v => fmt(v) + '배' }));
+      const flat = items.filter(i => i.max < 2).map(i => sk(i.skill));
+      const wide = items.filter(i => i.max / Math.max(0.01, i.min) > 2)[0];
+      s.append(readout([
+        ['now', '해석', [
+          flat.length
+            ? `**${flat.join(' · ')}** 는 1레벨에서 10레벨까지 올려도 두 배가 안 됩니다. 레벨업 카드를 뽑을 이유가 약합니다.`
+            : '모든 스킬이 만렙까지 두 배 이상 자랍니다.',
+          wide ? `**${sk(wide.skill)}** 는 상황에 따라 성장 폭이 ${fmt(wide.min, 1)}배에서 ${fmt(wide.max, 1)}배까지 갈립니다. ${scn(wide.minScn)}과 ${scn(wide.maxScn)}의 차이입니다.` : null,
+        ]],
+        ['did', '내가 만진 것', [
+          '모든 상황을 1레벨과 10레벨 둘 다 돌게 했습니다. 처음에는 대표 상황만 두 레벨로 재려 했는데, 그러면 위 범위 차이가 보이지 않습니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '성장이 평평한 스킬의 레벨 표를 봅니다. 어떤 축에 스텝이 걸려 있는지, 그 축이 그 스킬의 실제 파워축인지 확인합니다.',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §07 동반 릭 ──
+  {
+    const s = el('section', {});
+    s.append(head('07', '혼자서는 딜이 없는 스킬', '되감기 · 피뢰침 · 집중 산탄은 남의 쿨타임과 타수를 건드립니다. 기준 스킬 세 개에 넣어 전체 딜이 얼마나 바뀌는지로 잽니다.'));
+    const cv = G.companionVerdict || {};
+    const keys = Object.keys(cv);
+    if (!keys.length) s.append(el('div', { class: 'empty' }, '동반 측정 셀이 없습니다.'));
+    else {
+      const items = [];
+      for (const k of keys) for (const st of (cv[k].states || [])) {
+        if (st.n < 2) continue;
+        items.push({ skill: k, state: st.state, gain: st.gain, n: st.n });
+      }
+      items.sort((a, b) => b.gain - a.gain);
+      if (!items.length) {
+        s.append(el('div', { class: 'empty' },
+          `판정할 수 있는 상태가 아직 없습니다. 상태마다 무대가 두 개 이상 필요합니다. 지금은 ${keys.map(k => sk(k) + ' ' + cv[k].cells + '칸').join(' · ')}입니다.`));
+      } else {
+        s.append(bars(items.map(i => ({
+          label: sk(i.skill), sub: i.state, value: Math.abs(i.gain) < 0.01 ? 0.01 : i.gain,
+          text: pct(i.gain), tone: i.gain < 0 ? 'bad' : i.gain > 0.2 ? 'good' : null,
+          tip: `${sk(i.skill)} ${i.state}\n기준 세 스킬만 있을 때 대비 전체 딜 ${pct(i.gain)}\n무대 ${i.n}개 평균`,
+        })), { axis: '전체 딜 변화', ticks: [0, Math.max(...items.map(i => i.gain))], tickText: v => pct(v) }));
+      }
+      const harmful = keys.filter(k => (cv[k].harmful || []).length);
+      s.append(readout([
+        ['now', '해석', [
+          harmful.length
+            ? `**${harmful.map(k => sk(k) + '(' + cv[k].harmful.join(', ') + ')').join(' · ')}** 는 넣으면 파티 전체 딜이 떨어집니다. 슬롯을 차지하고 손해를 끼치는 상태입니다.`
+            : '모든 상태가 전체 딜을 떨어뜨리지 않습니다.',
+          '이 세 스킬은 자기 딜이 0입니다. 그래서 딜 지분으로 보면 영원히 쓸모없어 보입니다. 35회차까지의 스킬 표가 그렇게 읽고 있었습니다.',
+        ]],
+        ['did', '내가 만진 것', [
+          '기준 로드아웃을 기본 상태 10레벨 공격기 세 개(회오리 · 오브 · 독수리 투하)로 고정하고, 시험 대상을 네 번째 슬롯에 넣었습니다.',
+          '판정에서 단일 대상 무대를 뺐습니다. 처음에는 다섯 무대를 평균 내서 되감기가 25% 손해로 나왔는데, 갈라 보니 여러 적이 나오는 무대에서는 14%에서 16% 이득이었습니다. 손해는 적이 한 마리인 무대에서만 났습니다. 그 한 마리의 등장 위치가 전체 딜을 좌우합니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '차수별 기준 셀을 붙였으므로 다음 측정에서는 진화 상태까지 판정됩니다. 그때도 손해인 상태가 있으면 그것이 진짜 신호입니다.',
+        ]],
+      ]));
+    }
+    app.append(s);
+  }
+
+  // ── §08 호밍 ──
+  {
+    const curve = (G.growthCurve || []).filter(x => x.skill === 'Homing' && x.level === 10 && x.usable);
+    if (curve.length) {
+      const s = el('section', {});
+      s.append(head('08', '호밍 미사일은 쓸수록 세진다', '발동할 때마다 성장 스택이 쌓여 발당 피해가 커집니다. 판 중에 세지는 스킬은 호밍 하나뿐입니다.'));
+      const scName = curve.some(c => c.scenario === 'swarm') ? 'swarm' : curve[0].scenario;
+      const list = curve.filter(c => c.scenario === scName);
+      const byState = {};
+      for (const c of list) {
+        const k = c.evoStage ? `R${c.route} ${c.evoStage}차` : '기본';
+        (byState[k] = byState[k] || []).push(c);
+      }
+      const casts = [...new Set(list.map(c => c.casts))].sort((a, b) => a - b);
+      s.append(el('div', { class: 'scroll' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, scn(scName) + ' 무대 · 상태'),
+          casts.map(c => el('th', { class: 'r' }, fmt(c) + '회')), el('th', { class: 'r' }, '증가'))),
+        el('tbody', {}, Object.entries(byState).map(([k, xs]) => {
+          const cells = casts.map(c => xs.find(x => x.casts === c));
+          const first = cells.find(Boolean), last = [...cells].reverse().find(Boolean);
+          return el('tr', {}, el('td', {}, k),
+            cells.map(c => el('td', { class: 'r' }, c ? fmt(c.dps) : '—')),
+            el('td', { class: 'r' }, first && last && first.dps > 0 ? fmt(last.dps / first.dps, 1) + '배' : '—'));
+        })))));
+      const pre = byState['기본'] || [];
+      const g0 = pre.find(x => x.casts === 0), gN = pre.slice().sort((a, b) => b.casts - a.casts)[0];
+      s.append(readout([
+        ['now', '해석', [
+          g0 && gN && g0.dps > 0
+            ? `기본 상태 호밍이 스택 0에서 ${fmt(g0.dps)}, ${fmt(gN.casts)}회 쌓인 뒤 ${fmt(gN.dps)}입니다. **${fmt(gN.dps / g0.dps, 1)}배**입니다.`
+            : '스택별 값을 채우는 중입니다.',
+          '한 판에 몇 백 번 쏘므로, 후반 호밍은 위의 표들이 보여주는 것과 다른 스킬입니다.',
+          '실제로 몇 스택까지 가는지는 정주행 기록의 발동 수가 답합니다. 이 표와 그 숫자를 곱해야 실전 파워가 됩니다.',
+        ]],
+        ['did', '내가 만진 것', [
+          '스택을 미리 채운 셀을 같이 돌립니다. 0회 · 150회 · 450회 세 지점입니다.',
+          '짧은 시간만 재면 호밍을 판 시작 상태로만 재게 됩니다. 판을 길게 돌리는 대신 스택을 축으로 만들었습니다.',
+          '판 중에 누적되는 파워가 호밍 하나뿐임을 전수로 확인했습니다. 다른 스킬은 0회 지점만 돕니다.',
+        ]],
+        ['next', '다음에 볼 것', [
+          '450회 지점이 다른 2차 진화들과 같은 범위에 드는지 봅니다. 크게 넘으면 후반 호밍이 지배적이라는 뜻입니다.',
+        ]],
+      ]));
+      app.append(s);
+    }
+  }
+
+  // ── §09 측정 품질 ──
+  {
+    const s = el('section', {});
+    s.append(head('09', '이 숫자를 믿어도 되는가', '쓸 수 없는 셀이 섞인 표는 판정에 쓸 수 없습니다. 무엇이 걸렸고 무엇을 고쳤는지 적습니다.'));
+    const rowsQ = [
+      ['상태 강제 실패', Q.rigFailed.length, '요청한 진화 상태로 세우지 못한 셀입니다.'],
+      ['앞 셀 오염', (Q.residual || []).length, '측정 시작 시점에 앞 셀의 오브젝트가 남아 있던 셀입니다. 같은 스킬끼리의 오염은 이 항목만 잡습니다.'],
+      ['무대 천장', (Q.arenaLimited || []).length, '스킬이 적을 다 치워서, 더 센 스킬도 같은 숫자가 나오는 셀입니다.'],
+      ['다른 이름으로 집계', (Q.crossTagged || []).length, '오염이 아닙니다. 게임이 딜 출처를 오브젝트 종류로 적기 때문에 생기는 기록 방식입니다.'],
+    ];
+    s.append(el('div', { class: 'scroll' }, el('table', {},
+      el('thead', {}, el('tr', {}, el('th', {}, '항목'), el('th', { class: 'r' }, '셀'), el('th', {}, '뜻'))),
+      el('tbody', {}, rowsQ.map(([n, v, d]) => el('tr', {},
+        el('td', {}, n), el('td', { class: 'r' }, fmt(v)), el('td', { class: 'muted' }, d)))))));
+    const resNames = [...new Set((Q.residual || []).flatMap(r => String(r.names || '').split(',').filter(Boolean)))];
+    const cw = (Q.crossTagged || []).slice().sort((a, b) => (b.share || 0) - (a.share || 0))[0];
+    s.append(readout([
+      ['now', '해석', [
+        `${fmt(Q.cells)}칸 중 **${fmt(Q.usable)}칸**을 판정에 썼습니다. ${Math.round(100 * Q.usable / Q.cells)}%입니다.`,
+        (Q.residual || []).length
+          ? `오염된 칸은 모두 R1 루트입니다. R1 진화는 바닥에 남는 설치물을 만들고, 그중 충돌 판정이 없는 것이 무대 청소를 빠져나갔습니다.`
+            + (resNames.length ? ` 남은 오브젝트는 **${resNames.slice(0, 5).join(', ')}** 입니다.` : '')
+          : '오염된 칸이 없습니다. 셀 사이가 깨끗합니다.',
+        cw ? `기록 방식 항목에서 가장 큰 칸은 그 스킬 출력의 **${Math.round((cw.share || 0) * 100)}%가 ${(cw.names || []).map(sk).join(', ')} 이름으로** 적혔습니다. 독수리 투하 R1이 뿜는 회오리가 회오리 딜로 기록되기 때문입니다.` : null,
+      ]],
+      ['did', '내가 만진 것', [
+        '무대 청소 기준을 바꿨습니다. 충돌 판정이 있는 것만 치우던 것을, 시작 시점 목록에 없고 프로젝트 스크립트를 가진 오브젝트까지 치우게 했습니다.',
+        '한 번은 이 기준을 너무 넓혀서 효과음 오브젝트까지 지워 세션을 죽였습니다. 그 오브젝트만 스크립트가 없어서, 지금 기준이 둘을 정확히 가릅니다.',
+        '남은 오브젝트의 이름을 기록하게 했습니다. 개수만 보고 있어서 같은 함정을 세 번 뒤쫓았습니다.',
+        '딜 기록 방식을 오염으로 세지 않게 했습니다. 그대로 두면 멀쩡한 칸 57개를 버립니다.',
+        'UFO 무대를 무대 천장 판정에서 뺐습니다. UFO는 투하 뒤 스스로 화면을 빠져나가므로 남은 적 수가 항상 적습니다.',
+      ]],
+      ['next', '다음에 볼 것', [
+        '오염 0칸과 쓸 수 있는 셀 95% 이상을 목표로 합니다. 오염이 남으면 이제 이름이 찍히므로 추측 없이 처리할 수 있습니다.',
+      ]],
+    ]));
+    app.append(s);
+  }
+
+  // ── 부록 ──
+  {
+    const d = el('details', {});
+    d.append(el('summary', {}, `전체 표 — 2차 진화 × 상황 ${fmt(G.scenarios.length)}개 (10레벨)`));
+    const perScn = {};
+    for (const scName of G.scenarios) {
+      const vals = attackSkills.map(x => best2(x, scName)).filter(Boolean).map(c => c.dps);
+      perScn[scName] = vals.length ? vals.slice().sort((a, b) => a - b)[vals.length >> 1] : null;
+    }
+    d.append(el('div', { class: 'in' },
+      el('div', { class: 'scroll' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, '스킬'), G.scenarios.map(x => el('th', { class: 'r' }, scn(x))))),
+        el('tbody', {}, rank.map(r => el('tr', {},
+          el('td', {}, sk(r.skill), el('small', { class: 'muted mono' }, ' R' + r.route)),
+          G.scenarios.map(scName => {
+            const c = best2(r.skill, scName);
+            if (!c) return el('td', { class: 'cell muted' }, '—');
+            const nv = perScn[scName] > 0 ? c.dps / perScn[scName] : null;
+            const td = el('td', { class: 'cell' }, fmt(c.dps));
+            if (nv != null) {
+              const t = Math.max(-1, Math.min(1, Math.log2(nv) / 1.4));
+              td.style.background = `color-mix(in oklab, ${t < 0 ? 'var(--bar)' : 'var(--bad)'} ${Math.round(Math.abs(t) * 60)}%, var(--surface))`;
+            }
+            hover(td, `${sk(r.skill)} R${r.route} · ${scn(scName)}\n${fmt(c.dps)} dps`
+              + (nv ? `\n상황 중앙값 대비 ${nv.toFixed(2)}배` : ''));
+            return td;
+          })))))),
+      el('p', { class: 'muted', style: 'font-size:12.5px' },
+        '색은 그 상황의 중앙값 대비입니다. 파랑이 낮고 주황이 높으며 중앙은 배경색입니다. 숫자를 함께 적으므로 색만으로 읽지 않아도 됩니다.')));
+    app.append(d);
+  }
+
+  // ── §10 이번 회차에 만진 것 ──
+  if (IT.plan && (IT.plan.changes || []).length) {
+    const s = el('section', {});
+    s.append(head('10', `이터레이션 ${IT.iteration}에 만진 것`, IT.plan.verdict ? `판정 ${IT.plan.verdict}` : null));
+    s.append(el('div', { class: 'scroll' }, el('table', {},
+      el('thead', {}, el('tr', {}, el('th', {}, '파일'), el('th', {}, '무엇'), el('th', {}, '왜'))),
+      el('tbody', {}, IT.plan.changes.map(c => el('tr', {},
+        el('td', { class: 'mono', style: 'font-size:11.5px' }, String(c.file || '').split('/').pop()),
+        el('td', {}, c.field || ''),
+        el('td', { class: 'muted' }, c.why || '')))))));
+    if (IT.plan.changesNote) s.append(readout([['now', '메모', [IT.plan.changesNote]]]));
+    app.append(s);
+  }
+
+  // ── §11 회의록 ──
+  // 사용자 요청 2026-09-27: "논의가 이루어진 과정, 각각의 에이전트의 주장, 어떤 방식으로 최종 변경점을 정했는지 세세하게.
+  // 약간 회의록을 쓴다고 생각하고." → iterations/NN.json의 `minutes`를 그대로 읽는다. 여기서 요약하지 않는다.
+  if (IT.plan && IT.plan.minutes) {
+    const M = IT.plan.minutes;
+    const s = el('section', {});
+    s.append(head('11', '회의록 — 변경점이 어떻게 정해졌는가',
+      '제안은 관점이 다른 에이전트 여러 명이 각자 냈고, 반대 심문관이 근거를 공격했고, 남은 것을 합쳐 최종 변경점을 정했습니다. '
+      + '아래는 그 과정 전체입니다 — 무엇이 주장됐고, 무엇이 깎였고, 겹쳤을 때 무엇을 근거로 하나를 골랐는지.'));
+
+    // 참가자
+    if ((M.agents || []).length) {
+      s.append(el('h3', { class: 'grp' }, '참가자'));
+      s.append(el('div', { class: 'scroll' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, '에이전트'), el('th', {}, '관점'),
+          el('th', { class: 'r' }, '주장'), el('th', { class: 'r' }, '제안'))),
+        el('tbody', {}, M.agents.map(a => el('tr', {},
+          el('td', {}, a.name || ''),
+          el('td', { class: 'muted' }, a.perspective || ''),
+          el('td', { class: 'r mono' }, fmt(a.claimCount)),
+          el('td', { class: 'r mono' }, fmt(a.proposalCount))))))));
+    }
+
+    for (const R of (M.rounds || [])) {
+      s.append(el('h3', { class: 'grp' }, (R.round || '') + (R.title ? ' · ' + R.title : ''),
+        R.what ? el('small', {}, R.what) : null));
+
+      // R1 — 에이전트마다 주장과 제안
+      for (const b of (R.byAgent || [])) {
+        const d = el('details', {});
+        d.append(el('summary', {}, (b.agent || '') + ' — 주장 ' + fmt((b.claims || []).length)
+          + '건 · 제안 ' + fmt((b.proposals || []).length) + '건'));
+        const inner = el('div', { class: 'in' });
+        if ((b.claims || []).length)
+          inner.append(el('div', { class: 'scroll' }, el('table', {},
+            el('thead', {}, el('tr', {}, el('th', {}, '번호'), el('th', {}, '주장'), el('th', {}, '근거'))),
+            el('tbody', {}, b.claims.map(c => el('tr', {},
+              el('td', { class: 'mono muted' }, c.id || ''),
+              el('td', {}, rich(c.claim || '')),
+              el('td', { class: 'muted' }, c.evidence || '')))))));
+        if ((b.proposals || []).length)
+          inner.append(el('div', { class: 'scroll' }, el('table', {},
+            el('thead', {}, el('tr', {}, el('th', {}, '번호'), el('th', {}, '무엇을'),
+              el('th', {}, '얼마로'), el('th', {}, '왜'))),
+            el('tbody', {}, b.proposals.map(p => el('tr', {},
+              el('td', { class: 'mono muted' }, p.id || ''),
+              el('td', { class: 'mono', style: 'font-size:11.5px' }, p.target || ''),
+              el('td', { class: 'mono' }, p.beforeAfter || ''),
+              el('td', { class: 'muted' }, p.why || '')))))));
+        d.append(inner);
+        s.append(d);
+      }
+
+      // R2 — 공격과 응답
+      if ((R.challenges || []).length)
+        s.append(el('div', { class: 'scroll' }, el('table', {},
+          el('thead', {}, el('tr', {}, el('th', {}, '대상'), el('th', {}, '반론'),
+            el('th', {}, '판정'), el('th', {}, '제안자의 응답'), el('th', {}, '결과'))),
+          el('tbody', {}, R.challenges.map(c => el('tr', {},
+            el('td', { class: 'mono muted' }, c.against || ''),
+            el('td', {}, rich(c.objection || '')),
+            el('td', {}, c.verdict === '지지됨' ? chip('good', c.verdict)
+              : c.verdict === '철회 권고' ? chip('bad', c.verdict) : chip('warn', c.verdict || '—')),
+            el('td', { class: 'muted' }, c.response || ''),
+            el('td', {}, c.outcome === '철회' ? chip('bad', c.outcome)
+              : c.outcome === '수정' ? chip('warn', c.outcome) : chip('good', c.outcome || '유지'))))))));
+
+      // R3 — 같은 필드에 제안이 겹쳤을 때 무엇을 근거로 골랐나
+      if ((R.conflicts || []).length) {
+        s.append(el('h3', { class: 'grp' }, '같은 손잡이에 제안이 겹친 곳',
+          el('small', {}, '필드 하나당 변경 하나로 합쳤습니다 — 둘을 같이 밀면 어느 쪽이 들었는지 판정할 수 없습니다')));
+        s.append(el('div', { class: 'scroll' }, el('table', {},
+          el('thead', {}, el('tr', {}, el('th', {}, '손잡이'), el('th', {}, '경합한 제안'),
+            el('th', {}, '채택'), el('th', {}, '고른 근거'))),
+          el('tbody', {}, R.conflicts.map(c => el('tr', {},
+            el('td', { class: 'mono', style: 'font-size:11.5px' }, c.field || ''),
+            el('td', { class: 'mono muted' }, (c.proposals || []).join(' · ')),
+            el('td', { class: 'mono' }, c.chosen || ''),
+            el('td', {}, rich(c.reason || ''))))))));
+      }
+
+      // 최종 채택·기각
+      if ((R.decisions || []).length)
+        s.append(el('div', { class: 'scroll' }, el('table', {},
+          el('thead', {}, el('tr', {}, el('th', {}, '번호'), el('th', {}, '무엇을'),
+            el('th', {}, '최종 값'), el('th', {}, '판정'), el('th', {}, '이유'))),
+          el('tbody', {}, R.decisions.map(d2 => el('tr', {},
+            el('td', { class: 'mono muted' }, d2.id || ''),
+            el('td', { class: 'mono', style: 'font-size:11.5px' }, d2.target || ''),
+            el('td', { class: 'mono' }, d2.finalAfter != null ? String(d2.finalAfter) : '—'),
+            el('td', {}, d2.verdict === '채택' ? chip('good', d2.verdict) : chip('bad', d2.verdict || '기각')),
+            el('td', { class: 'muted' }, d2.reason || '')))))));
+    }
+
+    const rd = [];
+    if (M.howDecided) rd.push(['now', '무엇을 기준으로 정했나', [M.howDecided].flat()]);
+    if (M.disagreements) rd.push(['did', '끝까지 안 맞은 것', [M.disagreements].flat()]);
+    if (M.nextRound) rd.push(['next', '다음 회의에 가져갈 것', [M.nextRound].flat()]);
+    if (rd.length) s.append(readout(rd));
+    app.append(s);
+  }
+}
+</script>

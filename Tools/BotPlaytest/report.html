@@ -891,6 +891,7 @@ function render(idx) {
   app.append(attemptsChartSection(it));
   app.append(goalsSection(it, iters[idx - 1]));
   app.append(characterSection(it));
+  app.append(gymSection(it));      // 시험장이 돈 이터레이션이면 G5의 본체가 여기다
   app.append(skillSection(it));
   // 쿨타임 섹션 제거 — C1은 사소한 항목이라 보고서에서 뺐다(사용자 결정 2026-09-18). 되살리려면 이 줄과 스코어보드 C1 타일을 복구한다.
   app.append(progressSection(it));
@@ -1179,6 +1180,297 @@ function skillSection(it) {
   put(sec, skillNote(it));
   return sec;
 }
+// ───────── 스킬 시험장 (gym) ─────────
+// 실전 로그와 달리 상태를 강제해 재므로 2차 진화까지 표본이 고르게 찬다.
+// 🔴 표보다 먼저 **셀 품질**을 보여준다 — 오염·릭 실패·무대 한계에 걸린 셀은 숫자가 있어도 못 쓴다.
+function gymSection(it) {
+  const g = it.gym;
+  const sec = h('section', {}, sectionHead('스킬 시험장',
+    '스킬 하나만 들고 고정 시나리오를 고정 시간 돈다. 칸 = 시험 대상의 초당 유효딜. 처리량 무대는 진화 차수마다 적 체력이 달라 **차수를 넘어 비교하면 안 된다**'));
+  if (!g) { sec.append(h('div', { class: 'empty' }, '시험장(gym) 기록이 없습니다. `{"mode":"gym"}` 세션을 요청하세요.')); return sec; }
+
+  // 품질 — 이게 먼저다. 쓸 수 없는 셀이 섞인 표는 판정에 못 쓴다.
+  const q = g.quality;
+  const qLine = h('div', { class: 'legend', style: 'margin-bottom:8px' },
+    chip(q.usable === q.cells ? 'pass' : '', `쓸 수 있는 셀 ${q.usable}/${q.cells}`),
+    q.rigFailed.length ? chip('fail', `상태 강제 실패 ${q.rigFailed.length}`) : null,
+    (q.residual || []).length ? chip('fail', `앞 셀 오염(잔존) ${q.residual.length}`) : null,
+    (q.crossTagged || []).length ? chip('', `다른 이름으로 집계된 딜 ${q.crossTagged.length}칸`) : null,
+    q.arenaLimited.length ? chip('', `무대 한계 ${q.arenaLimited.length}`) : null,
+    g.noise.maxSpread != null ? h('span', {}, `반복 재현성: 최대 차 ${pct(g.noise.maxSpread)} · 평균 ${pct(g.noise.meanSpread)} (쌍 ${g.noise.pairs})`) : null);
+  sec.append(qLine);
+  if (q.rigFailed.length)
+    sec.append(h('div', { class: 'empty' }, '강제 실패: ' + q.rigFailed.slice(0, 6).map(x => `${x.cell} — ${x.error}`).join(' / ')));
+
+  // 시나리오 × 상태 행렬(차수 탭). 같은 차수 안에서만 비교한다.
+  const groupNames = ['진화 전', '1차 진화', '2차 진화'];
+  const body = h('div', {});
+  const tabs = h('div', { class: 'tabs', role: 'tablist' });
+  const label = s => { const [id, r] = String(s).split('/'); return skillName(id) + (r != null && r !== '-1' ? ' R' + r : ''); };
+  const show = gi => {
+    tabs.querySelectorAll('button').forEach((b, i) => b.setAttribute('aria-selected', i === gi ? 'true' : 'false'));
+    const grp = g.groups[gi] || {};
+    body.replaceChildren();
+    body.append(h('div', { class: 'legend', style: 'margin-bottom:8px' },
+      grp.states >= 3 ? (grp.pass ? chip('pass', '판정 통과') : chip('fail', '판정 미달')) : chip('', '표본 부족(상태 3개 이상 필요)'),
+      (grp.dominance || []).length ? h('span', {}, '모든 시나리오에서 앞섬: ' + grp.dominance.map(d => `${label(d.dominant)} > ${label(d.dominated)}`).join(', ')) : null,
+      (grp.noStrength || []).length ? h('span', {}, '어느 시나리오에서도 상위 1/3이 아님: ' + grp.noStrength.map(label).join(', ')) : null,
+      (grp.excluded || []).length ? h('span', { class: 'muted' }, '단독 판정 제외(동반 릭으로 따로 봄): ' + grp.excluded.map(skillName).join(', ')) : null));
+
+    const states = [...new Set(g.rows.filter(r => r.rig === 'solo' && r.evoStage === gi && r.level === 10 && r.growthCasts === 0)
+      .map(r => `${r.skill}/${r.route}`))].sort();
+    if (!states.length) { body.append(h('div', { class: 'empty' }, `${groupNames[gi]} 셀이 없습니다.`)); return; }
+    const cellOf = (st, scn, lv) => g.rows.find(r => r.rig === 'solo' && `${r.skill}/${r.route}` === st
+      && r.scenario === scn && r.level === lv && r.growthCasts === 0 && r.evoStage === gi);
+    // 중앙값 대비 배율로 칠한다(기존 스킬 표와 같은 색 규칙).
+    const medOf = {};
+    for (const scn of g.scenarios) {
+      const vals = states.map(s => cellOf(s, scn, 10)).filter(c => c && c.usable).map(c => c.dps);
+      medOf[scn] = vals.length ? vals.slice().sort((a, b) => a - b)[vals.length >> 1] : null;
+    }
+    body.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), g.scenarios.map(s => h('th', { class: 'r' }, s)))),
+      h('tbody', {}, states.map(st => h('tr', {}, h('td', {}, label(st)), g.scenarios.map(scn => {
+        const c = cellOf(st, scn, 10), c1 = cellOf(st, scn, 1);
+        if (!c) return h('td', { class: 'r muted' }, '—');
+        const nv = medOf[scn] > 0 ? c.dps / medOf[scn] : null;
+        const td = h('td', { class: 'cell', style: c.usable ? divStyle(nv) : '' },
+          c.usable ? fmt(c.dps, 0) : h('span', { class: 'muted' }, fmt(c.dps, 0)),
+          c1 ? h('div', { class: 'muted', style: 'font-size:11px' }, `Lv1 ${fmt(c1.dps, 0)}`) : null);
+        hover(td, `${label(st)} · ${scn} · ${c.arenaKind} 무대\nLv10 ${fmt(c.dps, 0)} dps${nv ? ` (중앙값 대비 ×${fmt(nv, 2)})` : ''}`
+          + (c1 ? `\nLv1 ${fmt(c1.dps, 0)} dps → 성장 ×${c1.dps > 0 ? fmt(c.dps / c1.dps, 2) : '—'}` : '')
+          + `\n처치 ${fmt(c.kills, 0)} · 못 막은 피해 ${fmt(c.damageTaken, 0)} · 오버킬 ${pct(c.overkill)} · 발동 ${fmt(c.casts, 0)}회 · 포화 ${fmt(c.saturation, 2)}`
+          + (c.usable ? '' : '\n⚠ 못 쓰는 셀 — 무대가 천장이거나 앞 셀에 오염됐다'));
+        return td;
+      })))))));
+  };
+  groupNames.forEach((n, gi) => tabs.append(h('button', { type: 'button', role: 'tab', onclick: () => show(gi) }, n)));
+  sec.append(tabs, body);
+  // 🔴 기본 탭 = **2차 진화**(사용자 우선순위 2026-09-27: "기본스킬 밸런스보다 진화스킬 밸런스"). 셀이 없으면 뒤로 내려간다.
+  const hasStates = gi => g.rows.some(r => r.rig === 'solo' && r.evoStage === gi && r.level === 10 && r.growthCasts === 0);
+  show(hasStates(2) ? 2 : hasStates(1) ? 1 : 0);
+
+  // ── 진화 스킬 비교 — 한 스킬의 네 진화체를 나란히. 탭을 눌러야 보이는 것을 앞으로 끌어올린다 ──
+  // 🔴 처리량 무대는 차수마다 적 체력이 달라(GroupHpScale) 차수를 넘어 비교할 수 없다 →
+  //    이 표는 **천장 없는 DPS 무대**(tank·airship·boss)만 쓴다. 거기서는 같은 표적을 상대하므로 차수 간 비교가 성립한다.
+  const dpsScns = g.scenarios.filter(s => g.rows.some(r => r.scenario === s && r.arenaKind === 'dps'));
+  if (dpsScns.length) {
+    sec.append(h('h3', {}, '진화 스킬 비교 — 단일 대상 DPS 무대에서 차수별 (Lv10)'),
+      h('p', { class: 'muted', style: 'font-size:12.5px;margin:-6px 0 0' },
+        '처리량 무대는 차수마다 적 체력이 달라 차수 간 비교가 안 된다. 천장이 없는 이 세 무대만 쓴다.'));
+    const skillsAll = [...new Set(g.rows.filter(r => r.rig === 'solo' && r.level === 10 && r.growthCasts === 0).map(r => r.skill))].sort();
+    const stateCols = [[0, -1, '진화 전'], [1, 0, 'R0 1차'], [2, 0, 'R0 2차'], [1, 1, 'R1 1차'], [2, 1, 'R1 2차']];
+    for (const scn of dpsScns) {
+      const at = (sk, st, rt) => g.rows.find(r => r.rig === 'solo' && r.level === 10 && r.growthCasts === 0
+        && r.skill === sk && r.scenario === scn && r.evoStage === st && (st === 0 || r.route === rt));
+      const vals = skillsAll.flatMap(sk => stateCols.map(([st, rt]) => at(sk, st, rt)).filter(c => c && c.usable).map(c => c.dps));
+      if (!vals.length) continue;
+      const med = vals.slice().sort((a, b) => a - b)[vals.length >> 1];
+      sec.append(h('div', { class: 'scroll' }, h('table', {},
+        h('thead', {}, h('tr', {}, h('th', {}, scn + ' — 스킬'), stateCols.map(c => h('th', { class: 'r' }, c[2])), h('th', { class: 'r' }, '2차÷진화 전'))),
+        h('tbody', {}, skillsAll.map(sk => {
+          const cs = stateCols.map(([st, rt]) => at(sk, st, rt));
+          if (!cs.some(c => c && c.usable)) return null;
+          const pre = cs[0], best2 = [cs[2], cs[4]].filter(c => c && c.usable).sort((a, b) => b.dps - a.dps)[0];
+          return h('tr', {}, h('td', {}, skillName(sk)),
+            cs.map(c => {
+              if (!c) return h('td', { class: 'r muted' }, '—');
+              const nv = med > 0 ? c.dps / med : null;
+              const td = h('td', { class: 'cell', style: c.usable ? divStyle(nv) : '' },
+                c.usable ? fmt(c.dps, 0) : h('span', { class: 'muted' }, fmt(c.dps, 0)));
+              hover(td, `${skillName(sk)} · ${scn} · ${fmt(c.dps, 0)} dps`
+                + (nv ? ` (무대 중앙값 대비 ×${fmt(nv, 2)})` : '')
+                + (c.usable ? '' : '\n⚠ 못 쓰는 셀'));
+              return td;
+            }),
+            h('td', { class: 'r num' }, pre && pre.usable && pre.dps > 0 && best2 ? '×' + fmt(best2.dps / pre.dps, 1) : '—'));
+        }).filter(Boolean)))));
+    }
+    sec.append(gymEvoNote(g, dpsScns, stateCols));
+  }
+
+  // 생애 사슬 — 진화 전이 약해도 진화체가 강하면 납득할 구조다.
+  const life = (g.lifetime || []).filter(l => l.usable);
+  if (life.length) {
+    sec.append(h('h3', {}, '생애 사슬 (진화 전 → 1차 → 2차, Lv10)'));
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', {}, '루트'), h('th', {}, '시나리오'),
+        h('th', { class: 'r' }, '진화 전'), h('th', { class: 'r' }, '1차'), h('th', { class: 'r' }, '2차'), h('th', { class: 'r' }, '2차÷진화 전'))),
+      h('tbody', {}, life.map(l => h('tr', {}, h('td', {}, skillName(l.skill)), h('td', {}, 'R' + l.route), h('td', {}, l.scenario),
+        h('td', { class: 'r num' }, fmt(l.pre, 0)), h('td', { class: 'r num' }, fmt(l.t1, 0)), h('td', { class: 'r num' }, fmt(l.t2, 0)),
+        h('td', { class: 'r num' }, l.pre > 0 ? '×' + fmt(l.t2 / l.pre, 1) : '—')))))));
+  }
+
+  // 강화 노드(은별+금별)의 값 — bare 모드를 같이 돌린 경우에만 나온다.
+  const td2 = (g.treeDelta || []).filter(x => x.usable && x.gain != null);
+  if (td2.length) {
+    sec.append(h('h3', {}, '강화 노드 2개(은별+금별)의 값 — full ÷ bare'));
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', {}, '상태'), h('th', {}, '시나리오'), h('th', {}, 'Lv'),
+        h('th', { class: 'r' }, '노드 없음'), h('th', { class: 'r' }, '노드 보유'), h('th', { class: 'r' }, '증가'), h('th', {}, '노드'))),
+      h('tbody', {}, td2.map(x => h('tr', {}, h('td', {}, skillName(x.skill)),
+        h('td', {}, x.evoStage ? `R${x.route} ${x.evoStage}차` : '진화 전'), h('td', {}, x.scenario), h('td', {}, 'Lv' + x.level),
+        h('td', { class: 'r num' }, fmt(x.bare, 0)), h('td', { class: 'r num' }, fmt(x.full, 0)),
+        h('td', { class: 'r num' }, (x.gain >= 0 ? '+' : '') + pct(x.gain)),
+        h('td', { class: 'muted' }, (x.nodes || []).join(', '))))))));
+  }
+
+  // 호밍의 누적 스택 곡선 — 판 중에 세지는 유일한 스킬이라 따로 본다.
+  const gc = (g.growthCurve || []).filter(x => x.usable && x.skill === 'Homing');
+  if (gc.length) {
+    sec.append(h('h3', {}, '호밍 미사일 — 누적 발동 대비 파워'));
+    const scns = [...new Set(gc.map(x => x.scenario))];
+    const casts = [...new Set(gc.map(x => x.casts))].sort((a, b) => a - b);
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '상태'), h('th', {}, '시나리오'), casts.map(c => h('th', { class: 'r' }, c + '회')))),
+      h('tbody', {}, [...new Set(gc.map(x => `${x.evoStage}|${x.route}`))].flatMap(k => scns.map(scn => {
+        const [st, rt] = k.split('|');
+        const row = casts.map(c => gc.find(x => x.scenario === scn && String(x.evoStage) === st && String(x.route) === rt && x.casts === c && x.level === 10));
+        if (!row.some(Boolean)) return null;
+        return h('tr', {}, h('td', {}, st === '0' ? '진화 전' : `R${rt} ${st}차`), h('td', {}, scn),
+          row.map(x => h('td', { class: 'r num' }, x ? fmt(x.dps, 0) : '—')));
+      })).filter(Boolean)))));
+  }
+
+  // 동반 릭 — 되감기·산탄·낙뢰는 혼자 두면 딜이 0이다.
+  const comp = (g.companion || []).filter(x => x.usable && x.gain != null);
+  const cv = g.companionVerdict || {};
+  if (Object.keys(cv).length) {
+    sec.append(h('h3', {}, '동반 릭 판정 — 혼자 두면 딜이 0인 스킬'));
+    sec.append(h('div', { class: 'legend', style: 'margin-bottom:8px' }, Object.entries(cv).map(([k, v]) =>
+      h('span', {}, chip(v.cells === 0 ? '' : v.pass ? 'pass' : 'fail', skillName(k)),
+        v.cells === 0 ? ' 표본 없음'
+          : ` 최고 ${(v.bestGain >= 0 ? '+' : '') + pct(v.bestGain)} · 최저 ${(v.worstGain >= 0 ? '+' : '') + pct(v.worstGain)}`
+            + ((v.harmful || []).length ? ` · 전체 딜을 떨어뜨림: ${v.harmful.join(', ')}` : '')))));
+  }
+  if (comp.length) {
+    sec.append(h('h3', {}, '동반 릭 — 기준 3스킬에 넣었을 때의 전체 딜 변화'));
+    sec.append(h('div', { class: 'scroll' }, h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, '스킬'), h('th', {}, '상태'), h('th', {}, '시나리오'),
+        h('th', { class: 'r' }, '없을 때'), h('th', { class: 'r' }, '있을 때'), h('th', { class: 'r' }, '증가'), h('th', { class: 'r' }, '자기 몫'))),
+      h('tbody', {}, comp.map(x => h('tr', {}, h('td', {}, skillName(x.skill)),
+        h('td', {}, x.evoStage ? `R${x.route} ${x.evoStage}차` : '진화 전'), h('td', {}, x.scenario),
+        h('td', { class: 'r num' }, fmt(x.baseline, 0)), h('td', { class: 'r num' }, fmt(x.withSkill, 0)),
+        h('td', { class: 'r num' }, (x.gain >= 0 ? '+' : '') + pct(x.gain)),
+        h('td', { class: 'r num' }, pct(x.ownShare))))))));
+  }
+
+  put(sec, gymNote(it));
+  return sec;
+}
+
+// 진화 스킬 표의 해설 — 차수가 올라가며 실제로 세지는지, 어느 진화체가 뒤처지는지.
+function gymEvoNote(g, dpsScns, stateCols) {
+  const now = [], fix = [], goal = [];
+  const skills = [...new Set(g.rows.filter(r => r.rig === 'solo' && r.level === 10 && r.growthCasts === 0).map(r => r.skill))].sort();
+  const scn = dpsScns[0];
+  const at = (sk, st, rt) => g.rows.find(r => r.rig === 'solo' && r.level === 10 && r.growthCasts === 0
+    && r.skill === sk && r.scenario === scn && r.evoStage === st && (st === 0 || r.route === rt) && r.usable);
+  // 차수가 올라가도 안 세지는 스킬 = 진화가 값을 안 주는 스킬
+  const flat = [], jumps = [];
+  for (const sk of skills) {
+    const pre = at(sk, 0, -1);
+    const best2 = [at(sk, 2, 0), at(sk, 2, 1)].filter(Boolean).sort((a, b) => b.dps - a.dps)[0];
+    if (!pre || !best2 || pre.dps <= 0) continue;
+    const ratio = Math.round((best2.dps / pre.dps) * 10) / 10;
+    (ratio < 3 ? flat : jumps).push({ skill: sk, ratio });
+  }
+  if (flat.length) {
+    now.push(`**${flat.map(f => skillName(f.skill) + ' ×' + f.ratio).join(' · ')}** — 2차 진화까지 갔는데 진화 전의 3배도 안 됩니다. `
+      + `진화 두 번이 주는 기본 도약만으로도 ×2.25(${'1.5'}의 제곱)이므로, 이 스킬들은 **진화가 값을 거의 안 주고 있습니다**.`);
+    fix.push('그 스킬의 `Evo_<스킬>_R*_T*` 에셋을 엽니다 — `baseDamage`가 0이고 `levels`가 비어 있으면 진화체가 코드의 ×1.5만 받고 원래 커브를 다시 타므로 차수가 올라가도 안 세집니다. 그 네 에셋을 채우는 것이 직접 손잡이입니다.');
+    goal.push(`다음 세션에서 이 스킬들의 2차÷진화 전이 **×3 이상**. 반증: 에셋을 채웠는데도 안 오르면 그 스킬의 진화 효과가 피해가 아닌 축(범위·타수)에 걸려 있다는 뜻이므로 그 축을 재는 시나리오에서 봅니다.`);
+  }
+  if (jumps.length) {
+    const top = jumps.slice().sort((a, b) => b.ratio - a.ratio)[0];
+    now.push(`반대쪽 끝은 **${skillName(top.skill)} ×${top.ratio}** 입니다 — 같은 진화 두 번에 이만큼 벌어지면 2차 진화끼리의 격차가 곧 빌드 격차가 됩니다.`);
+  }
+  if (!now.length) now.push('단일 대상 무대에서 차수별 비교가 아직 안 채워졌습니다(측정 중이거나 그 칸들이 못 쓰는 셀입니다).');
+  if (!fix.length) fix.push('진화 차수별 표가 채워지면 2차÷진화 전 배율이 가장 낮은 스킬부터 봅니다.');
+  if (!goal.length) goal.push('스킬 11종의 2차÷진화 전 배율이 한 자리 수 안에서 서로 3배 이내로 모이기.');
+  return prose({ now, fix, goal });
+}
+
+// 해설 — `현재 상황 → 개선안 → 기대 목표` 세 칸(balance-loop §4-C). 데이터에서 생성한다.
+function gymNote(it) {
+  const g = it.gym;
+  if (!g) return null;
+  const q = g.quality, now = [], fix = [], goal = [];
+  const label = s => { const [id, r] = String(s).split('/'); return skillName(id) + (r != null && r !== '-1' ? ' R' + r : ''); };
+
+  if (q.rigFailed.length) {
+    now.push(`상태 강제가 **${q.rigFailed.length}칸**에서 실패했습니다 — 그 조합은 아예 측정되지 않았습니다.`);
+    fix.push('`GymRig.Apply`의 진화 관문 네 개(게이트·레벨·루트 선행·2차 열쇠) 중 어디서 막혔는지는 셀의 `rigError`에 찍힙니다. 도달 불가한 조합이면 `EvolutionRoutes`의 표가 원본입니다.');
+    goal.push('다음 세션에서 **강제 실패 0칸**. 그래도 남으면 그 조합은 게임에서도 못 만드는 것이므로 격자에서 뺍니다.');
+  }
+  if ((q.residual || []).length) {
+    const first = q.residual[0].cell.split('|')[0];
+    const names = [...new Set(q.residual.flatMap(r => String(r.names || '').split(',').filter(Boolean)))];
+    now.push(`측정 시작에 앞 셀의 것이 남아 있던 칸이 **${q.residual.length}개** 있습니다(첫 칸: **${skillName(first)}**)`
+      + (names.length ? `. 남은 오브젝트: **${names.slice(0, 6).join(', ')}**` : '')
+      + `. 같은 스킬끼리의 오염은 딜 출처가 시험 대상과 같아 정상처럼 보이고 값만 부풀려지므로, **이 잔존 카운터가 유일한 가드**입니다.`);
+    fix.push('위에 뜬 오브젝트 이름을 `GymArena.Clear`가 치우게 합니다 — 콜라이더도 없고 스크립트도 없는 것이면 `EmitterTypes`에, 프리팹 이름만 아는 경우엔 그 프리팹의 컴포넌트를 찾아 넣습니다.');
+    goal.push('다음 세션에서 **잔존 0칸**. 남으면 그 스킬의 셀만 다시 재면 되므로, 그 스킬만 좁혀 짧게 돌립니다.');
+  }
+  if ((q.crossTagged || []).length) {
+    const worst = q.crossTagged.slice().sort((a, b) => (b.share || 0) - (a.share || 0))[0];
+    now.push(`**${q.crossTagged.length}칸**에서 그 스킬의 딜이 **다른 스킬 이름으로** 집계됐습니다`
+      + (worst ? ` — 가장 큰 칸은 ${worst.cell.split('|')[0] ? skillName(worst.cell.split('|')[0]) : ''}의 ${pct(worst.share)}가 **${(worst.names || []).map(skillName).join(', ')}** 이름으로 찍혔습니다` : '')
+      + `. 오염이 아닙니다 — 게임이 딜 출처를 **오브젝트 종류로** 태그하기 때문입니다(예: 독수리투하 R1이 뿜는 미니 회오리는 회오리 딜로 찍힙니다).`);
+    fix.push('시험장은 단독 릭이라 **셀의 전체 딜이 곧 그 스킬의 출력**이므로 판정은 이미 그렇게 합니다. 손댈 곳은 없습니다. '
+      + '다만 **실전 로그 쪽 스킬 표(아래 "스킬 밸런스")는 같은 보정이 없어** 그 스킬의 지분이 낮게, 이름을 빌려준 스킬의 지분이 높게 나옵니다.');
+    goal.push('실전 로그 표를 근거로 그 두 스킬의 파워를 말하지 않기 — 시험장 표가 원본입니다. 반증 조건: 시험장에서도 같은 순위가 나오면 귀속과 무관한 실제 차이입니다.');
+  }
+  if (q.arenaLimited.length) {
+    now.push(`**${q.arenaLimited.length}칸**이 무대 한계입니다 — 그 스킬이 무대를 비워, 더 센 스킬도 같은 숫자가 나옵니다.`);
+    fix.push('`GymArena.Table`의 해당 시나리오 `hpMult`를 올리거나 `GroupHpScale`의 그 차수 배율을 올립니다. 공급 HP/초 = (batch ÷ interval) × 기본체력 × hpMult × 차수배율 이 그 차수 최강 dps의 3배가 되게 잡습니다.');
+    goal.push('다음 세션에서 **무대 한계 0칸**(끝 생존 수가 상한의 80% 이상). 그래도 남으면 그 스킬이 그 차수에서 지나치게 세다는 뜻이므로 스킬 쪽을 봅니다.');
+  }
+  if (g.noise.maxSpread != null && g.noise.maxSpread > 0.15)
+    now.push(`반복 재현성 최대 차가 **${pct(g.noise.maxSpread)}**입니다 — 이보다 작은 차이는 판정할 수 없습니다.`);
+
+  for (const gi of [0, 1, 2]) {
+    const grp = g.groups[gi]; if (!grp || grp.states < 3) continue;
+    const name = ['진화 전', '1차 진화', '2차 진화'][gi];
+    if (grp.dominance.length) {
+      const d = grp.dominance[0];
+      now.push(`${name} 그룹에서 **${label(d.dominant)}가 ${label(d.dominated)}를 모든 시나리오에서 앞섭니다** — 장단점이 없어 고를 이유가 한쪽으로 몰립니다.`);
+      fix.push(`뒤진 쪽(${label(d.dominated)})에 **한 시나리오만 강점**을 주는 쪽이 싸게 풉니다 — 행렬에서 그 스킬이 가장 덜 뒤진 칸을 골라 \`Evo_*\`/\`Prog_*\`의 그 축을 올립니다(전체 피해를 올리면 지배 관계만 뒤집힙니다).`);
+      goal.push(`다음 세션에서 ${label(d.dominated)}가 시나리오 **하나 이상에서 ${label(d.dominant)}를 앞서기**. 전 시나리오에서 여전히 뒤지면 그 스킬의 작동 방식을 바꿔야 한다는 뜻입니다.`);
+    }
+    if (grp.noStrength.length) {
+      now.push(`${name} 그룹에서 **${grp.noStrength.map(label).join(', ')}** 는 어느 시나리오에서도 상위 1/3이 아닙니다 — 집을 이유가 없습니다.`);
+      fix.push('그 스킬이 상대적으로 덜 뒤진 시나리오를 행렬에서 골라 그 축을 올립니다. `SKILL_AXES.md`의 G5b가 요구하는 것은 **강점 하나**이지 평균이 아닙니다.');
+      goal.push('다음 세션에서 그 스킬들이 **각자 한 시나리오에서 상위 1/3**. 안 되면 그 스킬의 사거리·예측·범위(작동 방식)를 먼저 봅니다.');
+    }
+  }
+  for (const [k, v] of Object.entries(g.companionVerdict || {})) {
+    if (v.cells === 0 || v.pass) continue;
+    if ((v.harmful || []).length) {
+      now.push(`**${skillName(k)}**를 기준 3스킬에 넣으면 상태 ${v.harmful.join(', ')}에서 **전체 딜이 오히려 떨어집니다** — 슬롯을 먹고 손해를 끼칩니다.`);
+      fix.push(`그 상태가 전역 쿨·발동 순서를 어떻게 먹는지 봅니다(\`balance\` §2의 "한 스킬이 발동을 독점하면 버그"). 쿨(\`Evo_*.baseCooldown\`)을 먼저, 안 되면 효과 크기를 봅니다.`);
+      goal.push(`다음 세션에서 ${skillName(k)}의 모든 상태가 전체 딜을 **+0% 이상**으로. 반증: 쿨을 늘려도 여전히 마이너스면 효과 자체가 남의 발동을 밀어내는 구조입니다.`);
+    } else {
+      now.push(`**${skillName(k)}**는 전체 딜을 노이즈 폭(${pct(g.noise.maxSpread)}) 이상으로 올리는 상태가 하나도 없습니다 — 넣을 이유가 없습니다.`);
+      fix.push(`가장 덜 뒤진 상태를 골라 그 축을 올립니다. 되감기라면 쿨 당김량(\`RewindAmount\`), 버프기라면 지속·배수입니다.`);
+      goal.push(`다음 세션에서 ${skillName(k)}의 한 상태 이상이 전체 딜을 노이즈 폭 초과로 올리기.`);
+    }
+  }
+  const zero = g.rows.filter(r => r.usable && r.rig === 'solo' && r.level === 10 && r.dps === 0);
+  if (zero.length) {
+    now.push(`**딜이 0인 칸이 ${zero.length}개** 있습니다(발동은 했는데 아무것도 못 맞혔습니다): ` +
+      zero.slice(0, 5).map(r => `${skillName(r.skill)}${r.route >= 0 ? ' R' + r.route : ''}/${r.scenario}`).join(', ') + '.');
+    fix.push('상성으로 막히는 것(방패에 멈추는 투사체)인지 **버그**인지 갈라야 합니다 — 같은 상태가 다른 시나리오에서는 딜이 나오는지 행렬에서 확인하고, 나오면 그 시나리오의 적 종류가 원인입니다.');
+    goal.push('각 0칸에 **상성 때문인지 버그인지** 라벨이 붙기. 버그면 `codeSuggestions`에 적습니다(루프는 게임 로직을 고치지 않습니다).');
+  }
+  if (!now.length) {
+    now.push(`쓸 수 있는 셀 **${q.usable}/${q.cells}**, 세 그룹 모두 지배·무강점 없음 — 시험장 기준으로 스킬 밸런스가 맞습니다.`);
+    fix.push('다음은 격자를 넓히는 쪽입니다: `gymTreeModes`에 `bare`를 넣어 **강화 노드 2개의 값**을 재고, `gymGrowthCasts`로 호밍 곡선을 채웁니다.');
+    goal.push('다음 세션에서도 세 그룹 통과 유지. 한 그룹이라도 깨지면 그 그룹의 행렬에서 바뀐 칸을 짚습니다.');
+  }
+  return prose({ now, fix, goal });
+}
+
 function divStyle(v) {
   if (v == null) return '';
   const t = Math.max(-1, Math.min(1, Math.log2(v) / 1.2)); // ×0.5 ~ ×2.0 → -0.83 ~ 0.83
@@ -1276,9 +1568,29 @@ function deathSection(it) {
 }
 
 // 기본 선택 = **측정이 있는** 마지막 이터레이션. 변경만 적용하고 아직 안 잰 이터레이션이 기본으로 열리면 빈 표만 보인다.
+// 🔴 시험장 셀은 `gym.jsonl`에 쌓여 `runCount`(runs.jsonl)에 안 들어간다 — 그것만 보면 gym 회차를 통째로 건너뛰고
+//    정주행 회차를 열어서 "진화 스킬 데이터가 없다"로 보인다(실제로 그랬다). 그래서 gymCells도 같이 본다.
+// 그리고 마지막 회차가 **측정 중**이면 앞 회차를 연다 — 몇 칸만 든 표를 기본으로 보여주지 않는다.
+// 🔴 "덜 찼다"를 셀 수로 판정하면 틀린다 — 변경을 확인하는 회차는 건드린 스킬만 좁게 돌아서 셀 수로 늘 진다.
+//    그러면 방금 적용한 변경이 보고서에 한 번도 안 나온다. 그래서 **끝까지 돈(state가 done) 회차 중 가장 최신**을 먼저 본다.
 render((() => {
   const it = (DATA && DATA.iterations) || [];
-  for (let i = it.length - 1; i >= 0; i--) if ((it[i].runCount || 0) > 0) return i;
-  return Math.max(0, it.length - 1);
+  const has = x => (x.runCount || 0) > 0 || (x.gymCells || 0) > 0;
+  for (let i = it.length - 1; i >= 0; i--) {
+    // 한 회차에 세션이 여럿일 수 있다 — 도는 것이 없고 끝난 것이 하나라도 있으면 끝난 회차다.
+    const st = it[i].sessionStates || [];
+    if (has(it[i]) && st.length && !st.includes('running') && st.includes('done')) return i;
+  }
+  let last = -1;
+  for (let i = it.length - 1; i >= 0; i--) if (has(it[i])) { last = i; break; }
+  if (last < 0) return Math.max(0, it.length - 1);
+  for (let j = last - 1; j >= 0; j--) {
+    if (!has(it[j])) continue;
+    const a = it[last], b = it[j];
+    const aTotal = (a.runCount || 0) + (a.gymCells || 0);
+    const bTotal = (b.runCount || 0) + (b.gymCells || 0);
+    return aTotal < bTotal ? j : last;   // 마지막이 아직 덜 찼으면 앞 회차를 연다
+  }
+  return last;
 })());
 </script>
