@@ -37,6 +37,22 @@ public class SmallOrb : MonoBehaviour
     //    부채꼴로 펴지기도 전에 첫 프레임부터 같은 적을 향해 **완전히 겹쳐** 한 개로 보였다(실측 6개 → 좌표 1곳).
     private const float HomingTurnDegPerSec = 360f;
 
+    // ── 추적 오브의 관성 (사용자 지시 2026-09-27) ────────────────────────────
+    // "속도가 훨씬 빨라야 하고, 방향 전환이 없다면 가속도 개념도 있어야 해. 약간 관성을 줘서
+    //  방향 전환할 때 원심력 같은게 작용하도록"
+    // 🔴 원심력의 정체는 **횡가속이 일정하면 각속도가 속도에 반비례한다**는 것이다(ω = a/v).
+    //    그래서 빠를수록 크게 돌고, 꺾는 만큼 속도가 깎여 코너에서 다시 조여진다.
+    //    ⚠️ 하한(MinTurn)이 없으면 빨라진 오브가 적 주위를 **영영 맴돌며 못 맞힌다**.
+    private const float HomingSpeedMult = 1.8f;        // 프리팹 moveSpeed에 곱하는 출발 속도
+    private const float HomingMaxSpeedMult = 3.2f;     // 직진으로 붙일 수 있는 최고 속도
+    private const float HomingMinSpeedMult = 1.1f;     // 아무리 꺾어도 이 밑으로는 안 떨어진다
+    private const float HomingAccel = 14f;             // 직진 중 가속(유닛/초²)
+    private const float HomingLateralAccel = 42f;      // 선회에 쓸 수 있는 횡가속 — 이 값이 선회 반경을 정한다
+    private const float HomingMinTurnDegPerSec = 220f; // 각속도 하한
+    private const float HomingTurnSpeedBleed = 0.9f;   // 1라디안 꺾을 때마다 깎이는 속도 비율
+
+    private float speed;   // 지금 속도. 산탄 알(비추적)은 moveSpeed에 고정된 채로 쓴다.
+
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
     // 정렬 키(거리)를 담을 때 미리 재서 넣는다 — 비교 함수 안에서 transform.position을 읽으면
     // 네이티브 접근이 비교 횟수(N log N)만큼 일어난다. 먼저 재면 N번으로 끝난다.
@@ -51,6 +67,9 @@ public class SmallOrb : MonoBehaviour
         direction = dir.normalized;
         Damage = damage;
         ApplyVulnerable = applyVulnerable;
+        // 추적만 빨라지고 가속한다. 산탄 알은 예전 그대로 등속 직진이다.
+        // ⚠️ 호출부가 Homing을 Init보다 **먼저** 켠다 — 순서가 바뀌면 이 분기가 안 먹는다.
+        speed = Homing ? moveSpeed * HomingSpeedMult : moveSpeed;
     }
 
     private void Start() => Destroy(gameObject, lifetime);
@@ -67,7 +86,7 @@ public class SmallOrb : MonoBehaviour
 
             float maxRadBack = HomingTurnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
             direction = ((Vector2)Vector3.RotateTowards(direction, toOwner.normalized, maxRadBack, 0f)).normalized;
-            transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+            transform.Translate(direction * speed * Time.deltaTime, Space.World);
             return;
         }
 
@@ -77,14 +96,25 @@ public class SmallOrb : MonoBehaviour
         {
             if (homingTarget == null || !homingTarget.IsAlive || hitEnemies.Contains(homingTarget))
                 homingTarget = AcquireTarget();
+
+            float turnedRad = 0f;
             if (homingTarget != null)
             {
                 Vector2 desired = ((Vector2)homingTarget.transform.position - (Vector2)transform.position).normalized;
-                float maxRad = HomingTurnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
-                direction = ((Vector2)Vector3.RotateTowards(direction, desired, maxRad, 0f)).normalized;
+                // 각속도 = 횡가속 ÷ 속도. 빠를수록 크게 돈다 — 이게 원심력으로 보이는 부분이다.
+                float omega = Mathf.Max(HomingMinTurnDegPerSec * Mathf.Deg2Rad,
+                                        HomingLateralAccel / Mathf.Max(0.01f, speed));
+                Vector2 before = direction;
+                direction = ((Vector2)Vector3.RotateTowards(direction, desired, omega * Time.deltaTime, 0f)).normalized;
+                turnedRad = Vector2.Angle(before, direction) * Mathf.Deg2Rad;
             }
+
+            // 직진하면 붙고, 꺾은 만큼 깎인다 — 코너에서 느려졌다가 빠져나오며 다시 가속한다.
+            speed += HomingAccel * Time.deltaTime;
+            speed -= speed * turnedRad * HomingTurnSpeedBleed;
+            speed = Mathf.Clamp(speed, moveSpeed * HomingMinSpeedMult, moveSpeed * HomingMaxSpeedMult);
         }
-        transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
 
     // 아직 안 때린 산 적을 가까운 순으로 세워 TargetRank번째를 노린다. 오브가 적보다 많으면 순번이 돌아 겹친다(적이 적을 땐 몰리는 게 맞다).

@@ -38,8 +38,9 @@ public class SkillNode
 
     // Normal 노드가 올리는 스탯 축과 그 크기. SkillEffects.Compute가 이 둘을 그대로 읽는다.
     public MetaUpgradeId effect = MetaUpgradeId.Attack;
+    // 🔴 이 노드를 사면 얹히는 양. **레벨제 폐지(2026-09-27) 후로는 "한 번에 주는 전부"다** —
+    //    이름은 옛 흔적이라 남겨 두었다(에셋 96개의 YAML 키를 바꾸지 않으려고).
     public float perLevel = 5f;
-    public int maxLevel = 5;
 
     public List<string> prereqIds = new List<string>();
     public Vector2 editorPos = new Vector2(200, 200);
@@ -101,9 +102,12 @@ public static class SkillTreeSave
 
     public static bool IsUnlocked(string id) => LevelOf(id) >= 1;
 
-    // 노드 만렙: 스탯 노드(Normal)만 여러 레벨(에셋 maxLevel), 스킬 해금/강화는 1회 개방
-    public static int MaxLevelOf(SkillNode n) =>
-        n.type == SkillNodeType.Normal ? Mathf.Max(1, n.maxLevel) : 1;
+    // 🔴 **레벨제는 폐지됐다 — 모든 노드가 "구매/미구매" 2상태다**(사용자 결정 2026-09-27).
+    //    예전엔 Normal 노드만 에셋의 maxLevel까지 여러 번 찍을 수 있었다. 폐지하면서
+    //    노드 에셋을 **등가 변환**했다: 가격 = 옛 1~만렙 누적 비용의 합, 효과 = perLevel × 옛 만렙.
+    //    그래서 트리 전체 비용(201,924)도 만렙 총효과도 그대로다.
+    // 함수를 남겨 두는 이유: 호출부(업적·봇·UI)가 "다 찍었나"를 이걸로 묻는데, 1을 돌려주면 전부 그대로 맞는다.
+    public static int MaxLevelOf(SkillNode n) => 1;
 
     // 저장된 레벨이 에셋 만렙보다 높으면 만렙으로 본다 — 에셋에서 만렙을 줄인 뒤 남은 옛 세이브용.
     // 효과·표시·지불액이 전부 이 값을 쓴다. 그래서 넘친 레벨에 냈던 정수는 Spent가 안 세어 **자동으로 돌려준다.**
@@ -141,15 +145,44 @@ public static class SkillTreeSave
     //   ⚠️ Max(1,…)은 안전망이다. cost가 안 적힌 옛/백업 에셋이 0으로 읽혀 노드가 공짜가 되는 걸 막는다.
     public static int CostOf(SkillNode n) => Mathf.Max(1, n.cost);
 
-    // 레벨당 비용 성장 배율(레벨이 오를수록 비싸짐 — 레벨제 Normal 노드용)
-    private const float LevelCostGrowth = 1.5f;
-
-    // 다음 레벨(현재 level → level+1) 구매 비용. 1레벨(cur 0)=등급 비용, 이후 1.5배씩.
-    public static int NextLevelCost(SkillTreeData tree, SkillNode n) =>
-        Mathf.RoundToInt(CostOf(n) * Mathf.Pow(LevelCostGrowth, LevelOf(n.id)));
+    // 구매 비용. 레벨제가 폐지돼 노드당 **한 번**만 낸다 — 곧 노드가 가진 값 그대로다.
+    // (예전엔 레벨마다 1.5배씩 비싸졌다. 그 누적분은 노드 cost에 합쳐 넣었다 — MaxLevelOf 주석 참고.)
+    public static int NextLevelCost(SkillTreeData tree, SkillNode n) => CostOf(n);
 
     // ── available 정수 = earned − Σ(해금된 노드에 지불한 정수) ──
-    public static int AvailableEssence(SkillTreeData tree) => EssenceEarned - Spent(tree);
+    public static int AvailableEssence(SkillTreeData tree)
+    {
+        if (!flattenChecked) { flattenChecked = true; MigrateFlattenedCosts(tree); }
+        return EssenceEarned - Spent(tree);
+    }
+
+    // 🔴 레벨제 폐지(2026-09-27)로 노드 가격을 전부 2.9319배 했다. 그러면 **이미 산 노드**의 지출액도
+    //    소급해서 같이 오르기 때문에 available(= earned − spent)이 음수가 된다 —
+    //    실제로 기존 세이브에서 화면에 `-19,356 Essence`가 찍혔다.
+    //    산 노드가 옛 가격으로 냈던 몫과 새 가격의 **차액만큼 earned에 얹어**, 가진 정수를 그대로 보존한다.
+    //    (플레이어는 같은 노드로 이제 만렙 몫을 받으므로 값을 더 내라고 할 이유가 없다.)
+    // 한 번만 돈다 — 세이브 키로 표시하므로 두 번 얹히지 않는다.
+    private const string FlattenMigrationKey = "skilltree.flatten.v1";
+    private const float FlattenCostScale = 2.9319f;   // 변환 때 쓴 배율과 같아야 한다
+    private static bool flattenChecked;               // 도메인 리로드마다 풀린다 — 위 키가 진짜 방어선이다
+
+    private static void MigrateFlattenedCosts(SkillTreeData tree)
+    {
+        if (tree == null || SaveStore.GetInt(FlattenMigrationKey, 0) == 1) return;
+
+        int delta = 0;
+        foreach (var kv in Levels())
+        {
+            SkillNode n = tree.Find(kv.Key);
+            if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
+            int now = CostOf(n);
+            int old = Mathf.Max(1, Mathf.RoundToInt(now / FlattenCostScale));
+            delta += now - old;
+        }
+        if (delta > 0) SaveStore.SetInt(EssenceKey, SaveStore.GetInt(EssenceKey, 0) + delta);
+        SaveStore.SetInt(FlattenMigrationKey, 1);
+        SaveStore.Save();
+    }
 
     private static int Spent(SkillTreeData tree)
     {
@@ -159,9 +192,9 @@ public static class SkillTreeSave
         {
             SkillNode n = tree.Find(kv.Key);
             if (n == null) continue;
-            int baseCost = CostOf(n);
-            for (int L = 0; L < EffectiveLevel(n, kv.Value); L++)
-                sum += Mathf.RoundToInt(baseCost * Mathf.Pow(LevelCostGrowth, L));
+            // EffectiveLevel은 0 아니면 1이다 — 산 노드만 한 번 센다.
+            // 🔴 옛 세이브에 레벨 2 이상이 남아 있어도 1로 눌리므로, 초과 레벨에 냈던 정수는 여기서 **자동으로 돌아온다.**
+            sum += CostOf(n) * EffectiveLevel(n, kv.Value);
         }
         return sum;
     }

@@ -8,10 +8,17 @@ using UnityEngine;
 // 적(sortingOrder 1~180)보다 **앞**에 깔고, 대신 알파 상한을 걸어 뒤의 적이 비쳐 보이게 한다(사용자 결정 2026-09-02).
 public class PoisonCloud : MonoBehaviour
 {
-    private const int PuffCount = 7;
+    // 🔴 안개가 커질 때 **덩이를 키우지 않고 개수를 늘린다**(사용자 지시 2026-09-27).
+    //    예전엔 덩이 크기에 radius를 곱해서, 넓어질수록 같은 그림이 확대돼 뭉개져 보였다.
+    //    이제 덩이는 늘 같은 크기고, 넓이(반경²)에 비례해 개수가 는다.
+    private const int PuffCountAtBase = 7;            // 기본 반경(PlayerSkills.GrapeCloudRadius)에서의 덩이 수
+    private const int PuffCountMax = 18;              // 상한 — 파티클 수가 곧 프레임 비용이라 여기서 끊는다
+    private const float PuffCenterSize = 1.875f;      // 가운데 덩이 지름(유닛). 기본 반경 1.5 × 1.25 = 예전 그대로
+    private const float PuffSizeMin = 1.08f;          // 둘레 덩이 지름 하한 (1.5 × 0.72)
+    private const float PuffSizeMax = 1.5f;           // 둘레 덩이 지름 상한 (1.5 × 1.0)
     private const int PuffTexSize = 32;
     private const int SortingOrder = 250;     // 적(1~180)보다 앞, 만화 효과(600)·미사일(400)보다 뒤
-    private const float MaxAlpha = 0.33f;     // 덩이 7장이 겹치므로 장당 알파를 낮춰야 뒤의 적이 보인다
+    private const float MaxAlpha = 0.33f;     // 덩이 여러 장이 겹치므로 장당 알파를 낮춰야 뒤의 적이 보인다
     private const float ReapplyInterval = 0.2f; // 적 탐색 주기. 매 프레임 FindObjects는 안개 여러 개면 비싸다
     private const float FadeInTime = 0.15f;
     private const float FadeOutTime = 0.4f;
@@ -48,11 +55,18 @@ public class PoisonCloud : MonoBehaviour
     {
         if (puffSprite == null) puffSprite = CreateCircleSprite();
 
-        for (int i = 0; i < PuffCount; i++)
+        // 덩이 수는 **넓이**를 따라간다 — 반경이 √2배면 개수가 2배다. 기본 반경에서는 예전과 같은 7장.
+        float sizeRatio = radius / PlayerSkills.GrapeCloudRadius;
+        int puffCount = Mathf.Clamp(Mathf.RoundToInt(PuffCountAtBase * sizeRatio * sizeRatio),
+                                    PuffCountAtBase, PuffCountMax);
+
+        for (int i = 0; i < puffCount; i++)
         {
             // 가운데 한 덩이 + 둘레에 흩어진 덩이들 = 뭉게뭉게한 실루엣.
-            float angle = (i - 1) / (float)(PuffCount - 1) * Mathf.PI * 2f;
-            float dist = i == 0 ? 0f : radius * Random.Range(0.35f, 0.62f);
+            // 🔴 황금각 나선으로 원판을 고르게 메운다 — 한 겹 링에 늘어놓으면 개수가 늘수록
+            //    둘레만 빽빽해지고 가운데가 빈다. sqrt는 바깥으로 갈수록 링 간격을 좁혀 밀도를 맞춘다.
+            float angle = i * 2.39996f;
+            float dist = i == 0 ? 0f : radius * 0.62f * Mathf.Sqrt(i / (float)(puffCount - 1));
             Vector3 home = i == 0
                 ? Vector3.zero
                 : new Vector3(Mathf.Cos(angle) * dist, Mathf.Sin(angle) * dist * 0.55f, 0f); // 세로로 눌러 바닥에 깔린 느낌
@@ -68,7 +82,8 @@ public class PoisonCloud : MonoBehaviour
             sr.color = new Color(color.r * shade, color.g * shade, color.b * shade, 0f); // 알파는 페이드인이 올린다
             sr.sortingOrder = SortingOrder + i;
 
-            float scale = radius * (i == 0 ? 1.25f : Random.Range(0.72f, 1.0f));
+            // 🔴 radius를 곱하지 않는다 — 덩이 크기는 안개가 넓어져도 그대로다(개수로 채운다).
+            float scale = i == 0 ? PuffCenterSize : Random.Range(PuffSizeMin, PuffSizeMax);
             puff.transform.localScale = Vector3.one * scale;
 
             puffs.Add(sr);

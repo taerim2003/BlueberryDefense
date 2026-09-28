@@ -2171,6 +2171,30 @@ MonoBehaviour:
     m_Key: tutorial.evolution.2
     m_Metadata:
       m_Items: []
+  - m_Id: 16698336888954880
+    m_Key: tree.name.critdmg_4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149184
+    m_Key: tree.name.critdmg_5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149185
+    m_Key: tree.name.crit_3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149186
+    m_Key: tree.name.crit_4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149187
+    m_Key: tree.name.regen_1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149188
+    m_Key: tree.name.regen_2
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

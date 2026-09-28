@@ -88,19 +88,36 @@ public class PlayerSkills : MonoBehaviour
 
     public const float GrapePoisonDuration = 3f;     // 중독이 몸에 남는 시간(안개 밖으로 나가도 이만큼 아프다)
     public const float GrapePoisonInterval = 0.5f;   // 도트 간격 → 기본 6틱
-    public const float GrapeCloudDuration = 4f;      // 안개가 바닥에 깔려 있는 시간
+    public const float GrapeCloudDuration = 5.5f;    // 안개가 바닥에 깔려 있는 시간(2026-09-27 사용자: 늘려 달라 → 4→5.5)
     public const float GrapeCloudRadius = 1.5f;      // 안개 반경(유닛). skill.Scale이 곱해진다
+    // 🔴 알끼리 이만큼은 떨어뜨려 던진다 — **포도 캐릭터 키**(Grape1.png 48px ÷ PPU32 × 프리팹 1.5배)다
+    //    (사용자 지시 2026-09-27: "적이 없는 곳이어도 괜찮으니 최대한 적과 가까우면서 서로 떨어지게").
+    //    예전엔 안개 반경에 비례시켜서(radius×1.2) 안개가 커질수록 자동으로 벌어졌는데,
+    //    그러면 레벨업으로 안개가 커질 때 알이 화면 밖까지 흩어진다.
+    public const float GrapeSpotMinGap = 2.25f;
     public const int GrapeBaseBalls = 3;             // 한 번에 던지는 포도알 수
     public const float GrapeFlightTime = 0.55f;
     // 착지 뒤에도 적은 계속 걸어온다 — 이만큼 더 앞에 깔아 적이 안개로 걸어 들어오게 한다(2026-09-20 사용자).
     public const float GrapeLeadDwell = 0.6f;
     public const float GrapeArcHeight = 2.2f;
-    public const float GrapeStunDuration = 0.5f;
+    // 기절 가동률을 40%로 맞춘 값(2026-09-27 사용자). 찌릿찌릿 1차는 3틱마다 = 1.5초 주기라 0.6/1.5 = 40%.
+    // 2차는 2틱마다(1.0초 주기)라 60%가 된다 — 2차가 더 센 것이 맞다고 보고 상수 하나로 둔다.
+    public const float GrapeStunDuration = 0.6f;
     public const float GrapeStunVulnerableMult = 1.25f;
     public const float GrapeStunVulnerableDuration = 2f;
     public const float GrapeExplodeRadius = 2f;
     public const float GrapeExplodeDamageRatio = 0.35f; // 터진 적 최대체력 대비
+    // 🔴 안개 색은 **진화 루트마다 다르다**(사용자 지시 2026-09-27). 알 그림이 루트마다 바뀌는 것과 짝을 이룬다.
+    //    미진화 = 보라(Effect_GrapeBomb) · R0 생화학 = 초록(Sprite_GrapeBombGreen) · R1 찌릿찌릿 = 노랑(Effect_GrapeBombElectric)
     private static readonly Color GrapeCloudColor = new Color(0.42f, 0.16f, 0.55f, 1f);
+    private static readonly Color GrapeCloudColorBio = new Color(0.30f, 0.62f, 0.20f, 1f);      // 생화학 초록
+    private static readonly Color GrapeCloudColorElectric = new Color(0.88f, 0.80f, 0.18f, 1f); // 찌릿찌릿 노랑
+
+    // 루트를 탄 쪽의 색. 두 루트를 동시에 탈 수 없어(진화는 한 루트만) 순서 판정으로 충분하다.
+    private static Color GrapeCloudColorFor(EquippedSkill skill) =>
+        skill.PathTier[1] >= 2 ? GrapeCloudColorBio
+        : skill.PathTier[2] >= 2 ? GrapeCloudColorElectric
+        : GrapeCloudColor;
 
     private const float MiniWhirlwindScale = 0.4f; // 미니 회오리 크기 배율(바닥선 보정 계산에도 쓰임)
     private const float MiniWhirlwindGroundBlend = 0.5f; // 바닥선 보정을 얼마나 먹일지. 1=큰 회오리와 바닥선 일치(너무 낮았다) / 0=보정 없음
@@ -129,9 +146,16 @@ public class PlayerSkills : MonoBehaviour
     private static float overchargeHitsTimer;
     private const float OverchargeWindow = 2.5f;   // 한 캐스트의 타격이 다 끝날 만큼만 — 다음 캐스트로 안 샌다
 
-    // Enemy.TakeSkillHit가 참조: 스킬 고유 타수(기본공격만 >1, 그 외 1)
+    // 진화가 정한 타수. 0 = "이 진화는 타수를 안 정한다"라 기본 스킬 값으로 떨어진다.
+    // 🔴 진화 에셋의 `baseHits`는 여기 담겨야 실제로 먹는다 — 에셋에 적어 두기만 하면 조용히 무시된다.
+    //    타수는 `NaturalHits`(static)가 읽는데 그쪽은 EquippedSkill을 못 보므로 스킬별 static으로 올린다.
+    private static readonly System.Collections.Generic.Dictionary<ActiveSkillId, int> evolvedHits =
+        new System.Collections.Generic.Dictionary<ActiveSkillId, int>();
+
+    // Enemy.TakeSkillHit가 참조: 스킬 고유 타수(진화 > 기본 스킬 에셋 > 기본공격 특례 > 1)
     public static int NaturalHits(ActiveSkillId source) =>
-        Prog(source) != null && Prog(source).baseHits > 0 ? Prog(source).baseHits
+        evolvedHits.TryGetValue(source, out int h) && h > 0 ? h
+        : Prog(source) != null && Prog(source).baseHits > 0 ? Prog(source).baseHits
         : source == ActiveSkillId.BasicAttack ? Mathf.Max(1, BasicAttackHits) : 1;
 
     // Enemy.TakeSkillHit가 참조: 산탄 버프로 추가되는 타격 수(스킬을 안 가린다) + 과충전이 얹은 1회분
@@ -238,7 +262,6 @@ public class PlayerSkills : MonoBehaviour
     [SerializeField] private GameObject swingShockwavePrefab;     // 휘두르기 2루트 진화: 맵 끝까지 달리는 충격파
     // 포도알 그림은 기본 오브를 빌려 쓴다(전용 이펙트 없음 — 사용자 결정). 미배선이면 orbPrefab의 그림으로 폴백.
     [SerializeField] private GameObject grapeBallPrefab;
-    [SerializeField] private GameObject grapeExplosionVfxPrefab;  // 착탄 순간의 터짐(Effect_Explosion 재사용)
     [SerializeField] private Animator animator;
     [SerializeField] private SkillProgression[] progressions; // 스킬별 시작값+레벨 커브(Tier A). 미할당/미포함 스킬은 코드 기본 규칙 폴백(=현행)
 
@@ -303,6 +326,8 @@ public class PlayerSkills : MonoBehaviour
         GrapeExplodeRadiusMult = 1f;
         GrapeStunEveryNPoisonTicks = 0;
         GrapeStunAppliesVulnerable = false;
+        evolvedHits.Clear(); // 진화가 정한 타수는 이번 판 한정이다
+
         BasicAttackHits = BalanceConstants.BasicAttackBaseHits;
         shotgunTimer = 0f;
         shotgunBonus = 0;
@@ -667,6 +692,8 @@ public class PlayerSkills : MonoBehaviour
         if (e == null) return;
         if (e.baseDamage > 0f) skill.Damage = e.baseDamage;
         if (e.baseCooldown > 0f) skill.Cooldown = Mathf.Max(GlobalCooldown, e.baseCooldown);
+        // 타수는 EquippedSkill이 아니라 static 조회맵에 담는다(위 evolvedHits 주석 참고).
+        if (e.baseHits > 0) evolvedHits[skill.Id] = e.baseHits;
         if (e.basePierce > 0) skill.ExtraPierce = e.basePierce;
         if (e.baseProjectiles > 0) skill.ExtraProjectiles = e.baseProjectiles;
         // 지속시간은 스킬마다 담기는 필드가 달라 산탄만 따로 받는다(나머지는 BaseDuration이 에셋을 직접 읽는다).
@@ -1779,8 +1806,11 @@ public class PlayerSkills : MonoBehaviour
         float radius = GrapeCloudRadius * skill.Scale;
         if (skill.PathTier[1] >= 1) radius *= 1.4f;          // 생화학 1차: 안개가 커진다
 
-        float interval = GrapePoisonInterval;
+        // 도트 간격. 레벨업 "독 피해 주기"(SkillStat.TickRate)가 여기 곱해진다 — 회오리·독수리와 같은 축이다.
+        // 🔴 예전엔 상수만 읽어서, Prog_GrapeToss에 TickRate 스텝을 넣어도 조용히 무시됐다(2026-09-27 배선).
+        float interval = GrapePoisonInterval * skill.TickIntervalMult;
         if (skill.PathTier[1] >= 2) interval *= 0.5f;        // 생화학 1차(옛 T2): 도트 간격 절반
+        interval = Mathf.Max(0.1f, interval);                // 너무 잦으면 틱마다 도는 판정이 통째로 비싸진다
 
         // 중독 틱이 읽을 값 — 진화 직후 첫 시전에 반영되고, 그 전에는 중독 자체가 없다.
         GrapePoisonExplodeOnDeath = skill.PathTier[1] >= 3;  // 생화학 2차
@@ -1788,87 +1818,53 @@ public class PlayerSkills : MonoBehaviour
         GrapeStunEveryNPoisonTicks = skill.PathTier[2] >= 3 ? 2 : (skill.PathTier[2] >= 2 ? 3 : 0);
         GrapeStunAppliesVulnerable = skill.PathTier[2] >= 3; // 찌릿찌릿 2차
 
-        // 적이 하나도 없으면 **던지지 않는다** — 전방에 알을 띄워 두고 적이 나올 때까지 기다렸다가 그때 날린다
-        // (사용자 결정 2026-09-10). 예전엔 허공에 던져서 안개가 빈 자리에 깔리고 쿨만 날아갔다.
-        if (!AnyLivingEnemy())
-        {
-            List<GrapeProjectile> held = new List<GrapeProjectile>();
-            for (int i = 0; i < balls; i++)
-            {
-                GameObject ball = SpawnGrapeBall(GrapeHoldSpot(i, balls), skill);
-                if (ball == null) break;   // 그림을 못 만드는 상황이면 대기시킬 것도 없다
-                GrapeProjectile gp = ball.GetComponent<GrapeProjectile>();
-                if (gp == null) gp = ball.AddComponent<GrapeProjectile>();
-                held.Add(gp);
-            }
-            if (held.Count > 0) StartCoroutine(HoldGrapesUntilEnemy(held, radius, damage, interval));
-            return;
-        }
-
+        // 🔴 적이 없으면 **그냥 랜덤한 자리에 던진다**(사용자 결정 2026-09-27).
+        //    2026-09-10에는 반대로 정했었다 — 전방에 알을 띄워 두고 적이 나올 때까지 기다리는 방식.
+        //    그때 문제였던 "안개가 빈 자리에 깔리고 쿨만 날아간다"는 이제 덜하다: 안개가 넓어지고
+        //    오래 남으며 알끼리 벌어져 떨어지므로, 빈 자리에 깔려도 곧 걸어오는 적이 밟는다.
+        Color cloudColor = GrapeCloudColorFor(skill);
+        float crit = GetCritChance(skill);
         foreach (Vector3 spot in PickGrapeSpots(balls, radius))
         {
             GameObject ball = SpawnGrapeBall(transform.position + Vector3.up * 0.4f, skill);
-            if (ball == null) { LandGrape(spot, radius, damage, interval); continue; }
+            if (ball == null) { LandGrape(spot, radius, damage, interval, cloudColor, crit); continue; }
 
             GrapeProjectile gp = ball.GetComponent<GrapeProjectile>();
             if (gp == null) gp = ball.AddComponent<GrapeProjectile>();
-            Vector3 target = spot;
-            gp.Init(target, GrapeFlightTime, GrapeArcHeight, landed => LandGrape(landed, radius, damage, interval));
+            gp.Init(spot, GrapeFlightTime, GrapeArcHeight,
+                    landed => LandGrape(landed, radius, damage, interval, cloudColor, crit));
         }
     }
 
-    private bool AnyLivingEnemy()
-    {
-        foreach (Enemy e in Enemy.Active)
-            if (e != null && e.IsAlive) return true;
-        return false;
-    }
+    // 알 자체가 때리는 몫 — **안개 몇 틱분**인지로 정한다(사용자 지시 2026-09-27: "안개 2틱정도").
+    private const int GrapeImpactTicks = 2;
 
-    // 대기 중인 알이 설 자리 — 플레이어 **전방**(-x)에 조금씩 벌려 세운다. 겹쳐 두면 한 알처럼 보인다.
-    private Vector3 GrapeHoldSpot(int index, int total)
-    {
-        float spread = total > 1 ? Mathf.Lerp(-0.6f, 0.6f, index / (float)(total - 1)) : 0f;
-        return transform.position + Vector3.left * (2f + index * 0.55f) + Vector3.up * (0.9f + spread);
-    }
-
-    // 적이 나올 때까지 알을 띄워 두었다가, 나오는 순간 평소의 조준(PickGrapeSpots)으로 날린다.
-    // 매 프레임 전수 검색은 비싸서 0.1초 간격으로 본다 — 대기 중엔 급할 게 없다.
-    private IEnumerator HoldGrapesUntilEnemy(List<GrapeProjectile> held, float radius, float damage, float interval)
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(0.1f);
-
-            held.RemoveAll(g => g == null);      // 판이 끝나 정리된 알은 빠진다
-            if (held.Count == 0) yield break;
-            if (!AnyLivingEnemy()) continue;
-
-            List<Vector3> spots = PickGrapeSpots(held.Count, radius);
-            for (int i = 0; i < held.Count; i++)
-                held[i].Init(spots[i], GrapeFlightTime, GrapeArcHeight,
-                             landed => LandGrape(landed, radius, damage, interval));
-            yield break;
-        }
-    }
-
-    // 착탄 — 터짐을 한 번 보여주고 그 자리에 안개를 남긴다.
-    private void LandGrape(Vector3 at, float radius, float damage, float interval)
+    // 착탄 — 그 자리에 있던 적을 한 번 때리고 안개를 남긴다.
+    // 🔴 터지는 이펙트는 뺐다(사용자 지시 2026-09-27) — 호밍의 `Effect_Explosion`을 돌려 쓰고 있어서
+    //    포도를 쓰는데 호밍 폭발이 보였다. 소리(GrapeToss.pop)는 남긴다.
+    private void LandGrape(Vector3 at, float radius, float damage, float interval, Color cloudColor, float critChance)
     {
         SkillSfx.Play("GrapeToss.pop");
 
-        if (grapeExplosionVfxPrefab != null)
-        {
-            GameObject vfx = ObjectPool.Instance.Spawn(grapeExplosionVfxPrefab, at, Quaternion.identity);
-            vfx.transform.localScale = Vector3.one * (radius * 0.6f);
-            ObjectPool.Instance.Despawn(vfx, 1.5f);
-        }
+        // 🔴 알 자체 피해는 **목적지에 도착한 순간 그 자리에 있는 적**에게만 들어간다(사용자 결정 2026-09-27).
+        //    비행 중 충돌 판정이 아니다 — 알이 포물선으로 떠서 날아가 "가는 길에 스치는" 판정이 어색했다.
+        //    가는 길에 아무도 못 만났으면 그냥 안개만 남는다.
+        float impact = damage * GrapeImpactTicks;
+        if (impact > 0f)
+            using (Enemy.GetSnapshot(out List<Enemy> enemies))
+                foreach (Enemy e in enemies)
+                {
+                    if (e == null || !e.IsAlive) continue;
+                    if (Vector2.Distance(e.transform.position, at) > radius) continue;
+                    e.TakeSkillHit(impact, critChance, ActiveSkillId.GrapeToss);
+                }
 
         GameObject cloud = new GameObject("PoisonCloud");
         cloud.transform.position = at;
         // 스킬트리 「짙은 독안개」가 바닥에 남는 시간을 늘린다(안개 밖으로 나간 뒤 아픈 시간은 그대로).
         cloud.AddComponent<PoisonCloud>()
              .Init(radius, GrapeCloudDuration + MetaBonuses.GrapeCloudExtraSeconds,
-                   damage, GrapePoisonDuration, interval, GrapeCloudColor);
+                   damage, GrapePoisonDuration, interval, cloudColor);
     }
 
     // 포도알 그림 = 기본 오브. 전용 프리팹이 배선돼 있으면 그쪽을 먼저 쓴다.
@@ -1953,30 +1949,63 @@ public class PlayerSkills : MonoBehaviour
         alive.Sort((a, b) => Mathf.Abs(a.transform.position.x - playerX)
                                  .CompareTo(Mathf.Abs(b.transform.position.x - playerX)));
 
-        float minGap = radius * 1.2f;
+        // 🔴 알끼리 **포도 캐릭터 키만큼** 떨어뜨린다(사용자 지시 2026-09-27). 예전엔 안개 반경에
+        //    비례시켰는데, 그러면 레벨업으로 안개가 커질수록 알이 화면 밖까지 흩어진다.
+        const float minGap = GrapeSpotMinGap;
+
         for (int i = 0; i < count; i++)
         {
+            // 적이 하나도 없으면 전방 랜덤 — 그래도 서로는 벌린다(사용자 결정 2026-09-27: 대기하지 말고 던져라).
             if (alive.Count == 0)
             {
-                spots.Add(transform.position + new Vector3(Random.Range(-7f, -2f), Random.Range(-1.5f, 1.5f), 0f));
+                spots.Add(SpreadGrapeSpot(
+                    transform.position + new Vector3(Random.Range(-7f, -2f), Random.Range(-1.5f, 1.5f), 0f),
+                    spots, minGap));
                 continue;
             }
 
-            // 앞줄부터 훑어 이미 고른 자리와 떨어진 첫 적을 쓴다.
-            // 다 붙어 있어 못 고르면 **앞에서 i번째** 적으로 떨어진다 — alive[0]로 고정하면
-            // 빽빽한 무리에서 알이 전부 한 마리 위에 겹쳐 안개 넓이가 통째로 낭비된다.
-            Vector3 pick = LeadGrapeTarget(alive[Mathf.Min(i, alive.Count - 1)], playerX);
+            // 🔴 **이미 고른 자리에서 가장 멀리 떨어진 후보**를 고른다(예전엔 "떨어진 첫 적"이라
+            //    앞줄 몇 마리에 몰렸다). 여유가 있는 후보들 중에서는 앞줄(플레이어에 가까운 쪽)이 이긴다 —
+            //    alive가 이미 그 순서로 정렬돼 있어 동점이면 먼저 나온 쪽이 남는다.
+            Vector3 best = Vector3.zero;
+            float bestClearance = float.NegativeInfinity;
             foreach (Enemy e in alive)
             {
                 Vector3 cand = LeadGrapeTarget(e, playerX);
-                bool far = true;
+                float clearance = float.PositiveInfinity;
                 foreach (Vector3 s in spots)
-                    if (Vector2.Distance(s, cand) < minGap) { far = false; break; }
-                if (far) { pick = cand; break; }
+                    clearance = Mathf.Min(clearance, Vector2.Distance(s, cand));
+                if (clearance > bestClearance) { bestClearance = clearance; best = cand; }
             }
-            spots.Add(pick);
+
+            // 다 붙어 있어 어디를 골라도 겹치면, 적이 없는 자리로 밀어낸다.
+            // "적이 없는 곳이어도 괜찮으니 최대한 적과 가까우면서" — 가장 가까운 후보에서 최소한만 비켜선다.
+            spots.Add(SpreadGrapeSpot(best, spots, minGap));
         }
         return spots;
+    }
+
+    // 이미 고른 자리들에서 minGap만큼 떨어질 때까지 **가장 가까운 자리에서 밀어낸다**.
+    // 옮기는 거리를 최소로 두어 원래 노리던 지점(적 무리) 근처에 남는다.
+    private static Vector3 SpreadGrapeSpot(Vector3 want, List<Vector3> taken, float minGap)
+    {
+        for (int pass = 0; pass < 8; pass++)
+        {
+            int worst = -1;
+            float worstDist = minGap;
+            for (int i = 0; i < taken.Count; i++)
+            {
+                float d = Vector2.Distance(taken[i], want);
+                if (d < worstDist) { worstDist = d; worst = i; }
+            }
+            if (worst < 0) break;   // 전부 minGap 밖 — 끝
+
+            Vector2 away = (Vector2)(want - taken[worst]);
+            // 정확히 겹쳐 방향이 없으면 아무 방향으로나 뗀다(0벡터를 정규화하면 0이 되어 영영 안 벌어진다).
+            if (away.sqrMagnitude < 0.0001f) away = Random.insideUnitCircle.normalized;
+            want = taken[worst] + (Vector3)(away.normalized * minGap);
+        }
+        return want;
     }
 
     // 착탄 시점의 위치를 미리 짚는다 — 포도알은 GrapeFlightTime만큼 날아가는데 그동안 적이 걸어 나가
@@ -2264,7 +2293,7 @@ public class PlayerSkills : MonoBehaviour
 
                 e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing, stun ? StatusIconLibrary.Stun : null);
                 e.ApplyKnockback(knockback);
-                if (stun) e.ApplySlow(0f, SwingStunDuration); // 감속 0 = 이동 정지(기절)
+                if (stun) e.ApplyStun(SwingStunDuration);
                 if (lifestealPerHit > 0 && health != null) health.AddOverheal(lifestealPerHit);
                 SpawnRockDebris(p);
             }
@@ -2885,7 +2914,11 @@ public class PlayerSkills : MonoBehaviour
     // 산탄 알 프리팹(SmallOrb)을 재사용하되 추적·관통을 켠다. 알 하나당 관통 3 = 최대 4마리를 때린다.
     private const int HomingOrbPierce = 3;
     private const float HomingOrbDamageRatio = 0.45f;   // 개수가 늘어난 만큼 발당 피해는 낮춘다
-    private const float HomingOrbScale = 0.8f;
+    // 🔴 추적 오브는 **기본 오브의 1/4 크기로 고정**한다(사용자 지시 2026-09-27).
+    //    기본 오브 = 스프라이트 2유닛 × 프리팹 1.5배 = 3유닛 → 1/4 = 0.75유닛.
+    //    ⚠️ 스케일 **배율**이 아니라 렌더 **크기**로 맞춘다 — 저글러는 전용 그림이라 원본 크기가 다르다.
+    //    ⚠️ 레벨업 크기 축(skill.Scale)을 물려받지 않는다. 성장해도 알은 그대로 작다.
+    private const float HomingOrbWorldSize = 0.75f;
     // 기본 개수(사용자 결정 2026-09-18: 6 → 10). 일반 오브의 타격 수(OrbBaseTargets)와 따로 둔다 — 그건 그대로 6이다.
     // 레벨업·스킬트리의 "타겟 수"는 이 위에 더해진다.
     private const int HomingOrbBaseCount = 10;
@@ -2946,7 +2979,10 @@ public class PlayerSkills : MonoBehaviour
             // 2차 「저글러」는 전용 그림(Effect_Juggler). 미배선이면 1차와 같은 산탄 알 그림.
             GameObject orbPrefabToUse = juggler && jugglerOrbPrefab != null ? jugglerOrbPrefab : shotgunPelletPrefab;
             GameObject obj = Instantiate(orbPrefabToUse, origin, Quaternion.identity);
-            obj.transform.localScale *= skill.Scale * HomingOrbScale;
+            // 크기는 **대입**한다(곱이 아니다) — 프리팹 스케일도 레벨업 크기도 안 물려받는다.
+            SpriteRenderer ballSr = obj.GetComponentInChildren<SpriteRenderer>();
+            float ballSpriteWidth = ballSr != null && ballSr.sprite != null ? ballSr.sprite.bounds.size.x : 1f;
+            obj.transform.localScale = Vector3.one * (HomingOrbWorldSize / Mathf.Max(0.01f, ballSpriteWidth));
             SmallOrb orb = obj.GetComponent<SmallOrb>();
             if (orb == null) continue;
             orb.CritChance = critChance;
@@ -3397,7 +3433,7 @@ public class PlayerSkills : MonoBehaviour
                     float hit = PlayerPassives.ApplyCrit(damage * ratio, critChance, out bool isCrit);
                     e.TakeDamage(hit, isLightningProc: true, isCrit: isCrit, source: ActiveSkillId.Lightning,
                                  rollLightning: false, statusIcon: StatusIconLibrary.Stun);
-                    if (e != null && e.IsAlive) e.ApplySlow(0f, LightningRodStun); // 감속 0 = 기절
+                    if (e != null && e.IsAlive) e.ApplyStun(LightningRodStun);
                     // 2차 「제우스의 은총」 — 노션 문구 "낙뢰를 떨굴 때마다 **피뢰침 쪽으로 적들을 끌어당긴다**".
                     if (empowered && e != null && e.IsAlive) e.ApplyPullTowardX(center.x, ZeusPullDistance);
                 }

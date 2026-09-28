@@ -61,6 +61,15 @@ public class LevelUpUI : MonoBehaviour
     // 🔴 레벨업 카드(LevelUpPanel)와 **완전히 다른 뷰**다. 고르는 게 아니라 받는 것이므로
     //    제목/설명/버튼 없이 **획득한 아이콘만 하나씩 쌓이고**, 다 뜨면 클릭해서 넘긴다(뱀서 방식).
     [SerializeField] private GameObject treasurePanel;       // Canvas/TreasurePanel
+
+    // 🔴 보물상자 연출이 화면을 잡고 있는 동안인가. HUD가 **새 스테이지 알림을 미루는** 데 쓴다
+    //    (사용자 지시 2026-09-27: 둘이 겹쳤다). 고정 지연이 아니라 "닫힐 때까지"라 상자 연출이 길어져도 안 겹친다.
+    //    갈림길(TreasureChoicePanel)과 보상(TreasurePanel) 둘 다 본다 — 사용자에겐 한 흐름이다.
+    //    ⚠️ 둘 다 씬에서 **루트가 통째로 꺼지는** 패널이라 activeInHierarchy로 판정된다(SCENE_MAP 참고).
+    public static bool TreasureOpen =>
+        Instance != null
+        && ((Instance.treasurePanel != null && Instance.treasurePanel.activeInHierarchy)
+            || (Instance.choicePanel != null && Instance.choicePanel.activeInHierarchy));
     [SerializeField] private RectTransform treasureIconRow;  // 아이콘이 런타임으로 붙는 줄(HorizontalLayoutGroup)
     [SerializeField] private TMP_Text treasureContinueText;  // 전부 뜬 뒤에만 보이는 "클릭하여 계속"
     [SerializeField] private Button treasureDismissButton;   // 패널 전체를 덮는 투명 버튼(클릭=닫기)

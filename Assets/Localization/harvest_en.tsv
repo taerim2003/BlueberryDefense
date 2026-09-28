@@ -105,7 +105,7 @@ evo.active.desc.GrapeToss.0.1	The cloud spreads wider, and the toxin grows stron
 evo.name.GrapeToss.0.1	Biochem Grapes
 evo.active.desc.GrapeToss.0.2	Enemies that fall poisoned pass the toxin to those around them.
 evo.name.GrapeToss.0.2	Cataclysmic Plague
-evo.active.desc.GrapeToss.1.1	Throws more grapes at once, and enemies entering the cloud are briefly stunned.
+evo.active.desc.GrapeToss.1.1	Throws more grapes at once, and poisoned enemies are briefly stunned at regular intervals.
 evo.name.GrapeToss.1.1	Crackling Grapes
 evo.active.desc.GrapeToss.1.2	Poisoned enemies are stunned again and again, and take more damage.
 evo.name.GrapeToss.1.2	Medusa's Snack

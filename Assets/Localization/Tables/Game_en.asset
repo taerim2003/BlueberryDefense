@@ -1384,8 +1384,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386438
-    m_Localized: Throws more grapes at once, and enemies entering the cloud are briefly
-      stunned.
+    m_Localized: Throws more grapes at once, and poisoned enemies are briefly stunned
+      at regular intervals.
     m_Metadata:
       m_Items: []
   - m_Id: 7524160026386440
@@ -2199,6 +2199,30 @@ MonoBehaviour:
 
       to evolve
       it into something stronger.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336888954880
+    m_Localized: Crit Damage IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149184
+    m_Localized: Crit Damage V
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149185
+    m_Localized: Crit III
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149186
+    m_Localized: Crit IV
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149187
+    m_Localized: Regeneration I
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16698336893149188
+    m_Localized: Regeneration II
     m_Metadata:
       m_Items: []
   references:

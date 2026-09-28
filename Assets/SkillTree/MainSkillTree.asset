@@ -19,10 +19,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 3
+    cost: 9
     effect: 0
-    perLevel: 10
-    maxLevel: 4
+    perLevel: 40
     prereqIds:
     - Root_Skilltree
     editorPos: {x: 380, y: -270}
@@ -32,10 +31,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 62
+    cost: 182
     effect: 0
-    perLevel: 10
-    maxLevel: 4
+    perLevel: 40
     prereqIds:
     - orb_BasicSlow
     editorPos: {x: 1340, y: 540}
@@ -45,10 +43,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 7
+    cost: 21
     effect: 1
-    perLevel: 8
-    maxLevel: 4
+    perLevel: 32
     prereqIds:
     - New_Lightning
     editorPos: {x: 380, y: -810}
@@ -58,10 +55,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 45
+    cost: 132
     effect: 1
-    perLevel: 8
-    maxLevel: 4
+    perLevel: 32
     prereqIds:
     - hp_1
     editorPos: {x: 60, y: -810}
@@ -72,10 +68,9 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 1
-    cost: 18
+    cost: 53
     effect: 0
     perLevel: 5
-    maxLevel: 1
     prereqIds:
     - Root_Skilltree
     editorPos: {x: 60, y: 0}
@@ -85,10 +80,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 22
+    cost: 65
     effect: 11
     perLevel: 1
-    maxLevel: 1
     prereqIds:
     - New_Reroll
     editorPos: {x: 60, y: 270}
@@ -98,10 +92,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 9
+    cost: 26
     effect: 7
-    perLevel: 3
-    maxLevel: 2
+    perLevel: 6
     prereqIds:
     - gold_1
     editorPos: {x: 380, y: 540}
@@ -111,10 +104,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 70
+    cost: 205
     effect: 7
-    perLevel: 3
-    maxLevel: 2
+    perLevel: 6
     prereqIds:
     - eagle_DropNum
     editorPos: {x: 700, y: -1080}
@@ -124,10 +116,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 16
+    cost: 47
     effect: 5
-    perLevel: 8
-    maxLevel: 3
+    perLevel: 24
     prereqIds:
     - fly_1
     editorPos: {x: 1340, y: 270}
@@ -137,10 +128,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 95
+    cost: 279
     effect: 5
-    perLevel: 8
-    maxLevel: 3
+    perLevel: 24
     prereqIds:
     - thunder_Stack
     editorPos: {x: 1340, y: -1080}
@@ -150,10 +140,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 8
+    cost: 23
     effect: 6
-    perLevel: 40
-    maxLevel: 3
+    perLevel: 120
     prereqIds:
     - Root_Skilltree
     editorPos: {x: 380, y: 270}
@@ -163,10 +152,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 52
+    cost: 152
     effect: 6
-    perLevel: 90
-    maxLevel: 3
+    perLevel: 270
     prereqIds:
     - arrow_StartLev
     editorPos: {x: 1020, y: 0}
@@ -177,10 +165,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 2
-    cost: 50
+    cost: 147
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - Root_Skilltree
     editorPos: {x: 700, y: 0}
@@ -190,10 +177,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 11
+    cost: 32
     effect: 8
     perLevel: 20
-    maxLevel: 1
     prereqIds:
     - New_Orb
     editorPos: {x: 1020, y: 270}
@@ -204,10 +190,9 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 4
-    cost: 957
+    cost: 2806
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - exp_2
     editorPos: {x: 1340, y: -810}
@@ -217,10 +202,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 56
+    cost: 164
     effect: 8
     perLevel: 20
-    maxLevel: 1
     prereqIds:
     - tornado_CoolDownBonus
     editorPos: {x: 1340, y: -270}
@@ -230,10 +214,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 20
+    cost: 59
     effect: 3
-    perLevel: 2
-    maxLevel: 4
+    perLevel: 8
     prereqIds:
     - critdmg_1
     editorPos: {x: -260, y: -270}
@@ -243,10 +226,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 28
+    cost: 82
     effect: 3
-    perLevel: 2
-    maxLevel: 4
+    perLevel: 8
     prereqIds:
     - New_Orb
     editorPos: {x: 700, y: 540}
@@ -257,10 +239,9 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 2
-    cost: 54
+    cost: 158
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - gold_2
     editorPos: {x: 1340, y: 0}
@@ -271,10 +252,9 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 4
-    cost: 1199
+    cost: 3515
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - exp_2
     editorPos: {x: 1340, y: -1350}
@@ -284,10 +264,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 122
+    cost: 358
     effect: 0
-    perLevel: 10
-    maxLevel: 4
+    perLevel: 40
     prereqIds:
     - New_Homing
     editorPos: {x: -260, y: 810}
@@ -297,10 +276,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 132
+    cost: 387
     effect: 6
-    perLevel: 180
-    maxLevel: 3
+    perLevel: 540
     prereqIds:
     - shotgun_BonusHit
     editorPos: {x: -580, y: 0}
@@ -310,10 +288,9 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 0
-    cost: 1
+    cost: 3
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds: []
     editorPos: {x: 380, y: 0}
   - id: New_Orb
@@ -322,10 +299,9 @@ MonoBehaviour:
     type: 1
     skill: 2
     tier: 1
-    cost: 10
+    cost: 29
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - gold_1
     editorPos: {x: 700, y: 270}
@@ -335,10 +311,9 @@ MonoBehaviour:
     type: 1
     skill: 3
     tier: 1
-    cost: 6
+    cost: 18
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - atk_1
     editorPos: {x: 380, y: -540}
@@ -349,10 +324,9 @@ MonoBehaviour:
     type: 1
     skill: 6
     tier: 2
-    cost: 30
+    cost: 88
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - critdmg_2
     editorPos: {x: 60, y: 810}
@@ -363,10 +337,9 @@ MonoBehaviour:
     type: 1
     skill: 7
     tier: 2
-    cost: 23
+    cost: 67
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - reroll_2
     editorPos: {x: -260, y: 270}
@@ -377,10 +350,9 @@ MonoBehaviour:
     type: 1
     skill: 8
     tier: 3
-    cost: 64
+    cost: 188
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - cool_1
     editorPos: {x: -260, y: -540}
@@ -392,10 +364,9 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 4
-    cost: 1102
+    cost: 3231
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - boss_3
     editorPos: {x: -260, y: -1080}
@@ -407,10 +378,9 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 2
-    cost: 74
+    cost: 217
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - New_Homing
     editorPos: {x: 60, y: 1080}
@@ -421,10 +391,9 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 2
-    cost: 87
+    cost: 255
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - boss_2
     editorPos: {x: 1020, y: 1080}
@@ -435,10 +404,9 @@ MonoBehaviour:
     type: 2
     skill: 9
     tier: 3
-    cost: 195
+    cost: 572
     effect: 0
     perLevel: 5
-    maxLevel: 5
     prereqIds:
     - rewind_NoGcd
     editorPos: {x: -580, y: -810}
@@ -449,10 +417,9 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 4
-    cost: 681
+    cost: 1997
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - critdmg_3
     editorPos: {x: 1020, y: -810}
@@ -462,10 +429,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 216
+    cost: 633
     effect: 3
-    perLevel: 2
-    maxLevel: 4
+    perLevel: 8
     prereqIds:
     - assassin_BaseCrit
     editorPos: {x: 60, y: 1620}
@@ -475,10 +441,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 328
+    cost: 962
     effect: 3
-    perLevel: 2
-    maxLevel: 4
+    perLevel: 8
     prereqIds:
     - cool_1
     editorPos: {x: 60, y: -270}
@@ -488,10 +453,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1614
+    cost: 4732
     effect: 3
-    perLevel: 5
-    maxLevel: 4
+    perLevel: 20
     prereqIds:
     - exp_3
     editorPos: {x: -580, y: -270}
@@ -502,10 +466,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 237
+    cost: 695
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - exp_3
     editorPos: {x: -1220, y: -270}
@@ -516,10 +479,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
-    cost: 2775
+    cost: 8136
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - boss_5
     editorPos: {x: -1220, y: 270}
@@ -529,10 +491,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 19
+    cost: 56
     effect: 9
-    perLevel: 12
-    maxLevel: 2
+    perLevel: 24
     prereqIds:
     - New_Reroll
     editorPos: {x: -260, y: 0}
@@ -542,10 +503,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 32
+    cost: 94
     effect: 9
-    perLevel: 12
-    maxLevel: 2
+    perLevel: 24
     prereqIds:
     - crit_1
     editorPos: {x: 380, y: 810}
@@ -555,10 +515,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 174
+    cost: 510
     effect: 9
-    perLevel: 12
-    maxLevel: 2
+    perLevel: 24
     prereqIds:
     - knowledge_BaseXp
     editorPos: {x: 1020, y: -540}
@@ -569,10 +528,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 164
+    cost: 481
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - Homing_MissileNum
     editorPos: {x: 60, y: 1350}
@@ -583,10 +541,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
-    cost: 1749
+    cost: 5128
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - exp_5
     editorPos: {x: 700, y: 1350}
@@ -596,10 +553,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 78
+    cost: 229
     effect: 11
     perLevel: 1
-    maxLevel: 1
     prereqIds:
     - shotgun_BonusHit
     editorPos: {x: -580, y: 540}
@@ -609,10 +565,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 93
+    cost: 273
     effect: 11
     perLevel: 1
-    maxLevel: 1
     prereqIds:
     - reroll_2
     editorPos: {x: 60, y: 540}
@@ -622,10 +577,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 1248
+    cost: 3659
     effect: 11
     perLevel: 1
-    maxLevel: 1
     prereqIds:
     - defense_BaseReduce
     editorPos: {x: -900, y: -1350}
@@ -635,10 +589,9 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 2
-    cost: 53
+    cost: 155
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - fly_1
     editorPos: {x: 1020, y: 540}
@@ -648,10 +601,9 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 4
-    cost: 1053
+    cost: 3087
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - gold_4
     editorPos: {x: 1340, y: 810}
@@ -661,10 +613,9 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 2
-    cost: 40
+    cost: 117
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - hp_1
     editorPos: {x: 380, y: -1080}
@@ -676,10 +627,9 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 2
-    cost: 57
+    cost: 167
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - New_Shotgun
     editorPos: {x: -580, y: 270}
@@ -690,10 +640,9 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 4
-    cost: 572
+    cost: 1677
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - reroll_3
     editorPos: {x: -580, y: 810}
@@ -703,10 +652,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 227
+    cost: 666
     effect: 5
-    perLevel: 8
-    maxLevel: 3
+    perLevel: 24
     prereqIds:
     - health_BaseHp
     editorPos: {x: -900, y: -270}
@@ -716,10 +664,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 356
+    cost: 1044
     effect: 5
-    perLevel: 8
-    maxLevel: 3
+    perLevel: 24
     prereqIds:
     - New_Shotgun
     editorPos: {x: -260, y: 540}
@@ -729,10 +676,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1681
+    cost: 4929
     effect: 5
-    perLevel: 8
-    maxLevel: 3
+    perLevel: 24
     prereqIds:
     - strength_BaseDmg
     editorPos: {x: 380, y: 1350}
@@ -743,10 +689,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 153
+    cost: 449
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - fly_2
     editorPos: {x: 1340, y: -540}
@@ -757,10 +702,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
-    cost: 1580
+    cost: 4632
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - critdmg_3
     editorPos: {x: 1020, y: -270}
@@ -771,10 +715,9 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 2
-    cost: 13
+    cost: 38
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - New_Lightning
     editorPos: {x: 700, y: -540}
@@ -784,10 +727,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 4
-    cost: 384
+    cost: 1126
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - fly_2
     editorPos: {x: 1660, y: -270}
@@ -797,10 +739,9 @@ MonoBehaviour:
     type: 2
     skill: 9
     tier: 5
-    cost: 1850
+    cost: 5424
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - reroll_5
     editorPos: {x: -900, y: -1620}
@@ -810,10 +751,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 645
+    cost: 1891
     effect: 6
-    perLevel: 300
-    maxLevel: 3
+    perLevel: 900
     prereqIds:
     - Sniping_TwoTarget
     editorPos: {x: 1340, y: 1080}
@@ -823,10 +763,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1546
+    cost: 4533
     effect: 6
-    perLevel: 490
-    maxLevel: 3
+    perLevel: 1470
     prereqIds:
     - health_BaseHp
     editorPos: {x: -1220, y: -540}
@@ -837,10 +776,9 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 2
-    cost: 83
+    cost: 243
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - New_Rewind
     editorPos: {x: -580, y: -540}
@@ -851,10 +789,9 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 2
-    cost: 91
+    cost: 267
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - crit_2
     editorPos: {x: 1020, y: -1080}
@@ -864,10 +801,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 143
+    cost: 419
     effect: 1
-    perLevel: 8
-    maxLevel: 4
+    perLevel: 32
     prereqIds:
     - New_Rewind
     editorPos: {x: -260, y: -810}
@@ -877,10 +813,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 536
+    cost: 1571
     effect: 1
-    perLevel: 8
-    maxLevel: 4
+    perLevel: 32
     prereqIds:
     - boss_2
     editorPos: {x: 700, y: 810}
@@ -891,10 +826,9 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 4
-    cost: 1152
+    cost: 3378
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - gold_4
     editorPos: {x: 1660, y: 1080}
@@ -905,10 +839,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 185
+    cost: 542
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - rewind_NoGcd
     editorPos: {x: -900, y: -540}
@@ -919,10 +852,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
-    cost: 1783
+    cost: 5228
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - boss_5
     editorPos: {x: -1540, y: 0}
@@ -932,10 +864,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1715
+    cost: 5028
     effect: 1
-    perLevel: 40
-    maxLevel: 4
+    perLevel: 160
     prereqIds:
     - strength_BaseDmg
     editorPos: {x: 700, y: 1620}
@@ -946,10 +877,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 248
+    cost: 727
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - boss_3
     editorPos: {x: -900, y: -1080}
@@ -960,10 +890,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
-    cost: 2888
+    cost: 8467
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - reroll_5
     editorPos: {x: -580, y: -1350}
@@ -973,10 +902,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 6
-    cost: 2550
+    cost: 7476
     effect: 1
-    perLevel: 45
-    maxLevel: 4
+    perLevel: 180
     prereqIds:
     - knowledge_BaseXp
     editorPos: {x: 1660, y: -540}
@@ -987,10 +915,9 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 4
-    cost: 1006
+    cost: 2949
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - cool_3
     editorPos: {x: -260, y: 1620}
@@ -1000,10 +927,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 300
+    cost: 880
     effect: 0
-    perLevel: 10
-    maxLevel: 4
+    perLevel: 40
     prereqIds:
     - tornado_CoolDownBonus
     editorPos: {x: 1660, y: 0}
@@ -1013,10 +939,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1513
+    cost: 4436
     effect: 0
-    perLevel: 60
-    maxLevel: 4
+    perLevel: 240
     prereqIds:
     - assassin_BaseCrit
     editorPos: {x: -260, y: 1350}
@@ -1027,10 +952,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 258
+    cost: 756
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - cool_3
     editorPos: {x: 380, y: 1620}
@@ -1041,10 +965,9 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 6
-    cost: 3000
+    cost: 8796
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - exp_5
     editorPos: {x: 380, y: 1080}
@@ -1055,10 +978,9 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 5
-    cost: 1525
+    cost: 4471
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - boss_5
     editorPos: {x: -900, y: 0}
@@ -1068,10 +990,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 6
-    cost: 2663
+    cost: 7808
     effect: 0
-    perLevel: 60
-    maxLevel: 4
+    perLevel: 240
     prereqIds:
     - defense_BaseReduce
     editorPos: {x: -900, y: -810}
@@ -1081,10 +1002,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 25
+    cost: 73
     effect: 10
     perLevel: 10
-    maxLevel: 1
     prereqIds:
     - atk_1
     editorPos: {x: 700, y: -270}
@@ -1094,10 +1014,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 66
+    cost: 194
     effect: 10
     perLevel: 10
-    maxLevel: 1
     prereqIds:
     - orb_BasicSlow
     editorPos: {x: 1020, y: 810}
@@ -1107,10 +1026,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 206
+    cost: 604
     effect: 10
     perLevel: 10
-    maxLevel: 1
     prereqIds:
     - swing_StartLev
     editorPos: {x: -580, y: -1080}
@@ -1120,10 +1038,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 608
+    cost: 1783
     effect: 10
     perLevel: 10
-    maxLevel: 1
     prereqIds:
     - Sniping_TwoTarget
     editorPos: {x: 700, y: 1080}
@@ -1133,10 +1050,9 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1648
+    cost: 4832
     effect: 10
     perLevel: 100
-    maxLevel: 1
     prereqIds:
     - accel_BaseCool
     editorPos: {x: -1220, y: 0}
@@ -1146,153 +1062,146 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 1342
+    cost: 3935
     effect: 8
-    perLevel: 60
-    maxLevel: 2
+    perLevel: 120
     prereqIds:
     - arrow_Pierce
     editorPos: {x: 1980, y: -270}
   - id: heal_1
     displayName: "\uD68C\uBCF5 I"
-    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
+    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300
+      \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
     type: 0
     skill: 0
     tier: 5
-    cost: 1825
+    cost: 5351
     effect: 12
     perLevel: 5
-    maxLevel: 1
     prereqIds:
     - cool_3
     editorPos: {x: 60, y: 1890}
   - id: heal_2
     displayName: "\uD68C\uBCF5 II"
-    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
+    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300
+      \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
     type: 0
     skill: 0
     tier: 6
-    cost: 1950
+    cost: 5717
     effect: 12
     perLevel: 5
-    maxLevel: 1
     prereqIds:
     - Rewind_Slow
     editorPos: {x: -260, y: -1350}
   - id: heal_3
     displayName: "\uD68C\uBCF5 III"
-    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
+    description: "\uCCB4\uB825 \uD68C\uBCF5 \uC544\uC774\uD15C\uC774 \uCD5C\uB300
+      \uCCB4\uB825\uC758 +5%\uB97C \uB354 \uD68C\uBCF5"
     type: 0
     skill: 0
     tier: 6
-    cost: 2100
+    cost: 6157
     effect: 12
     perLevel: 5
-    maxLevel: 1
     prereqIds:
     - fly_3
     editorPos: {x: 1980, y: -540}
   - id: regen_1
     displayName: "\uC7AC\uC0DD I"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 5
-    cost: 1800
+    cost: 5277
     effect: 2
-    perLevel: 3
-    maxLevel: 3
+    perLevel: 9
     prereqIds:
     - hp_5
     editorPos: {x: 1020, y: 1620}
   - id: regen_2
     displayName: "\uC7AC\uC0DD II"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 6
-    cost: 2600
+    cost: 7623
     effect: 2
-    perLevel: 5
-    maxLevel: 3
+    perLevel: 15
     prereqIds:
     - regen_1
     editorPos: {x: 1340, y: 1620}
   - id: crit_3
     displayName: "\uCE58\uBA85 III"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 5
-    cost: 1200
+    cost: 3518
     effect: 7
-    perLevel: 4
-    maxLevel: 2
+    perLevel: 8
     prereqIds:
     - crit_2
     editorPos: {x: 700, y: -810}
   - id: crit_4
     displayName: "\uCE58\uBA85 IV"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 6
-    cost: 2400
+    cost: 7037
     effect: 7
-    perLevel: 5
-    maxLevel: 2
+    perLevel: 10
     prereqIds:
     - crit_3
     editorPos: {x: 700, y: -1350}
   - id: critdmg_4
     displayName: "\uCE58\uBA85\uD0C0 \uD53C\uD574 IV"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 5
-    cost: 1400
+    cost: 4105
     effect: 9
-    perLevel: 6
-    maxLevel: 2
+    perLevel: 12
     prereqIds:
     - critdmg_3
-    editorPos: {x: 1660, y: -1080}
+    editorPos: {x: 1020, y: -1350}
   - id: critdmg_5
     displayName: "\uCE58\uBA85\uD0C0 \uD53C\uD574 V"
-    description: ""
+    description: 
     type: 0
     skill: 0
     tier: 6
-    cost: 2800
+    cost: 8209
     effect: 9
-    perLevel: 8
-    maxLevel: 2
+    perLevel: 16
     prereqIds:
     - critdmg_4
-    editorPos: {x: 1980, y: -1080}
+    editorPos: {x: 1020, y: -1620}
   - id: grape_StartLev
     displayName: \uD3EC\uB3C4 \uC219\uB828
-    description: (\uD3EC\uB3C4 \uC120\uD0DD \uC2DC) \uD3EC\uB3C4 \uD22C\uCC99 3\uB808\uBCA8\uB85C \uC2DC\uC791
+    description: (\uD3EC\uB3C4 \uC120\uD0DD \uC2DC) \uD3EC\uB3C4 \uD22C\uCC99 3\uB808\uBCA8\uB85C
+      \uC2DC\uC791
     type: 2
     skill: 10
     tier: 2
-    cost: 120
+    cost: 352
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - atk_2
     editorPos: {x: 1660, y: 540}
   - id: grape_CloudDuration
     displayName: \uC9D9\uC740 \uB3C5\uC548\uAC1C
-    description: \uD3EC\uB3C4 \uD22C\uCC99\uC758 \uB3C5\uC548\uAC1C\uAC00 2\uCD08 \uB354 \uC624\uB798 \uB0A8\uB294\uB2E4
+    description: \uD3EC\uB3C4 \uD22C\uCC99\uC758 \uB3C5\uC548\uAC1C\uAC00 2\uCD08
+      \uB354 \uC624\uB798 \uB0A8\uB294\uB2E4
     type: 2
     skill: 10
     tier: 4
-    cost: 900
+    cost: 2639
     effect: 0
     perLevel: 0
-    maxLevel: 1
     prereqIds:
     - shotgun_Crit
     editorPos: {x: -900, y: 810}

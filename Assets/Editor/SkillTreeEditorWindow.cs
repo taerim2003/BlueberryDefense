@@ -237,8 +237,8 @@ public class SkillTreeEditorWindow : EditorWindow
         if (n.type == SkillNodeType.Normal)
         {
             n.effect = (MetaUpgradeId)EditorGUILayout.EnumPopup("효과 축", n.effect);
-            n.perLevel = EditorGUILayout.FloatField("레벨당", n.perLevel);
-            n.maxLevel = Mathf.Max(1, EditorGUILayout.IntField("단계(만렙)", n.maxLevel));
+            // 레벨제가 폐지돼 노드는 한 번만 산다 — 이 값이 그 노드가 주는 전부다(단계 칸은 없앴다).
+            n.perLevel = EditorGUILayout.FloatField("효과량", n.perLevel);
         }
 
         EditorGUILayout.LabelField("효과 / 메모", EditorStyles.miniBoldLabel);

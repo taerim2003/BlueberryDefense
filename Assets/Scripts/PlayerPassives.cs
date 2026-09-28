@@ -493,6 +493,8 @@ public class PlayerPassives : MonoBehaviour
     //    "다 찍으면 엄청난 체력을 가질 수 있게" 같은 요구가 여기서 만들어진다.
     //    루트를 안 탄 패시브(EvolutionStage 0)는 걸리지 않는다.
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
+    // 가속 R0 「리프레쉬」: 진화 즉시 10%(ApplyPassivePathTierEffect) + 레벨마다 +2%p (사용자 결정 2026-09-27).
+    private const float RefreshChancePerLevel = 0.02f;
     private const float HealthSturdyBase = 0.5f;       // 건강 R0: 진화 즉시 최대체력 +50%
     // 🔴 0.3 → 0.1 (2026-09-20 사용자). 복리라 레벨당 30%면 만렙에 최대체력이 약 ×13.8이 되고,
     //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
@@ -525,6 +527,11 @@ public class PlayerPassives : MonoBehaviour
                 break;
             case (PassiveSkillId.Defense, 1):
                 HealthRetaliationMultiplier += DefenseThornsBase * DefenseThornsPerLevel;
+                break;
+            // 가속 R0 「리프레쉬」 — 레벨업마다 쿨타임 초기화 확률이 오른다(사용자 지시 2026-09-27).
+            // 진화 순간의 10%(ApplyPassivePathTierEffect)가 시작값이고, 여기가 레벨마다 더 얹는다.
+            case (PassiveSkillId.Accel, 0):
+                RefreshChance += RefreshChancePerLevel;
                 break;
         }
     }

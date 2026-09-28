@@ -68,6 +68,7 @@ public class HUDController : MonoBehaviour
     private int lastSeenCurrency = -1;
     private TMP_Text essenceText;      // 이번 판 정수 표시 — 씬에 없어서 런타임 생성한다
     private Sequence stageBannerSeq;
+    private bool stageBannerPending;   // 스테이지는 넘어갔는데 아직 알림을 못 띄운 상태(보물상자가 떠 있다)
 
     private void OnEnable() => PlayerSkills.OnRefreshProc += PulseRefreshIcon;
     private void OnDisable() => PlayerSkills.OnRefreshProc -= PulseRefreshIcon;
@@ -97,8 +98,17 @@ public class HUDController : MonoBehaviour
             else if (stage != lastSeenStage)
             {
                 lastSeenStage = stage;
-                ShowStageBanner(stage);
+                stageBannerPending = true;
                 BounceStageText();
+            }
+
+            // 🔴 **알림 표시만** 미룬다 — 스테이지 진행·적 스폰·전투는 그대로 간다(사용자 결정 2026-09-27).
+            //    보물상자 패널이 떠 있는 동안 배너를 띄우면 둘이 겹친다. 상자가 닫히면 그때 뜬다.
+            //    상자가 안 떠 있으면 같은 프레임에 바로 뜬다 — 평소 동작은 안 바뀐다.
+            if (stageBannerPending && !LevelUpUI.TreasureOpen)
+            {
+                stageBannerPending = false;
+                ShowStageBanner(stage);
             }
         }
 

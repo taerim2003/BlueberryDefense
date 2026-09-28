@@ -105,7 +105,7 @@ evo.active.desc.GrapeToss.0.1	안개가 더 넓게 깔리고, 독성이 더욱 �
 evo.name.GrapeToss.0.1	생화학 포도알
 evo.active.desc.GrapeToss.0.2	중독된 채 쓰러진 적은 주변 적에게 독을 옮긴다.
 evo.name.GrapeToss.0.2	재앙의 역병
-evo.active.desc.GrapeToss.1.1	한 번에 더 많은 포도알을 던지고, 안개에 들어온 적은 짧게 기절한다.
+evo.active.desc.GrapeToss.1.1	한 번에 더 많은 포도알을 던지고, 중독된 적은 주기적으로 짧게 기절한다.
 evo.name.GrapeToss.1.1	찌릿찌릿 포도알
 evo.active.desc.GrapeToss.1.2	중독 상태의 적은 주기적으로 기절하고, 받는 피해가 증가한다.
 evo.name.GrapeToss.1.2	메두사의 간식

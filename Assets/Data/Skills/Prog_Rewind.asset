@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Prog_Rewind
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 8
-  baseCooldown: 8
+  baseCooldown: 9
   baseDamage: 0
   baseDuration: 0
   baseHits: 1
@@ -22,28 +22,28 @@ MonoBehaviour:
   levels:
   - stat: 8
     op: 0
-    amount: 0.3
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.3
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.3
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.3
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.4
+    amount: 0.25

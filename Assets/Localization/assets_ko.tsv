@@ -58,6 +58,12 @@ tree.desc.accel_FastSkillDmg	<가속> 보유 시 쿨타임 4초 이하 스킬의
 tree.name.critdmg_1	치명타 피해 I
 tree.name.critdmg_2	치명타 피해 II
 tree.name.critdmg_3	치명타 피해 III
+tree.name.critdmg_4	치명타 피해 IV
+tree.name.critdmg_5	치명타 피해 V
+tree.name.crit_3	치명 III
+tree.name.crit_4	치명 IV
+tree.name.regen_1	재생 I
+tree.name.regen_2	재생 II
 tree.name.assassin_BaseCrit	암살 단련
 tree.desc.assassin_BaseCrit	<암살> 획득 시 기본 치명타 확률 +10%
 tree.name.assassin_FullCritHit	확인 사살

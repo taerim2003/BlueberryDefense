@@ -58,6 +58,12 @@ tree.desc.accel_FastSkillDmg	拥有<加速>时，冷却时间4秒及以下的技
 tree.name.critdmg_1	暴击伤害 I
 tree.name.critdmg_2	暴击伤害 II
 tree.name.critdmg_3	暴击伤害 III
+tree.name.critdmg_4	暴击伤害 IV
+tree.name.critdmg_5	暴击伤害 V
+tree.name.crit_3	暴击 III
+tree.name.crit_4	暴击 IV
+tree.name.regen_1	再生 I
+tree.name.regen_2	再生 II
 tree.name.assassin_BaseCrit	暗杀修炼
 tree.desc.assassin_BaseCrit	获得<暗杀>时，基础暴击率 +10%
 tree.name.assassin_FullCritHit	补刀

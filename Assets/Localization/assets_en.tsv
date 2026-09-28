@@ -64,6 +64,12 @@ tree.desc.accel_FastSkillDmg	While you have <Haste>, skills with a cooldown of 4
 tree.name.critdmg_1	Crit Damage I
 tree.name.critdmg_2	Crit Damage II
 tree.name.critdmg_3	Crit Damage III
+tree.name.critdmg_4	Crit Damage IV
+tree.name.critdmg_5	Crit Damage V
+tree.name.crit_3	Crit III
+tree.name.crit_4	Crit IV
+tree.name.regen_1	Regeneration I
+tree.name.regen_2	Regeneration II
 tree.name.assassin_BaseCrit	Assassination Training
 tree.desc.assassin_BaseCrit	<Assassination> starts with +10% critical chance
 tree.name.assassin_FullCritHit	Double Tap

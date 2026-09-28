@@ -199,6 +199,11 @@ public class Enemy : MonoBehaviour
 
     private float slowMultiplier = 1f;
     private float slowTimer;
+    // 🔴 기절은 둔화와 **별개 상태**다(사용자 결정 2026-09-27). 예전엔 기절이 `ApplySlow(0f, ...)`로
+    //    둔화와 같은 필드를 써서, 기절 중에 약한 둔화(끈적한 오브 0.8배 등) 하나만 들어와도
+    //    남은 기절이 그 자리에서 취소됐다. 이제 둘이 동시에 걸리고 서로 지우지 않는다 —
+    //    기절이 풀리면 남아 있던 둔화가 그대로 이어진다.
+    private float stunTimer;
     private float vulnerableMultiplier = 1f;
     private float vulnerableTimer;
 
@@ -248,7 +253,13 @@ public class Enemy : MonoBehaviour
     private static void ResetActiveList() => active.Clear();
 
     // 지금 실제로 걷는 속도(둔화·기절 반영). 포도알이 착탄 지점을 미리 짚는 데 쓴다.
-    public float CurrentMoveSpeed => moveSpeed * slowMultiplier;
+    public float CurrentMoveSpeed => moveSpeed * MoveScale;
+
+    // 🔴 이동을 깎는 것은 **여기 한 곳**으로만 들어온다 — 기절이 이기고(0), 아니면 둔화 배율.
+    //    움직임을 계산하는 자리에서 `slowMultiplier`를 직접 곱하지 말 것. 그러면 기절이 새어 나간다.
+    private float MoveScale => stunTimer > 0f ? 0f : slowMultiplier;
+
+    public bool IsStunned => stunTimer > 0f;
 
     private void Awake()
     {
@@ -297,6 +308,8 @@ public class Enemy : MonoBehaviour
     // 뜬 높이만큼 자식 좌표를 아래로 내려 월드 y를 지면에 고정한다(부모 스케일로 나눠 보정).
     private void LateUpdate()
     {
+        ClampInsideArena();
+
         if (shadowTr == null) return;
 
         float groundY = popping ? popGroundY : (isHopper ? hopBaseY : transform.position.y);
@@ -306,6 +319,28 @@ public class Enemy : MonoBehaviour
         Vector3 lp = shadowTr.localPosition;
         lp.y = shadowBaseLocalY - (Mathf.Abs(scaleY) > 0.0001f ? lift / scaleY : 0f);
         shadowTr.localPosition = lp;
+    }
+
+    // 🔴 적이 존재할 수 있는 가로 범위 — **플레이어 정지선을 넘지 않는다**(사용자 지시 2026-09-27).
+    //    행진은 HoldAtPlayer가 알아서 세우지만 그 판정을 안 거치는 경로가 있다. 대표가 보스 사망분출이다:
+    //    `popping`이 Update 맨 앞에서 return해 정지 판정을 통째로 건너뛰는데, popVelX가 최대 +5라
+    //    플레이어 바로 앞에서 터지면 그대로 뒤로 날아간다.
+    //    그래서 개별 호출부가 아니라 **위치가 다 확정된 뒤 한 곳**에서 자른다. 여기 있는 한
+    //    앞으로 어떤 이동 경로가 새로 생겨도 선을 넘지 못한다.
+    // 캐리어(UFO)는 화면 위를 가로질러 지나가는 것이 제 역할이라 제외한다.
+    private void ClampInsideArena()
+    {
+        PlayerHealth player = Player;
+        if (player == null || isCarrier) return;
+
+        float limit = player.transform.position.x - BalanceConstants.ContactStopDistance;
+        if (transform.position.x <= limit) return;
+
+        Vector3 p = transform.position;
+        p.x = limit;
+        transform.position = p;
+        // 분출 속도가 남아 있으면 매 프레임 다시 선 밖으로 밀어붙인다 — 가로 성분만 죽이고 낙하는 그대로 둔다.
+        if (popVelX > 0f) popVelX = 0f;
     }
 
     // 휘두르기 범위 그림자(PlayerSkills)도 같은 타원을 쓴다 — 사본을 두 개 두지 않는다.
@@ -366,7 +401,7 @@ public class Enemy : MonoBehaviour
         headbuttTimer = BalanceConstants.HeadbuttInterval - BalanceConstants.HeadbuttFirstDelay;
         holdBaseX = 0f; lungeTimer = -1f; lungeDamageDone = false; isHolding = false;
         knockbackDistance = 0f; knockbackElapsed = 0f; knockbackMoved = 0f;
-        slowMultiplier = 1f; slowTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
+        slowMultiplier = 1f; slowTimer = 0f; stunTimer = 0f; vulnerableMultiplier = 1f; vulnerableTimer = 0f;
         poisonDamage = 0f; poisonTimer = 0f; poisonInterval = 0f; poisonNextTick = 0f;
         poisonTicksTaken = 0; poisonFromExplosion = false;
         SetPoisonTint(false);
@@ -451,7 +486,7 @@ public class Enemy : MonoBehaviour
         baseRotation = transform.localRotation; // 돌진 기울기는 이 각도 위에 얹힌다
     }
 
-    // 기절 = 이동정지(slowMultiplier≈0). 이때 걷기 애니메이션도 함께 멈추고, 풀리면 다시 재생한다.
+    // 기절(stunTimer) 중엔 걷기 애니메이션도 함께 멈추고, 풀리면 다시 재생한다.
     private void SetAnimatorFrozen(bool frozen)
     {
         if (animator != null) animator.speed = frozen ? 0f : 1f;
@@ -498,11 +533,13 @@ public class Enemy : MonoBehaviour
         if (slowTimer > 0f && knockbackDistance <= 0f)
         {
             slowTimer -= Time.deltaTime;
-            if (slowTimer <= 0f)
-            {
-                slowMultiplier = 1f;
-                SetAnimatorFrozen(false); // 기절 해제 → 걷기 재생 복구
-            }
+            if (slowTimer <= 0f) slowMultiplier = 1f;
+        }
+
+        if (stunTimer > 0f && knockbackDistance <= 0f)
+        {
+            stunTimer -= Time.deltaTime;
+            if (stunTimer <= 0f) SetAnimatorFrozen(false); // 기절 해제 → 걷기 재생 복구
         }
 
         if (vulnerableTimer > 0f)
@@ -546,7 +583,7 @@ public class Enemy : MonoBehaviour
             // 강하 유닛은 기수가 돌아가 있으므로 반드시 월드 기준으로 이동해야 한다(로컬 right는 기울어져 있음).
             if (isDiveFlyer)
             {
-                transform.Translate(diveDir * moveSpeed * slowMultiplier * Time.deltaTime, Space.World);
+                transform.Translate(diveDir * moveSpeed * MoveScale * Time.deltaTime, Space.World);
                 // 조준했던 높이에 닿으면 거기서 강하가 끝난다 — 각도를 눕혀 더 내려가지 않게 한다.
                 // (diveDir을 눕히는 것이 핵심이다. y만 클램프하면 다음 프레임에도 아래로 밀어서
                 //  넉백→전진을 반복할 때마다 바닥에 눌린 채 x만 흘러간다.)
@@ -559,11 +596,11 @@ public class Enemy : MonoBehaviour
                 }
             }
             else
-                transform.Translate(Vector2.right * moveSpeed * slowMultiplier * Time.deltaTime);
+                transform.Translate(Vector2.right * moveSpeed * MoveScale * Time.deltaTime);
         }
 
         // 제자리에 서 있으면 걷기 애니메이션도 멈춘다(기절 정지와 같은 스위치를 공유).
-        SetAnimatorFrozen(holding || slowMultiplier <= 0.01f);
+        SetAnimatorFrozen(holding || IsStunned);
 
         if (isHopper) UpdateHop();
         if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(holding);
@@ -577,7 +614,7 @@ public class Enemy : MonoBehaviour
     private void UpdateHop()
     {
         float cycle = hopDuration + hopGroundPause;
-        hopTimer += Time.deltaTime * slowMultiplier; // 기절하면 공중에 굳는 게 아니라 도약 자체가 느려진다
+        hopTimer += Time.deltaTime * MoveScale; // 기절하면 공중에 굳는 게 아니라 도약 자체가 느려진다
         if (hopTimer >= cycle) hopTimer -= cycle;
 
         float lift = 0f;
@@ -608,7 +645,7 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            diveBobTimer += Time.deltaTime * slowMultiplier;
+            diveBobTimer += Time.deltaTime * MoveScale;
             float w = diveBobSpeed * diveBobRate;
             bob = diveBobAmplitude *
                 (Mathf.Sin(diveBobTimer * w + diveBobPhase) * 0.7f +
@@ -725,7 +762,7 @@ public class Enemy : MonoBehaviour
         switch (carrierPhase)
         {
             case CarrierPhase.Descend:
-                p.y -= carrierDescendSpeed * slowMultiplier * Time.deltaTime;
+                p.y -= carrierDescendSpeed * MoveScale * Time.deltaTime;
                 if (p.y <= carrierHoverY) { p.y = carrierHoverY; carrierPhase = CarrierPhase.Hover; carrierHoverTimer = 0f; }
                 break;
             case CarrierPhase.Hover:
@@ -740,7 +777,7 @@ public class Enemy : MonoBehaviour
                     carrierPhase = CarrierPhase.Ascend;
                 break;
             case CarrierPhase.Ascend:
-                p.y += carrierAscendSpeed * slowMultiplier * Time.deltaTime;
+                p.y += carrierAscendSpeed * MoveScale * Time.deltaTime;
                 if (p.y >= carrierTopY) { BotInput.OnEnemyEscaped?.Invoke(this); Despawn(); return; }
                 break;
         }
@@ -776,18 +813,31 @@ public class Enemy : MonoBehaviour
 
     public void ApplySlow(float multiplier, float duration)
     {
-        // 보스·저항 있는 적(비행선)은 **감속의 세기**만 깎여 받는다(지속시간은 그대로). 세기를 깎는 쪽이라
-        // 기절(multiplier 0)조차 "느려짐"으로 바뀌어 계속 전진한다 — 무한 스톨링을 끊는 지점이 여기다.
+        // 보스·저항 있는 적(비행선)은 **감속의 세기**만 깎여 받는다(지속시간은 그대로).
         multiplier = 1f - (1f - multiplier) * CrowdControlScale;
         BotInput.OnSlow?.Invoke(this, multiplier, duration);
 
         bool wasActive = slowTimer > 0f;
         slowMultiplier = multiplier;
         slowTimer = duration;
-        SetAnimatorFrozen(multiplier <= 0.01f); // 기절(감속 0)이면 걷기 애니메이션도 정지
         // 새로 걸릴 때만 튄다 — 안개처럼 매 프레임 다시 거는 것까지 튀면 파편 예산이 통째로 날아간다.
-        if (!wasActive)
-            SpawnStatusParticle(multiplier <= 0.01f ? StatusIconLibrary.Stun : StatusIconLibrary.Slow);
+        if (!wasActive) SpawnStatusParticle(StatusIconLibrary.Slow);
+    }
+
+    // 기절 — 이동이 완전히 멈춘다. 둔화와 **다른 칸**에 담겨 서로 덮어쓰지 않는다.
+    // 🔴 보스·저항 적의 감쇄는 세기가 아니라 **지속시간**에 건다(예전엔 세기를 깎아 기절을 둔화로
+    //    바꿨는데, 기절이 분리된 지금 그 방식은 기절을 통째로 무효화한다). 감쇄의 의도 —
+    //    "보스에게 기절을 연달아 걸어 무한 스톨링하는 것을 막는다"(2026-09-18 결정) — 는 그대로 지켜진다.
+    // 이미 걸린 기절보다 짧으면 무시한다. 약한 기절이 긴 기절을 끊지 않게 한다.
+    public void ApplyStun(float duration)
+    {
+        duration *= CrowdControlScale;
+        if (duration <= stunTimer) return;
+
+        bool wasActive = stunTimer > 0f;
+        stunTimer = duration;
+        SetAnimatorFrozen(true);
+        if (!wasActive) SpawnStatusParticle(StatusIconLibrary.Stun);
     }
 
     // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 물러나게 한다.
@@ -849,7 +899,11 @@ public class Enemy : MonoBehaviour
         if (damagePerTick > poisonDamage) poisonDamage = damagePerTick;
         // 처음 중독될 때만 튄다 — 안개는 매 프레임 다시 걸어 오므로 여기서 안 막으면 파편이 폭주한다.
         if (poisonTimer <= 0f) SpawnStatusParticle(StatusIconLibrary.Poison);
-        if (poisonTimer <= 0f) { poisonNextTick = interval; poisonTicksTaken = 0; poisonFromExplosion = fromExplosion; }
+        // 🔴 첫 틱은 **간격을 기다리지 않고 즉시** 온다(사용자 결정 2026-09-27).
+        //    예전엔 여기서 interval을 채워 첫 틱이 0.5초 뒤였는데, 찌릿찌릿은 3틱마다 기절이라
+        //    첫 기절이 진입 후 1.5초였다 — 적이 안개를 그보다 빨리 통과하면 **안개 밖에서** 기절했다.
+        //    ⚠️ 부수효과: 중독 총 피해가 틱 1회분 늘어난다.
+        if (poisonTimer <= 0f) { poisonNextTick = 0f; poisonTicksTaken = 0; poisonFromExplosion = fromExplosion; }
         poisonInterval = interval;
         poisonTimer = Mathf.Max(poisonTimer, duration);
         SetPoisonTint(true);
@@ -878,13 +932,15 @@ public class Enemy : MonoBehaviour
         // 🔴 중독만은 **피해를 입을 때마다** 아이콘이 튄다(2026-09-19 사용자). 걸릴 때 한 번이 아니다.
         //    TakeDamage가 평소 타격 파편을 같이 띄우므로 "다른 파티클과 함께" 튀는 그림이 된다.
         SpawnStatusParticle(StatusIconLibrary.Poison);
-        TakeDamage(poisonDamage, source: ActiveSkillId.GrapeToss, rollLightning: false);
+        // 🔴 독 틱도 낙뢰를 굴린다(사용자 지시 2026-09-27). 도입 당시엔 재귀 방지 패턴을 그대로 따라
+        //    false였는데, 낙뢰 피해 쪽이 이미 rollLightning:false라 여기서 켜도 연쇄가 생기지 않는다.
+        TakeDamage(poisonDamage, source: ActiveSkillId.GrapeToss, rollLightning: true);
 
         // 찌릿찌릿 루트: N번째 중독 피해마다 기절. 2차는 기절이 끝난 뒤 취약까지 남긴다.
         int stunEvery = PlayerSkills.GrapeStunEveryNPoisonTicks;
         if (stunEvery > 0 && poisonTicksTaken % stunEvery == 0 && !isDead)
         {
-            ApplySlow(0f, PlayerSkills.GrapeStunDuration);
+            ApplyStun(PlayerSkills.GrapeStunDuration);
             if (PlayerSkills.GrapeStunAppliesVulnerable)
                 ApplyVulnerable(PlayerSkills.GrapeStunVulnerableMult,
                                 PlayerSkills.GrapeStunDuration + PlayerSkills.GrapeStunVulnerableDuration);
@@ -1235,7 +1291,11 @@ public class Enemy : MonoBehaviour
     //
     // 🔴 파편은 `HitParticle.MaxLive`(2000) 예산을 평소 타격 파편과 **같이 쓴다**(2026-09-18 후반 렉 대책).
     //    독은 여러 적에게 오래 걸려서 여기가 제일 많이 먹는 자리다 — **한 번에 1개만** 띄운다.
-    private const float StatusIconSpacing = 0.34f;
+    // 🔴 아이콘 간격은 상수로 두지 않는다 — **실제 아이콘 폭에서 계산한다**(사용자 지적 2026-09-27: 겹침).
+    //    예전엔 간격이 0.34유닛 고정이었는데 아이콘 원본이 24px·PPU32라 폭이 0.75유닛이었다.
+    //    둘이 따로 놀아서 55%가 겹쳤고, 그림이 바뀌면 또 어긋난다.
+    private const float StatusIconScale = 0.5f;   // 원본 24px(0.75유닛)에 곱한다 → 0.375유닛
+    private const float StatusIconGap = 0.06f;    // 아이콘 **사이**의 빈 틈(유닛)
     private const float StatusIconHeadGap = 0.18f;
     private const int StatusIconSortingAbove = 3;
 
@@ -1256,9 +1316,9 @@ public class Enemy : MonoBehaviour
     private void UpdateStatusIcons()
     {
         int n = 0;
-        // 기절은 감속과 같은 타이머를 쓴다 — 감속 0이 곧 기절이라 **둘 중 하나만** 띄운다.
-        if (slowTimer > 0f)
-            statusIconBuffer[n++] = slowMultiplier <= 0.01f ? StatusIconLibrary.Stun : StatusIconLibrary.Slow;
+        // 기절과 둔화는 별개 상태라 **동시에 걸리면 둘 다** 띄운다(버퍼 4칸 = 기절·둔화·중독·취약).
+        if (stunTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Stun;
+        if (slowTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Slow;
         if (poisonTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Poison;
         if (vulnerableTimer > 0f) statusIconBuffer[n++] = StatusIconLibrary.Vulnerable;
 
@@ -1285,7 +1345,15 @@ public class Enemy : MonoBehaviour
 
         // 머리 위 — 스프라이트 윗변 기준이라 적 크기가 달라도 같은 간격으로 뜬다.
         float headY = spriteRenderer.bounds.max.y - transform.position.y + StatusIconHeadGap;
-        float startX = -(n - 1) * 0.5f * StatusIconSpacing;
+
+        // 간격 = 가장 넓은 아이콘의 폭 + 틈. 폭에서 뽑으므로 그림이 커져도 겹치지 않는다.
+        float widest = 0f;
+        for (int i = 0; i < n; i++)
+            if (statusIconBuffer[i] != null)
+                widest = Mathf.Max(widest, statusIconBuffer[i].bounds.size.x * StatusIconScale);
+        float spacing = widest + StatusIconGap;
+
+        float startX = -(n - 1) * 0.5f * spacing;
         for (int i = 0; i < statusIconSlots.Length; i++)
         {
             SpriteRenderer sr = statusIconSlots[i];
@@ -1294,7 +1362,8 @@ public class Enemy : MonoBehaviour
             if (!used) continue;
             sr.sprite = statusIconBuffer[i];
             sr.sortingOrder = spriteRenderer.sortingOrder + StatusIconSortingAbove;
-            sr.transform.localPosition = new Vector3(startX + i * StatusIconSpacing, headY, 0f);
+            sr.transform.localScale = Vector3.one * StatusIconScale;
+            sr.transform.localPosition = new Vector3(startX + i * spacing, headY, 0f);
         }
     }
 

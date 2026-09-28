@@ -99,8 +99,10 @@ public class EvolutionTreeUI : MonoBehaviour
             {
                 RectTransform rt = (RectTransform)nodes[i].button.transform;
                 nodeHome[i] = rt.anchoredPosition;
-                // 🔴 카드 크기는 **씬 값**이 정한다(2026-09-27에 1.4 → 1.82로 키웠다). 여기서 기억해 두지 않으면
-                //    AnimateNode가 1.0 기준으로 덮어써서 씬에서 키워도 창을 열 때 되돌아간다.
+                // 🔴 카드 크기는 **씬 값**이 정한다(`Battle.unity`의 Node_R{0,1}T{1,2}). 여기서 기억해 두지 않으면
+                //    AnimateNode가 1.0 기준으로 덮어써서 씬에서 바꿔도 창을 열 때 되돌아간다.
+                //    ⚠️ 숫자를 여기 적지 말 것 — 씬이 원본이라 주석만 낡는다(1.82라고 적혀 있었지만 씬은 1.68이었다).
+                //    2026-09-27 사용자: "선택지 버튼이 너무 크다" → 1.68에서 20~25% 줄여 1.30.
                 nodeBaseScale[i] = rt.localScale;
             }
 
