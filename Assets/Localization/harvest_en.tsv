@@ -33,7 +33,7 @@ skill.name.Lightning	Lightning
 skill.desc.Lightning	For a time, every hit you land has a chance to call down lightning.
 evo.active.desc.Lightning.0.1	The lightning buff can now stack.
 evo.name.Lightning.0.1	Gathering Thunderclouds
-evo.active.desc.Lightning.0.2	At 20 stacks of the lightning buff, a colossal bolt comes down.
+evo.active.desc.Lightning.0.2	At 15 stacks of the lightning buff, a colossal bolt comes down.
 evo.name.Lightning.0.2	Stormpeak Bolt
 evo.active.desc.Lightning.1.1	Plants a rod at the center of the field that calls down lightning.
 evo.name.Lightning.1.1	Lightning Rod
@@ -87,7 +87,7 @@ evo.active.desc.Rewind.0.2	The attack after a rewind costs double cooldown, but 
 evo.name.Rewind.0.2	Overcharge
 evo.active.desc.Rewind.1.1	Rewinds further, and the global cooldown is halved.
 evo.name.Rewind.1.1	Accelerated Rewind
-evo.active.desc.Rewind.1.2	Every skill's cooldown drops, and the global cooldown vanishes.
+evo.active.desc.Rewind.1.2	All cooldowns are halved and the global cooldown is removed. In exchange, this skill's active ability is sealed.
 evo.name.Rewind.1.2	Hour of Blueberry Extinction
 skill.name.Swing	Swing
 skill.desc.Swing	Slams a hammer, damaging every enemy in reach and knocking them back.

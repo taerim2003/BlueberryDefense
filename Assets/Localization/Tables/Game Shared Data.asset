@@ -959,10 +959,6 @@ MonoBehaviour:
     m_Key: step.TickRate
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873201
-    m_Key: step.MaxTargets.orb
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873202
     m_Key: step.MaxTargets
     m_Metadata:
@@ -1095,10 +1091,6 @@ MonoBehaviour:
     m_Key: ui.treasure.evoCount
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873235
-    m_Key: ui.treasure.evoDesc
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873236
     m_Key: ui.evotree.header
     m_Metadata:
@@ -1143,20 +1135,8 @@ MonoBehaviour:
     m_Key: ui.tree.clickUnlock
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873247
-    m_Key: ui.tree.maxed
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873248
     m_Key: ui.tree.unlocked
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873249
-    m_Key: ui.tree.next
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873250
-    m_Key: ui.tree.click
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873251
@@ -1947,10 +1927,6 @@ MonoBehaviour:
     m_Key: tree.desc.boss_5
     m_Metadata:
       m_Items: []
-  - m_Id: 13070686563803136
-    m_Key: step.MaxTargets.homingOrb
-    m_Metadata:
-      m_Items: []
   - m_Id: 13070686651883520
     m_Key: step.ProjectileCount.sniping
     m_Metadata:
@@ -2005,22 +1981,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 13076071072866311
     m_Key: tree.desc.fly_3
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121439379456
-    m_Key: tree.name.orb_BasicFly
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597184
-    m_Key: tree.desc.orb_BasicFly
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597185
-    m_Key: tree.name.Shotgun_CloseBonus
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597186
-    m_Key: tree.desc.Shotgun_CloseBonus
     m_Metadata:
       m_Items: []
   - m_Id: 14804126506098688
@@ -2193,6 +2153,146 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 16698336893149188
     m_Key: tree.name.regen_2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420477947125760
+    m_Key: step.Damage.mul.whirlwind
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162496
+    m_Key: step.Damage.mul.shotgun
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162497
+    m_Key: step.ProjectileCount.chasearrow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162498
+    m_Key: step.ProjectileCount.skyshredder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162499
+    m_Key: step.ProjectileCount.bolt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162500
+    m_Key: step.Duration.buff
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162501
+    m_Key: step.Duration.barrage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162502
+    m_Key: step.Duration.cloud
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162503
+    m_Key: step.Duration.orb
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162504
+    m_Key: step.Scale.hugeBolt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162505
+    m_Key: step.Scale.swing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162506
+    m_Key: step.TickRate.poison
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162507
+    m_Key: step.TickRate.bunker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162508
+    m_Key: step.TickRate.pull
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162509
+    m_Key: step.MaxTargets.orb
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162510
+    m_Key: step.MaxTargets.miniTornado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162511
+    m_Key: step.InstallDuration
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162512
+    m_Key: step.InstallDuration.maker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162513
+    m_Key: step.InstallDuration.rod
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162514
+    m_Key: step.InstallDuration.eagleRain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162515
+    m_Key: step.MaxStacks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162516
+    m_Key: step.SubDamage.explosion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162517
+    m_Key: step.SubDamage.wave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162518
+    m_Key: step.SubScale.explosion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162519
+    m_Key: step.SubScale.wave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162520
+    m_Key: step.SubScale.plague
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162521
+    m_Key: step.BossDamage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162522
+    m_Key: step.BonusHits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162523
+    m_Key: step.EmpowerBonus
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162524
+    m_Key: step.PenaltyReduction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162525
+    m_Key: step.AllCooldown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162526
+    m_Key: step.EnemySlow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162527
+    m_Key: step.StunDuration
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162528
+    m_Key: step.StunInterval
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162529
+    m_Key: step.Lifesteal
     m_Metadata:
       m_Items: []
   m_Metadata:

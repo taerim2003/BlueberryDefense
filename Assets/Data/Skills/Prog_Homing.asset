@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillProgression
   skill: 6
   baseCooldown: 6
-  baseDamage: 6.4
+  baseDamage: 6.4737
   baseDuration: 0
   baseHits: 1
   basePierce: 0
@@ -25,25 +25,25 @@ MonoBehaviour:
     amount: 1
   - stat: 0
     op: 1
-    amount: 1.15
+    amount: 1.2
   - stat: 4
     op: 0
     amount: 2
-  - stat: 1
-    op: 1
-    amount: 0.88
   - stat: 4
     op: 0
     amount: 2
   - stat: 0
     op: 1
-    amount: 1.15
+    amount: 1.2
   - stat: 4
     op: 0
     amount: 2
-  - stat: 1
+  - stat: 4
+    op: 0
+    amount: 2
+  - stat: 0
     op: 1
-    amount: 0.85
+    amount: 1.2
   - stat: 4
     op: 0
     amount: 2

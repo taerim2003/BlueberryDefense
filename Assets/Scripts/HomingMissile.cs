@@ -18,8 +18,12 @@ public class HomingMissile : MonoBehaviour
     public bool Explode { get; set; }
     public float ExplodeRadius { get; set; } = 1.5f;
     public float ExplodeVfxMult { get; set; } = 1f; // 레벨업 "폭발 범위" 몫 — 폭발 그림을 반경과 같은 비율로 키운다
-    public float ExplodeRatio { get; set; } = 0.4f;
+    public float ExplodeRatio { get; set; } = PlayerSkills.HomingExplodeRatio;
     // 노릴 적의 순번. FireHoming이 발사 순서대로 0,1,2…를 준다 — 전부 같은 적으로 몰리는 걸 막는 장치다.
+    // 레벨업 "미사일 속도"(ProjectileSpeed). 프리팹의 moveSpeed에 곱한다.
+    public float SpeedMultiplier { get; set; } = 1f;
+    // 레벨업 "보스 추가 피해"(BossDamage). 보스로 판정된 적에게만 이만큼 더 들어간다(0.2 = +20%).
+    public float BossDamageBonus { get; set; }
     public int TargetRank { get; set; }
     // 호밍 R0 2차 「초강력 슈퍼 로켓」 — 순번이 아니라 **체력이 가장 높은 적** 하나를 쫓는다.
     public bool TargetHighestHealth { get; set; }
@@ -68,7 +72,9 @@ public class HomingMissile : MonoBehaviour
         Explode = false;
         ExplodeRadius = 1.5f;
         ExplodeVfxMult = 1f;
-        ExplodeRatio = 0.4f;
+        ExplodeRatio = PlayerSkills.HomingExplodeRatio;
+        SpeedMultiplier = 1f;
+        BossDamageBonus = 0f;
         TargetRank = 0;
         TargetHighestHealth = false; // 🔴 안 되돌리면 재사용된 미사일이 일반 호밍인데도 체력 1위만 쫓는다
         nextRetargetTime = 0f; // 꺼내자마자 한 번은 즉시 표적을 잡는다(주기는 그 다음부터)
@@ -114,7 +120,7 @@ public class HomingMissile : MonoBehaviour
             dir = ((Vector2)Vector3.RotateTowards(dir, desired, maxRad, 0f)).normalized;
         }
         FaceDir();
-        transform.Translate(dir * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate(dir * moveSpeed * SpeedMultiplier * Time.deltaTime, Space.World);
     }
 
     private void FaceDir()
@@ -158,6 +164,9 @@ public class HomingMissile : MonoBehaviour
         return candidates[TargetRank % candidates.Count].enemy;
     }
 
+    // 보스에게만 붙는 추가 피해. 일반 적에겐 1이라 아무 영향이 없다.
+    private float BossMult(Enemy e) => e != null && e.IsBoss ? 1f + BossDamageBonus : 1f;
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (hit) return;
@@ -166,7 +175,7 @@ public class HomingMissile : MonoBehaviour
         hit = true;
 
         Vector3 pos = transform.position;
-        e.TakeSkillHit(Damage, CritChance, ActiveSkillId.Homing);
+        e.TakeSkillHit(Damage * BossMult(e), CritChance, ActiveSkillId.Homing);
 
         if (hitVfxPrefab != null)
         {
@@ -193,7 +202,7 @@ public class HomingMissile : MonoBehaviour
                     //    폭발 피해가 정확히 0이 되어 그림만 떴다. 이미 죽었으면 TakeDamage의 isDead 가드가 막는다.
                     if (o == null) continue;
                     if (Vector2.Distance(pos, o.transform.position) <= ExplodeRadius)
-                        o.TakeSkillHit(Damage * ExplodeRatio, CritChance, ActiveSkillId.Homing);
+                        o.TakeSkillHit(Damage * ExplodeRatio * BossMult(o), CritChance, ActiveSkillId.Homing);
                 }
         }
         Despawn();

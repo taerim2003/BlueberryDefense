@@ -9,6 +9,9 @@ class El {
   getAttribute(k) { return this.attrs[k]; }
   addEventListener() {}
   get textContent() { return (this.text || '') + this.kids.map(k => (k instanceof El ? k.textContent : String(k))).join(''); }
+  // 🔴 설정자가 없으면 `el.textContent = …` 대입이 조용히 사라져, 그 글자가 검사 대상에서 빠진다.
+  //    실제 DOM과 같게 자식을 비우고 글자를 넣는다(2026-09-29).
+  set textContent(v) { this.text = String(v); this.kids = []; }
   get style() { return this._style || (this._style = { setProperty() {} }); }
   set style(v) { this.attrs.style = v; }
   querySelectorAll() { return []; }
@@ -38,9 +41,14 @@ El.prototype.append = function (...xs) { count += xs.length; return origAppend.a
 
 try {
   new Function(script)();
+  // 🔴 `#app` 하나만 보면 컨테이너를 여러 개 쓰는 보고서에서 텍스트를 한 글자도 못 읽는다.
+  //    그러면 아래 null 누출 검사와 기대 문구 검사가 **빈 문자열을 검사하고 통과**한다(2026-09-29).
+  //    루트가 있으면 그것만, 없으면 스크립트가 꺼내 쓴 모든 컨테이너를 합쳐서 본다.
   const app = byId['app'];
-  const txt = app ? app.textContent : '';
-  console.log('렌더 성공 — append 호출 ' + count + '회, 최상위 자식 ' + (app ? app.children.length : 0) + '개, 텍스트 ' + txt.length + '자');
+  const roots = app ? [app] : Object.values(byId);
+  const txt = roots.map(e => e.textContent).join('\n');
+  const kids = roots.reduce((n, e) => n + e.children.length, 0);
+  console.log('렌더 성공 — append 호출 ' + count + '회, 최상위 자식 ' + kids + '개, 텍스트 ' + txt.length + '자');
   if (/\bnull\b|\bundefined\b|NaN/.test(txt)) {
     const bad = txt.match(/.{0,40}(null|undefined|NaN).{0,40}/g).slice(0, 5);
     console.log('⚠ 화면 텍스트에 null/undefined/NaN이 보인다:');

@@ -20,30 +20,30 @@ MonoBehaviour:
   basePierce: 0
   baseProjectiles: 0
   levels:
-  - stat: 8
-    op: 0
-    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.2
+    amount: 0.1
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.2
+    amount: 0.1
+  - stat: 1
+    op: 0
+    amount: -0.3
+  - stat: 8
+    op: 0
+    amount: 0.1
   - stat: 1
     op: 0
     amount: -0.4
   - stat: 8
     op: 0
-    amount: 0.2
-  - stat: 1
-    op: 0
-    amount: -0.4
+    amount: 0.1
   - stat: 8
     op: 0
-    amount: 0.25
+    amount: 0.1

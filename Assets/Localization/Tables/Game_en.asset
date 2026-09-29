@@ -457,7 +457,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709090811978
-    m_Localized: At 20 stacks of the lightning buff, a colossal bolt comes down.
+    m_Localized: At 15 stacks of the lightning buff, a colossal bolt comes down.
     m_Metadata:
       m_Items: []
   - m_Id: 709090811982
@@ -626,7 +626,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006240
-    m_Localized: Every skill's cooldown drops, and the global cooldown vanishes.
+    m_Localized: All cooldowns are halved and the global cooldown is removed. In
+      exchange, this skill's active ability is sealed.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006250
@@ -970,10 +971,6 @@ MonoBehaviour:
     m_Localized: Hits {0}% faster
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873201
-    m_Localized: Pierce targets +{0}
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873202
     m_Localized: Simultaneous targets +{0}
     m_Metadata:
@@ -1106,10 +1103,6 @@ MonoBehaviour:
     m_Localized: EVOLVE! {0} available
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873235
-    m_Localized: Pick one skill to evolve
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873236
     m_Localized: "{0} Evolution \u2014 Lv.{1}"
     m_Metadata:
@@ -1154,20 +1147,8 @@ MonoBehaviour:
     m_Localized: '  > click to unlock'
     m_Metadata:
       m_Items: []
-  - m_Id: 269049805873247
-    m_Localized: (MAX)
-    m_Metadata:
-      m_Items: []
   - m_Id: 269049805873248
     m_Localized: Unlocked
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873249
-    m_Localized: "  \xB7 next {0} Essence"
-    m_Metadata:
-      m_Items: []
-  - m_Id: 269049805873250
-    m_Localized: '  > click'
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873251
@@ -1969,10 +1950,6 @@ MonoBehaviour:
     m_Localized: Damage to bosses +10%
     m_Metadata:
       m_Items: []
-  - m_Id: 13070686563803136
-    m_Localized: Seeking Orbs +{0}
-    m_Metadata:
-      m_Items: []
   - m_Id: 13070686651883520
     m_Localized: Shots per target +{0}
     m_Metadata:
@@ -2027,24 +2004,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 13076071072866311
     m_Localized: +30% damage to flying enemies
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121439379456
-    m_Localized: Orb Hits Flyers
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597184
-    m_Localized: The basic orb can now hit flying enemies
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597185
-    m_Localized: Close Aim
-    m_Metadata:
-      m_Items: []
-  - m_Id: 14804121573597186
-    m_Localized: 'Buckshot-buffed attacks hit nearby enemies
-
-      2 extra times.'
     m_Metadata:
       m_Items: []
   - m_Id: 14804126506098688
@@ -2223,6 +2182,146 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 16698336893149188
     m_Localized: Regeneration II
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420477947125760
+    m_Localized: Tornado damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162496
+    m_Localized: Shotgun damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162497
+    m_Localized: Chasing arrows +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162498
+    m_Localized: Arrows +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162499
+    m_Localized: Lightning bolts +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162500
+    m_Localized: Buff duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162501
+    m_Localized: Barrage duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162502
+    m_Localized: Fog duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162503
+    m_Localized: Orb duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162504
+    m_Localized: Mega bolt radius +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162505
+    m_Localized: Attack range +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162506
+    m_Localized: Poison tick interval -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162507
+    m_Localized: Bunker recharge -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162508
+    m_Localized: Pull interval -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162509
+    m_Localized: Orbs +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162510
+    m_Localized: Mini tornadoes +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162511
+    m_Localized: Deployment duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162512
+    m_Localized: Machine duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162513
+    m_Localized: Lightning strike duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162514
+    m_Localized: Eagle rain duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162515
+    m_Localized: Max stacks +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162516
+    m_Localized: Explosion damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162517
+    m_Localized: Shockwave damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162518
+    m_Localized: Explosion radius +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162519
+    m_Localized: Shockwave size +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162520
+    m_Localized: Contagion radius +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162521
+    m_Localized: Damage to bosses +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162522
+    m_Localized: Buff bonus hits +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162523
+    m_Localized: Empower effect +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162524
+    m_Localized: Empower cooldown penalty -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162525
+    m_Localized: All skill cooldowns -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162526
+    m_Localized: All enemy move speed -{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162527
+    m_Localized: Stun duration +{0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162528
+    m_Localized: Stun interval -{0} ticks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162529
+    m_Localized: Shield gain +{0}
     m_Metadata:
       m_Items: []
   references:
