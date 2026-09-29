@@ -383,4 +383,18 @@ public class EnemySpawner : MonoBehaviour
         SpawnedThisStage += count;
         spawnedInBurst += count; // 웨이브 회계 — 이 한 곳만 지나가면 정문 스폰 전부가 무리에 잡힌다
     }
+
+    // 보스 프리팹 3종은 세 맵이 공유한다 — 맵이 자기 그림을 들고 있으면 여기서 덮어쓴다(MapDefinition.bossSpriteFrames).
+    private void ApplyBossSkin(Enemy enemy)
+    {
+        if (Map.bossColliderSize != Vector2.zero && enemy.TryGetComponent(out BoxCollider2D box))
+            box.size = Map.bossColliderSize;
+
+        enemy.SetBossSkinMotion(Map.bossHoldbackX, Map.bossFloatBobAmplitude, Map.bossFloatBobSpeed);
+
+        Sprite[] frames = Map.bossSpriteFrames;
+        if (frames == null || frames.Length == 0) return;
+        var flipbook = enemy.GetComponent<SpriteFlipbook>();
+        if (flipbook != null) flipbook.PlayFrames(frames);
+    }
 }

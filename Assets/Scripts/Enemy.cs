@@ -25,6 +25,20 @@ public class Enemy : MonoBehaviour
         isBoss = true;
         deathSpawnOverride = deathBurstPool;
     }
+
+    // 맵별 보스 스킨의 이동 연출(EnemySpawner.ApplyBossSkin이 부른다 — 보스 프리팹 3종은 맵 공유라 프리팹엔 못 둔다).
+    // holdbackX: 정지선을 이만큼 더 앞(왼쪽)에서 잡는다 — 그림이 큰 보스는 중심 기준 정지선에 서면 몸통이 플레이어를 덮는다.
+    // bobAmplitude > 0이면 강하 유닛이 아니어도 diveBob 출렁임만 빌려 쓴다(비행 보스. 멈추면 가라앉는 것도 동일).
+    public void SetBossSkinMotion(float holdbackX, float bobAmplitude, float bobSpeed)
+    {
+        skinHoldbackX = holdbackX;
+        if (bobAmplitude > 0f)
+        {
+            skinFloatBob = true;
+            diveBobAmplitude = bobAmplitude;
+            diveBobSpeed = bobSpeed;
+        }
+    }
     private const float BossCrowdControlScale = 0.15f; // 보스는 군중제어를 15%만 받는다(사용자 결정 2026-09-18: "아주 강하게")
 
     // 이번에 받을 군중제어 배율. 보스 슬롯 규칙과 종류별 저항(EnemyDefinition.crowdControlResistance) 중 강한 쪽.
@@ -71,6 +85,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float diveBobSpeed = 2.2f;
     private const float DiveBobSettleTime = 0.3f; // 멈춰 선 뒤 흔들림이 0으로 잦아드는 시간(초)
     // 개체마다 위상·속도를 흩는다 — 안 그러면 무리 전체가 한 파도를 타듯 똑같이 출렁인다.
+    private float skinHoldbackX;  // 맵 보스 스킨이 정지선을 물리는 거리(SetBossSkinMotion. 0 = 종전과 동일)
+    private bool skinFloatBob;    // 맵 보스 스킨의 출렁임 스위치(SetBossSkinMotion)
     private float diveBobPhase, diveBobPhase2, diveBobRate;
     private float diveBobPrev;  // 지난 프레임에 얹은 오프셋(경로에 누적되지 않게 차분만 더한다)
     private float diveBobTimer;
@@ -333,7 +349,7 @@ public class Enemy : MonoBehaviour
         PlayerHealth player = Player;
         if (player == null || isCarrier) return;
 
-        float limit = player.transform.position.x - BalanceConstants.ContactStopDistance;
+        float limit = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
         if (transform.position.x <= limit) return;
 
         Vector3 p = transform.position;
@@ -413,6 +429,8 @@ public class Enemy : MonoBehaviour
         diveBobRate = Random.Range(0.8f, 1.25f);
         diveBobPrev = 0f;
         diveBobTimer = 0f;
+        skinHoldbackX = 0f;   // 스킨 연출은 스폰마다 ApplyBossSkin이 다시 세팅한다 — 풀 재사용 잔재 방지
+        skinFloatBob = false;
         // 캐리어 좌표 3종은 아래 isCarrier 분기에서 다시 계산되지만, 여기서도 0으로 되돌린다.
         // 비캐리어에겐 읽히지 않는 값이라 지금은 무해하지만 — "런타임 필드는 예외 없이 전부 리셋된다"는
         // 불변식을 깨 두면 나중에 이 값을 읽는 경로가 생겼을 때 잠복 버그가 된다.
@@ -570,7 +588,7 @@ public class Enemy : MonoBehaviour
             isHolding = false;
             SetAnimatorFrozen(true);
             if (isHopper) UpdateHop();
-            if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(false);
+            if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(false);
             spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
@@ -603,7 +621,7 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(holding || IsStunned);
 
         if (isHopper) UpdateHop();
-        if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(holding);
+        if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(holding);
 
         spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
@@ -663,7 +681,7 @@ public class Enemy : MonoBehaviour
         PlayerHealth player = Player;
         if (player == null) return false;
 
-        if (transform.position.x >= player.transform.position.x - BalanceConstants.ContactStopDistance)
+        if (transform.position.x >= player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX)
         {
             if (lungeTimer < 0f) holdBaseX = transform.position.x; // 돌진 중이 아닐 때의 제자리를 기억해 둔다
             Headbutt(player);
