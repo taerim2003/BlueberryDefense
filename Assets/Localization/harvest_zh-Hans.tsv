@@ -33,7 +33,7 @@ skill.name.Lightning	落雷
 skill.desc.Lightning	在一段时间内，每次造成攻击伤害时都有一定几率降下落雷。
 evo.active.desc.Lightning.0.1	落雷增益可以叠加。
 evo.name.Lightning.0.1	雷云积聚
-evo.active.desc.Lightning.0.2	落雷增益叠加到20层时，降下超大落雷。
+evo.active.desc.Lightning.0.2	落雷增益叠加到15层时，降下超大落雷。
 evo.name.Lightning.0.2	超大蓄能雷电
 evo.active.desc.Lightning.1.1	在地图中央设置会降下落雷的避雷针。
 evo.name.Lightning.1.1	避雷针
@@ -87,7 +87,7 @@ evo.active.desc.Rewind.0.2	回溯后使用的攻击冷却时间翻倍，但威�
 evo.name.Rewind.0.2	过载
 evo.active.desc.Rewind.1.1	回溯效果增强，公共冷却减半。
 evo.name.Rewind.1.1	加速回溯
-evo.active.desc.Rewind.1.2	所有技能冷却时间缩短，公共冷却消失。
+evo.active.desc.Rewind.1.2	所有冷却时间减半，全局冷却消失。作为代价，此技能的主动能力被封印。
 evo.name.Rewind.1.2	蓝莓灭绝时刻
 skill.name.Swing	挥击
 skill.desc.Swing	挥动锤子，对范围内所有敌人造成伤害并击退。

@@ -1,0 +1,649 @@
+<title>스킬 밸런스 판독지</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#f6f4f8; --raise:#fffefe; --ink:#1f1a28; --muted:#6b6478; --faint:#8e8799;
+  --line:#e0dbe8; --hair:#eae6ef; --accent:#5b3e96;
+  --keep:#4a7358; --up:#2d6a93; --down:#a2452d; --struct:#8a6a17;
+  --chip-ink:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#15121b; --raise:#1c1824; --ink:#ece7f2; --muted:#9a92a8; --faint:#7d7589;
+    --line:#2c2636; --hair:#241f2e; --accent:#ac8fe9;
+    --keep:#7fb894; --up:#6aa8d4; --down:#e08a70; --struct:#d4ad4e;
+    --chip-ink:#15121b;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#15121b; --raise:#1c1824; --ink:#ece7f2; --muted:#9a92a8; --faint:#7d7589;
+  --line:#2c2636; --hair:#241f2e; --accent:#ac8fe9;
+  --keep:#7fb894; --up:#6aa8d4; --down:#e08a70; --struct:#d4ad4e;
+  --chip-ink:#15121b;
+}
+
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+  font-size:15px; line-height:1.75;
+}
+.wrap{max-width:860px; margin:0 auto; padding-inline:20px; padding-block:40px 72px;}
+
+/* ── 머리 ── */
+.mast{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 16px; margin-bottom:6px;}
+h1{
+  font-family:Hahmlet,"Nanum Myeongjo",serif; font-weight:700;
+  font-size:clamp(28px,5vw,38px); line-height:1.15; letter-spacing:-.01em;
+  margin:0; text-wrap:balance;
+}
+.round{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:13px; font-weight:600;
+  color:var(--accent); letter-spacing:.06em; text-transform:uppercase;
+}
+.stamp{color:var(--faint); font-size:13px;}
+.rule{height:2px; background:var(--ink); margin:18px 0 0;}
+.rule.thin{height:1px; background:var(--line);}
+
+.sample{
+  margin-top:20px; padding:10px 14px; border:1px dashed var(--line); border-radius:2px;
+  color:var(--muted); font-size:13px;
+}
+
+/* ── 절 제목 ── */
+h2{
+  font-family:Hahmlet,"Nanum Myeongjo",serif; font-weight:700; font-size:19px;
+  margin:44px 0 0; letter-spacing:-.01em;
+}
+.sub{color:var(--muted); font-size:13px; margin:2px 0 14px;}
+
+/* ── 측정 표 ── */
+.figure{display:flex; align-items:baseline; gap:10px; margin:14px 0 16px;}
+.figure b{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600;
+  font-size:30px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+}
+.figure span{color:var(--muted); font-size:13px;}
+
+/* ── 맵별 클리어 그래프 ── */
+.chart{display:grid; gap:18px; margin-top:6px;}
+.bar{display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:baseline;}
+.bar .nm{font-size:14px; font-weight:500;}
+.bar .val{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:13px;
+  font-variant-numeric:tabular-nums; color:var(--muted);
+}
+.bar .val b{color:var(--ink); font-weight:600;}
+.track{
+  grid-column:1 / -1; position:relative; height:22px; border-radius:2px;
+  background:var(--hair); border:1px solid var(--line); overflow:hidden;
+}
+.fill{position:absolute; inset:0 auto 0 0; background:var(--accent);}
+.tick{position:absolute; top:0; bottom:0; width:1px; background:var(--paper); opacity:.6;}
+.axis{
+  display:flex; justify-content:space-between; margin-top:2px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; color:var(--faint);
+  font-variant-numeric:tabular-nums;
+}
+.chartnote{color:var(--muted); font-size:13px; margin:14px 0 0;}
+
+/* ── 판정 칩 ── */
+.chip{
+  display:inline-flex; align-items:center; gap:6px; flex:none;
+  font-size:12px; font-weight:600; line-height:1;
+  padding:5px 9px; border-radius:2px; color:var(--chip-ink);
+}
+.v-keep{background:var(--keep);} .v-up{background:var(--up);}
+.v-down{background:var(--down);} .v-struct{background:var(--struct);}
+.v-missing{background:transparent; color:var(--faint); border:1px dashed var(--line); padding:4px 8px;}
+.entry[data-verdict="missing"] .esum{color:var(--faint);}
+
+.legend{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0;}
+.legend button{
+  font:inherit; font-size:12px; font-weight:500; cursor:pointer;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 11px; border:1px solid var(--line); border-radius:2px;
+  background:var(--raise); color:var(--ink);
+}
+.legend button:hover{border-color:var(--accent);}
+.legend button[aria-pressed="true"]{border-color:var(--ink); background:var(--ink); color:var(--paper);}
+.legend .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+.legend .n{font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; opacity:.7;}
+.legend button:focus-visible,details>summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+/* ── 대변인 항목 ── */
+.entry{padding:22px 0; border-bottom:1px solid var(--hair);}
+.entry:last-child{border-bottom:none;}
+.ehead{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px;}
+.ename{font-family:Hahmlet,"Nanum Myeongjo",serif; font-weight:700; font-size:20px; letter-spacing:-.01em;}
+.eroute{color:var(--faint); font-size:12.5px;}
+/* 🔴 줄 길이를 ch로 제한하지 않습니다. ch는 숫자 0의 너비여서, 전각인 한글에서는 의도한 글자 수의
+   절반 지점에서 줄이 바뀌고 오른쪽에 넓은 여백이 남습니다. 본문 폭은 .wrap의 860px가 정합니다. */
+.esum{margin:10px 0 0;}
+.esum p{margin:0 0 4px;}
+.esum p:last-child{margin-bottom:0;}
+.eprop{
+  margin:12px 0 0; padding-left:13px; border-left:2px solid var(--accent);
+  color:var(--muted); font-size:14px;
+}
+.eprop b{color:var(--ink); font-weight:600;}
+
+details{margin-top:12px;}
+details>summary{
+  cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:500; color:var(--muted);
+}
+details>summary::-webkit-details-marker{display:none;}
+details>summary::before{content:"+"; font-family:"IBM Plex Mono",monospace; color:var(--accent);}
+details[open]>summary::before{content:"–";}
+.qa{margin:12px 0 0; display:grid; gap:12px;}
+.qa>div{display:grid; grid-template-columns:38px 1fr; gap:10px; align-items:baseline;}
+.qk{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; font-weight:600;
+  color:var(--accent);
+}
+.qq{font-size:13px; color:var(--muted); margin:0 0 2px;}
+.qa2{font-size:14px; margin:0;}
+
+/* ── 반대 심문관 ── */
+.exam{padding:18px 0; border-bottom:1px solid var(--hair);}
+.exam:last-child{border-bottom:none;}
+.exam h3{font-size:15px; font-weight:600; margin:0 0 4px;}
+.exam p{margin:0; color:var(--muted);}
+
+.empty{color:var(--faint); font-size:14px; padding:18px 0;}
+@media (max-width:420px){
+  .qa>div{grid-template-columns:1fr; gap:2px;}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mast">
+      <h1>스킬 밸런스 판독지</h1>
+      <span class="round" id="round"></span>
+    </div>
+    <div class="stamp" id="stamp"></div>
+    <div class="rule"></div>
+    <div class="sample" id="sample" hidden>
+      이 화면은 <b>양식 견본</b>이며, 실제 회차 데이터가 아니라 배치를 확인하기 위한 예시 값이 들어 있습니다.
+    </div>
+  </header>
+
+  <section>
+    <h2>측정</h2>
+    <p class="sub">이 보고서에서 수치를 제시하는 곳은 이 절 하나이며, 스킬 판정은 아래의 대변인 서술로 대신합니다.</p>
+    <div class="figure"><b id="playtime"></b><span>플레이타임</span></div>
+    <div class="chart" id="chart"></div>
+    <p class="chartnote" id="chartnote"></p>
+  </section>
+
+  <section>
+    <h2>액티브 스킬</h2>
+    <p class="sub">액티브 11종 전체를 매 회차 보고합니다. 스킬 하나를 대변인 한 명이 담당하며, 요약은 세 줄에서 네 줄로 고정합니다.</p>
+    <div class="legend" id="legend"></div>
+    <div class="rule thin" style="margin-top:16px"></div>
+    <div id="skills"></div>
+    <p class="empty" id="skillsEmpty" hidden>선택하신 판정에 해당하는 스킬이 없습니다.</p>
+  </section>
+
+  <section>
+    <h2>패시브 스킬</h2>
+    <p class="sub">패시브 6종 전체를 담당자 한 명이 보고하되, 항목은 스킬마다 따로 씁니다. 액티브 대변인들이 각 패시브를 몇 번 요청하였는지가 주 지표입니다.</p>
+    <div class="rule thin"></div>
+    <div id="passives"></div>
+  </section>
+
+  <section id="examSec">
+    <h2>반대 심문</h2>
+    <p class="sub">반대 심문관에게는 변경 제안 권한이 없으며, 위 판정 가운데 근거가 충분하지 않은 부분만 지적합니다.</p>
+    <div class="rule thin"></div>
+    <div id="exam"></div>
+  </section>
+</div>
+
+<script>
+// analyze.js가 이 자리에 data.json을 통째로 넣는다. 비어 있으면 아래 견본이 뜬다.
+const DATA = /*__DATA__*/null;
+
+const SAMPLE = {
+  sample: true,
+  iteration: 44,
+  generated: "2026-09-29",
+  playtime: "3시간 06분",
+  maps: [
+    { name: "농장 어려움", runs: 40, clears: 31 },
+    { name: "해변 어려움", runs: 40, clears: 24 },
+    { name: "우주 어려움", runs: 40, clears: 9 }
+  ],
+  skills: [
+    {
+      name: "화살 사격", route: "R1 하늘 파쇄기 원정", verdict: "struct",
+      summary: [
+        "하늘 파쇄기는 쿨타임 없이 상시로 발동하기 때문에 레벨업 카드의 쿨타임 감소 효과가 적용되지 않았으며, 크기 증가 역시 처리량에 반영되지 않았습니다.",
+        "해당 다섯 칸을 화살 수 증가로 교체하여, 레벨이 오를수록 화면에 떨어지는 화살이 실제로 늘어나도록 조정하였습니다.",
+        "우주 어려움에서는 비행 적이 밀집하는 구간을 단독으로 처리하였으나, 지상 적 위주의 구간에서는 처리 속도가 뚜렷하게 떨어졌습니다.",
+        "2차 진화에는 40판 중 33판에서 도달하였고, 도달하지 못한 판의 원인은 모두 진화 아이템 부족이 아니라 레벨 부족이었습니다."
+      ],
+      proposal: "화살 수 카드의 증가폭은 유지하되, 만렙 기준 초당 화살이 약 60발에 이르므로 프레임 측정을 선행할 것을 권고합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 크기 증가 카드가 다섯 칸을 차지하고 있었으나, 상시 발동체에서는 화살 하나의 크기가 커져도 처리량이 변하지 않습니다. 화살 수 증가로 교체하였습니다." },
+        { k: "Q1", q: "이 스킬의 정체성과 강점·약점이 드러나는 상황은 무엇인가",
+          a: "화면 상단에서 낙하하는 공격이므로 비행 적과 밀집 구간에서는 우위를 보이며, 단일 고체력 적을 상대할 때는 처리 시간이 길어집니다." },
+        { k: "Q3", q: "각 맵에서 어디까지 도달하였고 무엇에 의해 진행이 중단되었는가",
+          a: "우주 어려움의 평균 도달 층은 직전 회차와 동일하며, 진행이 중단된 지점은 모두 보스 단일 처리 구간이었습니다." }
+      ]
+    },
+    {
+      name: "낙뢰", route: "R0 초대형 축적 번개 원정", verdict: "down",
+      summary: [
+        "낙뢰 버프에 중첩 상한이 설정되어 있지 않아 지속시간 안에서 스택이 제한 없이 누적되었으며, 그 결과 농장 어려움에서는 다른 스킬의 기여 없이도 클리어가 성립하여 판정 자체가 불가능하였습니다.",
+        "뇌운 축적에 기본 상한 4를, 초대형 축적 번개에 기본 상한 20을 설정하고, 레벨업 카드로 상한을 올리도록 조정하였습니다.",
+        "초대형 낙뢰의 발동 임계값은 20에서 15로 하향하여 상한과의 간격을 확보하였습니다."
+      ],
+      proposal: "다음 회차에서는 상한에 실제로 도달하는지를 먼저 확인합니다. 도달하지 않는다면 원인은 상한이 아니라 버프 지속시간입니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 피뢰침 루트는 버프 설정 구문에 도달하기 전에 분기를 벗어나므로 발동률 카드가 어떤 값도 변경하지 못합니다. 지속시간과 낙뢰 개수로 교체하였습니다." },
+        { k: "Q4", q: "2차 진화에 도달하였는가, 도달하지 못하였다면 무엇이 원인인가",
+          a: "40판 중 37판에서 도달하였습니다. 도달하지 못한 세 판은 모두 열쇠 스킬의 출현이 늦어진 경우입니다." }
+      ]
+    },
+    {
+      name: "휘두르기", route: "R0 로열 팔라딘의 망치 원정", verdict: "keep",
+      summary: [
+        "직전 회차의 기절 분리 이후 도달 층이 안정적으로 유지되고 있어 이번 회차에는 수치를 변경하지 않았습니다.",
+        "해변 어려움에서는 적을 밀어내어 방어선을 회복하는 역할이 의도한 대로 작동하였습니다.",
+        "기절 시간 카드를 새로 배치하였으나 카드당 0.02초이므로, 이번 측정에서는 노이즈 폭 안에 들어 효과를 판정할 수 없습니다."
+      ],
+      proposal: "변경하지 않습니다. 기절 시간 카드의 효과는 두 회차 이상의 데이터를 모은 뒤에 판정할 수 있습니다.",
+      qa: [
+        { k: "Q2", q: "약점을 보완하려면 어떤 액티브와 패시브를 함께 올려야 하는가",
+          a: "사거리가 짧아 비행 적을 맞히지 못합니다. 화살비 또는 독수리 투하를 보조로 함께 올리면 해당 약점이 보완됩니다." },
+        { k: "Q7", q: "다른 스킬의 조건이나 보조로 참여한 판에서 무엇을 수행하였는가",
+          a: "포도알 원정 12판에서 전열을 밀어내어 독안개가 깔릴 공간을 확보하였습니다." }
+      ]
+    },
+    {
+      name: "회오리", route: "R0 회오리 생성기 원정", verdict: "struct",
+      summary: [
+        "회오리 생성기는 설치한 기계가 일정 주기로 회오리를 생성하는 구조인데, 기존 지속시간 카드는 기계가 아니라 생성된 회오리의 수명만 연장하고 있었습니다.",
+        "기계 자체의 지속시간을 올리는 카드를 신설하고, 진화 이후 체감이 없던 회오리 크기와 타격 간격 카드를 제거하였습니다.",
+        "농장 어려움에서는 기계가 서 있는 동안 전 구간을 담당하였으나, 기계가 사라진 직후의 공백에서 실점이 집중되었습니다."
+      ],
+      proposal: "기계 지속시간 카드 두 장으로 8초에서 10초까지 확보됩니다. 공백이 계속 문제가 되면 지속시간이 아니라 쿨타임을 조정해야 합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부분적으로만 부합하였습니다. 지속시간 카드가 기계가 아니라 회오리의 수명에 적용되고 있어, 기계용 지속시간 축을 별도로 신설하였습니다." },
+        { k: "Q5", q: "진화 전 구간과 진화 후 구간 사이에 실제로 무엇이 달라졌는가",
+          a: "시전할 때마다 회오리가 나가는 방식에서, 설치물이 주기적으로 회오리를 공급하는 방식으로 바뀌었습니다. 피해의 총량보다 분포가 달라졌습니다." }
+      ]
+    },
+    {
+      name: "오브", route: "R1 저글러 원정", verdict: "up",
+      summary: [
+        "추적 오브와 저글러는 알의 크기가 고정값으로 대입되기 때문에 크기 카드가 어떤 값도 변경하지 못하고 있었습니다.",
+        "해당 칸을 오브 개수 증가로 교체하여, 추적 오브는 10개에서 14개로, 저글러는 15개에서 22개로 늘어나도록 조정하였습니다.",
+        "강력한 마력은 오브가 커진 만큼 이동속도를 기본값의 0.6배로 낮추어, 화면을 빠르게 지나가 버리던 문제를 완화하였습니다."
+      ],
+      proposal: "개수 증가분만큼 발당 피해를 낮추어 총량은 유지하였습니다. 다음 회차에서는 발사 간격이 쿨타임을 침범하지 않는지 확인합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 추적 오브 계열은 알 크기를 고정 대입하므로 크기 카드가 무효였습니다. 오브 개수로 교체하였습니다." },
+        { k: "Q1", q: "이 스킬의 정체성과 강점·약점이 드러나는 상황은 무엇인가",
+          a: "관통이 무한이므로 일렬로 늘어선 적에 강하고, 넓게 흩어진 적에는 한 발이 한 마리씩만 담당하게 되어 효율이 떨어집니다." }
+      ]
+    },
+    {
+      name: "독수리 투하", route: "R0 슈퍼 다이너마이트 독수리 원정", verdict: "keep",
+      summary: [
+        "슈퍼 다이너마이트 독수리는 타격 간격과 투사체 수와 크기 카드가 모두 단일 투하 구조와 맞지 않아 이번 회차에 제거하였습니다.",
+        "남은 아홉 칸을 피해와 쿨타임으로 채워, 한 발의 위력과 재사용 주기만으로 성장하는 구조가 되었습니다.",
+        "해변 어려움에서는 보스 단일 처리에서 가장 높은 기여를 보였고, 잡몹 밀집 구간에서는 기여가 낮았습니다."
+      ],
+      proposal: "변경하지 않습니다. 카드 구성만 정리하였으므로 총 피해는 직전 회차와 동일합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 독수리 한 마리만 떨어지는 진화에서 투하 횟수와 투하 간격 카드는 적용 대상이 없습니다. 모두 제거하였습니다." },
+        { k: "Q3", q: "각 맵에서 어디까지 도달하였고 무엇에 의해 진행이 중단되었는가",
+          a: "농장과 해변은 전 구간을 통과하였고, 우주 어려움에서는 재사용 대기시간 중에 전열이 무너져 진행이 중단되었습니다." }
+      ]
+    },
+    {
+      name: "스나이핑", route: "R1 사이버네틱 벙커 원정", verdict: "keep",
+      summary: [
+        "투사체 카드가 대상당 연사 수를 의미한다는 점을 코드에서 확인하였으므로 그대로 유지하였습니다.",
+        "사이버네틱 벙커는 피격 시 발동하는 반격 능력의 재사용 대기시간이 5초 고정이었고, 이를 낮추는 카드를 신설하였습니다.",
+        "우주 어려움에서는 피격 빈도가 높아 반격이 자주 발동하였으나, 농장 어려움에서는 거의 발동하지 않았습니다."
+      ],
+      proposal: "반격 쿨타임 카드 두 장으로 5초에서 약 4초까지 줄어듭니다. 저난도 맵에서 발동하지 않는 문제는 수치로 해결되지 않습니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "대체로 부합하였습니다. 다만 피격 반격 능력에 성장축이 하나도 없었으므로 재사용 대기시간 단축을 추가하였습니다." },
+        { k: "Q7", q: "다른 스킬의 조건이나 보조로 참여한 판에서 무엇을 수행하였는가",
+          a: "독수리 투하 원정 8판에서 체력이 가장 높은 적을 지정하여 처리 순서를 고정하는 역할을 하였습니다." }
+      ]
+    },
+    {
+      name: "호밍 미사일", route: "R0 초강력 슈퍼 로켓 원정", verdict: "struct",
+      summary: [
+        "폭발 반경과 미사일 크기가 같은 값을 공유하고 있어, 폭발 범위만 조정할 방법이 없었습니다.",
+        "폭발 반경을 별도 축으로 분리하고, 폭발 피해와 보스 추가 피해 카드를 신설하였습니다.",
+        "미사일 자체의 이동속도는 프리팹 고정값이었으므로 레벨업으로 조정할 수 있도록 배선하였습니다."
+      ],
+      proposal: "보스 추가 피해는 카드당 10퍼센트이며 두 장입니다. 보스 구간의 처리 시간이 줄지 않으면 수치가 아니라 적용 대상을 다시 확인해야 합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 크기 카드가 폭발 범위와 같은 값을 읽고 있어 두 효과를 따로 조정할 수 없었습니다. 폭발 전용 축으로 분리하였습니다." },
+        { k: "Q2", q: "약점을 보완하려면 어떤 액티브와 패시브를 함께 올려야 하는가",
+          a: "단일 표적을 추적하므로 밀집 구간에서 낭비가 발생합니다. 회오리나 독성 포도알과 함께 올리면 보완됩니다." }
+      ]
+    },
+    {
+      name: "되감기", route: "R1 블루베리 절멸의 시간 원정", verdict: "down",
+      summary: [
+        "블루베리 절멸의 시간은 액티브 능력이 봉인되는 진화이므로, 되감기 시간을 올리는 아홉 칸이 전부 아무 효과도 내지 못하고 있었습니다.",
+        "해당 칸을 모든 스킬의 쿨타임 감소 다섯 장과 모든 적의 이동속도 감소 네 장으로 교체하였습니다.",
+        "적 이동속도 감소는 카드당 5퍼센트이며 최대 20퍼센트에서 멈추도록 상한을 두었습니다."
+      ],
+      proposal: "쿨타임 감소는 진화가 주는 절반 감소 위에 곱연산으로 적용됩니다. 중첩 효과가 과도하면 카드당 3퍼센트를 2퍼센트로 하향합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "전혀 부합하지 않았습니다. 액티브가 봉인된 진화에서 되감기 시간을 올리는 카드가 아홉 칸 모두를 차지하고 있었습니다." },
+        { k: "Q6", q: "2차 진화 조건으로 강제되는 스킬들이 해당 판에서 유효하였는가",
+          a: "가속 패시브는 필수 조건이면서 실제 기여도 있었습니다. 나머지 강제 조건은 이 판에서 별도의 역할을 하지 않았습니다." }
+      ]
+    },
+    {
+      name: "독성 포도알", route: "R0 재앙의 역병 원정", verdict: "struct",
+      summary: [
+        "동시 대상 수 카드가 아홉 칸에 걸쳐 배치되어 있었으나, 포도알 계열은 해당 값을 코드에서 읽지 않으므로 전부 효과가 없었습니다.",
+        "재앙의 역병의 전염 반경이 독안개 크기와 같은 값을 공유하고 있어, 전염 범위를 별도 축으로 분리하였습니다.",
+        "제거한 칸은 투사체 수와 독 피해 주기, 안개 지속시간으로 나누어 채웠습니다."
+      ],
+      proposal: "포도알 수가 3개에서 최대 6개까지 늘어나므로 그만큼 틱당 피해를 낮추었습니다. 화면이 안개로 덮이면 지속시간부터 조정합니다.",
+      qa: [
+        { k: "Q10", q: "진화 이후의 레벨업 효과가 변경된 메커니즘에 부합하는가",
+          a: "부합하지 않았습니다. 동시 대상 수는 스나이핑 전용 축이며 포도알은 이를 참조하지 않습니다. 진화 전 1칸과 진화별 2칸씩 모두 제거하였습니다." },
+        { k: "Q1", q: "이 스킬의 정체성과 강점·약점이 드러나는 상황은 무엇인가",
+          a: "지속 피해를 바닥에 깔아 두는 스킬이므로 경로가 좁은 맵에 강하고, 적이 빠르게 통과하는 구간에서는 누적 피해가 쌓이지 않습니다." }
+      ]
+    },
+    {
+      name: "산탄 발사", route: "R1 전탄발사 원정", verdict: "up",
+      summary: [
+        "메카 버스터와 전탄발사는 총 피해를 지속시간에 나누어 담는 구조였기 때문에, 지속시간 카드가 화력에 전혀 기여하지 못하였습니다.",
+        "발당 피해를 기본 지속시간 기준으로 고정하여, 지속시간이 늘어난 만큼 발사 횟수와 총 피해가 함께 증가하도록 변경하였습니다.",
+        "1레벨 출력은 변경 전과 동일하며, 차이가 발생하는 구간은 지속시간 카드를 획득한 이후입니다."
+      ],
+      proposal: "지속시간 카드 세 장의 합이 기본값의 1.5배입니다. 과도하다고 판단되면 카드당 0.2초를 0.1초로 하향합니다.",
+      qa: [
+        { k: "Q5", q: "진화 전 구간과 진화 후 구간 사이에 실제로 무엇이 달라졌는가",
+          a: "변경 전에는 피해가 들어가는 시간만 달라지고 총량은 동일하였습니다. 이번 변경으로 지속시간이 총량에 직접 반영됩니다." },
+        { k: "Q6", q: "2차 진화 조건으로 강제되는 스킬들이 해당 판에서 유효하였는가",
+          a: "휘두르기는 전열 정리에 기여하였습니다. 되감기는 전탄발사의 쿨타임이 길어 앞당길 대상이 사실상 없었으므로 기여가 거의 없었습니다." }
+      ]
+    }
+  ],
+  passives: [
+    {
+      name: "힘", route: "요청 7회 · 최다", verdict: "keep",
+      summary: [
+        "액티브 대변인 11명 가운데 7명이 요청하여 여섯 종 중 가장 많이 호명되었습니다.",
+        "치명타 피해 증가가 루트를 가리지 않고 유효하므로, 재료로 강제되지 않는 판에서도 선택되었습니다.",
+        "요청 빈도가 지나치게 높으나 이번 회차에는 수치를 변경하지 않았습니다."
+      ],
+      proposal: "변경하지 않습니다. 다른 패시브의 요청 횟수를 올리는 쪽이 먼저이며, 힘을 낮추면 전체 화력이 함께 내려갑니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "화살 사격, 스나이핑, 호밍 미사일, 산탄 발사, 휘두르기, 독수리 투하, 오브가 요청하였습니다." }
+      ]
+    },
+    {
+      name: "건강", route: "요청 4회", verdict: "keep",
+      summary: [
+        "네 명이 요청하였으며, 모두 근접 사거리를 가진 액티브의 생존 보완 목적이었습니다.",
+        "우주 어려움에서는 요청 빈도가 올랐고 농장 어려움에서는 한 번도 요청되지 않았습니다.",
+        "난도에 따라 수요가 갈리는 것은 의도한 동작으로 판단하여 변경하지 않았습니다."
+      ],
+      proposal: "변경하지 않습니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "휘두르기, 산탄 발사, 스나이핑, 되감기가 요청하였습니다." }
+      ]
+    },
+    {
+      name: "지식", route: "요청 0회", verdict: "struct",
+      summary: [
+        "이번 회차에서 어떤 액티브 대변인도 요청하지 않았습니다.",
+        "2차 진화의 재료로 강제되는 자리가 하나도 없어, 선택할 근거가 정수 획득량 증가뿐입니다.",
+        "정수는 판이 끝난 뒤에야 효과가 나타나므로 원정 도중의 선택지로는 경쟁력이 없습니다."
+      ],
+      proposal: "수치가 아니라 구조를 바꾸어야 합니다. 어느 2차 진화의 재료로 편입할지 결정이 필요합니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "요청이 없었습니다. 현 데이터로는 성능이 낮아서인지 재료로 강제되지 않아서인지 구분할 수 없습니다." }
+      ]
+    },
+    {
+      name: "암살", route: "요청 3회", verdict: "keep",
+      summary: [
+        "세 명이 요청하였으며, 모두 화살 사격 R0 루트의 재료로 강제되는 경우였습니다.",
+        "강제되지 않는 판에서는 한 번도 선택되지 않았습니다.",
+        "재료 수요만으로 유지되고 있는 상태이나, 이번 회차에는 판정 근거가 부족하여 변경하지 않았습니다."
+      ],
+      proposal: "변경하지 않습니다. 강제되지 않는 판에서의 선택률을 다음 회차에 따로 측정합니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "화살 사격이 세 번 요청하였으며 모두 2차 진화 조건 충족 목적이었습니다." }
+      ]
+    },
+    {
+      name: "방어", route: "요청 5회", verdict: "keep",
+      summary: [
+        "다섯 명이 요청하여 힘 다음으로 많이 호명되었습니다.",
+        "피해 감소가 모든 맵에서 동일하게 작동하므로 난도와 무관하게 안정적인 선택지로 기능하였습니다.",
+        "요청 사유가 전부 생존 보완이었고, 화력 보완 목적의 요청은 없었습니다."
+      ],
+      proposal: "변경하지 않습니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "휘두르기, 스나이핑, 산탄 발사, 회오리, 독성 포도알이 요청하였습니다." }
+      ]
+    },
+    {
+      name: "가속", route: "요청 2회 · 되감기 전용", verdict: "keep",
+      summary: [
+        "되감기 원정에서만 요청되었으며, 해당 판에서는 2차 진화의 필수 조건이었습니다.",
+        "되감기를 목표로 하지 않는 판에서는 한 번도 선택되지 않았습니다.",
+        "한 스킬에 수요가 묶여 있으나 그 판에서의 기여는 명확하여 이번 회차에는 변경하지 않았습니다."
+      ],
+      proposal: "변경하지 않습니다. 지식의 재료 편입을 결정할 때 가속의 수요 편중도 함께 검토합니다.",
+      qa: [
+        { k: "Q2", q: "어떤 액티브가 이 패시브를 요청하였는가",
+          a: "되감기가 두 번 요청하였습니다." }
+      ]
+    }
+  ],
+  crossExam: [
+    { title: "낙뢰의 상한 효과는 이번 데이터로 판정할 수 없습니다",
+      body: "중첩 상한과 발동 임계값을 같은 회차에 함께 변경하였으므로, 도달 층의 변화가 둘 중 어느 쪽에서 비롯되었는지 이 표본으로는 구분되지 않습니다." },
+    { title: "산탄 판정의 근거가 직전 회차와 동일한 축이 아닙니다",
+      body: "연사 구조 자체가 변경되어 직전 회차의 초당 피해와 같은 기준으로 비교할 수 없습니다. 짝비교는 다음 회차부터 성립합니다." }
+  ]
+};
+
+const V = {
+  keep:    { label: "유지",     cls: "v-keep",    css: "--keep" },
+  up:      { label: "상향",     cls: "v-up",      css: "--up" },
+  down:    { label: "하향",     cls: "v-down",    css: "--down" },
+  struct:  { label: "구조 변경", cls: "v-struct",  css: "--struct" },
+  missing: { label: "보고 없음", cls: "v-missing", css: "--faint" }
+};
+
+const d = DATA && DATA.skills ? DATA : SAMPLE;
+const el = id => document.getElementById(id);
+const text = (tag, cls, s) => { const n = document.createElement(tag); if (cls) n.className = cls; if (s != null) n.textContent = s; return n; };
+
+el("round").textContent = d.iteration != null ? `${d.iteration}회차` : "";
+el("stamp").textContent = d.generated ? `${d.generated} 작성` : "";
+el("sample").hidden = !d.sample;
+
+// ── 측정: 맵별 클리어 그래프 ──
+// 막대 길이는 클리어율에 정비례하며, 눈금은 25퍼센트 간격입니다.
+el("playtime").textContent = d.playtime || "—";
+const maps = d.maps || [];
+const chart = el("chart");
+let totalRuns = 0, totalClears = 0;
+
+for (const m of maps) {
+  const runs = m.runs || 0, clears = m.clears || 0;
+  const rate = runs ? clears / runs : 0;
+  totalRuns += runs; totalClears += clears;
+
+  const row = text("div", "bar");
+  row.append(text("span", "nm", m.name));
+
+  const val = text("span", "val");
+  val.append(text("b", null, String(clears)));
+  val.append(document.createTextNode(` / ${runs}판 · ${Math.round(rate * 100)}%`));
+  row.append(val);
+
+  const track = text("div", "track");
+  const fill = text("div", "fill");
+  fill.style.width = (rate * 100).toFixed(1) + "%";
+  track.append(fill);
+  for (const p of [25, 50, 75]) {
+    const t = text("div", "tick");
+    t.style.left = p + "%";
+    track.append(t);
+  }
+  row.append(track);
+  chart.append(row);
+}
+
+if (maps.length) {
+  const axis = text("div", "axis");
+  for (const label of ["0%", "25%", "50%", "75%", "100%"]) axis.append(text("span", null, label));
+  chart.append(axis);
+  el("chartnote").textContent =
+    `전체 ${totalRuns}판 가운데 ${totalClears}판을 클리어하였으며, 전체 클리어율은 ` +
+    `${Math.round(totalClears / totalRuns * 100)}퍼센트입니다.`;
+}
+
+// ── 대변인 항목 ──
+function entry(s) {
+  const v = V[s.verdict] || V.keep;
+  const box = text("div", "entry");
+  box.setAttribute("data-verdict", s.verdict || "keep");
+
+  const head = text("div", "ehead");
+  head.append(text("span", "ename", s.name));
+  if (s.route) head.append(text("span", "eroute", s.route));
+  head.append(text("span", "chip " + v.cls, v.label));
+  box.append(head);
+
+  const sum = text("div", "esum");
+  for (const line of (s.summary || [])) sum.append(text("p", null, line));
+  box.append(sum);
+
+  if (s.proposal) {
+    const p = text("div", "eprop");
+    p.append(text("b", null, "이번 회차 "), document.createTextNode(s.proposal));
+    box.append(p);
+  }
+
+  if (s.qa && s.qa.length) {
+    const det = document.createElement("details");
+    det.append(text("summary", null, `대변인 문답 ${s.qa.length}건`));
+    const qa = text("div", "qa");
+    for (const item of s.qa) {
+      const row = text("div");
+      row.append(text("span", "qk", item.k || ""));
+      const col = text("div");
+      col.append(text("p", "qq", item.q || ""), text("p", "qa2", item.a || ""));
+      row.append(col);
+      qa.append(row);
+    }
+    det.append(qa);
+    box.append(det);
+  }
+  return box;
+}
+
+// 🔴 매 회차 전원이 보고합니다. 데이터에 없는 스킬은 조용히 사라지지 않고 "보고 없음"으로 남아야,
+//    빠뜨린 것과 보고할 내용이 없는 것이 구분됩니다.
+const ACTIVE_ROSTER = ["화살 사격", "회오리", "오브", "낙뢰", "독수리 투하", "스나이핑",
+                       "호밍 미사일", "산탄 발사", "되감기", "휘두르기", "독성 포도알"];
+const PASSIVE_ROSTER = ["힘", "건강", "지식", "암살", "방어", "가속"];
+
+function fillRoster(given, roster) {
+  const byName = new Map((given || []).map(s => [s.name, s]));
+  const out = [];
+  for (const name of roster) {
+    out.push(byName.get(name) || {
+      name, verdict: "missing", route: "보고 없음",
+      summary: ["이번 회차에 이 스킬의 대변인 보고가 제출되지 않았습니다."]
+    });
+    byName.delete(name);
+  }
+  for (const leftover of byName.values()) out.push(leftover);   // 명단에 없는 이름도 버리지 않습니다
+  return out;
+}
+
+const list = el("skills");
+const skills = fillRoster(d.skills, ACTIVE_ROSTER);
+for (const s of skills) list.append(entry(s));
+
+// ── 판정 필터 ──
+const counts = {};
+for (const s of skills) counts[s.verdict || "keep"] = (counts[s.verdict || "keep"] || 0) + 1;
+const legend = el("legend");
+let active = null;
+
+function makeBtn(key, label, n, cssVar) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.setAttribute("aria-pressed", "false");
+  if (cssVar) {
+    const dot = text("span", "dot");
+    dot.style.background = `var(${cssVar})`;
+    b.append(dot);
+  }
+  b.append(text("span", null, label), text("span", "n", String(n)));
+  b.addEventListener("click", () => {
+    active = active === key ? null : key;
+    for (const other of legend.children) other.setAttribute("aria-pressed", String(other === b && active !== null));
+    let shown = 0;
+    for (const node of list.children) {
+      const hit = active === null || node.getAttribute("data-verdict") === active;
+      node.hidden = !hit;
+      if (hit) shown++;
+    }
+    el("skillsEmpty").hidden = shown > 0;
+  });
+  return b;
+}
+legend.append(makeBtn(null, "전체", skills.length, null));
+for (const key of ["struct", "down", "up", "keep", "missing"])
+  if (counts[key]) legend.append(makeBtn(key, V[key].label, counts[key], V[key].css));
+
+// ── 패시브 ──
+const passives = fillRoster(d.passives, PASSIVE_ROSTER);
+for (const p of passives) el("passives").append(entry(p));
+
+// ── 반대 심문 ──
+const exam = d.crossExam || [];
+if (exam.length) {
+  for (const e of exam) {
+    const box = text("div", "exam");
+    box.append(text("h3", null, e.title), text("p", null, e.body));
+    el("exam").append(box);
+  }
+} else {
+  el("examSec").hidden = true;
+}
+</script>

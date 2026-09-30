@@ -25,6 +25,20 @@ public class Enemy : MonoBehaviour
         isBoss = true;
         deathSpawnOverride = deathBurstPool;
     }
+
+    // 맵별 보스 스킨의 이동 연출(EnemySpawner.ApplyBossSkin이 부른다 — 보스 프리팹 3종은 맵 공유라 프리팹엔 못 둔다).
+    // holdbackX: 정지선을 이만큼 더 앞(왼쪽)에서 잡는다 — 그림이 큰 보스는 중심 기준 정지선에 서면 몸통이 플레이어를 덮는다.
+    // bobAmplitude > 0이면 강하 유닛이 아니어도 diveBob 출렁임만 빌려 쓴다(비행 보스. 멈추면 가라앉는 것도 동일).
+    public void SetBossSkinMotion(float holdbackX, float bobAmplitude, float bobSpeed)
+    {
+        skinHoldbackX = holdbackX;
+        if (bobAmplitude > 0f)
+        {
+            skinFloatBob = true;
+            diveBobAmplitude = bobAmplitude;
+            diveBobSpeed = bobSpeed;
+        }
+    }
     private const float BossCrowdControlScale = 0.15f; // 보스는 군중제어를 15%만 받는다(사용자 결정 2026-09-18: "아주 강하게")
 
     // 이번에 받을 군중제어 배율. 보스 슬롯 규칙과 종류별 저항(EnemyDefinition.crowdControlResistance) 중 강한 쪽.
@@ -33,7 +47,6 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] private GameObject damageNumberPrefab;
     [SerializeField] private GameObject lightningVfxPrefab;
-    [SerializeField] private GameObject chainLightningVfxPrefab;
     [SerializeField] private GameObject deathVfxPrefab;
     [SerializeField] private GameObject hitParticlePrefab;
     [SerializeField] private Sprite[] hitParticleSprites;
@@ -71,6 +84,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float diveBobSpeed = 2.2f;
     private const float DiveBobSettleTime = 0.3f; // 멈춰 선 뒤 흔들림이 0으로 잦아드는 시간(초)
     // 개체마다 위상·속도를 흩는다 — 안 그러면 무리 전체가 한 파도를 타듯 똑같이 출렁인다.
+    private float skinHoldbackX;  // 맵 보스 스킨이 정지선을 물리는 거리(SetBossSkinMotion. 0 = 종전과 동일)
+    private bool skinFloatBob;    // 맵 보스 스킨의 출렁임 스위치(SetBossSkinMotion)
     private float diveBobPhase, diveBobPhase2, diveBobRate;
     private float diveBobPrev;  // 지난 프레임에 얹은 오프셋(경로에 누적되지 않게 차분만 더한다)
     private float diveBobTimer;
@@ -136,8 +151,7 @@ public class Enemy : MonoBehaviour
 
     // 앞 적 감지용 공유 버퍼(적마다 새로 할당하지 않게 static 1개만 돌려쓴다).
     private static readonly List<Collider2D> aheadHits = new List<Collider2D>();
-    private static ContactFilter2D aheadFilter = new ContactFilter2D { useTriggers = true };
-    private static ContactFilter2D AheadFilter => aheadFilter;
+    private static readonly ContactFilter2D AheadFilter = new ContactFilter2D { useTriggers = true };
 
     // 씬이 바뀌면 자동으로 null이 되어 다시 찾는다(판 간 static 누수 없음).
     private static PlayerHealth cachedPlayer;
@@ -155,24 +169,14 @@ public class Enemy : MonoBehaviour
     // 하트(체력회복) 드랍 확률. 건강 진화 path2(오브 연계)의 배율만 여기에 곱해진다.
     private const float BaseHealDropChance = 0.03f;
 
-    // 재귀로 발동되는 낙뢰(힘 연계 path0)를 재귀 횟수별로 색깔을 다르게 표시 (1회=노랑, 2회=파랑, 3회=보라, 4회=마젠타)
-    private static readonly Color[] RecursiveLightningColors =
-    {
-        new Color(1f, 0.95f, 0.3f),
-        new Color(0.35f, 0.55f, 1f),
-        new Color(0.75f, 0.35f, 1f),
-        new Color(1f, 0.35f, 0.85f),
-    };
-
     public bool IsFlying => isFlying;
     public bool IsCarrier => isCarrier;
     public bool BlocksProjectiles => blocksProjectiles;
     public float CurrentHealth => currentHealth;
-    // 봇 플레이테스트 기록용 읽기 전용 창구(적 종류·보스·보물·등장 중 무적 여부로 딜·사망을 가른다).
+    // 봇 플레이테스트 기록용 읽기 전용 창구(적 종류·보스·보물로 딜·사망을 가른다 — BotRecorder).
     public string DefinitionName => definition != null ? definition.name : gameObject.name;
     public bool IsBoss => isBoss;
     public bool IsTreasure => isTreasure;
-    public bool IsPopping => popping;
     public float SpawnYOffset => spawnYOffset; // 이 종류가 서는 자연 높이(레인 y=0 기준). 분출 팝콘의 착지 높이로 사용
 
     // definition에서 복사한 런타임 스탯 — 스테이지 배율(ApplyStageMultipliers)이 여기에만 곱해져 공유 SO를 오염시키지 않음.
@@ -257,7 +261,8 @@ public class Enemy : MonoBehaviour
 
     // 🔴 이동을 깎는 것은 **여기 한 곳**으로만 들어온다 — 기절이 이기고(0), 아니면 둔화 배율.
     //    움직임을 계산하는 자리에서 `slowMultiplier`를 직접 곱하지 말 것. 그러면 기절이 새어 나간다.
-    private float MoveScale => stunTimer > 0f ? 0f : slowMultiplier;
+    //    GlobalSlow는 적 개개인이 아니라 **판 전체**에 걸리는 둔화다(블루베리 절멸의 시간 레벨업).
+    private float MoveScale => stunTimer > 0f ? 0f : slowMultiplier * PlayerSkills.GlobalEnemySlowMult;
 
     public bool IsStunned => stunTimer > 0f;
 
@@ -333,7 +338,7 @@ public class Enemy : MonoBehaviour
         PlayerHealth player = Player;
         if (player == null || isCarrier) return;
 
-        float limit = player.transform.position.x - BalanceConstants.ContactStopDistance;
+        float limit = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
         if (transform.position.x <= limit) return;
 
         Vector3 p = transform.position;
@@ -413,6 +418,8 @@ public class Enemy : MonoBehaviour
         diveBobRate = Random.Range(0.8f, 1.25f);
         diveBobPrev = 0f;
         diveBobTimer = 0f;
+        skinHoldbackX = 0f;   // 스킨 연출은 스폰마다 ApplyBossSkin이 다시 세팅한다 — 풀 재사용 잔재 방지
+        skinFloatBob = false;
         // 캐리어 좌표 3종은 아래 isCarrier 분기에서 다시 계산되지만, 여기서도 0으로 되돌린다.
         // 비캐리어에겐 읽히지 않는 값이라 지금은 무해하지만 — "런타임 필드는 예외 없이 전부 리셋된다"는
         // 불변식을 깨 두면 나중에 이 값을 읽는 경로가 생겼을 때 잠복 버그가 된다.
@@ -570,7 +577,7 @@ public class Enemy : MonoBehaviour
             isHolding = false;
             SetAnimatorFrozen(true);
             if (isHopper) UpdateHop();
-            if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(false);
+            if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(false);
             spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
@@ -603,7 +610,7 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(holding || IsStunned);
 
         if (isHopper) UpdateHop();
-        if (isDiveFlyer && diveBobAmplitude > 0f) UpdateDiveBob(holding);
+        if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(holding);
 
         spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
@@ -663,7 +670,12 @@ public class Enemy : MonoBehaviour
         PlayerHealth player = Player;
         if (player == null) return false;
 
-        if (transform.position.x >= player.transform.position.x - BalanceConstants.ContactStopDistance)
+        // 🔴 정지선 판정엔 0.001 여유가 필수다 — ClampInsideArena가 매 프레임 x를 정지선 **정확값**(float)으로
+        //    스냅하는데, 이 비교식 우변을 인라인으로 두면 Mono JIT가 double 중간 정밀도로 계산해
+        //    "x >= 정지선"이 영원히 false가 된다(2026-09-30, 전 적 접촉 공격 불능 — 이틀간 피해 0).
+        //    같은 식을 두 곳(여기·ClampInsideArena)에서 계산해 등호로 만나는 구조라 반올림 한 번 차이가 곧 판정 차이다.
+        float stopLine = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
+        if (transform.position.x >= stopLine - 0.001f)
         {
             if (lungeTimer < 0f) holdBaseX = transform.position.x; // 돌진 중이 아닐 때의 제자리를 기억해 둔다
             Headbutt(player);
@@ -840,9 +852,6 @@ public class Enemy : MonoBehaviour
         if (!wasActive) SpawnStatusParticle(StatusIconLibrary.Stun);
     }
 
-    // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 물러나게 한다.
-    // 예전엔 한 프레임에 순간이동시켰는데, 그러면 "밀렸다"가 눈에 안 보인다(특히 타격 이펙트가
-    // 그 프레임을 가린다). 거리를 KnockbackSpeed로 나눠 몇 프레임에 걸쳐 미끄러지게 한다.
     // 어떤 지점 **쪽으로** 끌어당긴다(초대형 오브 · 제우스의 은총).
     // 🔴 **가로로만 당긴다.** 아래 TickKnockback 주석대로 y를 건드리면 콩콩이 도약(y 절대 대입)·
     //    서핑 너울(y 차분 누적)과 섞여 높이가 어긋나 쌓인다. 화면에서는 "빨려 들어온다"로 충분히 읽힌다.
@@ -854,6 +863,9 @@ public class Enemy : MonoBehaviour
         ApplyKnockback(signed);
     }
 
+    // 휘두르기처럼 밀어내는 공격 — 적을 진행 반대(왼쪽)로 물러나게 한다.
+    // 예전엔 한 프레임에 순간이동시켰는데, 그러면 "밀렸다"가 눈에 안 보인다(특히 타격 이펙트가
+    // 그 프레임을 가린다). 거리를 KnockbackSpeed로 나눠 몇 프레임에 걸쳐 미끄러지게 한다.
     public void ApplyKnockback(float distance)
     {
         if (isDead || popping || isCarrier) return; // 캐리어는 자기 상태기계로 움직여 밀면 궤적이 깨진다
@@ -965,19 +977,17 @@ public class Enemy : MonoBehaviour
             }
     }
 
-    private const int MaxLightningChain = 4;
-
     // rollLightning:    이 타격이 낙뢰 발동을 굴릴지. 멀티히트(TakeSkillHit)에선 첫 서브히트만 true로 넘겨
     //                   공격당 낙뢰 기회를 1회로 유지한다(히트가 쪼개졌다고 낙뢰 빈도가 뻥튀기되지 않게).
     // hitIndex:        멀티히트 서브히트 순번 — 데미지 숫자를 세로로 정렬해 쌓는 데 씀.
     // forceShowNumber: 이미 죽은 뒤의 멀티히트 남은 서브히트도 데미지 숫자만은 띄운다(공격이 항상 같은 타수로 보이게).
     // statusIcon:      이 타격이 상태이상을 거는 타격이면 그 아이콘 — 타격 파편이 그 그림으로 바뀐다.
-    public void TakeDamage(float amount, bool isLightningProc = false, int lightningChainDepth = 0, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0, bool forceShowNumber = false, Sprite statusIcon = null)
+    public void TakeDamage(float amount, bool isLightningProc = false, bool isCrit = false, bool suppressLightningStrikeVfx = false, ActiveSkillId? source = null, bool rollLightning = true, int hitIndex = 0, bool forceShowNumber = false, Sprite statusIcon = null)
     {
         if (popping) return; // 팝콘 등장(튀어오르는) 중엔 무적 — 보스 분출 직후 광역기에 즉사해 "안 튀어나온 것처럼" 보이는 걸 막음
         if (isDead)
         {
-            // 같은 프레임 중복 사망 처리는 막되(Destroy는 프레임 끝 실행), 멀티히트의 남은 숫자는 계속 쌓아 보여준다.
+            // 같은 프레임 중복 사망 처리는 막되(낙뢰 재귀·체인이 같은 프레임에 다시 들어온다), 멀티히트의 남은 숫자는 계속 쌓아 보여준다.
             if (forceShowNumber) SpawnDamageNumber(amount * vulnerableMultiplier, isCrit, hitIndex);
             return;
         }
@@ -1029,30 +1039,24 @@ public class Enemy : MonoBehaviour
         else if (isLightningProc && !suppressLightningStrikeVfx && lightningVfxPrefab != null)
         {
             GameObject strikeVfx = ObjectPool.Instance.Spawn(lightningVfxPrefab, transform.position, Quaternion.identity);
-            if (lightningChainDepth >= 1) TintLightningVfx(strikeVfx, RecursiveLightningColors[Mathf.Min(lightningChainDepth, RecursiveLightningColors.Length) - 1]);
             ObjectPool.Instance.Despawn(strikeVfx, 2f);
         }
 
-        // 체인 라이트닝과 낙뢰 발동 판정은 이 타격이 적을 죽이는지와 무관하게 실행돼야 한다(사망 처리보다 뒤에 있으면,
+        // 낙뢰 발동 판정은 이 타격이 적을 죽이는지와 무관하게 실행돼야 한다(사망 처리보다 뒤에 있으면,
         // 기본공격처럼 잡몹을 한 방에 죽이는 일이 잦은 공격에서는 그 킬각 타격이 애초에 낙뢰를 굴려볼 기회조차 못 얻는다).
-        if (isLightningProc && lightningChainDepth == 1 && LightningStorm.ChainEnabled)
-            ChainLightningToNearby();
-
-        bool canChainAgain = (!isLightningProc && rollLightning) || (LightningStorm.RecursiveProcEnabled && lightningChainDepth < MaxLightningChain);
-        if (canChainAgain)
+        // 낙뢰가 떨어뜨린 타격(isLightningProc)은 다시 굴리지 않으므로 발동은 한 단계에서 끝난다.
+        if (!isLightningProc && rollLightning)
         {
             // 낙뢰 버프는 스택형이라 살아있는 스택 수만큼 발동 확률을 독립적으로 판정한다 (스택 2개=최대 2번 발동).
             int procCount = LightningStorm.RollProcCount();
             for (int i = 0; i < procCount; i++)
             {
-                // 힘 연계 path0 T3: 재귀로 떨어지는 낙뢰일수록(체인 깊이가 깊을수록) 더 강해짐
-                float procDamage = LightningStorm.ProcDamage * Mathf.Pow(1f + LightningStorm.RecursiveDamageGrowth, lightningChainDepth);
-                TakeDamage(procDamage, isLightningProc: true, lightningChainDepth: lightningChainDepth + 1);
+                TakeDamage(LightningStorm.ProcDamage, isLightningProc: true);
                 LightningStorm.OnProc?.Invoke();
             }
         }
 
-        // 위 재귀 프록 도중에 이미 사망 처리가 끝났을 수 있으므로(같은 프레임 재진입) 여기서 한 번 더 막는다.
+        // 위 낙뢰 발동 도중에 이미 사망 처리가 끝났을 수 있으므로(같은 프레임 재진입) 여기서 한 번 더 막는다.
         if (currentHealth <= 0f && !isDead)
         {
             isDead = true;
@@ -1118,50 +1122,13 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // 파괴 대신 풀에 반납한다. 비활성화는 즉시 반영되고 `FindObjectsByType`은 기본이 "비활성 제외"라
+    // 파괴 대신 풀에 반납한다. 비활성화되면 OnDisable이 `Enemy.Active`에서 빼므로
     // GameManager의 "잔몹 0" 클리어 판정·회오리/미사일의 타겟 탐색에서 곧바로 빠진다.
     // (풀을 거치지 않고 씬에 직접 놓인 적은 ObjectPool.Despawn이 알아서 Destroy로 폴백한다)
     private void Despawn() => ObjectPool.Instance.Despawn(gameObject);
 
-    // 체인 라이트닝: 첫 낙뢰 피격 시 주변 적 최대 3마리에게 전이 (재귀적으로 더 퍼지지는 않음)
-    private void ChainLightningToNearby()
-    {
-        // 후보 목록은 복사본이어야 한다 — 아래에서 후보에게 피해를 주면 활성 목록이 바뀐다.
-        List<Enemy> candidates = new List<Enemy>();
-        foreach (Enemy e in active)
-        {
-            if (e == this) continue;
-            if (Vector2.Distance(transform.position, e.transform.position) <= LightningStorm.ChainRadius)
-                candidates.Add(e);
-        }
-        candidates.Sort((a, b) => Vector2.Distance(transform.position, a.transform.position)
-            .CompareTo(Vector2.Distance(transform.position, b.transform.position)));
-
-        int count = Mathf.Min(LightningStorm.ChainCount, candidates.Count);
-        for (int i = 0; i < count; i++)
-        {
-            Enemy target = candidates[i];
-            if (chainLightningVfxPrefab != null)
-            {
-                GameObject beam = ObjectPool.Instance.Spawn(chainLightningVfxPrefab, transform.position, Quaternion.identity);
-                beam.GetComponent<ChainLightningBeam>().Init(transform.position, target.transform.position);
-                ObjectPool.Instance.Despawn(beam, 0.6f);
-            }
-            target.TakeDamage(LightningStorm.ProcDamage, isLightningProc: true, lightningChainDepth: MaxLightningChain, suppressLightningStrikeVfx: true);
-        }
-    }
-
-    private static void TintLightningVfx(GameObject vfx, Color color)
-    {
-        foreach (ParticleSystem ps in vfx.GetComponentsInChildren<ParticleSystem>(true))
-        {
-            ParticleSystem.MainModule main = ps.main;
-            main.startColor = color;
-        }
-    }
-
     // 보스 사망 시 잡몹 블루베리들을 사방으로 흩뿌린다(BTD 비행선처럼). 흩뿌린 잡몹은 그냥 Enemy라
-    // GameManager의 "잔몹 0" 클리어 조건에 자연히 포함된다. 무한 연쇄를 막으려 흩뿌린 잡몹 프리팹엔 deathSpawnCount=0.
+    // GameManager의 "잔몹 0" 클리어 조건에 자연히 포함된다. 무한 연쇄는 분출로 태어난 적에 SuppressDeathBurst()를 걸어 구조로 막는다.
     private void SpawnDeathBurst()
     {
         if (deathBurstVfxPrefab != null)

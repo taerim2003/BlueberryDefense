@@ -334,6 +334,17 @@ function gymMetrics(cells) {
     c.testSkill = c.own.find(s => s.id === c.skill) || null;
     // 이 셀에서 스킬로 귀속된 전체 딜(이름이 달라도 포함). 단독 릭에서는 곧 시험 대상의 출력이다.
     c.allSkillDamage = (c.skills || []).filter(s => s.id !== 'Other').reduce((a, s) => a + s.effDamage, 0);
+    // 🔴 **앞 셀의 static 상태가 넘어온 딜을 가른다.** `residualAtStart`는 오브젝트만 세므로 이걸 못 잡는다
+    //    (실측 2026-09-27: it37 baseline 25칸 중 15칸이 앞 낙뢰 셀의 딜을 안고 있었고 최대 54.7%였다.
+    //     원인은 `gymSettleSeconds 1.5` < `Prog_Lightning.baseDuration 10`이다).
+    //    동반·baseline 릭은 로드아웃이 명시적이므로 **로드아웃에 없는 이름의 딜은 이 셀의 것이 아니다.**
+    //    단독 릭은 그렇게 못 가른다 — 독수리 R1의 미니 회오리처럼 자기 출력이 남의 이름으로 찍힌다.
+    const inLoadout = new Set((c.loadout || []).map(s => String(s).split(':')[0]));
+    c.outsideDamage = c.rig === 'solo' ? 0
+      : (c.skills || []).filter(s => s.id !== 'Other' && !inLoadout.has(s.id)).reduce((a, s) => a + s.effDamage, 0);
+    c.contaminated = c.outsideDamage > 0.01 * Math.max(1, c.allSkillDamage);
+    // 파티 출력 = 로드아웃이 낼 수 있는 딜만. 동반 이득의 분자·분모가 이 값이다.
+    c.partyDamage = c.allSkillDamage - c.outsideDamage;
   }
   const quality = {
     cells: cells.length,
@@ -349,6 +360,14 @@ function gymMetrics(cells) {
     })),
     arenaLimited: cells.filter(c => c.arenaLimited).map(c => c.cellKey),
     usable: cells.filter(c => c.usable).length,
+    // 🔴 앞 셀에서 넘어온 딜. 셀을 버리지 않고 **빼서** 쓴다(빼면 route 라벨별 baseline 차이가 20~88% → 1~13%로 접힌다).
+    //    값이 있으면 `gymSettleSeconds`가 그 스킬의 지속시간보다 짧다는 뜻이다.
+    carryOver: cells.filter(c => c.contaminated).map(c => ({
+      cell: c.cellKey, outside: round(c.outsideDamage),
+      share: round(c.outsideDamage / Math.max(1, c.allSkillDamage), 3),
+      names: (c.skills || []).filter(s => s.id !== 'Other' && s.effDamage > 0
+        && !new Set((c.loadout || []).map(x => String(x).split(':')[0])).has(s.id)).map(s => s.id),
+    })),
   };
 
   // 같은 셀을 격자 앞뒤에 두 번 넣었으면(gymRepeats>1) 그 차이가 **이 측정의 노이즈 폭**이다.
@@ -378,7 +397,10 @@ function gymMetrics(cells) {
       // 그중 **자기 이름으로** 찍힌 몫. 낮으면 그 스킬의 출력이 남의 이름으로 집계된다는 신호다(실전 로그 해석에 필요).
       dpsOwnName: round(mean(v.map(c => mine(c) / t(c))), 1),
       ownNameShare: round(mean(v.map(c => (c.allSkillDamage > 0 ? mine(c) / c.allSkillDamage : 1))), 2),
-      dpsAll: round(mean(v.map(c => c.allSkillDamage / t(c))), 1),   // 동반 릭에서 baseline과 비교할 값
+      // 동반 릭에서 baseline과 비교할 값 — **로드아웃이 낸 딜만** 센다(앞 셀에서 넘어온 딜을 뺀다).
+      dpsAll: round(mean(v.map(c => c.partyDamage / t(c))), 1),
+      carryOver: round(mean(v.map(c => c.outsideDamage / t(c))), 1),
+      contaminated: v.some(c => c.contaminated),
       kills: round(mean(v.map(c => c.kills)), 1),
       // 🔴 접촉선 처치·오버킬도 **스킬로 귀속된 전체**를 센다 — 자기 이름 몫만 세면 독수리 R1처럼
       //    출력의 절반 이상이 다른 이름으로 찍히는 스킬을 절반만 재게 된다.
@@ -412,17 +434,29 @@ function gymMetrics(cells) {
   const companionMeasured = new Set(
     cells.flatMap(c => String(c.companionPool || '').split(',').filter(Boolean))
       .concat(rows.filter(r => r.rig === 'companion').map(r => r.skill)));
-  const soloJudged = solo.filter(r => !companionMeasured.has(r.skill));
+  // 🔴 제외는 **스킬 단위가 아니라 상태 단위**다. 동반 풀에 있어도 딜을 내는 상태는 단독 표에 남긴다 —
+  //    스킬로 빼면 전 무대에서 딜을 내는 집중산탄 네 상태·낙뢰 R1 두 상태가 파워 표에서 통째로 사라진다
+  //    (실측 2026-09-27: 동반 풀 15개 상태 중 어느 무대에서도 딜이 0인 것은 아홉 개뿐이다).
+  const stateOf = r => `${r.skill}|${r.evoStage}|${r.route}`;
+  const dealsDamage = new Set(solo.filter(r => r.usable && r.dps > 0).map(stateOf));
+  const excludedStates = [...new Set(solo.filter(r => companionMeasured.has(r.skill) && !dealsDamage.has(stateOf(r))).map(stateOf))];
+  const excludedSet = new Set(excludedStates);
+  const soloJudged = solo.filter(r => !excludedSet.has(stateOf(r)));
 
   // 🔴 G5 판정은 **같은 진화 차수 안에서** 한다(사용자 요구: 기본끼리·1차끼리·2차끼리).
   //    시나리오마다 따로 판정한다 — "무리에선 세지만 대공은 못 한다"가 정상이고, 그게 장단점이다.
   const groups = {};
+  const scnMedian = {};   // [차수][무대] = 그 무대의 중앙 dps. 파워의 분모는 이 한 곳에서만 만든다.
   for (const g of [0, 1, 2]) {
     const perScenario = {};
     for (const scn of scenarios) {
       const m = soloJudged.filter(r => r.evoStage === g && r.scenario === scn && r.usable && r.level === 10);
-      if (m.length < 3) { perScenario[scn] = { members: m.length, note: '표본 부족' }; continue; }
-      const med = median(m.map(r => r.dps));
+      // 🔴 **파워의 정의는 여기 한 곳이다** — 보고서 §01은 계산하지 않고 아래 `power` 표를 읽는다.
+      //    중앙값은 딜이 0인 칸을 빼고 세운다. 0을 분모에 넣으면 같은 셀의 파워가 문서 안에 여러 벌 생긴다.
+      const scored = m.filter(r => r.dps > 0);
+      if (scored.length < 3) { perScenario[scn] = { members: m.length, scored: scored.length, note: '표본 부족' }; continue; }
+      const med = median(scored.map(r => r.dps));
+      (scnMedian[g] = scnMedian[g] || {})[scn] = med;
       for (const r of m) r.norm = med > 0 ? round(r.dps / med, 2) : null;
       const band = targets.skillPowerBand;
       perScenario[scn] = {
@@ -435,8 +469,10 @@ function gymMetrics(cells) {
     }
     // G5a 지배 금지 — 한 상태가 **모든 시나리오에서** 다른 상태보다 높으면 장단점이 없다.
     const states = [...new Set(soloJudged.filter(r => r.evoStage === g && r.usable && r.level === 10).map(r => `${r.skill}/${r.route}`))];
+    // 🔴 `evoStage === g`를 빠뜨리면 E1과 E2의 지배·무강점 판정이 **둘 다 E1 행으로** 계산된다(실측 2026-09-27).
     const dpsOf = (st, scn) => {
-      const r = soloJudged.find(x => `${x.skill}/${x.route}` === st && x.scenario === scn && x.usable && x.level === 10);
+      const r = soloJudged.find(x => `${x.skill}/${x.route}` === st && x.evoStage === g
+        && x.scenario === scn && x.usable && x.level === 10);
       return r ? r.dps : null;
     };
     const dominance = [];
@@ -455,10 +491,49 @@ function gymMetrics(cells) {
     }));
     groups[g] = {
       states: states.length, perScenario, dominance, noStrength,
-      excluded: [...companionMeasured],   // 동반 릭으로 따로 판정하는 스킬 — 단독 표에 넣으면 구조적으로 실패한다
+      // 단독 표에서 뺀 **상태** — 어느 무대에서도 딜이 0인 동반 릭 상태만. 판정은 `companionVerdict`가 한다.
+      excluded: excludedStates,
+      excludedSkills: [...companionMeasured],   // 동반 릭으로 따로 판정하는 스킬(정보용)
       pass: states.length >= 3 && dominance.length === 0 && noStrength.length === 0,
     };
   }
+
+  // 🔴 판 경과에 따라 세지는 스킬(호밍의 누적 스택)은 `growthCasts = 0` 셀만으로 밸런스를 말할 수 없다 —
+  //    같은 표가 호밍을 미달과 초과로 동시에 판정한다. 하드코딩하지 않고 **측정으로 가른다**:
+  //    같은 상태·무대에서 캐스트를 쌓은 셀의 dps가 0캐스트보다 2배 이상이면 성장 의존으로 표시한다.
+  const growthDependent = new Set();
+  for (const r of rows.filter(x => x.rig === 'solo' && x.growthCasts > 0 && x.usable)) {
+    const z = rows.find(x => x.rig === 'solo' && x.growthCasts === 0 && x.usable && x.level === r.level
+      && x.skill === r.skill && x.evoStage === r.evoStage && x.route === r.route && x.scenario === r.scenario);
+    if (z && z.dps > 0 && r.dps / z.dps >= 2) growthDependent.add(r.skill);
+  }
+
+  // 🔴 파워 표의 **원본**. 보고서 §01이 이걸 그대로 읽는다 — 같은 값을 두 곳에서 따로 계산하지 않는다.
+  //    분모는 위 `scnMedian`(딜 0인 칸 제외, 그 무대에 셋 이상)이고, 파워는 무대별 배율의 중앙값이다.
+  const powerTable = [];
+  for (const g of [0, 1, 2]) {
+    const states = [...new Set(soloJudged.filter(r => r.evoStage === g && r.usable && r.level === 10)
+      .map(r => `${r.skill}|${r.route}`))];
+    for (const st of states) {
+      const [skill, routeStr] = st.split('|');
+      const route = Number(routeStr);
+      const per = scenarios.map(scn => {
+        const r = soloJudged.find(x => x.skill === skill && x.route === route && x.evoStage === g
+          && x.scenario === scn && x.usable && x.level === 10);
+        const med = (scnMedian[g] || {})[scn];
+        return r && med > 0 ? { scn, nv: round(r.dps / med, 3), dps: r.dps } : null;
+      }).filter(Boolean);
+      if (per.length < 5) continue;   // 무대 다섯 곳을 못 채운 상태는 줄 세우지 않는다
+      const byNv = per.slice().sort((a, b) => b.nv - a.nv);
+      powerTable.push({
+        skill, evoStage: g, route, n: per.length,
+        power: round(median(per.map(p => p.nv)), 3),
+        top: byNv[0], bot: byNv[byNv.length - 1],
+        growthDependent: growthDependent.has(skill),   // 이 값은 0캐스트 기준 — 밴드 통과율 분모에서 뺀다
+      });
+    }
+  }
+  powerTable.sort((a, b) => a.evoStage - b.evoStage || b.power - a.power);
 
   // 성장률 — 사용자 요구: Lv1과 Lv10을 같이 본다. 상황마다 성장 폭이 다른 게 요점이다.
   const growth = [];
@@ -509,14 +584,25 @@ function gymMetrics(cells) {
   // 동반 릭 — 되감기·산탄·낙뢰는 혼자 두면 딜이 0이다. baseline 대비 전체 딜 증가분이 그 스킬의 값이다.
   const companion = [];
   for (const r of rows.filter(r => r.rig === 'companion')) {
-    // 🔴 baseline은 **같은 시나리오 + 같은 진화 차수**의 것만 쓴다. 차수마다 무대 세기가 다르므로
+    // 🔴 baseline은 **같은 시나리오 + 같은 진화 차수**의 것을 전부 **평균 낸다**. 차수마다 무대 세기가 다르므로
     //    (GymArena.GroupHpScale ×1/×3/×9) 차수가 다른 baseline과 비교하면 무대 차이가 스킬 효과로 읽힌다.
-    const base = rows.find(b => b.rig === 'baseline' && b.scenario === r.scenario && b.evoStage === r.evoStage);
-    if (!base) continue;
+    //    🔴 **route로는 가르지 않는다** — `GymRig.Apply`는 `rig != "baseline"`일 때만 `Evolve`를 부르므로
+    //       baseline 파티는 진화하지 않는다. 실측(it37): baseline 25칸 전부 같은 loadout
+    //       `[Whirlwind, Orb, EagleDrop]` · `gotRoute = -1` · `gotStage = -1`이다.
+    //       셀의 route·evoStage 라벨은 **무대 세기만** 정한다. 즉 같은 (무대·차수)의 route0/route1 baseline은
+    //       같은 구성의 **중복 측정**이므로 평균이 맞다. 종전에 보였던 32~88% 차이는 route가 아니라
+    //       앞 셀에서 넘어온 딜이었다(빼고 나면 1~13%로 접힌다).
+    const bs = rows.filter(b => b.rig === 'baseline' && b.scenario === r.scenario && b.evoStage === r.evoStage);
+    if (!bs.length) continue;
+    const baseDps = mean(bs.map(b => b.dpsAll));
     companion.push({ skill: r.skill, evoStage: r.evoStage, route: r.route, scenario: r.scenario,
-      baseline: base.dpsAll, withSkill: r.dpsAll,
-      gain: base.dpsAll > 0 ? round(r.dpsAll / base.dpsAll - 1, 3) : null,
-      ownShare: r.dpsAll > 0 ? round(r.dps / r.dpsAll, 3) : null, usable: r.usable && base.usable });
+      baseline: round(baseDps, 1), baselineCells: bs.length, withSkill: r.dpsAll,
+      baselineSpread: bs.length > 1 && Math.min(...bs.map(b => b.dpsAll)) > 0
+        ? round(Math.max(...bs.map(b => b.dpsAll)) / Math.min(...bs.map(b => b.dpsAll)) - 1, 3) : null,
+      carryOverRemoved: round(mean(bs.map(b => b.carryOver || 0)) + (r.carryOver || 0), 1),
+      gain: baseDps > 0 ? round(r.dpsAll / baseDps - 1, 3) : null,
+      ownShare: r.dpsAll > 0 ? round(r.dpsOwnName / r.dpsAll, 3) : null,
+      usable: r.usable && bs.every(b => b.usable) });
   }
 
   // 🔴 동반 릭으로 재는 스킬(되감기·낙뢰·집중산탄)의 판정. 값 = baseline 대비 **전체 딜 증가분**.
@@ -556,7 +642,7 @@ function gymMetrics(cells) {
 
   const measured = [0, 1, 2].filter(g => groups[g].states >= 3);
   return {
-    quality, noise, rows, scenarios, groups, growth, treeDelta, lifetime, growthCurve, companion, companionVerdict,
+    quality, noise, rows, scenarios, groups, power: powerTable, growth, treeDelta, lifetime, growthCurve, companion, companionVerdict,
     G5: {
       value: measured.length
         ? `${measured.filter(g => groups[g].pass).length}/${measured.length} 그룹`
@@ -610,6 +696,44 @@ function fingerprintDiff(a, b) {
 }
 
 // ───────── 조립 ─────────
+// ── 원정 판 집계 (2026-09-29 측정 방식 개편) ──────────────────────────────
+// 봇은 판마다 header(map·ascension·loadoutId·targetSkill·targetRoute·rep)와 결과(result·stageReached·gameTime)를
+// 내보내고, 구간 파생과 맵별 집계는 여기서 합니다. 계측기에 파생값을 넣으면 지표 정의가 두 벌이 됩니다.
+function expeditionMetrics(runs) {
+  const rows = runs.filter(r => r.mode === 'expedition');
+  if (!rows.length) return null;
+
+  const byMap = new Map();
+  for (const r of rows) {
+    const key = goalKey(r.map, r.ascension);
+    if (!byMap.has(key)) byMap.set(key, { key, name: goalName(r.map, r.ascension), runs: 0, clears: 0, stage2: 0, stageSum: 0 });
+    const g = byMap.get(key);
+    g.runs++;
+    if (r.result === 'clear') g.clears++;
+    // 2차 도달은 진화 이벤트로 판정합니다. 판이 끝난 시점의 상태로 보면 도중에 도달하고 죽은 판을 놓칩니다.
+    if ((r.evolutions || []).some(e => e.what === 'evolve' && e.evoStage === 2)) g.stage2++;
+    g.stageSum += r.stageReached || 0;
+  }
+
+  // 목표 2차 진화별 집계. 대변인이 자기 스킬의 원정 판만 골라 보는 데 씁니다.
+  const byGoal = new Map();
+  for (const r of rows) {
+    const key = `${r.targetSkill}|R${r.targetRoute}`;
+    if (!byGoal.has(key)) byGoal.set(key, { key, targetSkill: r.targetSkill, targetRoute: r.targetRoute, runs: 0, clears: 0, stage2: 0 });
+    const g = byGoal.get(key);
+    g.runs++;
+    if (r.result === 'clear') g.clears++;
+    if ((r.evolutions || []).some(e => e.what === 'evolve' && e.evoStage === 2)) g.stage2++;
+  }
+
+  const fin = g => ({ ...g, clearRate: round(g.clears / g.runs, 3), stage2Rate: round(g.stage2 / g.runs, 3) });
+  return {
+    maps: [...byMap.values()].map(g => ({ ...fin(g), meanStage: round(g.stageSum / g.runs, 1) })),
+    goals: [...byGoal.values()].map(fin),
+    runs: rows.length,
+  };
+}
+
 function analyze() {
   const sessions = loadSessions();
   const iterations = loadIterations(sessions);
@@ -652,7 +776,7 @@ function analyze() {
       // C2(진화하면 쿨이 길어진다)는 목표에서 뺐다 — 사용자 결정 2026-09-18.
       // 되살리려면 `C2: cool.C2`를 다시 넣고 report.html의 C2 타일·칩 주석을 푼다. cool.C2는 계속 계산된다.
       scoreboard: { G1: camp.G1, G2: probe.G2, G3: camp.G3, G4: probe.G4, G5: gym ? gym.G5 : skills.G5, G6: probe.G6, C1: cool.C1 },
-      campaign: camp, probe, skills, gym, deaths: deathMetrics(runs), cooldowns: cool,
+      campaign: camp, probe, skills, gym, expedition: expeditionMetrics(runs), deaths: deathMetrics(runs), cooldowns: cool,
       changedFiles: fingerprintDiff(prevFp, fp),
       results: Object.fromEntries(['clear', 'dead', 'stuck', 'timeout', 'error'].map(k => [k, runs.filter(r => r.result === k).length])),
     });
@@ -662,7 +786,53 @@ function analyze() {
 }
 
 // Tools/QA/qa-analyze.js가 지표 함수를 재사용한다(require할 때는 아래 실행부가 돌지 않는다).
-module.exports = { campaignMetrics, skillMetrics, gymMetrics, deathMetrics, fingerprintDiff, goalKey, goalName, progressOf, targets, mean, median, std, round };
+module.exports = { campaignMetrics, skillMetrics, gymMetrics, expeditionMetrics, deathMetrics, fingerprintDiff, goalKey, goalName, progressOf, targets, mean, median, std, round };
+
+// ── 스킬 밸런스 판독지(readout.html)에 넣을 값 ────────────────────────────
+// 🔴 수치는 플레이타임 하나와 맵별 클리어뿐입니다(사용자 결정 2026-09-29). 판정은 전부 대변인 서술로 하며,
+//    그 서술은 에이전트가 `report/advocates/` 아래에 각자 파일로 씁니다 — 한 파일에 몰아 쓰면 서로 덮어씁니다.
+function readAdvocates(reportDir) {
+  const dir = path.join(reportDir, 'advocates');
+  const out = { skills: [], passives: [], crossExam: [] };
+  if (!fs.existsSync(dir)) return out;
+  for (const file of fs.readdirSync(dir)) {
+    if (!file.endsWith('.json')) continue;
+    let body;
+    try { body = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')); }
+    catch (e) { console.warn(`대변인 파일을 읽지 못했습니다: ${file} — ${e.message}`); continue; }
+    if (file === '_passives.json') out.passives = Array.isArray(body) ? body : [body];
+    else if (file === '_crossexam.json') out.crossExam = Array.isArray(body) ? body : [body];
+    else if (!file.startsWith('_')) out.skills.push(body);
+  }
+  return out;
+}
+
+function buildReadout(data, reportDir) {
+  const last = data.iterations[data.iterations.length - 1] || {};
+  const minutes = Math.round(last.realMinutes || 0);
+  const playtime = minutes >= 60
+    ? `${Math.floor(minutes / 60)}시간 ${String(minutes % 60).padStart(2, '0')}분`
+    : `${minutes}분`;
+
+  // 맵별 클리어. 원정 모드 집계가 들어오면 그쪽을 먼저 쓰고, 없으면 기존 캠페인 목표별 집계를 씁니다.
+  // ⚠️ 원정 판 레코드의 구간 필드(effByEvoStage 등)는 대변인이 읽는 값이고, 이 그래프는 클리어 판수만 봅니다.
+  const perGoal = (last.campaign && last.campaign.perGoal) || [];
+  const maps = (last.expedition && Array.isArray(last.expedition.maps) ? last.expedition.maps : perGoal)
+    .map(g => ({
+      name: g.name || g.key,
+      runs: g.runs != null ? g.runs : (g.campaigns || 0),
+      clears: g.clears != null ? g.clears : (g.clearedCampaigns || 0),
+    }))
+    .filter(m => m.runs > 0);
+
+  const adv = readAdvocates(reportDir);
+  return {
+    iteration: last.iteration,
+    generated: new Date().toISOString().slice(0, 10),
+    playtime, maps,
+    skills: adv.skills, passives: adv.passives, crossExam: adv.crossExam,
+  };
+}
 
 if (require.main === module) {
   const data = analyze();
@@ -678,6 +848,17 @@ if (require.main === module) {
     if (!fs.existsSync(tpl)) continue;
     fs.writeFileSync(path.join(reportDir, outName),
       fs.readFileSync(tpl, 'utf8').replace('/*__DATA__*/null', payload));
+  }
+
+  // `readout.html` = 사용자에게 배포하는 스킬 밸런스 판독지(2026-09-29 사용자 지시로 양식을 새로 만들었다).
+  // 🔴 위 둘과 달리 **직전 회차 하나만** 싣는다. 수치는 플레이타임과 맵별 클리어뿐이고 판정은 전부 대변인 서술이다.
+  const readoutTpl = path.join(__dirname, 'balance_readout.html');
+  if (fs.existsSync(readoutTpl)) {
+    const readout = buildReadout(data, reportDir);
+    fs.writeFileSync(path.join(reportDir, 'readout.html'),
+      fs.readFileSync(readoutTpl, 'utf8')
+        .replace('/*__DATA__*/null', JSON.stringify(readout).replace(/</g, '\\u003c')));
+    if (!QUIET) console.log(`→ readout.html (대변인 ${readout.skills.length}건 · 패시브 ${readout.passives.length}건)`);
   }
 
   if (!QUIET) {

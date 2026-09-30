@@ -47,9 +47,7 @@ step.Duration	持续时间延长{0}秒
 step.Scale	大小增加{0}%
 step.RewindAmount	回溯时间延长{0}秒
 step.TickRate	攻击间隔缩短{0}%
-step.MaxTargets.orb	穿透目标 +{0}
 step.MaxTargets	同时攻击目标 +{0}
-step.MaxTargets.homingOrb	追踪法球 +{0}个
 step.ProjectileCount.sniping	连射 +{0}次
 step.ProjectileCount.eagle	空投次数 +{0}
 step.TickRate.eagle	空投间隔缩短{0}%
@@ -79,7 +77,6 @@ ui.treasure.boxTitle	宝箱
 ui.treasure.boxDesc	随机技能升级1~5次
 ui.treasure.evoTitle	进化
 ui.treasure.evoCount	进化！可进化{0}个
-ui.treasure.evoDesc	选择一个技能进行进化
 ui.evotree.header	{0}进化——Lv.{1}
 ui.evotree.allDone	已完成全部进化
 ui.evotree.pickRoute	请选择一条路线——选择后无法更改
@@ -91,10 +88,7 @@ ui.evotree.locked	[未解锁]
 ui.essence	{0}精华
 ui.tree.cost	{0}精华
 ui.tree.clickUnlock	  > 点击解锁
-ui.tree.maxed	（满级）
 ui.tree.unlocked	已解锁
-ui.tree.next	  · 下一级 {0}精华
-ui.tree.click	  > 点击
 ui.difficulty.0	简单
 ui.difficulty.1	普通
 ui.difficulty.2	困难
@@ -165,3 +159,38 @@ ui.evotree.title	技能进化
 tutorial.skills	用 QWER 释放技能，横扫蜂拥而来的蓝莓吧！
 tutorial.evolution.1	现在可以进化技能了！
 tutorial.evolution.2	将技能升到 10 级并拥有联动技能，\n即可进化为更强的技能。
+step.Damage.mul.whirlwind	龙卷风伤害提高{0}%
+step.Damage.mul.shotgun	霰弹伤害提高{0}%
+step.ProjectileCount.chasearrow	追击箭矢+{0}
+step.ProjectileCount.skyshredder	箭矢数量+{0}
+step.ProjectileCount.bolt	落雷数量+{0}
+step.Duration.buff	增益持续时间+{0}秒
+step.Duration.barrage	连射持续时间+{0}秒
+step.Duration.cloud	毒雾持续时间+{0}秒
+step.Duration.orb	法球持续时间+{0}秒
+step.Scale.hugeBolt	超大闪电范围提高{0}%
+step.Scale.swing	攻击范围提高{0}%
+step.TickRate.poison	中毒伤害间隔缩短{0}%
+step.TickRate.bunker	地堡冷却缩短{0}%
+step.TickRate.pull	吸引周期缩短{0}%
+step.MaxTargets.orb	法球数量+{0}
+step.MaxTargets.miniTornado	小龙卷风+{0}
+step.InstallDuration	设置物持续时间+{0}秒
+step.InstallDuration.maker	机器持续时间+{0}秒
+step.InstallDuration.rod	落雷持续时间+{0}秒
+step.InstallDuration.eagleRain	雄鹰之雨持续时间+{0}秒
+step.MaxStacks	最大层数+{0}
+step.SubDamage.explosion	爆炸伤害提高{0}%
+step.SubDamage.wave	冲击波伤害提高{0}%
+step.SubScale.explosion	爆炸范围提高{0}%
+step.SubScale.wave	冲击波大小提高{0}%
+step.SubScale.plague	传染范围提高{0}%
+step.BossDamage	对首领伤害提高{0}%
+step.BonusHits	增益打击次数+{0}
+step.EmpowerBonus	强化效果提高{0}%
+step.PenaltyReduction	强化冷却惩罚减少{0}%
+step.AllCooldown	所有技能冷却缩短{0}%
+step.EnemySlow	所有敌人移动速度降低{0}%
+step.StunDuration	晕眩时间+{0}秒
+step.StunInterval	晕眩周期缩短{0}跳
+step.Lifesteal	护盾获取+{0}

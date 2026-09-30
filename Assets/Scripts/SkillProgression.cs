@@ -17,6 +17,21 @@ public enum SkillStat
     MaxTargets,      // 동시에 상대하는 적 수 — 오브 동시 타격 수, 스나이핑 저격 대상 수
     VolleyCount,     // 한 번 시전에 나가는 **발사 묶음 수** — 산탄의 "빵 빵"을 몇 번 할지(2026-09-19 사용자)
                      // ⚠️ 알 수(ProjectileCount)와 다른 축이다. 볼리마다 같은 피해가 통째로 한 번 더 나간다.
+    // ↓ 2026-09-29 사용자 지시로 추가한 13종. 스킬마다 성장축이 달라야 한다는 요구에서 나왔다.
+    InstallDuration, // 설치물이 서 있는 시간 — 회오리 생성기 기계 · 피뢰침 · 독수리의 비
+                     // ⚠️ Duration과 다른 축이다. Duration은 그 설치물이 **뽑는 것**의 수명이다.
+    MaxStacks,       // 최대 스택 수 — 낙뢰 버프 중첩 상한
+    SubDamage,       // 파생 피해 배율 — 본체가 아니라 거기서 갈라져 나오는 피해(폭발 · 파동)
+    SubScale,        // 파생 범위 배율 — 파동 크기 · 재앙의 역병 전염 반경
+    BossDamage,      // 보스에게만 더 들어가는 피해 비율
+    BonusHits,       // 버프가 부여하는 타수 — 산탄 R0 루트
+    EmpowerBonus,    // 되감기가 다음 공격에 주는 강화량 배율
+    PenaltyReduction,// 그 강화에 딸린 쿨타임 페널티를 깎는 비율
+    AllCooldown,     // **모든 스킬**의 쿨타임 감소율 — 블루베리 절멸의 시간
+    EnemySlow,       // 모든 적의 이동속도 감소율 — 블루베리 절멸의 시간
+    StunDuration,    // 기절이 지속되는 시간
+    StunInterval,    // 기절이 걸리는 주기(중독 몇 틱마다) — 작을수록 자주
+    Lifesteal,       // 타격당 흡수하는 체력. 만피면 보호막으로 넘어간다
 }
 
 // 스탯을 올리는 방식. Multiply=현재값×amount, Add=현재값+amount.

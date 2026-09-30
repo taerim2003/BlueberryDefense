@@ -33,7 +33,7 @@ skill.name.Lightning	낙뢰
 skill.desc.Lightning	일정 시간 동안 공격 피해를 입힐 때마다 일정 확률로 낙뢰를 떨군다.
 evo.active.desc.Lightning.0.1	낙뢰 버프를 중첩할 수 있다.
 evo.name.Lightning.0.1	뇌운 축적
-evo.active.desc.Lightning.0.2	낙뢰 버프가 20스택 중첩되었을 시 초대형 낙뢰가 떨어짐
+evo.active.desc.Lightning.0.2	낙뢰 버프가 15번 쌓이면 초대형 낙뢰가 떨어진다.
 evo.name.Lightning.0.2	초대형 축적 번개
 evo.active.desc.Lightning.1.1	맵 가운데 낙뢰를 떨구는 피뢰침을 설치한다.
 evo.name.Lightning.1.1	피뢰침
@@ -87,7 +87,7 @@ evo.active.desc.Rewind.0.2	되감기 후 사용하는 공격의 쿨타임이 2�
 evo.name.Rewind.0.2	과충전
 evo.active.desc.Rewind.1.1	되감기가 강력해지고, 글로벌 쿨타임이 절반으로 준다.
 evo.name.Rewind.1.1	가속 되감기
-evo.active.desc.Rewind.1.2	모든 스킬의 쿨타임이 감소하고, 글로벌 쿨타임이 사라진다.
+evo.active.desc.Rewind.1.2	모든 쿨타임이 절반이 되고 글로벌 쿨타임이 사라진다. 대신 이 스킬의 액티브 능력은 봉인된다.
 evo.name.Rewind.1.2	블루베리 절멸의 시간
 skill.name.Swing	휘두르기
 skill.desc.Swing	망치를 후려쳐 닿는 적 전체에 피해를 주고 뒤로 밀어낸다.

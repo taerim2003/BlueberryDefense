@@ -50,3 +50,12 @@ MonoBehaviour:
   - {fileID: 1348368236079402333, guid: 017ef458e4ed6be41aeea56d842438bc, type: 3}
   - {fileID: 4929157244831216748, guid: b88842734937001fcc61d2fc9e29939e, type: 3}
   - {fileID: 8099291569125172224, guid: d5f2b64da2264b249b892dbf608cd9ab, type: 3}
+  bossSpriteFrames:
+  - {fileID: 21300000, guid: d8a3428d673d4155a4d737eab5ee0b55, type: 3}
+  - {fileID: 21300000, guid: 3eaee18f985d4deaa01daaf2e8a9da2e, type: 3}
+  - {fileID: 21300000, guid: dd19f729bc1f4af49f050626e17f9fec, type: 3}
+  - {fileID: 21300000, guid: 6f8fafc7f11948a5b0d9c30d124360af, type: 3}
+  bossColliderSize: {x: 4.5, y: 3.5}
+  bossHoldbackX: 7
+  bossFloatBobAmplitude: 0.3
+  bossFloatBobSpeed: 0.9

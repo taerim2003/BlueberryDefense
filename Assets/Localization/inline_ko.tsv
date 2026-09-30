@@ -47,9 +47,7 @@ step.Duration	지속시간 {0}초 증가
 step.Scale	크기 {0}% 증가
 step.RewindAmount	되감기 시간 {0}초 증가
 step.TickRate	타격 주기 {0}% 빨라짐
-step.MaxTargets.orb	관통 대상 +{0}
 step.MaxTargets	동시 대상 +{0}
-step.MaxTargets.homingOrb	추적 오브 +{0}개
 step.ProjectileCount.sniping	연사 +{0}회
 step.ProjectileCount.eagle	투하 횟수 +{0}
 step.TickRate.eagle	투하 간격 {0}% 단축
@@ -79,7 +77,6 @@ ui.treasure.boxTitle	보물 상자
 ui.treasure.boxDesc	무작위 스킬 레벨업 1~5회
 ui.treasure.evoTitle	진화
 ui.treasure.evoCount	진화! {0}개 가능
-ui.treasure.evoDesc	스킬 하나를 골라 진화시킨다
 ui.evotree.header	{0} 진화 — Lv.{1}
 ui.evotree.allDone	모든 진화 완료
 ui.evotree.pickRoute	루트를 하나 고르세요 — 고른 뒤에는 바꿀 수 없습니다
@@ -91,10 +88,7 @@ ui.evotree.locked	[잠김]
 ui.essence	{0} 정수
 ui.tree.cost	{0} 정수
 ui.tree.clickUnlock	  > 클릭하여 해금
-ui.tree.maxed	(최대)
 ui.tree.unlocked	해금됨
-ui.tree.next	  · 다음 {0} 정수
-ui.tree.click	  > 클릭
 ui.difficulty.0	쉬움
 ui.difficulty.1	보통
 ui.difficulty.2	어려움
@@ -165,3 +159,38 @@ ui.evotree.title	스킬 진화
 tutorial.skills	QWER로 스킬을 사용해 몰려오는 블루베리들을 쓸어버리세요!
 tutorial.evolution.1	스킬을 진화시킬 수 있어요!
 tutorial.evolution.2	스킬을 레벨 10까지 올리고 연계 스킬을 갖추면\n더 강한 스킬로 진화합니다.
+step.Damage.mul.whirlwind	회오리 피해량 {0}% 증가
+step.Damage.mul.shotgun	샷건 피해량 {0}% 증가
+step.ProjectileCount.chasearrow	추격 화살 개수 +{0}
+step.ProjectileCount.skyshredder	화살 수 +{0}
+step.ProjectileCount.bolt	낙뢰 개수 +{0}
+step.Duration.buff	버프 지속시간 {0}초 증가
+step.Duration.barrage	연사 지속시간 {0}초 증가
+step.Duration.cloud	안개 지속시간 {0}초 증가
+step.Duration.orb	오브 지속시간 {0}초 증가
+step.Scale.hugeBolt	초대형 번개 범위 {0}% 증가
+step.Scale.swing	공격 범위 {0}% 증가
+step.TickRate.poison	독 피해 주기 {0}% 단축
+step.TickRate.bunker	벙커 재가동 시간 {0}% 단축
+step.TickRate.pull	빨아들이기 주기 {0}% 단축
+step.MaxTargets.orb	오브 개수 +{0}
+step.MaxTargets.miniTornado	미니 회오리 +{0}
+step.InstallDuration	설치 지속시간 {0}초 증가
+step.InstallDuration.maker	기계 지속시간 {0}초 증가
+step.InstallDuration.rod	낙뢰가 떨어지는 시간 {0}초 증가
+step.InstallDuration.eagleRain	독수리의 비 지속시간 {0}초 증가
+step.MaxStacks	최대 스택 수 +{0}
+step.SubDamage.explosion	폭발 피해량 {0}% 증가
+step.SubDamage.wave	파동 피해량 {0}% 증가
+step.SubScale.explosion	폭발 범위 {0}% 증가
+step.SubScale.wave	파동 크기 {0}% 증가
+step.SubScale.plague	전염 범위 {0}% 증가
+step.BossDamage	보스에게 주는 피해 {0}% 증가
+step.BonusHits	버프 타수 +{0}
+step.EmpowerBonus	강화 효과 {0}% 증가
+step.PenaltyReduction	강화 쿨타임 페널티 {0}% 감소
+step.AllCooldown	모든 스킬 재사용 대기시간 {0}% 감소
+step.EnemySlow	모든 적 이동속도 {0}% 감소
+step.StunDuration	기절 시간 {0}초 증가
+step.StunInterval	기절 주기 {0}틱 단축
+step.Lifesteal	보호막 획득량 +{0}

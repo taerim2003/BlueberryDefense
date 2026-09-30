@@ -95,4 +95,24 @@ public class MapDefinition : ScriptableObject
     // 🔴 캐리어(UFO)를 넣지 말 것: 분출로 생기면 화면 위로 상승 퇴장하는데 그동안 Enemy.Active에 남아
     //    GameManager의 "잔몹 0" 클리어 조건이 안 채워진다 → 판이 끝나지 않는다.
     public GameObject[] bossDeathSpawnPrefabs;
+
+    // 🔴 맵마다 보스 생김새를 다르게 한다(2026-09-29 사용자: "해변 맵의 보스는 생김새가 달랐으면 좋겠어서 그렸어").
+    //    bossDeathSpawnPrefabs와 **같은 이유**로 맵 쪽에 둔다 — 보스 프리팹 3종은 세 맵이 공유하므로
+    //    프리팹의 그림을 바꾸면 세 맵이 같이 바뀐다. 비어 있으면 프리팹 그림 그대로(= 안 꽂은 맵은 종전과 같다).
+    // ⚠️ 그림만 덮어쓴다 — 콜라이더는 아래 bossColliderSize로 따로 맞춘다. 그림 크기가 크게 다르면
+    //    실루엣과 피격 범위가 어긋나므로 캡처로 한 번 볼 것.
+    public Sprite[] bossSpriteFrames;
+
+    // 보스 BoxCollider2D 크기(로컬). 같은 이유로 맵 쪽에 둔다. 중심(offset)은 프리팹 값 그대로 두고 크기만 바꾼다.
+    // (0,0)이면 프리팹 크기 그대로. 2026-09-29 사용자: 크라켄 히트박스를 "가운데 중심으로 가로세로 두 배".
+    public Vector2 bossColliderSize;
+
+    // 보스 정지선을 이만큼 더 앞(왼쪽)에서 잡는다(2026-09-30 사용자: 베리크루저가 "너무 가까워. 좀 뒤에 서있어야").
+    // 정지선(플레이어 x − ContactStopDistance)은 적 **중심** 기준이라, 그림이 큰 보스는 몸통이 플레이어를 덮는다. 0이면 종전.
+    public float bossHoldbackX;
+
+    // 0보다 크면 보스가 이동 중 위아래로 출렁인다(2026-09-30 사용자: "날아다니는 거니까"). 멈추면 가라앉는다.
+    // 강하 유닛(diveBob)의 출렁임 곡선을 그대로 빌린다 — 참고로 우주 종이비행기는 진폭 1.5 · 속도 1.
+    public float bossFloatBobAmplitude;
+    public float bossFloatBobSpeed = 1f;
 }
