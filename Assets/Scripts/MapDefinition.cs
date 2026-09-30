@@ -103,9 +103,12 @@ public class MapDefinition : ScriptableObject
     //    실루엣과 피격 범위가 어긋나므로 캡처로 한 번 볼 것.
     public Sprite[] bossSpriteFrames;
 
-    // 보스 BoxCollider2D 크기(로컬). 같은 이유로 맵 쪽에 둔다. 중심(offset)은 프리팹 값 그대로 두고 크기만 바꾼다.
-    // (0,0)이면 프리팹 크기 그대로. 2026-09-29 사용자: 크라켄 히트박스를 "가운데 중심으로 가로세로 두 배".
+    // 보스 BoxCollider2D 크기(로컬). 같은 이유로 맵 쪽에 둔다.
+    // (0,0)이면 프리팹 크기·중심 그대로. 2026-09-30 사용자: 크라켄 히트박스를 "스프라이트 크기랑 비슷하게".
     public Vector2 bossColliderSize;
+    // 보스 BoxCollider2D 중심(로컬). **bossColliderSize가 (0,0)이 아닐 때만** 같이 적용된다 — (0,0)도 유효한 중심이라
+    // 크기 칸이 스위치 역할을 한다. 프리팹 중심은 (0, −0.4)이고, 그림 중심에 맞추려면 (0,0)이다.
+    public Vector2 bossColliderOffset;
 
     // 보스 정지선을 이만큼 더 앞(왼쪽)에서 잡는다(2026-09-30 사용자: 베리크루저가 "너무 가까워. 좀 뒤에 서있어야").
     // 정지선(플레이어 x − ContactStopDistance)은 적 **중심** 기준이라, 그림이 큰 보스는 몸통이 플레이어를 덮는다. 0이면 종전.

@@ -388,7 +388,10 @@ public class EnemySpawner : MonoBehaviour
     private void ApplyBossSkin(Enemy enemy)
     {
         if (Map.bossColliderSize != Vector2.zero && enemy.TryGetComponent(out BoxCollider2D box))
+        {
             box.size = Map.bossColliderSize;
+            box.offset = Map.bossColliderOffset;
+        }
 
         enemy.SetBossSkinMotion(Map.bossHoldbackX, Map.bossFloatBobAmplitude, Map.bossFloatBobSpeed);
 

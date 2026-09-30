@@ -56,6 +56,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: dd19f729bc1f4af49f050626e17f9fec, type: 3}
   - {fileID: 21300000, guid: 6f8fafc7f11948a5b0d9c30d124360af, type: 3}
   bossColliderSize: {x: 4.5, y: 3.5}
+  bossColliderOffset: {x: 0, y: -0.4}
   bossHoldbackX: 7
   bossFloatBobAmplitude: 0.3
   bossFloatBobSpeed: 0.9

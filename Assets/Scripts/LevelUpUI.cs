@@ -490,6 +490,8 @@ public class LevelUpUI : MonoBehaviour
     {
         Title = Loc.T("ui.levelup.essenceTitle"),
         Description = Loc.F("ui.levelup.essenceDesc", EssenceReward),
+        // 정수 픽업과 같은 그림. 없으면 보물 칸에 흰 틀 위 흰 글자만 남아 빈칸으로 보였다(2026-09-30 사용자).
+        Icon = SkillIconLibrary.Essence(),
         Apply = () => MetaRun.Collect(EssenceReward),
     };
 

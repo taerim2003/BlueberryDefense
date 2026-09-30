@@ -111,8 +111,8 @@ public class PlayerSkills : MonoBehaviour
     public const float GrapeCloudRadius = 1.5f;      // 안개 반경(유닛). skill.Scale이 곱해진다
     // 🔴 알끼리 이만큼은 떨어뜨려 던진다 — **포도 캐릭터 키**(Grape1.png 48px ÷ PPU32 × 프리팹 1.5배)다
     //    (사용자 지시 2026-09-27: "적이 없는 곳이어도 괜찮으니 최대한 적과 가까우면서 서로 떨어지게").
-    //    예전엔 안개 반경에 비례시켜서(radius×1.2) 안개가 커질수록 자동으로 벌어졌는데,
-    //    그러면 레벨업으로 안개가 커질 때 알이 화면 밖까지 흩어진다.
+    //    이 값은 **기본 반경(GrapeCloudRadius)에서의** 간격이고, 안개가 커지면 같은 비율로 벌어진다
+    //    (2026-09-30 사용자: 안개끼리 점점 겹쳐 보인다). 화면 밖으로 흩어지는 건 ClampGrapeSpot이 막는다.
     public const float GrapeSpotMinGap = 2.25f;
     public const int GrapeBaseBalls = 3;             // 한 번에 던지는 포도알 수
     public const float GrapeFlightTime = 0.55f;
@@ -1898,7 +1898,7 @@ public class PlayerSkills : MonoBehaviour
         if (skill.PathTier[2] >= 1) balls += 2;              // 찌릿찌릿 1차: 던지는 알이 늘어난다
 
         float radius = GrapeCloudRadius * skill.Scale;
-        if (skill.PathTier[1] >= 1) radius *= 1.4f;          // 생화학 1차: 안개가 커진다
+        if (skill.PathTier[1] >= 1) radius *= 2.0f;          // 생화학 1차: 안개가 커진다(2026-09-30 사용자 "2배 정도" — 1.4→2.0, 넓이로 지금의 약 2배)
 
         // 도트 간격. 레벨업 "독 피해 주기"(SkillStat.TickRate)가 여기 곱해진다 — 회오리·독수리와 같은 축이다.
         // 🔴 예전엔 상수만 읽어서, Prog_GrapeToss에 TickRate 스텝을 넣어도 조용히 무시됐다(2026-09-27 배선).
@@ -2050,9 +2050,10 @@ public class PlayerSkills : MonoBehaviour
         alive.Sort((a, b) => Mathf.Abs(a.transform.position.x - playerX)
                                  .CompareTo(Mathf.Abs(b.transform.position.x - playerX)));
 
-        // 🔴 알끼리 **포도 캐릭터 키만큼** 떨어뜨린다(사용자 지시 2026-09-27). 예전엔 안개 반경에
-        //    비례시켰는데, 그러면 레벨업으로 안개가 커질수록 알이 화면 밖까지 흩어진다.
-        const float minGap = GrapeSpotMinGap;
+        // 🔴 알 간격은 **안개 크기에 비례**한다(사용자 지시 2026-09-30: 안개가 커지면 간격도 커져야 한다 — 원이 점점 겹쳐 보인다).
+        //    기본 반경에서는 포도 캐릭터 키(GrapeSpotMinGap)다. 2026-09-27에 비례를 걷어냈던 이유
+        //    ("안개가 커질수록 알이 화면 밖까지 흩어진다")는 아래 ClampGrapeSpot이 화면 안으로 잘라서 막는다.
+        float minGap = GrapeSpotMinGap * (radius / GrapeCloudRadius);
 
         for (int i = 0; i < count; i++)
         {
@@ -2083,7 +2084,23 @@ public class PlayerSkills : MonoBehaviour
             // "적이 없는 곳이어도 괜찮으니 최대한 적과 가까우면서" — 가장 가까운 후보에서 최소한만 비켜선다.
             spots.Add(SpreadGrapeSpot(best, spots, minGap));
         }
+        for (int i = 0; i < spots.Count; i++) spots[i] = ClampGrapeSpot(spots[i], radius, playerX);
         return spots;
+    }
+
+    // 던지는 자리를 화면 안(가장자리 여백 = 안개 반경의 절반)과 플레이어 앞으로 자른다.
+    // 간격이 안개 크기를 따라 커지면서 밀려난 알이 화면 밖에 떨어지는 것을 막는다.
+    private static Vector3 ClampGrapeSpot(Vector3 p, float radius, float playerX)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return p;
+        float halfH = cam.orthographicSize, halfW = halfH * cam.aspect;
+        float margin = radius * 0.5f;
+        Vector3 c = cam.transform.position;
+        float maxX = Mathf.Min(c.x + halfW - margin, playerX);
+        p.x = Mathf.Clamp(p.x, c.x - halfW + margin, Mathf.Max(c.x - halfW + margin, maxX));
+        p.y = Mathf.Clamp(p.y, c.y - halfH + margin, c.y + halfH - margin);
+        return p;
     }
 
     // 이미 고른 자리들에서 minGap만큼 떨어질 때까지 **가장 가까운 자리에서 밀어낸다**.
@@ -2302,7 +2319,9 @@ public class PlayerSkills : MonoBehaviour
             //    레벨 1(mult=1)은 그대로 두고, 1을 넘은 만큼만 HammerGrowthGain배로 부풀린다 —
             //    hammerBaseScale은 프리팹 원래 크기라 SwingReach와 대응하는 값이 아니고, 그래서 처음부터 있던
             //    격차가 mult와 함께 커져 레벨이 오를수록 눈에 띄었다.
-            float grown = 1f + (mult - 1f) * HammerGrowthGain;
+            // 🔴 지진파 루트(path2)는 망치를 키우지 않는다(사용자 지시 2026-09-30) — 진화해도 Scale이 초기화되지 않아
+            //    진화 전 휘두르기 시절의 크기를 물려받아 커져 있었다. 그림만 원래 크기로 두고 판정 범위는 그대로다.
+            float grown = swing.PathTier[2] >= 2 ? 1f : 1f + (mult - 1f) * HammerGrowthGain;
             hammerTr.localScale = hammerBaseScale * grown * look;
             hammerTr.localPosition = hammerBaseLocalPos
                 + (swing.PathTier[1] >= 3 ? PaladinHammerOffset : Vector3.zero);
@@ -2393,9 +2412,12 @@ public class PlayerSkills : MonoBehaviour
             {
                 if (e == null || !e.IsAlive) continue;
                 Vector3 p = e.transform.position;
-                float dx = px - p.x;
-                if (dx < SwingNearOffset || dx > reach) continue;
-                if (Mathf.Abs(p.y - py) > halfHeight) continue;
+                // 🔴 보스는 **몸(콜라이더)이 판정 사각형에 닿으면** 맞는다(사용자 지시 2026-09-30: 크라켄이 범위 그림자 안에
+                //    들어왔는데 안 맞았다). 그림이 7.5유닛이라 중심점만 보면 몸 앞부분이 그림자에 들어와도 중심이 사거리 밖이다.
+                //    일반 적은 중심점 그대로다 — 크기 0인 영역이라 같은 식이 예전 판정과 똑같이 돈다.
+                Bounds b = e.IsBoss && e.TryGetComponent(out Collider2D bossCol) ? bossCol.bounds : new Bounds(p, Vector3.zero);
+                if (px - b.min.x < SwingNearOffset || px - b.max.x > reach) continue;
+                if (b.min.y > py + halfHeight || b.max.y < py - halfHeight) continue;
 
                 e.TakeSkillHit(damage, critChance, ActiveSkillId.Swing, stun ? StatusIconLibrary.Stun : null);
                 e.ApplyKnockback(knockback);

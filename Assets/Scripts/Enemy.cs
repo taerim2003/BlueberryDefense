@@ -254,7 +254,26 @@ public class Enemy : MonoBehaviour
 
     // 도메인 리로드를 끈 에디터에서 지난 플레이의 목록이 남지 않게.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetActiveList() => active.Clear();
+    private static void ResetActiveList() { active.Clear(); nextSpawnSortingOrder = SpawnSortingTop; }
+
+    // 🔴 그리는 순서는 **스폰할 때 한 번만** 정한다(사용자 지시 2026-09-30: 촘촘할 때 앞뒤가 바뀌며 움찔거린다).
+    //    예전엔 매 프레임 `100 + x×10`으로 다시 계산해서, x가 0.1 안으로 붙은 두 적이 반올림 경계를
+    //    다른 프레임에 넘거나 추월·넉백·돌진으로 x가 교차할 때마다 위아래가 뒤집혔다.
+    //    먼저 나온 적이 위다 — 먼저 나온 적이 대체로 앞(플레이어 쪽)에 있어서 예전 그림과 같다.
+    //    범위(156~2)는 예전 공식의 값 범위 안이다: 156 = 정지선(x≈5.6)에 선 적. 이펙트(120~150)·독안개(250)와의
+    //    앞뒤도 예전처럼 "앞줄 적은 이펙트 위, 뒷줄은 아래"로 남는다. 바닥에 닿으면 위로 돌아간다.
+    private const int SpawnSortingTop = 156;
+    private const int SpawnSortingBottom = 2;   // 1은 alwaysBackLayer 전용
+    private static int nextSpawnSortingOrder = SpawnSortingTop;
+
+    private int TakeSpawnSortingOrder()
+    {
+        // 살아 있는 다른 적이 없으면 번호를 처음부터 — 웨이브 사이에 맞춰 두면 한 무리 안에서 번호가 한 바퀴 도는 일이 드물다.
+        if (active.Count == 0 || (active.Count == 1 && active[0] == this)) nextSpawnSortingOrder = SpawnSortingTop;
+        int order = nextSpawnSortingOrder;
+        nextSpawnSortingOrder = order <= SpawnSortingBottom ? SpawnSortingTop : order - 1;
+        return order;
+    }
 
     // 지금 실제로 걷는 속도(둔화·기절 반영). 포도알이 착탄 지점을 미리 짚는 데 쓴다.
     public float CurrentMoveSpeed => moveSpeed * MoveScale;
@@ -336,7 +355,9 @@ public class Enemy : MonoBehaviour
     private void ClampInsideArena()
     {
         PlayerHealth player = Player;
-        if (player == null || isCarrier) return;
+        // 박치기 돌진 중엔 자르지 않는다 — 돌진은 정지선 너머로 HeadbuttLungeDistance만큼 튀어나갔다가
+        // 제자리(holdBaseX)로 돌아오는 동작이라, 여기서 자르면 앞으로 나간 거리가 지워지고 기울기만 남는다.
+        if (player == null || isCarrier || lungeTimer >= 0f) return;
 
         float limit = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
         if (transform.position.x <= limit) return;
@@ -428,6 +449,7 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(false); // 기절/정지로 animator.speed=0인 채 반납됐을 수 있다
 
         baseRotation = transform.localRotation;
+        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : TakeSpawnSortingOrder();
 
         // 스폰 순간부터 y를 살짝 흔들어 둔다 — 겹쳐 쌓일 때 자로 잰 듯한 일렬이 아니라 두께 있는 무리로 보이게.
         // (캐리어는 스스로 화면 위로 재배치하므로 제외)
@@ -530,7 +552,6 @@ public class Enemy : MonoBehaviour
             // 팝인으로 소환된 콩콩이는 튀어오른 자리가 곧 자기 지면이 된다 — 착지 높이를 도약 기준으로 넘겨받는다.
             if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; }
             transform.position = p;
-            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
 
@@ -578,7 +599,6 @@ public class Enemy : MonoBehaviour
             SetAnimatorFrozen(true);
             if (isHopper) UpdateHop();
             if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(false);
-            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
 
@@ -611,8 +631,6 @@ public class Enemy : MonoBehaviour
 
         if (isHopper) UpdateHop();
         if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(holding);
-
-        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
 
     // 포물선 도약을 반복한다. y를 "지면 + 도약 높이"로 **덮어쓰는** 방식이라(누적 아님)
@@ -794,7 +812,6 @@ public class Enemy : MonoBehaviour
                 break;
         }
         transform.position = p;
-        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
 
     // 호버 지점에서 잡몹 부대를 팝콘처럼 흩뿌린다. 각 투하물은 레인 지면(carrierLaneY)으로 낙하하며,
