@@ -670,7 +670,12 @@ public class Enemy : MonoBehaviour
         PlayerHealth player = Player;
         if (player == null) return false;
 
-        if (transform.position.x >= player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX)
+        // 🔴 정지선 판정엔 0.001 여유가 필수다 — ClampInsideArena가 매 프레임 x를 정지선 **정확값**(float)으로
+        //    스냅하는데, 이 비교식 우변을 인라인으로 두면 Mono JIT가 double 중간 정밀도로 계산해
+        //    "x >= 정지선"이 영원히 false가 된다(2026-09-30, 전 적 접촉 공격 불능 — 이틀간 피해 0).
+        //    같은 식을 두 곳(여기·ClampInsideArena)에서 계산해 등호로 만나는 구조라 반올림 한 번 차이가 곧 판정 차이다.
+        float stopLine = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
+        if (transform.position.x >= stopLine - 0.001f)
         {
             if (lungeTimer < 0f) holdBaseX = transform.position.x; // 돌진 중이 아닐 때의 제자리를 기억해 둔다
             Headbutt(player);
