@@ -38,6 +38,10 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 > 커밋·푸시·노션 카드 수정·파일 삭제처럼 사용자 승인이 필요한 행위는 **가정으로 밀어붙이지 말고**
 > `확인 대기`에 적고 넘어간다. 나머지 작업은 전부 끝낸다.
 >
+> 🔴 **"올려줘·보내줘"를 받았는데 *어디로*를 내가 골랐다면, 그 목적지는 승인받은 게 아니다.**
+> 요청 문장이 승인한 건 *올리는 행위*뿐이다. 트리거 자명 — *이력에서 업로드·배포 목적지가 둘 이상 보이는 순간.*
+> 공개되는 쪽(스토어·라이브 채널)을 고르지 말고 **내부 공유처**를 고르고, 고른 이유를 선언한다.
+>
 > 되돌리려면: `~/.claude/settings.json`의 `permissions.deny`에서 `"AskUserQuestion"`을 지운다.
 
 Before implementing:

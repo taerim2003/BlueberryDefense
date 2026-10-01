@@ -106,6 +106,7 @@ public class CollectionUI : MonoBehaviour
         Instance = this;
         BindSlots();
         BindNodes();
+        CreateKeyLabels();
         if (backButton != null) backButton.onClick.AddListener(Close);
         panel.SetActive(false);
         Loc.LocaleChanged += ApplyText;
@@ -194,6 +195,26 @@ public class CollectionUI : MonoBehaviour
                         + (node.frame == null ? " Image" : "") + (node.icon == null ? " Icon" : "")
                         + (node.title == null ? " Title" : "") + (node.desc == null ? " Desc" : ""), tr);
             }
+    }
+
+    // 2차 열쇠 라벨은 프리팹에 따로 두지 않고 **루트 라벨을 복제**해 2차 칸 위로 옮긴다 —
+    // 옮기는 거리는 프리팹의 1차 칸 → 2차 칸 간격이라, 칸을 옮기면 라벨도 따라간다(글꼴·루트 색도 그대로 이어받는다).
+    // 연계 아이콘(PrereqIcon)이 라벨 자식으로 생기기 전에 복제해야 해서 Awake에서 한다.
+    private void CreateKeyLabels()
+    {
+        for (int route = 0; route < 2; route++)
+        {
+            TMP_Text src = routeLabels[route];
+            Node t1 = nodes[route, 0], t2 = nodes[route, 1];
+            if (src == null || t1 == null || t2 == null) continue;
+
+            TMP_Text label = Instantiate(src, src.transform.parent);
+            label.name = "KeyLabel_R" + route;
+            label.raycastTarget = false;
+            float dx = ((RectTransform)t2.root.transform).anchoredPosition.x - ((RectTransform)t1.root.transform).anchoredPosition.x;
+            label.rectTransform.anchoredPosition += new Vector2(dx, 0f);
+            keyLabels[route] = label;
+        }
     }
 
     // 언어가 바뀌면 고정 문구를 다시 채운다(나머지는 Open→Refresh가 채운다).
@@ -353,13 +374,14 @@ public class CollectionUI : MonoBehaviour
 
             bool showPrereq = discovered && hasPrereq;
             routeLabels[route].text = showPrereq ? full : routeText;
-            SetPrereqIcon(route, showPrereq ? PrereqIcon(pre) : null,
-                spacerAt >= 0 ? full.Substring(0, spacerAt) : full);
+            SetPrereqIcon(prereqIcons, routeLabels[route], route, showPrereq ? PrereqIcon(pre) : null,
+                spacerAt >= 0 ? full.Substring(0, spacerAt) : full, RouteGap);
             // 🔴 패시브는 2차 진화가 없다(2026-09-08) — 도감에서도 2차 칸과 T1→T2 화살표를 감춘다.
             //    남기면 영원히 "미발견"인 칸이 도감에 두 개 뜬다.
             int maxTier = selectedIsPassive
                 ? EvolutionRoutes.MaxStageFor((PassiveSkillId)selectedId)
                 : EvolutionRoutes.MaxStageFor((ActiveSkillId)selectedId);
+            RefreshKeyLabel(route, discovered && maxTier >= 2);
             routeArrows[route].gameObject.SetActive(maxTier >= 2);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
@@ -379,19 +401,48 @@ public class CollectionUI : MonoBehaviour
     private const float RouteGap = 40f;        // "루트 N"과 아이콘 사이
 
     private readonly Image[] prereqIcons = new Image[2];
+    private readonly TMP_Text[] keyLabels = new TMP_Text[2];   // 2차 진화 열쇠 — CreateKeyLabels가 만든다
+    private readonly Image[] keyIcons = new Image[2];
 
     private static Sprite PrereqIcon((PassiveSkillId? Passive, ActiveSkillId? Active) pre) =>
         pre.Passive.HasValue ? SkillIconLibrary.Passive(pre.Passive.Value)
         : pre.Active.HasValue ? SkillIconLibrary.Active(pre.Active.Value)
         : null;
 
-    private void SetPrereqIcon(int route, Sprite sprite, string textBeforeIcon)
+    // 2차의 열쇠는 스킬이 아니라 **그 스킬의 1차 진화체**라(§EvolutionRoutes.Stage2Prereq) 진화체 아이콘을 쓴다.
+    // 1차 연계 아이콘과 같은 스킬이라도 진화 아이콘이라 루트까지 구별된다.
+    private static Sprite KeyIcon((PassiveSkillId? Passive, ActiveSkillId? Active, int Route) key) =>
+        key.Passive.HasValue ? SkillIconLibrary.PassiveEvo(key.Passive.Value, key.Route)
+        : key.Active.HasValue ? SkillIconLibrary.ActiveEvo(key.Active.Value, key.Route)
+        : null;
+
+    // 2차 칸 위의 "(열쇠 아이콘) 연계". 1차 연계와 같은 문구를 쓰되 "루트 N" 접두사가 없어서
+    // 아이콘 앞 간격(RouteGap)도 두지 않는다 — 아이콘이 라벨 왼쪽 끝에서 시작한다.
+    private void RefreshKeyLabel(int route, bool show)
     {
-        Image img = prereqIcons[route];
+        TMP_Text label = keyLabels[route];
+        if (label == null) return;   // 프리팹에서 노드가 빠졌을 때 — Awake가 이미 경고를 찍었다
+
+        // 패시브는 2차가 없다 — show가 false라 여기까지 안 온다(Stage2Prereq도 액티브 전용이다).
+        var key = show ? EvolutionRoutes.Stage2Prereq((ActiveSkillId)selectedId, route) : default;
+        Sprite icon = show ? KeyIcon(key) : null;
+        label.gameObject.SetActive(icon != null);
+        if (icon == null) return;
+
+        string spacer = "<space=" + (PrereqIconSize + PrereqIconGap) + ">";
+        string full = Loc.F("ui.collection.prereq", spacer);
+        int spacerAt = full.IndexOf(spacer, StringComparison.Ordinal);
+        label.text = full;
+        SetPrereqIcon(keyIcons, label, route, icon, spacerAt >= 0 ? full.Substring(0, spacerAt) : full, 0f);
+    }
+
+    private void SetPrereqIcon(Image[] icons, TMP_Text label, int route, Sprite sprite, string textBeforeIcon, float gapBefore)
+    {
+        Image img = icons[route];
         if (img == null)
         {
             if (sprite == null) return;         // 쓸 일이 없으면 만들지도 않는다
-            img = prereqIcons[route] = CreatePrereqIcon(routeLabels[route]);
+            img = icons[route] = CreatePrereqIcon(label);
         }
 
         img.sprite = sprite;
@@ -403,7 +454,7 @@ public class CollectionUI : MonoBehaviour
         // ⚠️ RouteGap을 앞 글자에 태그로 붙여 재면 안 된다 — TMP는 **문자열 끝의 `<space>`는 폭에 안 센다**.
         //    그래서 간격은 재지 않고 여기서 더한다.
         var rt = img.rectTransform;
-        rt.anchoredPosition = new Vector2(routeLabels[route].GetPreferredValues(textBeforeIcon).x + RouteGap, 0f);
+        rt.anchoredPosition = new Vector2(label.GetPreferredValues(textBeforeIcon).x + gapBefore, 0f);
     }
 
     private static Image CreatePrereqIcon(TMP_Text label)

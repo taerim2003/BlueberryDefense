@@ -699,7 +699,8 @@ public class PlayerSkills : MonoBehaviour
             }
             case SkillStat.SubScale:
             {
-                int pct = Mathf.RoundToInt((s.amount - 1f) * 100f);
+                // 더하기 칸(배율에 +0.15)도 있다 — 곱하기 식으로만 읽으면 "+15%"가 "-85%"로 찍혔다(묵직한 탄두 등 7칸).
+                int pct = Mathf.RoundToInt((s.op == StatOp.Add ? s.amount : s.amount - 1f) * 100f);
                 if (id == ActiveSkillId.Swing) return Loc.F("step.SubScale.wave", pct);
                 if (id == ActiveSkillId.GrapeToss) return Loc.F("step.SubScale.plague", pct);
                 return Loc.F("step.SubScale.explosion", pct);
