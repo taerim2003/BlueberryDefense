@@ -31,6 +31,9 @@ public class UIFocusGroup
     // 패널을 열 때 부른다. 같은 그룹을 다시 열면 목록만 갈아끼운다.
     public void Open(IList<Button> buttons, int initialIndex = 0)
     {
+        // 🔴 닫지 않고 다시 여는 화면이 있다(레벨업 리롤). 지난 목록의 테·선택됨을 끄지 않고 비우면
+        //    그때 포커스였던 칸(리롤)이 노랑 테와 밝은 상태를 단 채 남고, 이후 아무도 그 칸을 끄지 않는다.
+        for (int i = 0; i < items.Count; i++) Paint(i, false);
         Clear();
         for (int i = 0; i < buttons.Count; i++)
             if (buttons[i] != null) items.Add(buttons[i]);
