@@ -179,7 +179,12 @@ public class OptionsMenu : MonoBehaviour
 
         // 창 밖에서 바뀌었을 수 있는 것들 — 해상도·전체화면은 이 창 말고도 바뀐다(빌드 설정·Alt+Enter).
         if (fullscreenToggle != null) fullscreenToggle.SetIsOnWithoutNotify(Screen.fullScreen);
+        var now = new Vector2Int(Screen.width, Screen.height);
+        SyncResolutionIndex(now.x, now.y);
         RefreshResolutionLabel();
+        // 창 테두리를 끌어 목록에 없는 크기가 됐으면 실제 크기를 보여 준다(WindowAspectLock).
+        if (resolutionLabel != null && resolutions != null && System.Array.IndexOf(resolutions, now) < 0)
+            resolutionLabel.text = $"{now.x} x {now.y}";
 
         panel.SetActive(true);
         PlayShow();
