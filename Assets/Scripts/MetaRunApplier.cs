@@ -48,9 +48,10 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.CritBonus = 0.01f * totals.CritPct;
         MetaBonuses.CritDamageBonus = 0.01f * totals.CritDmgPct;
         MetaBonuses.BossDamageBonus = 0.01f * totals.BossDmgPct;
-        // 정수 획득량 = 스킬트리(부유) 보너스 × 승천 등급 보상 배율
+        // 정수 획득량 = 스킬트리(부유) 보너스 × 승천 등급 보상 배율 × 맵 기본 배율(씬 단독 실행이면 1)
         AscensionTable ascTable = ascension != null ? ascension : AscensionTable.Default;
-        MetaBonuses.CurrencyMult = (1f + 0.01f * totals.CurrencyPct) * ascTable.Get(RunConfig.AscensionLevel).essenceMult;
+        float mapEssenceMult = RunConfig.Map != null ? RunConfig.Map.essenceMult : 1f;
+        MetaBonuses.CurrencyMult = (1f + 0.01f * totals.CurrencyPct) * ascTable.Get(RunConfig.AscensionLevel).essenceMult * mapEssenceMult;
         MetaBonuses.FlyDamageBonus = 0.01f * totals.FlyDmgPct;
         MetaBonuses.EagleFlyDamageBonus = 0.01f * totals.EagleFlyDmgPct;
         MetaBonuses.WhirlwindFlyDamageBonus = 0.01f * totals.WhirlwindFlyDmgPct;

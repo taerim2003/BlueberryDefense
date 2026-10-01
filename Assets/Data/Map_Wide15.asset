@@ -57,3 +57,4 @@ MonoBehaviour:
   bossColliderSize: {x: 3.75, y: 2.75}
   bossColliderOffset: {x: 0, y: 0}
   bossHoldbackX: 2.5
+  essenceMult: 1.3

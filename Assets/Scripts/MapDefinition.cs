@@ -118,4 +118,12 @@ public class MapDefinition : ScriptableObject
     // 강하 유닛(diveBob)의 출렁임 곡선을 그대로 빌린다 — 참고로 우주 종이비행기는 진폭 1.5 · 속도 1.
     public float bossFloatBobAmplitude;
     public float bossFloatBobSpeed = 1f;
+
+    // 이 맵의 정수 획득 기본 배율. 스킬트리(부유)·승천 배율 위에 곱한다(MetaRunApplier). 1이면 보너스 없음.
+    // 2026-10-01 사용자: 해안가 1.3 · 우주 1.6.
+    public float essenceMult = 1f;
+
+    // 보스 체력 배율(층·승천 배율 위에 곱한다, EnemySpawner의 보스 슬롯에서만). bossSpriteFrames와 같은 이유로 맵 쪽에 둔다 —
+    // 보스 정의의 maxHealth를 바꾸면 세 맵이 같이 바뀐다. 1이면 종전. 2026-10-01 사용자: 우주 2.
+    public float bossHpMultiplier = 1f;
 }

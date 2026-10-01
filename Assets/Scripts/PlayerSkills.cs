@@ -3487,7 +3487,7 @@ public class PlayerSkills : MonoBehaviour
     }
 
     // ── 낙뢰 R1(힘 연계, path1): 맵 중앙에 꽂는 피뢰침 ──
-    // LightningRodDuration동안 1초마다 아주 넓은 범위를 내리쳐 큰 피해와 짧은 기절을 준다.
+    // LightningRodDuration동안 LightningRodInterval마다(2차 제우스는 1초) 아주 넓은 범위를 내리쳐 큰 피해와 짧은 기절을 준다.
     // 🔴 이 루트를 고르면 **기본 낙뢰 버프는 사라진다**(FireSkill의 Lightning 분기) — 대체이고 덧붙임이 아니다.
     // ⚠️ 기둥은 **임시 프리미티브**다 — 코드로 만든 회색 사각형(SwingRange와 같은 방식, 별도 에셋 없음).
     //    전용 도트가 나오면 SpawnLightningRod의 스프라이트만 갈아끼우면 된다.
@@ -3496,7 +3496,10 @@ public class PlayerSkills : MonoBehaviour
     //    총 피해가 1.8배가 된다. **그 강화를 감수한 결정**이다(아래 낙뢰 버프 대체로 이 루트가 약해지기 때문).
     //    ⚠️ 쿨감이 쌓여 쿨이 10.5초보다 짧아지면 두 피뢰침이 겹친다 — 그때는 이 값을 쿨에서 계산해야 한다.
     private const float LightningRodDuration = 10.5f;
-    private const float LightningRodInterval = 1f;
+    // 1 → 1.4(2026-10-01 사용자 "낙뢰 떨어지는 주기를 40% 늘려서 너프"). 기본 지속 10.5초에 11타 → 8타.
+    // 1차 피뢰침만이다 — 2차 제우스상은 석상 애니메이션 한 바퀴(1초)에 타격을 맞춰 둬서(ZeusChargeDelay) 1초를 유지한다.
+    private const float LightningRodInterval = 1.4f;
+    private const float ZeusStrikeInterval = 1f;
     private const float LightningRodRadius = 9.1f;    // "아주 넓은 범위" — 2026-09-27 사용자 +30%(7 → 9.1)
     private const float LightningRodStun = 0.5f;
     // 🔴 피뢰침은 기본 낙뢰 버프를 대체하므로 내리치는 번개가 곧 본체다 — 비율 1(2026-09-28).
@@ -3554,6 +3557,7 @@ public class PlayerSkills : MonoBehaviour
     {
         // 레벨업 "지속시간"(InstallDuration)과 "낙뢰 개수"(ProjectileCount) — 둘 다 2026-09-29에 붙인 축이다.
         float duration = LightningRodDuration + extraDuration;
+        float interval = empowered ? ZeusStrikeInterval : LightningRodInterval;
         int boltsPerStrike = Mathf.Max(1, LightningRodBoltsPerStrike + extraBolts);
         float ratio = empowered ? LightningRodEmpoweredRatio : LightningRodDamageRatio;
         float radius = LightningRodRadius * (empowered ? LightningRodEmpoweredRadiusMult : 1f) * scale;
@@ -3584,7 +3588,7 @@ public class PlayerSkills : MonoBehaviour
         List<float> boltXs = new List<float>();
         float boltRadius = radius * LightningRodBoltRadiusRatio;
 
-        for (float elapsed = 0f; elapsed < duration; elapsed += LightningRodInterval)
+        for (float elapsed = 0f; elapsed < duration; elapsed += interval)
         {
             using (Enemy.GetSnapshot(out List<Enemy> enemies))
             {
@@ -3650,7 +3654,7 @@ public class PlayerSkills : MonoBehaviour
                 }
                 inRange.Clear(); // 죽은 적 참조를 틱 사이에 붙들고 있지 않게
             }
-            yield return new WaitForSeconds(LightningRodInterval);
+            yield return new WaitForSeconds(interval);
         }
 
         if (rod != null) Destroy(rod); // 6초가 끝나면 기둥도 같이 사라진다

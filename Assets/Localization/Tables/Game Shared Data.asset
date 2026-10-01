@@ -2295,6 +2295,14 @@ MonoBehaviour:
     m_Key: step.Lifesteal
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162530
+    m_Key: passive.lvl.TreasureFind
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162531
+    m_Key: passive.lvl.StrengthQ
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

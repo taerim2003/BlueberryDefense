@@ -60,3 +60,5 @@ MonoBehaviour:
   bossHoldbackX: 7
   bossFloatBobAmplitude: 0.3
   bossFloatBobSpeed: 0.9
+  essenceMult: 1.6
+  bossHpMultiplier: 2

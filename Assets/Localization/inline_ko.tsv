@@ -194,3 +194,5 @@ step.EnemySlow	모든 적 이동속도 {0}% 감소
 step.StunDuration	기절 시간 {0}초 증가
 step.StunInterval	기절 주기 {0}틱 단축
 step.Lifesteal	보호막 획득량 +{0}
+passive.lvl.TreasureFind	보물 블루베리 변환 확률 +{0}%
+passive.lvl.StrengthQ	Q스킬 피해량 +{0}%

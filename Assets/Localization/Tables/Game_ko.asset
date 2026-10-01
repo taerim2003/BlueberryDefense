@@ -2424,6 +2424,14 @@ MonoBehaviour:
     m_Localized: "\uBCF4\uD638\uB9C9 \uD68D\uB4DD\uB7C9 +{0}"
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162530
+    m_Localized: "\uBCF4\uBB3C \uBE14\uB8E8\uBCA0\uB9AC \uBCC0\uD658 \uD655\uB960 +{0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162531
+    m_Localized: "Q\uC2A4\uD0AC \uD53C\uD574\uB7C9 +{0}%"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

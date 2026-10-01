@@ -818,7 +818,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id) + EvolutionHint(captured),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured) + EvolutionHint(captured),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,

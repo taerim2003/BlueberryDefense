@@ -2324,6 +2324,14 @@ MonoBehaviour:
     m_Localized: Shield gain +{0}
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162530
+    m_Localized: Treasure blueberry conversion chance +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162531
+    m_Localized: Q skill damage +{0}%
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

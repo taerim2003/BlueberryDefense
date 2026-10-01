@@ -354,12 +354,12 @@ public class EnemySpawner : MonoBehaviour
         if (gm != null) ApplyStageScaling(enemy, gm.CurrentStageData, gm.CurrentStage);
     }
 
-    private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage)
+    private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage, float extraHpMult = 1f)
     {
         if (stage == null) return;
         int step = currentStage / 3;
         AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
-        float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;
+        float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult * extraHpMult;
         float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step)) * asc.speedMult;
         enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
     }
@@ -376,7 +376,7 @@ public class EnemySpawner : MonoBehaviour
                 // 군중제어 감쇄 대상 — 프리팹이 아니라 이 슬롯으로 스폰됐는지가 기준.
                 // 사망 분출 풀도 여기서 넘긴다(보스 프리팹은 세 맵 공유 — MapDefinition 주석 참고).
                 if (isBoss) enemy.MarkAsBoss(Map.bossDeathSpawnPrefabs);
-                ApplyStageScaling(enemy, stage, currentStage);
+                ApplyStageScaling(enemy, stage, currentStage, isBoss ? Map.bossHpMultiplier : 1f);
             }
         }
 
