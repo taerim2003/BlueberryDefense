@@ -154,6 +154,22 @@ details[open]>summary::before{content:"–";}
 .exam p{margin:0; color:var(--muted);}
 
 .empty{color:var(--faint); font-size:14px; padding:18px 0;}
+
+/* ── 스킬별 도달 층 표 ── */
+.stbl-wrap{overflow-x:auto; margin-top:6px;}
+table.stbl{border-collapse:collapse; width:100%; min-width:640px; font-size:14px;}
+.stbl th,.stbl td{padding:7px 10px; border-bottom:1px solid var(--hair); text-align:left;}
+.stbl thead th{font-size:12.5px; font-weight:600; color:var(--muted); border-bottom:1px solid var(--line);}
+.stbl td.sk{font-weight:500; white-space:nowrap;}
+.stbl td.rt{color:var(--faint); font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px;}
+.stbl tr.first td{border-top:1px solid var(--line);}
+.cell{display:grid; grid-template-columns:52px 1fr auto; align-items:center; gap:8px;}
+.cell .rank{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.cell b{font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600; font-variant-numeric:tabular-nums;}
+.cell .mini{height:8px; border-radius:2px; background:var(--hair); position:relative; overflow:hidden;}
+.cell .mini i{position:absolute; inset:0 auto 0 0; background:var(--accent);}
+.cell small{grid-column:1 / -1; color:var(--faint); font-size:11.5px; margin-top:-2px;}
+.cell.none{color:var(--faint);}
 @media (max-width:420px){
   .qa>div{grid-template-columns:1fr; gap:2px;}
 }
@@ -175,7 +191,10 @@ details[open]>summary::before{content:"–";}
   <section>
     <h2>측정</h2>
     <p class="sub">이 보고서에서 수치를 제시하는 곳은 이 절 하나이며, 스킬 판정은 아래의 대변인 서술로 대신합니다.</p>
-    <div class="figure"><b id="playtime"></b><span>플레이타임</span></div>
+    <h3 style="font-size:15px;margin:18px 0 2px">스킬별 평균 도달 층</h3>
+    <p class="sub">각 스킬의 2차 진화를 목표로 한 원정에서, 맵마다 평균 몇 층까지 갔는지입니다. 25층이 끝이며, 빈 칸은 아직 측정하지 않은 조합입니다. 순위는 같은 맵·같은 루트의 스킬끼리 매기며, 평균 도달 층이 같으면 클리어가 많은 쪽을 위에 둡니다. 시간은 판당 평균 게임 시간입니다.</p>
+    <div class="stbl-wrap"><table class="stbl" id="stbl"></table></div>
+    <div class="figure" style="margin-top:26px"><b id="playtime"></b><span>판당 평균 게임 시간</span></div>
     <div class="chart" id="chart"></div>
     <p class="chartnote" id="chartnote"></p>
   </section>
@@ -532,6 +551,43 @@ if (maps.length) {
   el("chartnote").textContent =
     `전체 ${totalRuns}판 가운데 ${totalClears}판을 클리어하였으며, 전체 클리어율은 ` +
     `${Math.round(totalClears / totalRuns * 100)}퍼센트입니다.`;
+}
+
+// ── 스킬별 평균 도달 층 표 ──
+const st = d.stageTable;
+if (st && st.rows && st.rows.length) {
+  const tbl = el("stbl");
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  hr.append(text("th", null, "스킬"), text("th", null, "루트"));
+  for (const c of st.cols) hr.append(text("th", null, c));
+  thead.append(hr);
+  tbl.append(thead);
+  const tbody = document.createElement("tbody");
+  for (let i = 0; i < st.rows.length; i++) {
+    const r = st.rows[i];
+    const tr = document.createElement("tr");
+    if (r.route === "R0" && i > 0) tr.className = "first";
+    tr.append(text("td", "sk", r.route === "R0" ? r.skill : ""), text("td", "rt", r.route));
+    for (const c of r.cells) {
+      const td = document.createElement("td");
+      if (!c) { td.append(text("div", "cell none", "—")); tr.append(td); continue; }
+      const cell = text("div", "cell");
+      cell.append(text("b", null, c.avg.toFixed(1) + "층"));
+      const mini = text("div", "mini");
+      const fill = document.createElement("i");
+      fill.style.width = Math.min(100, c.avg / 25 * 100).toFixed(1) + "%";
+      mini.append(fill);
+      cell.append(mini);
+      if (c.rank != null) cell.append(text("span", "rank", `${c.rank}/${c.of}위`));
+      const t = c.sec != null ? ` · 평균 ${Math.floor(c.sec / 60)}분 ${String(c.sec % 60).padStart(2, "0")}초` : "";
+      cell.append(text("small", null, `${c.n}판 중 ${c.clears}판 클리어${t}`));
+      td.append(cell);
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  tbl.append(tbody);
 }
 
 // ── 대변인 항목 ──

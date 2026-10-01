@@ -9,15 +9,15 @@ using UnityEngine;
 // ─────────────────────────────────────────────────────────────────────────────
 
 // 스킬트리 **일반(Normal) 노드**의 효과 축. 노드가 어느 스탯을 올리는지는 이 값이 정하고,
-// 크기는 SkillNode.perLevel(레벨당)이 정한다 — 즉 일반 노드는 코드를 안 고치고 에디터에서 얼마든지 늘릴 수 있다.
+// 크기는 SkillNode.perLevel(노드 하나의 효과량 — 레벨제 폐지 뒤 이름만 남았다)이 정한다 — 즉 일반 노드는 코드를 안 고치고 에디터에서 얼마든지 늘릴 수 있다.
 // 🔴 **끝에만 추가할 것.** 에셋이 정수로 직렬화해서 중간에 끼우면 기존 노드의 축이 통째로 밀린다.
 public enum MetaUpgradeId
 {
     Attack,   // 공격력 — 모든 피해 +N%
     Health,   // 체력 — 최대 체력 +N
-    Regen,    // 회복 — 5초마다 +N (트리에 노드가 생기면 그때부터 동작)
+    Regen,    // 회복 — 5초마다 +N (regen_1·regen_2 노드, PlayerHealth가 소비)
     Cooldown, // 쿨타임 — 모든 쿨 -N%
-    Duration, // 지속시간 — 스킬 지속 +N%
+    Duration, // 🚫 폐지 — 이 축의 노드는 만들지 않는다(2026-09-28 사용자). 직렬화 순서 때문에 자리만 남김. 골라도 효과 없음
     Xp,       // 경험 — 경험치 획득 +N%
     Wealth,   // 부유 — 정수 획득 +N%
     Crit,     // 치명타 — 치명타 확률 +N%p
@@ -35,7 +35,6 @@ public enum MetaUpgradeId
 public static class MetaBonuses
 {
     public static float CooldownMult = 1f; // 스킬 쿨타임 배율 (<1이면 감소)
-    public static float DurationMult = 1f; // 스킬 지속시간 배율 (>1이면 증가)
     public static float CritBonus = 0f;    // 전역 치명타 확률 가산(0~1)
     public static float CurrencyMult = 1f; // 정수 획득 배율
     public static int RegenPer5s = 0;      // 5초마다 회복량
@@ -61,13 +60,10 @@ public static class MetaBonuses
     public static int ArrowExtraPierce = 0;         // 화살: 기본 관통 +N
     public static float SwingKnockbackMult = 1f;    // 휘두르기: 넉백 배율
     public static bool OrbSlowUnlocked = false;     // 오브: 둔화 개방 — 기본 오브는 둔화를 안 건다
-    // 🔴 오브 관통 예산이 없어진 뒤(2026-09-27) 이 값은 **유도 오브(R1 path2)의 개수**에만 쓰인다.
-    //    같은 노드(orb_Pierce)가 아래 OrbPiercesShields도 켠다 — 이름과 달리 두 몫이라 헷갈리기 쉽다.
-    public static int OrbExtraTargets = 0;
     public static bool OrbPiercesShields = false;   // 오브: 기본 오브가 방패 블루베리를 뚫는다(orb_Pierce 노드)
     public static int EagleExtraDrops = 0;          // 독수리 투하: 투하 횟수 +N
-    public static bool ThunderStackable = false;    // 번개: 낙뢰 버프 중첩(스택당 피해 증가) 개방
-    public static int ShotgunExtraBonusHit = 0;     // 산탄: 타수 버프가 주는 타수 +N
+    public static float ThunderProcBonus = 0f;      // 번개: 낙뢰 발동 확률 가산(%p ÷ 100)
+    public static float ShotgunDamageBonus = 0f;    // 산탄: 산탄 발사 피해 가산(0.10 = +10%)
     public static float ShotgunCritBonus = 0f;      // 산탄: 이 스킬 전용 치명타 확률 가산
     public static float SnipingCritBonus = 0f;      // 스나이핑: 이 스킬 전용 치명타 확률 가산
     public static float HomingCooldownCut = 0f;     // 호밍: 기본 쿨타임 -N초(감소율보다 먼저 빠진다)
@@ -110,7 +106,6 @@ public static class MetaBonuses
         GatedSkills.Clear();
         TreeUnlockedSkills.Clear();
         CooldownMult = 1f;
-        DurationMult = 1f;
         CritBonus = 0f;
         CurrencyMult = 1f;
         RegenPer5s = 0;
@@ -132,11 +127,10 @@ public static class MetaBonuses
         ArrowExtraPierce = 0;
         SwingKnockbackMult = 1f;
         OrbSlowUnlocked = false;
-        OrbExtraTargets = 0;
         OrbPiercesShields = false;
         EagleExtraDrops = 0;
-        ThunderStackable = false;
-        ShotgunExtraBonusHit = 0;
+        ThunderProcBonus = 0f;
+        ShotgunDamageBonus = 0f;
         ShotgunCritBonus = 0f;
         SnipingCritBonus = 0f;
         HomingCooldownCut = 0f;
@@ -207,7 +201,7 @@ public static class MetaRun
 // 스킬트리 해금집합 → 인게임 효과. MetaRunApplier가 판 시작 시 한 번 호출한다.
 //
 // 🔴 노드 종류에 따라 효과를 정하는 주체가 다르다:
-//   Normal(일반)  = **에셋이 정한다.** SkillNode.effect(축) × perLevel(레벨당 크기) × 노드 레벨.
+//   Normal(일반)  = **에셋이 정한다.** SkillNode.effect(축) × perLevel(노드 하나의 효과량). 레벨제는 2026-09-28에 폐지돼 구매/미구매 2상태다.
 //                   → 공격력·체력·치명타·치명타 피해·경험치·정수·쿨타임·비행·보스·리롤 노드를
 //                     에디터에서 몇 개를 만들든 코드를 안 고쳐도 된다(재설계 목표 100개 대응).
 //   그 외(해금·강화·기타) = **코드가 정한다.** 노드 하나하나가 고유 동작이라 아래 id 스위치가 진실원.
@@ -229,7 +223,6 @@ public static class SkillEffects
         public float XpPct;
         public float CurrencyPct;
         public float CdReducePct;
-        public float DurationPct;
         public float FlyDmgPct;      // 비행 추가피해(전역)
         public float BossDmgPct;     // 보스 추가피해
         public int RerollCount;      // 레벨업 리롤 횟수(게임당)
@@ -250,11 +243,10 @@ public static class SkillEffects
         public int ArrowPierce;          // 화살 기본 관통 +N
         public float SwingKnockbackMult; // 휘두르기 넉백 배율(1=기본)
         public bool OrbSlowUnlocked;     // 오브 둔화 개방
-        public int OrbTargets;           // 유도 오브 개수 +N (예전 "오브 관통 +N")
         public bool OrbPiercesShields;   // 기본 오브가 방패 블루베리를 뚫는가
         public int EagleDrops;           // 독수리 투하 횟수 +N
-        public bool ThunderStack;        // 낙뢰 버프 중첩 개방
-        public int ShotgunBonusHit;      // 산탄 타수 버프 +N
+        public float ThunderProcPct;     // 낙뢰 발동 확률(%p)
+        public float ShotgunDmgPct;      // 산탄 발사 피해(%)
         public float ShotgunCritPct;     // 산탄 전용 치명타 확률(%p)
         public float SnipingCritPct;     // 스나이핑 전용 치명타 확률(%p)
         public float HomingCdCut;        // 호밍 기본 쿨 -N초
@@ -301,6 +293,7 @@ public static class SkillEffects
             SkillNode node = tree != null ? tree.Find(id) : null;
 
             // ① 일반 노드 — 축과 크기를 에셋이 들고 있다. 코드는 축을 스탯에 꽂아 주기만 한다.
+            //    EffectiveLevel은 0 아니면 1이다(레벨제 폐지) — 곱은 "산 노드만 센다"는 안전망으로만 남아 있다.
             if (node != null && node.type == SkillNodeType.Normal)
             {
                 AddNormal(ref t, node.effect, node.perLevel * SkillTreeSave.EffectiveLevel(node, lv));
@@ -333,20 +326,21 @@ public static class SkillEffects
                 case "orb_BasicSlow": t.OrbSlowUnlocked = true; break;
                 // 🔴 2026-09-27 사용자: "오브 Pierce 노드는 일반 오브가 방패 블루베리를 관통할 수 있는 능력으로 바꿔줘."
                 //    기본 오브의 관통 예산이 사라져 +3이 효과 0이 됐기 때문이다.
-                // ⚠️ OrbTargets(+3)는 **유도 오브 개수**에도 먹고 있어서 그 몫은 남긴다 — 지우면 요청 밖의
-                //    다른 루트(오브 R1 유도 오브 10→13개)가 조용히 너프된다.
-                case "orb_Pierce": t.OrbPiercesShields = true; t.OrbTargets += 3; break;
+                // 🔴 2026-09-30 사용자: 방패 관통 하나만 준다 — 딸려 있던 유도 오브 +3(R1 10→13개)은 뺐다.
+                case "orb_Pierce": t.OrbPiercesShields = true; break;
 
                 // ── 독수리 투하 ──
                 case "eagle_DropNum": t.EagleDrops += 1; break;
                 case "eagle_fly": t.EagleFlyDmgPct += 30f; break;
 
                 // ── 번개 ──
-                case "thunder_Stack": t.ThunderStack = true; break;
+                // 🔴 2026-09-30 사용자: "축전"은 스택 피해 조기 개방이 아니라 **낙뢰 발동 확률 +10%p**다(id는 세이브 호환으로 유지).
+                case "thunder_Stack": t.ThunderProcPct += 10f; break;
                 case "thunder_Cooldown": t.ThunderCdPerStrike += 0.01f; break;
 
                 // ── 산탄 ──
-                case "shotgun_BonusHit": t.ShotgunBonusHit += 1; break;
+                // 🔴 2026-09-30 사용자: "추가 장전"은 **산탄 발사 피해 +10%**만 준다(옛 효과 = 보너스 탄환 버프 타수 +1, 폐지).
+                case "shotgun_BonusHit": t.ShotgunDmgPct += 10f; break;
                 case "shotgun_Crit": t.ShotgunCritPct += 30f; break;
 
                 // ── 스나이핑 ──
@@ -384,7 +378,7 @@ public static class SkillEffects
         return t;
     }
 
-    // 일반 노드의 효과 축 → 누적 스탯. amount 는 이미 (레벨당 × 노드 레벨)로 곱해져 들어온다.
+    // 일반 노드의 효과 축 → 누적 스탯. amount 는 노드의 perLevel(산 노드만 들어온다).
     private static void AddNormal(ref Totals t, MetaUpgradeId effect, float amount)
     {
         switch (effect)
@@ -393,7 +387,6 @@ public static class SkillEffects
             case MetaUpgradeId.Health: t.HpAdd += Mathf.RoundToInt(amount); break;
             case MetaUpgradeId.Regen: t.RegenPer5s += Mathf.RoundToInt(amount); break;
             case MetaUpgradeId.Cooldown: t.CdReducePct += amount; break;
-            case MetaUpgradeId.Duration: t.DurationPct += amount; break;
             case MetaUpgradeId.Xp: t.XpPct += amount; break;
             case MetaUpgradeId.Wealth: t.CurrencyPct += amount; break;
             case MetaUpgradeId.Crit: t.CritPct += amount; break;

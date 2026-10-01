@@ -36,7 +36,7 @@ MonoBehaviour:
     amount: 1.2
   - stat: 22
     op: 0
-    amount: 0.02
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.5
@@ -45,7 +45,7 @@ MonoBehaviour:
     amount: -0.5
   - stat: 22
     op: 0
-    amount: 0.02
+    amount: 0.2
   - stat: 1
     op: 0
     amount: -0.5

@@ -26,6 +26,10 @@ public class SpriteFlipbook : MonoBehaviour
     // 런타임에 프레임을 갈아끼우고 처음부터 재생한다.
     // 프리팹에 미리 박아둘 수 없는 경우(진화한 화살처럼 진화 티어에 따라 그림이 갈리는 것)에 쓴다.
     // ⚠️ loop=true로 부르면 `despawnOnFinish`는 영영 안 걸린다 — 풀이 아닌 Instantiate 오브젝트엔 그쪽이 맞다.
+    // 그림만 갈아끼운다(fps·loop는 프리팹 값 그대로). 맵마다 다른 보스 그림처럼
+    // "연출 속도는 그대로인데 그림만 다른" 경우에 쓴다 — 속도를 양쪽에 적어두지 않기 위해서다.
+    public void PlayFrames(Sprite[] newFrames) => Play(newFrames, fps, loop);
+
     public void Play(Sprite[] newFrames, float newFps, bool newLoop)
     {
         frames = newFrames;

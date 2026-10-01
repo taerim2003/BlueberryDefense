@@ -95,6 +95,7 @@ public class PlayerSkills : MonoBehaviour
     //    종전엔 두 스킬이 `MiniWhirlwindDamageBonus`라는 공유 보너스로 서로를 증폭했고 차수별 배율(0.25·0.35)도 달랐다 —
     //    그래서 미니 한 개의 피해를 알려면 두 스킬의 진화 상태를 같이 봐야 했다. 지우고 이 상수 하나로 모았다.
     public const float MiniWhirlwindDamageRatio = 0.3f;
+    private const float WhirlwindMainSpacing = 1.8f;   // R0 본체 회오리끼리의 가로 간격(유닛)
 
     // ── 포도(독성 포도알) ────────────────────────────────────────────────────
     // 진화로 켜지는 것만 static이다. **Enemy가 중독 틱 안에서 읽어야 해서** — 적은 어느 스킬이
@@ -162,6 +163,9 @@ public class PlayerSkills : MonoBehaviour
     // 되감기 R0 2차 「과충전」: 다음 스킬에 얹히는 추가 타수. 소비되면 아래 overcharge* 로 옮겨 간다.
     private static int nextSkillBonusHits;
     private static ActiveSkillId overchargeSkill;
+    // 봇 관측용(BotCastPolicy) — 충전 되감기·과충전이 걸어 둔 "다음 스킬 강화"가 아직 소비되지 않고 남아 있는가.
+    // 읽기 전용 창구라 게임 동작에는 영향이 없다(BotInput의 관측 원칙과 같다).
+    public static bool EmpowerPending => nextSkillDamageBonus > 0f || nextSkillBonusHits > 0;
     private static float overchargeHitsTimer;
     private const float OverchargeWindow = 2.5f;   // 한 캐스트의 타격이 다 끝날 만큼만 — 다음 캐스트로 안 샌다
 
@@ -424,7 +428,9 @@ public class PlayerSkills : MonoBehaviour
         {
             if (IsAutoCastOnly(skill) || skill.CooldownTimer > 0f) continue;
             // 꾹 누르고 있어도 쿨이 끝나면 재발동. BotInput.HoldSkills = 봇 플레이테스트의 "QWER 꾹"(평소 false).
-            if (BotInput.HoldSkills || Keyboard.current[skill.Key].isPressed) castQueue.Add(skill);
+            // 봇일 때만 CastGate(스킬별 발사 허가, BotCastPolicy)를 본다 — null이면 종전과 같고, 사람 입력 경로는 그대로다.
+            if (BotInput.HoldSkills ? (BotInput.CastGate == null || BotInput.CastGate(skill))
+                                    : Keyboard.current[skill.Key].isPressed) castQueue.Add(skill);
         }
         while (castQueue.Count > 0)
         {
@@ -1012,7 +1018,10 @@ public class PlayerSkills : MonoBehaviour
                     break;
                 }
 
-                float baseDuration = BaseDuration(skill.Id, 10f) * (skill.PathTier[0] >= 2 ? 1.3f : 1f);
+                // 🔴 스택 유지 시간 = 진화 전 10초 × 차수 배율(2026-10-01 사용자 "R0 쿨이 길어 스택이 안 쌓인다").
+                //    동시 스택 ≈ 유지 시간 ÷ 쿨. 종전 ×1.3(13초)은 1차 쿨 10→6초에서 스택 1.3~2.2개라 상한 4~10과 "최대 스택" 카드가 빈 칸이었고,
+                //    2차 초대형 번개(15스택)는 쿨 6초로 사실상 발동 불가였다. 1차 ×3(30초 → 3~5스택) · 2차 ×9(90초 → 약 15스택).
+                float baseDuration = BaseDuration(skill.Id, 10f) * (skill.PathTier[0] >= 3 ? 9f : skill.PathTier[0] >= 2 ? 3f : 1f);
                 // 🔴 스택은 R0 진화부터만 쌓인다(사용자 결정 2026-09-17). 진화 전엔 AddStack이 기존 버프를 갈아끼운다 —
                 //    쿨감이 쌓여 쿨이 지속시간보다 짧아지면 진화 없이도 스택이 겹치던 버그.
                 LightningStorm.StackingEnabled = skill.PathTier[0] >= 2;
@@ -1021,10 +1030,10 @@ public class PlayerSkills : MonoBehaviour
                 LightningStorm.MaxStacks = (skill.PathTier[0] >= 3 ? HugeBoltBaseMaxStacks : LightningStorm.BaseMaxStacks)
                                            + skill.ExtraMaxStacks;
                 LightningStorm.AddStack(baseDuration);
-                LightningStorm.ProcChance = LightningStorm.BaseProcChance + skill.ProcChanceBonus;
+                // 스킬트리 "축전"(thunder_Stack) = 발동 확률 +10%p — 레벨업 "발동 확률" 카드와 같은 덧셈.
+                LightningStorm.ProcChance = LightningStorm.BaseProcChance + skill.ProcChanceBonus + MetaBonuses.ThunderProcBonus;
                 LightningStorm.ProcDamage = damage;
-                // 스킬트리 "낙뢰 버프 중첩"(thunder_Stack)이 진화 R0 T2와 같은 문을 연다 — 둘 중 하나만 있어도 켜진다.
-                LightningStorm.StackDamageEnabled = skill.PathTier[0] >= 2 || MetaBonuses.ThunderStackable;
+                LightningStorm.StackDamageEnabled = skill.PathTier[0] >= 2;
                 LightningStorm.StackDamageBonusPerStack = skill.PathTier[0] >= 3 ? 0.25f : LightningStorm.BaseStackDamageBonus;
                 // R0 2차 「초대형 축적 번개」 — 스택 15 이상이면 낙뢰가 초대형으로 바뀐다(쿨 0.5초).
                 // VFX 프리팹을 여기서 넘긴다 — Enemy 프리팹 12장에 같은 칸을 만들지 않으려고.
@@ -1154,6 +1163,7 @@ public class PlayerSkills : MonoBehaviour
         // ⚠️ 예전엔 "쿨 5초 이상 스킬은 확정 치명타"라 상한을 **건너뛰었다** — 지금은 상한 자체를 올린다.
         //    그래서 확률을 실제로 쌓아야 100%에 닿는다(레벨업이 그 몫을 준다).
         float cap = PlayerPassives.CritChanceCapOverride > 0f ? PlayerPassives.CritChanceCapOverride : MaxCritChance;
+        BotInput.OnCritChance?.Invoke(skill.Id, chance, cap); // 봇 관측(평소 null)
         return Mathf.Min(chance, cap);
     }
 
@@ -1197,6 +1207,8 @@ public class PlayerSkills : MonoBehaviour
             nextSkillDamageBonus = 0f;
         }
 
+        if (skill.Damage > 0f) BotInput.OnBaseDamage?.Invoke(skillId, damage / skill.Damage); // 봇 관측(평소 null)
+        BotInput.OnDamageShares?.Invoke(skillId, damageMultiplier, strengthDamageBonus + damageMultiplier - passiveDamageMultiplier, MetaBonuses.AccelFastSkillDamage && skill.Cooldown <= AccelFastSkillCooldown && passives != null && passives.HasPassive(PassiveSkillId.Accel) ? AccelFastSkillDamageBonus : 0f); // 봇 관측(평소 null)
         return damage;
     }
 
@@ -1689,7 +1701,9 @@ public class PlayerSkills : MonoBehaviour
 
         // 성장: 사용할수록 강해짐(이번 판 한정). 상한이 없어 판이 길수록 혼자 세진다 — 알려진 성질.
         // 0.08 → 0.05(사용자 결정 2026-09-18): 우주 어려움 한 판에 600회 안팎을 쏴서 판 끝 피해가 첫 발의 ×49까지 갔다.
-        const float growthPerCast = 0.05f;
+        // 0.05 → 0.04(사용자 결정 2026-10-01 — 진화 전 스킬 고정 규칙의 예외로 허용. 3회차: 상한 없는 누적이 호밍 과점의 공통 원인).
+        // 누적 상한은 두지 않는다(같은 날 사용자 "상한 스택은 별로") — 진화 레벨업 피해 카드도 같이 낮췄다(Evo_Homing_*).
+        const float growthPerCast = 0.04f;
         skill.GrowthStacks++;
         float missileDamage = damage * (1f + growthPerCast * skill.GrowthStacks);
 
@@ -1779,7 +1793,6 @@ public class PlayerSkills : MonoBehaviour
     // 실제로 산탄을 쏘게 해 이름값을 하게 하고, 알 개수를 레벨업 주 성장축으로 삼는다.
     // R0 2차 「내 지휘를 따라!」 — 산탄 발사를 통째로 포기하는 대신 타수 버프를 **배수**로 키운다.
     // 🔴 더하기가 아니라 곱하기다(사용자 결정 2026-09-08): Lv.1에 2배, 만렙에 3배.
-    //    스킬트리 "산탄 타수 +1"이 켜져 있으면 그 몫까지 같이 배가된다 — 의도한 결이다.
     private const float ShotgunMegaMultAtLv1 = 2f;
     private const float ShotgunMegaMultAtMax = 3f;
 
@@ -1802,11 +1815,10 @@ public class PlayerSkills : MonoBehaviour
         // 루트를 탔으므로 +2초는 늘 붙는다(R1 루트는 위에서 이미 빠져나갔다).
         // 기본 7초(5+2) — 에셋 `Prog_Shotgun.baseDuration`이 있으면 그쪽이 이긴다.
         float duration = BaseDuration(skill.Id, 5f + 2f) + skill.ExtraShotgunDuration; // 레벨업 "지속시간" 스텝
-        // 스킬트리 "산탄 타수 +1"은 버프가 주는 타수에 더해진다.
-        // ⚠️ 그래서 **R0(보너스 탄환 장착) 루트를 타야만 효과가 있다** — 바로 위 게이트에서 미진화·R1은 이미 빠져나갔다.
         // 🔴 1차 = **모든 공격에 +1**(2026-09-08 명세). 스킬을 고르지도, 배수를 곱하지도 않는다.
         // 레벨업 "버프 타수"(BonusHits)도 여기 더해진다(2026-09-29 사용자).
-        int bonus = 1 + MetaBonuses.ShotgunExtraBonusHit + skill.ExtraBonusHits;
+        // (스킬트리 "추가 장전"이 여기 +1을 얹던 효과는 2026-09-30 폐지 — 지금은 산탄 발사 피해 +10%다. FireShotgunPellets)
+        int bonus = 1 + skill.ExtraBonusHits;
         if (megaBuff)
         {
             float t = Mathf.InverseLerp(1f, BalanceConstants.MaxSkillLevel, skill.Level);
@@ -2448,7 +2460,7 @@ public class PlayerSkills : MonoBehaviour
 
     // 되감기 진화 손잡이 — 문구가 말하는 것과 1:1로 붙여 둔다(§evo.active.desc.Rewind.*).
     private const float RewindAcceleratedMult = 1.6f;      // R1 1차 "되감기가 강력해지고"
-    private const float RewindChargeDamageBonus = 0.3f;      // R0 1차 「충전 되감기」 다음 피해 +30%
+    private const float RewindChargeDamageBonus = 0.5f;      // R0 1차 「충전 되감기」 다음 피해 +50% (0.3 → 0.5, 사용자 승인 2026-10-01 — 3회차 대변인 처방)
     private const float RewindOverchargeDamageBonus = 3.5f;  // R0 2차 「과충전」 다음 피해 +350%
     private const int RewindOverchargeBonusHits = 2;        // R0 2차 "타수 +2"
     private const float RewindOverchargeCooldownMult = 2f;  // R0 2차 "그 공격의 쿨타임 2배"
@@ -2548,9 +2560,10 @@ public class PlayerSkills : MonoBehaviour
         bool applySlow = skill.PathTier[2] >= 1;
         bool applyVulnerable = skill.PathTier[2] >= 3;
 
-        // R0(화살 연계, path0): 본체를 **2개** 소환하고, 각각이 사라질 때 그 자리에 미니 회오리를 남긴다.
+        // R0(화살 연계, path0): 본체를 **3개** 소환하고, 각각이 사라질 때 그 자리에 미니 회오리를 남긴다.
         // 예전엔 시전과 동시에 미니를 흩뿌렸다 — 이제는 "큰 게 수명을 다하면 새끼가 남는다"는 2단 구조다(2026-08-06 명세).
-        int mainCount = skill.PathTier[0] >= 2 ? 2 : 1;
+        // 2 → 3(사용자 지시 2026-10-01). 2차 「회오리 생성기」도 이 본체를 같이 쓴다.
+        int mainCount = skill.PathTier[0] >= 2 ? 3 : 1;
         int miniOnExpire = skill.PathTier[0] >= 2 ? 2 : 0;
         float miniDamage = damage * MiniWhirlwindDamageRatio;   // 회오리 피해의 30%
 
@@ -2570,8 +2583,9 @@ public class PlayerSkills : MonoBehaviour
         {
             for (int i = 0; i < mainCount; i++)
             {
-                // 2개일 때만 좌우로 살짝 벌려 겹쳐 보이지 않게 한다.
-                float spread = mainCount > 1 ? (i == 0 ? -0.7f : 0.7f) : 0f;
+                // 여러 개일 때 좌우로 벌려 겹쳐 보이지 않게 한다. 가운데가 원래 자리, 이웃 간격 1.8
+                // (종전 2개 ±0.7 = 1.4 — 2026-10-01 사용자 "둘이 너무 겹쳐서 나온다, 간격을 조금 늘려줘").
+                float spread = mainCount > 1 ? (i - (mainCount - 1) * 0.5f) * WhirlwindMainSpacing : 0f;
                 Vector3 spawnPos = transform.position + Vector3.left * (0.6f - spread) + Vector3.up * 0.6f;
                 Whirlwind main = SpawnWhirlwind(spawnPos, damage, critChance, skill.Scale, applySlow, applyVulnerable, maxHitCount: 0, slowDuration: 3f, extraLifetime: skill.ExtraWhirlwindDuration, tickIntervalMult: skill.TickIntervalMult, speedMult: skill.ProjectileSpeedMultiplier);
                 // R0 본체는 높이와 상관없이 표적을 쫓는다(하늘의 비행선까지). 미니는 소멸 자리에서 원래대로 떨어진다.
@@ -2745,7 +2759,12 @@ public class PlayerSkills : MonoBehaviour
     //    🔴 2026-09-19 사용자: 볼리 수가 **레벨업 성장축**이 됐다(알 수 증가를 빼고 그 자리에 넣었다) —
     //       "투사체 1 늘어봐야 티도 안 난다"는 지적. 만렙에 2 → 4회가 된다.
     private const int ShotgunBaseVolleys = 2;
-    private static int ShotgunVolleyCount(EquippedSkill skill) => Mathf.Max(1, ShotgunBaseVolleys + skill.ExtraVolleys);
+    // 🔴 R0 1차 「보너스 탄환 장착」은 **4회 고정**(사용자 결정 2026-09-30). 진화해도 묶음 수(ExtraVolleys)가 초기화되지 않아
+    //    진화 전 카드로 쌓인 8회를 그대로 쐈다 — 이 루트의 본체는 타수 버프라 탄은 고정한다. 2차는 탄을 안 쏜다.
+    private const int BonusBulletVolleys = 4;
+    private static int ShotgunVolleyCount(EquippedSkill skill) =>
+        skill.EvolutionStage >= 1 && skill.PathTier[1] > 0 ? BonusBulletVolleys
+        : Mathf.Max(1, ShotgunBaseVolleys + skill.ExtraVolleys);
     private const float ShotgunVolleyGap = 0.25f; // 볼리 사이 간격(초)
     //    ⚠️ 이 규칙은 이제 **미진화 산탄에만** 적용된다. R1 메카 버스터(path2 T2+)는 2026-09-02에 연사로 바뀌었고,
     //       거기서는 애니메이션이 볼리마다 도는 것이 의도다(사용자 결정).
@@ -2770,7 +2789,8 @@ public class PlayerSkills : MonoBehaviour
         // 각도를 0으로 좁히는 게 핵심 — 흩어지던 화력이 정면 한 줄기에 전부 실린다.
         float spreadDegrees = skill.PathTier[2] >= 2 ? 0f : BalanceConstants.ShotgunSpreadDegrees;
         // 🔴 R1 루트의 펠릿은 그 자체가 공격이므로 진화 배수(1.3·1.6)를 없앴다 — 값은 Evo_Shotgun_R1_*.baseDamage가 정한다(2026-09-28).
-        float pelletDamage = damage;
+        // 스킬트리 "추가 장전"(shotgun_BonusHit) = 산탄 발사 피해 +10%. 부채꼴·전탄발사 둘 다 이 값을 쓴다.
+        float pelletDamage = damage * (1f + MetaBonuses.ShotgunDamageBonus);
 
         // 🔴 2차 「초강력 섬멸용 전탄발사」는 **무조건 치명타로 명중한다**(노션 UI 문구). 확률을 1로 고정한다.
         if (skill.PathTier[2] >= 3) critChance = 1f;
@@ -3091,7 +3111,7 @@ public class PlayerSkills : MonoBehaviour
     //    ⚠️ 레벨업 크기 축(skill.Scale)을 물려받지 않는다. 성장해도 알은 그대로 작다.
     private const float HomingOrbWorldSize = 0.75f;
     // 기본 개수(사용자 결정 2026-09-18: 6 → 10). 일반 오브는 관통 무한이라 "개수" 축은 추적 오브에만 있다.
-    // 레벨업·스킬트리의 "타겟 수"는 이 위에 더해진다.
+    // 레벨업의 "타겟 수"는 이 위에 더해진다.
     private const int HomingOrbBaseCount = 10;
     // 산탄 알 프리팹의 수명(2초 × 속도 5 = 10유닛)으로는 화면 왼쪽에서 오는 적까지 가지도 못하고 사라졌다.
     // 호밍 미사일의 사거리(4초 × 속도 9 ≈ 36유닛)에 맞춘다 — 속도 5로 7초.
@@ -3102,7 +3122,7 @@ public class PlayerSkills : MonoBehaviour
     //    종전 결정(2026-09-20 "물려받지 않는다")은 크기 카드가 살아 있다는 전제였다.
     private static int HomingOrbCount(EquippedSkill skill)
     {
-        int count = HomingOrbBaseCount + MetaBonuses.OrbExtraTargets + skill.ExtraTargets;
+        int count = HomingOrbBaseCount + skill.ExtraTargets;
         if (skill.PathTier[2] >= 3) count = Mathf.RoundToInt(count * 1.5f);
         return count;
     }
@@ -3486,8 +3506,12 @@ public class PlayerSkills : MonoBehaviour
 
     // 🔴 낙뢰는 **기둥 위가 아니라 기둥 둘레**에 떨어진다(8/25 빌드 검수). 기둥은 번개를 부르는 표지일 뿐이고,
     //    피해 범위가 반경 7유닛이라 한 줄기만 꽂히면 "넓게 때린다"는 게 화면에 안 보였다.
-    private const int LightningRodBoltsPerStrike = 3;
+    // 🔴 2026-09-30 사용자: 피해가 반경 전원에서 줄기 단위로 바뀌면서 줄기 수가 곧 화력이 됐다 — 3 → 6.
+    private const int LightningRodBoltsPerStrike = 6;
     private const float LightningRodBoltSpreadRatio = 0.7f; // 반경의 몇 %까지 흩뿌리나
+    // 줄기 하나가 피해를 주는 가로 반경 = 피뢰침 반경 × 이 값(기본 9.1 × 0.15 ≈ 1.4). 세로로 내리꽂는 줄기라 가로 거리만 본다.
+    // 0.25 → 0.15(사용자 승인 2026-10-01 — 3회차 판정: 적이 몰린 층에서 줄기가 겹쳐 맞아 1차 구간 지분 0.7~0.8. 폭만 줄여 밀집 층의 겹침만 덜어낸다)
+    private const float LightningRodBoltRadiusRatio = 0.15f;
     private const float LightningRodBoltScale = 1.5f;       // 프리팹(1.5배) 위에 더 키운다 — 화면을 채우는 크기
     private const float ZeusChargeDelay = 0.5f;             // Effect_ZeusStatue 6프레임 × fps6 = 1초. 내리치는 4프레임째가 0.5초
     private const float ZeusPullDistance = 1.2f;            // 낙뢰 한 틱마다 기둥 쪽으로 끌려오는 거리(유닛)
@@ -3556,6 +3580,8 @@ public class PlayerSkills : MonoBehaviour
 
         // 이 캐스트 전용 버퍼. 인스턴스 필드로 두면 쿨감으로 두 피뢰침이 겹칠 때 서로의 목록을 밟는다.
         List<Enemy> inRange = new List<Enemy>();
+        List<float> boltXs = new List<float>();
+        float boltRadius = radius * LightningRodBoltRadiusRatio;
 
         for (float elapsed = 0f; elapsed < duration; elapsed += LightningRodInterval)
         {
@@ -3575,43 +3601,51 @@ public class PlayerSkills : MonoBehaviour
                 // 타격음 — 번개가 실제로 내리치는 이 순간에만 울린다(시전 순간이 아니다).
                 SkillSfx.Play(empowered ? "Zeus.strike" : "LightningRod.strike");
 
-                // 연출과 판정을 같은 틱에 맞춘다 — 번개가 내리치는 순간 아래 루프가 피해·기절을 준다.
+                // 줄기 자리를 먼저 정한다 — 연출이 없어도(프리팹 미배선) 판정은 이 자리로 한다.
                 // ⚠️ 풀은 localScale을 되돌려 주지 않는다 — 재사용본이 옛 크기로 나오지 않게 매번 직접 넣는다.
-                if (bigThunderVfxPrefab != null)
+                boltXs.Clear();
+                for (int i = 0; i < boltsPerStrike; i++)
                 {
-                    for (int i = 0; i < boltsPerStrike; i++)
+                    float x;
+                    if (i < inRange.Count)
                     {
-                        float x;
-                        if (i < inRange.Count)
-                        {
-                            // 부분 셔플 — 같은 적에 두 줄기가 겹쳐 꽂히지 않는다.
-                            int pick = Random.Range(i, inRange.Count);
-                            Enemy swap = inRange[i]; inRange[i] = inRange[pick]; inRange[pick] = swap;
-                            x = inRange[i].transform.position.x;
-                        }
-                        else
-                        {
-                            // 적이 줄기 수보다 적으면 남는 줄기는 종전처럼 무작위 x로 — 빈 화면에 아무것도 안 뜨면
-                            // 스킬이 안 나간 것처럼 보인다.
-                            x = center.x + Random.Range(-1f, 1f) * radius * LightningRodBoltSpreadRatio;
-                        }
+                        // 부분 셔플 — 같은 적에 두 줄기가 겹쳐 꽂히지 않는다.
+                        int pick = Random.Range(i, inRange.Count);
+                        Enemy swap = inRange[i]; inRange[i] = inRange[pick]; inRange[pick] = swap;
+                        x = inRange[i].transform.position.x;
+                    }
+                    else
+                    {
+                        // 적이 줄기 수보다 적으면 남는 줄기는 무작위 x로 — 빈 화면에 아무것도 안 뜨면
+                        // 스킬이 안 나간 것처럼 보인다.
+                        x = center.x + Random.Range(-1f, 1f) * radius * LightningRodBoltSpreadRatio;
+                    }
+                    boltXs.Add(x);
+                    if (bigThunderVfxPrefab != null)
+                    {
                         GameObject bolt = ObjectPool.Instance.Spawn(bigThunderVfxPrefab, new Vector3(x, boltCenterY, 0f), Quaternion.identity);
                         if (bolt != null) bolt.transform.localScale = boltScale;
                     }
                 }
 
-                // 🔴 판정은 그대로 **반경 안 전원 AoE**다(사용자 확인) — 줄기가 꽂힌 적만 맞는 게 아니다.
-                for (int i = 0; i < inRange.Count; i++)
+                // 🔴 판정은 **줄기가 떨어진 자리마다** 한다(사용자 결정 2026-09-30 — 9/27에 확인했던 "반경 안 전원 광역"을 대체).
+                //    줄기 둘 이상의 범위에 겹친 적은 겹친 만큼 전부 맞는다(사용자 지시) — 낙뢰 수 카드가 곧 화력이다.
+                //    피뢰침 반경 밖의 적은 줄기 범위 안이어도 맞지 않는다(inRange만 본다).
+                foreach (float bx in boltXs)
                 {
-                    Enemy e = inRange[i];
-                    if (e == null || !e.IsAlive) continue;
+                    for (int i = 0; i < inRange.Count; i++)
+                    {
+                        Enemy e = inRange[i];
+                        if (e == null || !e.IsAlive) continue;
+                        if (Mathf.Abs(e.transform.position.x - bx) > boltRadius) continue;
 
-                    float hit = PlayerPassives.ApplyCrit(damage * ratio, critChance, out bool isCrit);
-                    e.TakeDamage(hit, isLightningProc: true, isCrit: isCrit, source: ActiveSkillId.Lightning,
-                                 rollLightning: false, statusIcon: StatusIconLibrary.Stun);
-                    if (e != null && e.IsAlive) e.ApplyStun(LightningRodStun);
-                    // 2차 「제우스의 은총」 — 노션 문구 "낙뢰를 떨굴 때마다 **피뢰침 쪽으로 적들을 끌어당긴다**".
-                    if (empowered && e != null && e.IsAlive) e.ApplyPullTowardX(center.x, ZeusPullDistance);
+                        float hit = PlayerPassives.ApplyCrit(damage * ratio, critChance, out bool isCrit);
+                        e.TakeDamage(hit, isLightningProc: true, isCrit: isCrit, source: ActiveSkillId.Lightning,
+                                     rollLightning: false, statusIcon: StatusIconLibrary.Stun);
+                        if (e != null && e.IsAlive) e.ApplyStun(LightningRodStun);
+                        // 2차 「제우스의 은총」 — 노션 문구 "낙뢰를 떨굴 때마다 **피뢰침 쪽으로 적들을 끌어당긴다**".
+                        if (empowered && e != null && e.IsAlive) e.ApplyPullTowardX(center.x, ZeusPullDistance);
+                    }
                 }
                 inRange.Clear(); // 죽은 적 참조를 틱 사이에 붙들고 있지 않게
             }

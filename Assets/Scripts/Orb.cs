@@ -50,7 +50,7 @@ public class Orb : MonoBehaviour
         // 🔴 기본 오브에는 **수명도 관통 예산도 없다**(2026-09-27 사용자: "지속시간이나 관통력 다 없애고
         //    그냥 방패 블루베리 아니면 맵 끝까지 무조건 가게"). 소멸 경로는 ① 방패에 막힘 ② 맵 밖으로 나감 둘뿐이다.
         // 🔴 단 초대형 오브(LifetimeOverride > 0)에서는 지속시간이 **명세된 대가**다("대신 지속시간이 있다").
-        if (LifetimeOverride > 0f) Destroy(gameObject, LifetimeOverride * MetaBonuses.DurationMult);
+        if (LifetimeOverride > 0f) Destroy(gameObject, LifetimeOverride);
 
         // 화면 왼쪽 경계보다 이만큼 더 나가면 소멸. 여유(DespawnMargin)가 필요하다 —
         // ScreenShake가 카메라 x를 최대 0.12유닛 흔들어서, 딱 경계로 잡으면 화면 안에서 사라지는 프레임이 생긴다.

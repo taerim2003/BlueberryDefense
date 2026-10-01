@@ -1020,7 +1020,7 @@ public class Enemy : MonoBehaviour
         if (isBoss) actualDamage *= 1f + MetaBonuses.BossDamageBonus;
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
-        BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage);
+        BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage, isCrit, amount);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
         SpawnHitParticles(actualDamage, statusIcon);
         SfxPlayer.Play(SfxId.EnemyHit); // 광역기로 여러 마리를 동시에 때려도 AudioThrottle이 프레임당 한 번으로 묶는다
@@ -1104,6 +1104,7 @@ public class Enemy : MonoBehaviour
             // ⚠️ 예전엔 "독수리 투하 시전마다 즉시 XP"였다 — 문구가 바뀌면서 대상이 통째로 옮겨갔다.
             if (source == ActiveSkillId.Homing) xpMult *= PlayerPassives.HomingKillXpMultiplier;
             int grantedXp = Mathf.RoundToInt(xpValue * xpMult);
+            BotInput.OnKillXp?.Invoke(this, xpValue, isCrit, source); // 봇 관측(평소 null)
             // 경험치 보석이 경험치 바까지 날아가 도착하는 순간 적립된다. 연출이 불가능하면(HUD 없는 씬 등) 즉시 적립.
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);

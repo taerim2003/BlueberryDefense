@@ -29,6 +29,7 @@ public class BotResumeState
     public string campaignKeyPrefix;   // 최초 세션 id — 여러 세션에 걸친 캠페인을 분석기가 하나로 묶는 키
     public int nextProbeIndex;
     public int nextGymIndex;           // 시험장: 다음에 돌 셀 번호(셀은 초 단위라 경계에서 거의 즉시 비킨다)
+    public int nextExpeditionIndex;    // 원정: 다음에 돌 (항목×판) 번호
     public int campaign;
     public bool campaignStarted;
     public int[] attempts;
@@ -47,6 +48,7 @@ public class BotConfig
     public string label = "run";
     // campaign = 빈 세이브에서 정주행 · probe = 고정 트리에서 목표×캐릭터 측정 · audit = 쿨 감사만
     // gym = 스킬 시험장(고정 상태 × 고정 시나리오로 스킬끼리 비교. G5 전용 — 난이도는 안 잰다)
+    // expedition = 2차 진화 원정(고정 로드아웃으로 목표 진화까지 정주행. G5의 주 측정 — balance-loop 스킬)
     public string mode = "campaign";
 
     // ── campaign ──
@@ -88,6 +90,14 @@ public class BotConfig
     public int gymReloadEveryCells = 0;   // >0이면 N셀마다 씬을 다시 로드해 누수를 떨어낸다(0 = 안 함)
     public string gymMap = "Map_Wide15";  // 무대. 적 세기는 시나리오가 선언하므로 맵은 크기·레인만 준다
     public int gymAscension = 1;
+
+    // ── expedition (2차 진화 원정 — 고정 로드아웃, balance-loop 스킬) ──
+    public string expeditionLoadouts = "Tools/BotPlaytest/expedition_loadouts.json"; // 프로젝트 루트 기준
+    public string[] expeditionItems;      // 로드아웃 id 필터("BasicAttack_R0"). 비면 전 항목
+    public int expeditionRuns = 3;        // 항목당 판 수
+    public string expeditionMap = "Map_BlueberryField"; // 한 회차 = 맵 하나(회차마다 바꾼다)
+    public int expeditionAscension = 3;
+    public float expeditionTreeRatio = 0.7f; // 기준 트리 — 농장 0.7 · 해변 0.85 · 우주 1.0 (balance-loop)
 
     // ── 공통 ──
     public bool runAudit = true;          // 세션 시작에 쿨 감사(cooldowns.json)를 같이 뽑는다

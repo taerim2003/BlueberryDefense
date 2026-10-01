@@ -44,7 +44,6 @@ public class MetaRunApplier : MonoBehaviour
     private void ApplyRuntimeBonuses()
     {
         MetaBonuses.CooldownMult = 1f - 0.01f * totals.CdReducePct;
-        MetaBonuses.DurationMult = 1f + 0.01f * totals.DurationPct;
         MetaBonuses.RegenPer5s = totals.RegenPer5s;
         MetaBonuses.CritBonus = 0.01f * totals.CritPct;
         MetaBonuses.CritDamageBonus = 0.01f * totals.CritDmgPct;
@@ -69,11 +68,10 @@ public class MetaRunApplier : MonoBehaviour
         MetaBonuses.ArrowExtraPierce = totals.ArrowPierce;
         MetaBonuses.SwingKnockbackMult = totals.SwingKnockbackMult;
         MetaBonuses.OrbSlowUnlocked = totals.OrbSlowUnlocked;
-        MetaBonuses.OrbExtraTargets = totals.OrbTargets;
         MetaBonuses.OrbPiercesShields = totals.OrbPiercesShields;
         MetaBonuses.EagleExtraDrops = totals.EagleDrops;
-        MetaBonuses.ThunderStackable = totals.ThunderStack;
-        MetaBonuses.ShotgunExtraBonusHit = totals.ShotgunBonusHit;
+        MetaBonuses.ThunderProcBonus = 0.01f * totals.ThunderProcPct;
+        MetaBonuses.ShotgunDamageBonus = 0.01f * totals.ShotgunDmgPct;
         MetaBonuses.ShotgunCritBonus = 0.01f * totals.ShotgunCritPct;
         MetaBonuses.SnipingCritBonus = 0.01f * totals.SnipingCritPct;
         MetaBonuses.HomingCooldownCut = totals.HomingCdCut;

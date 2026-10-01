@@ -45,13 +45,14 @@ public class PlayerPassives : MonoBehaviour
     public static float RefreshChance = 0f;
     public static float AssassinateKillXpMultiplier = 1f; // 암살 연계 path1: 치명타 처치 시 경험치 배율
     public static float RefreshHealOnResetAmount = 0f; // 리프레쉬 연계 path1: 쿨타임 초기화시 회복량
-    public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path3 T2+: 낙뢰 발동시 전체 쿨타임 감소 확률
-    public static float BuffSkillCooldownMult = 1f; // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
+    // ⚠️ 아래 둘은 폐지된 리프레쉬 패시브의 path2 효과(case (Refresh, 2, 1)·(Refresh, 2, 2)) — 치트 창으로만 도달한다.
+    public static float RefreshLightningCooldownProcChance = 0f; // (Refresh, 2, 2): 낙뢰 발동시 전체 쿨타임 감소 확률
+    public static float BuffSkillCooldownMult = 1f; // (Refresh, 2, 1): 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
     // 피격 시 받은 피해의 이 배수를 전체 적에게 되돌려준다.
     // ⚠️ 예전엔 건강 path2("가시 갑주")가 이걸 켰지만, 2026-08-06 명세에서 **방어 path2**로 옮겨졌다
     //    (건강 path2는 하트 드랍으로 교체). 소비처는 HandleDamageTaken 한 곳뿐이라 필드는 그대로 쓴다.
     public static float HealthRetaliationMultiplier = 0f;
-    // 힘 연계 path2("완력/괴력"): **Q키에 할당된 스킬** 전용 추가 피해 배율.
+    // 힘 R1 「생활 근육」(path2): **Q키에 할당된 스킬** 전용 추가 피해 배율.
     // ⚠️ 예전엔 기본공격(화살 쏘기) 고정이었는데 2026-08-07 명세대로 슬롯 기준으로 바꿨다.
     //    Q는 슬롯 이름이 아니라 **가장 먼저 얻은 스킬**에 붙는다(PlayerSkills.AcquireSkill) —
     //    화살 쏘기로 시작하지 않는 캐릭터(파인애플=휘두르기)에선 대상이 달라진다.
@@ -173,6 +174,7 @@ public class PlayerPassives : MonoBehaviour
     //    보호막으로 다 막은 타격은 반사도 자동 휘두르기도 안 나간다(의도, PlayerHealth.TakeDamage 참고).
     private void HandleDamageTaken(int amount)
     {
+        BotInput.OnPlayerDamageTaken?.Invoke(amount); // 봇 관측(평소 null) — 반응이 돌기 전 쿨 상태를 재야 해서 맨 앞
         // 방어 path2(건강 연계): 받은 피해의 배수를 전체 적에게 되돌려준다.
         if (HealthRetaliationMultiplier > 0f)
         {
@@ -202,6 +204,7 @@ public class PlayerPassives : MonoBehaviour
     public static float ApplyCrit(float damage, float critChance, out bool isCrit)
     {
         isCrit = critChance > 0f && Random.value < critChance;
+        BotInput.OnCritRoll?.Invoke(critChance); // 봇 관측(평소 null)
         // 스킬트리 "치명타 피해" 노드는 여기서 더한다 — AssassinateCritMultiplier 자체를 올리면
         // ResetRunState가 판마다 3f로 되돌려 놓아서 적용 순서에 따라 사라진다.
         return isCrit ? damage * (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus) : damage;
