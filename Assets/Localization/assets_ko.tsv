@@ -87,7 +87,7 @@ tree.name.exp_5	경험 V
 tree.name.knowledge_BaseXp	지식 단련
 tree.desc.knowledge_BaseXp	<지식> 획득 시 기본 경험치 증가 +10%
 tree.name.knowledge_EvoHint	진화의 예감
-tree.desc.knowledge_EvoHint	<지식> 보유 시 레벨업 선택지에 보유 스킬의 진화 조건이 표시된다
+tree.desc.knowledge_EvoHint	레벨업 선택지에 진화 조건 표시
 tree.name.New_Evolution	진화 해금
 tree.desc.New_Evolution	스킬 1차 진화를 할 수 있게 된다
 tree.name.arrow_Pierce	관통 화살

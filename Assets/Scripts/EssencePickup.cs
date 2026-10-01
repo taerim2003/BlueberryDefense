@@ -47,25 +47,37 @@ public class EssencePickup : MonoBehaviour
             flyDir = new Vector3(Mathf.Cos(ang), Mathf.Sin(ang), 0f);
         }
 
-        homingTimer += Time.deltaTime;
-        currentSpeed = Mathf.Min(currentSpeed + homingAcceleration * Time.deltaTime, homingSpeed);
+        // 날아오는 구간만 한 프레임에 FlightSteps번 진행한다 — 곡선 모양은 그대로, 도착 시간이 1/FlightSteps
+        // (2026-10-01 사용자: 빨려드는 속도 2배). homingSpeed만 올리면 선회는 그대로라 곡선이 넓게 휘고
+        // 한 걸음이 커져 흡수 반경을 건너뛸 수 있다. 쪼개 진행하면 한 걸음 크기도 지금과 같다.
+        for (int i = 0; i < FlightSteps; i++)
+            if (StepHoming(Time.deltaTime)) return;
+    }
+
+    private const int FlightSteps = 2;
+
+    // 한 걸음 진행. 흡수했으면 true(이 오브젝트는 파괴된다).
+    private bool StepHoming(float dt)
+    {
+        homingTimer += dt;
+        currentSpeed = Mathf.Min(currentSpeed + homingAcceleration * dt, homingSpeed);
         Vector3 targetPos = target.position;
 
         // 선회 속도는 시간이 갈수록 커진다 — 곡선으로 출발하되 반드시 플레이어에게 도착하도록.
         Vector3 desired = (targetPos - transform.position).normalized;
-        float turnRad = (curveTurnDegPerSec + 400f * homingTimer) * Mathf.Deg2Rad * Time.deltaTime;
+        float turnRad = (curveTurnDegPerSec + 400f * homingTimer) * Mathf.Deg2Rad * dt;
         flyDir = Vector3.RotateTowards(flyDir, desired, turnRad, 0f).normalized;
-        transform.position += flyDir * (currentSpeed * Time.deltaTime);
+        transform.position += flyDir * (currentSpeed * dt);
 
-        if (Vector3.Distance(transform.position, targetPos) <= absorbDistance)
-        {
-            MetaRun.Collect(amount);
-            SfxPlayer.Play(SfxId.EssencePickup);
+        if (Vector3.Distance(transform.position, targetPos) > absorbDistance) return false;
 
-            if (absorbVfxPrefab != null)
-                ObjectPool.Instance.SpawnTimed(absorbVfxPrefab, targetPos, 2f);
+        MetaRun.Collect(amount);
+        SfxPlayer.Play(SfxId.EssencePickup);
 
-            Destroy(gameObject);
-        }
+        if (absorbVfxPrefab != null)
+            ObjectPool.Instance.SpawnTimed(absorbVfxPrefab, targetPos, 2f);
+
+        Destroy(gameObject);
+        return true;
     }
 }

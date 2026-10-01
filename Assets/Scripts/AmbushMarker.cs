@@ -38,12 +38,30 @@ public class AmbushMarker : MonoBehaviour
         m.sr = go.AddComponent<SpriteRenderer>();
         m.sr.sprite = GetSprite();
         m.sr.sortingOrder = SortingOrder;
+        // 🔴 생성한 프레임에도 제 모습으로 그려야 한다 — 새로 붙인 컴포넌트의 Update는 **다음 프레임부터** 돈다.
+        //    그 한 프레임 동안 기본값(흰색·알파 1·scale 1 = 지름 2유닛 원)이 그대로 그려져 하얀 원이 번쩍였다
+        //    (2026-10-01 사용자: 빌드에서 드문드문 하얀 원 점멸. 에디터는 프레임이 짧아 거의 안 보였다).
+        m.ApplyVisual();
         return m;
     }
 
     private void Update()
     {
         timer += Time.deltaTime;
+        ApplyVisual();
+
+        if (timer >= duration)
+        {
+            Action fire = onFire;
+            onFire = null; // 파괴 지연으로 Update가 한 번 더 돌더라도 두 번 터지지 않게
+            Destroy(gameObject);
+            fire?.Invoke();
+        }
+    }
+
+    // 지금 timer에 맞는 크기·색·깜빡임.
+    private void ApplyVisual()
+    {
         float t = Mathf.Clamp01(timer / duration);
 
         float scale = Radius * Mathf.Lerp(StartScaleRatio, 1f, Mathf.SmoothStep(0f, 1f, t));
@@ -56,14 +74,6 @@ public class AmbushMarker : MonoBehaviour
         Color c = Color.Lerp(EarlyColor, LateColor, t);
         c.a = Mathf.Lerp(AlphaMin, AlphaMax, blink) * Mathf.Lerp(0.6f, 1f, t);
         sr.color = c;
-
-        if (timer >= duration)
-        {
-            Action fire = onFire;
-            onFire = null; // 파괴 지연으로 Update가 한 번 더 돌더라도 두 번 터지지 않게
-            Destroy(gameObject);
-            fire?.Invoke();
-        }
     }
 
     // 가장자리로 갈수록 진해지는 표적 원. PPU 32·Point 필터라 다른 도트와 같은 픽셀 밀도로 보인다.

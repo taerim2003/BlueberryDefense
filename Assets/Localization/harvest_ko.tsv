@@ -117,7 +117,7 @@ evo.name.Strength.1.1	생활 근육
 passive.name.Health	건강
 evo.passive.desc.Health.0.1	체력이 더욱 빠르게 증가한다.
 evo.name.Health.0.1	강건함
-evo.passive.desc.Health.1.1	체력 회복 아이템이 3배 자주 출현한다.
+evo.passive.desc.Health.1.1	체력 회복 아이템이 6배 자주 출현한다.
 evo.name.Health.1.1	풍요
 passive.name.Knowledge	지식
 evo.passive.desc.Knowledge.0.1	일정 확률로 블루베리가 보물상자 블루베리로 변화해 등장한다.

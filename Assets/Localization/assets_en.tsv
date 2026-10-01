@@ -93,7 +93,7 @@ tree.name.exp_5	Experience V
 tree.name.knowledge_BaseXp	Knowledge Training
 tree.desc.knowledge_BaseXp	<Knowledge> starts with +10% experience gain
 tree.name.knowledge_EvoHint	Evolution Insight
-tree.desc.knowledge_EvoHint	While you have <Knowledge>, level-up choices show the evolution requirements of your skills
+tree.desc.knowledge_EvoHint	Level-up choices show evolution requirements
 tree.name.New_Evolution	Unlock Evolution
 tree.desc.New_Evolution	Skills can now reach Evolution 1
 tree.name.arrow_Pierce	Piercing Arrow

@@ -476,7 +476,7 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Health, 1, 1):
                 if (health != null) health.IncreaseMaxHealth(Mathf.RoundToInt(health.MaxHealth * HealthSturdyBase));
                 break;
-            // 건강 R1 「풍요」 — 체력 회복 아이템이 **3배** 자주 나온다. 레벨마다 더 잦아져 만렙에 5~6배.
+            // 건강 R1 「풍요」 — 체력 회복 아이템이 **6배** 자주 나온다(2026-10-01 사용자: 3배 → 6배). 레벨마다 더 잦아져 만렙에 9배.
             // ⚠️ 예전엔 1차 최종값이 5배였다(T1 3 → T2 5). 문구가 "3배"로 확정돼 T2 덮어쓰기를 걷어냈다.
             case (PassiveSkillId.Health, 2, 1): HeartDropMultiplier = HeartDropBase; break;
 
@@ -532,8 +532,8 @@ public class PlayerPassives : MonoBehaviour
     //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
     //    가른 것이 트리도 맵도 아니라 "이 패시브를 뽑았나"였다. 10%면 만렙 약 ×2.6이다.
     private const float HealthSturdyPerLevel = 0.1f;   //          레벨마다 최대체력 +10%(현재 최대치 기준 = 복리)
-    private const float HeartDropBase = 3f;            // 건강 R1: 회복템 3배
-    private const float HeartDropPerLevel = 0.3f;      //          진화 시 1회 + 레벨업 9회 = 만렙 6.0배
+    private const float HeartDropBase = 6f;            // 건강 R1: 회복템 6배(2026-10-01 사용자: 3 → 6. 문구 evo.passive.desc.Health.1.1과 짝)
+    private const float HeartDropPerLevel = 0.3f;      //          진화 시 1회 + 레벨업 9회 = 만렙 9.0배
     private const float HomingKillXpBase = 2f;         // 지식 R1: 호밍 처치 경험치 2배
     private const float HomingKillXpPerLevel = 0.15f;  //          진화 시 1회 + 레벨업 9회 = 만렙 3.5배
     private const float AssassinCertainCritPerLevel = 0.03f; // 암살 R1: 레벨마다 치명타 확률 +3%p(상한이 100%로 열려 있다)

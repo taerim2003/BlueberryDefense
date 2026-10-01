@@ -83,7 +83,8 @@ public class UIFocusGroup
             return;
         }
 
-        if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)
+        if (!ShortcutModifierHeld(kb)
+            && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame))
             Submit();
 
         // 키보드로 옮긴 뒤 마우스를 **움직이면** 커서 밑 칸으로 포커스를 되돌린다.
@@ -101,6 +102,31 @@ public class UIFocusGroup
     }
 
     private bool pointerDropped;
+
+    // ── 조합키를 누른 채 들어온 Enter·Space는 "누르기"가 아니다 ─────────────────────
+    // 🔴 Alt+Enter(전체화면 전환)를 눌렀더니 일시정지 창의 **포기**가 눌려 게임오버가 됐다(2026-10-01 사용자).
+    //    커서가 포기 위에 있으면 포커스가 거기로 옮겨 가 있고, Windows가 전체화면을 바꾸는 동안 Enter는 게임에도 들어온다.
+    //    Alt·Ctrl·Win은 OS·앱 단축키로 쓰이는 키라(Alt+Enter·Alt+Space·Win+Space…) 누르고 있는 동안은 확정 입력을 버린다.
+    public static bool ShortcutModifierHeld(Keyboard kb) =>
+        kb != null && (kb.altKey.isPressed || kb.ctrlKey.isPressed || kb.leftMetaKey.isPressed || kb.rightMetaKey.isPressed);
+
+    // 유니티 기본 UI 입력(EventSystem·DefaultInputActions)도 Enter를 Submit으로 받는다 — 마우스로 누른 버튼이
+    // **선택된 채 남아** 있다가 그 창이 다시 열리면 Enter가 그 버튼을 누른다. 그래서 조합키를 누르는 동안엔
+    // 입력 갱신 직후(EventSystem이 처리하기 전)에 선택을 비운다. 이 게임은 EventSystem의 선택·내비게이션을
+    // 쓰지 않고(키보드 이동은 이 클래스가 한다) 글자 입력칸도 없어서 비워도 잃는 게 없다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void HookShortcutGuard()
+    {
+        InputSystem.onAfterUpdate -= ClearSelectionWhileModifierHeld; // 도메인 리로드를 끈 설정에서 중복 구독 방지
+        InputSystem.onAfterUpdate += ClearSelectionWhileModifierHeld;
+    }
+
+    private static void ClearSelectionWhileModifierHeld()
+    {
+        EventSystem es = EventSystem.current;
+        if (es != null && es.currentSelectedGameObject != null && ShortcutModifierHeld(Keyboard.current))
+            es.SetSelectedGameObject(null);
+    }
 
     private void DropPointerHover()
     {

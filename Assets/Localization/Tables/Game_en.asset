@@ -700,7 +700,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006302
-    m_Localized: Health pickups appear three times as often.
+    m_Localized: Health pickups appear six times as often.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006314
@@ -1720,8 +1720,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594542
-    m_Localized: While you have <Knowledge>, level-up choices show the evolution
-      requirements of your skills
+    m_Localized: Level-up choices show evolution requirements
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594543

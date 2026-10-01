@@ -87,7 +87,7 @@ tree.name.exp_5	经验 V
 tree.name.knowledge_BaseXp	知识修炼
 tree.desc.knowledge_BaseXp	获得<知识>时，基础经验获取 +10%
 tree.name.knowledge_EvoHint	进化的预感
-tree.desc.knowledge_EvoHint	拥有<知识>时，升级选项中会显示已有技能的进化条件
+tree.desc.knowledge_EvoHint	升级选项显示进化条件
 tree.name.New_Evolution	解锁进化
 tree.desc.New_Evolution	技能可以进行一阶进化
 tree.name.arrow_Pierce	穿透之箭

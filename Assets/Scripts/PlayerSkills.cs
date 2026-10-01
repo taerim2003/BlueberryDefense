@@ -2067,6 +2067,7 @@ public class PlayerSkills : MonoBehaviour
         //    기본 반경에서는 포도 캐릭터 키(GrapeSpotMinGap)다. 2026-09-27에 비례를 걷어냈던 이유
         //    ("안개가 커질수록 알이 화면 밖까지 흩어진다")는 아래 ClampGrapeSpot이 화면 안으로 잘라서 막는다.
         float minGap = GrapeSpotMinGap * (radius / GrapeCloudRadius);
+        Rect area = GrapeArea(radius, playerX);
 
         for (int i = 0; i < count; i++)
         {
@@ -2075,7 +2076,7 @@ public class PlayerSkills : MonoBehaviour
             {
                 spots.Add(SpreadGrapeSpot(
                     transform.position + new Vector3(Random.Range(-7f, -2f), Random.Range(-1.5f, 1.5f), 0f),
-                    spots, minGap));
+                    spots, minGap, area));
                 continue;
             }
 
@@ -2086,7 +2087,7 @@ public class PlayerSkills : MonoBehaviour
             float bestClearance = float.NegativeInfinity;
             foreach (Enemy e in alive)
             {
-                Vector3 cand = LeadGrapeTarget(e, playerX);
+                Vector3 cand = ClampGrapeSpot(LeadGrapeTarget(e, playerX), area);
                 float clearance = float.PositiveInfinity;
                 foreach (Vector3 s in spots)
                     clearance = Mathf.Min(clearance, Vector2.Distance(s, cand));
@@ -2095,48 +2096,92 @@ public class PlayerSkills : MonoBehaviour
 
             // 다 붙어 있어 어디를 골라도 겹치면, 적이 없는 자리로 밀어낸다.
             // "적이 없는 곳이어도 괜찮으니 최대한 적과 가까우면서" — 가장 가까운 후보에서 최소한만 비켜선다.
-            spots.Add(SpreadGrapeSpot(best, spots, minGap));
+            spots.Add(SpreadGrapeSpot(best, spots, minGap, area));
         }
-        for (int i = 0; i < spots.Count; i++) spots[i] = ClampGrapeSpot(spots[i], radius, playerX);
         return spots;
     }
 
-    // 던지는 자리를 화면 안(가장자리 여백 = 안개 반경의 절반)과 플레이어 앞으로 자른다.
-    // 간격이 안개 크기를 따라 커지면서 밀려난 알이 화면 밖에 떨어지는 것을 막는다.
-    private static Vector3 ClampGrapeSpot(Vector3 p, float radius, float playerX)
+    private EnemySpawner laneSpawner; // 레인 기준선(스포너 y)을 읽으려고 둔다. 맵 배율이 스포너를 옮기므로 y는 던질 때마다 읽는다
+
+    // 포도알이 터질 수 있는 칸 = **적이 있을 수 있는 칸**(사용자 지시 2026-10-01: 플레이어 오른쪽·레인 아래에서 터지지 않게).
+    //   가로: 화면 왼쪽(여백 = 안개 반경의 절반) ~ 적 정지선(Enemy.ClampInsideArena와 같은 선 — 그 오른쪽엔 적이 못 간다)
+    //   세로: 레인 기준선(지상 적이 서는 가장 낮은 높이) ~ 화면 위(여백). 날아다니는 적은 전부 기준선보다 위에 있다.
+    // 간격이 안개 크기를 따라 커지면서 밀려난 알이 화면 밖에 떨어지는 것도 이걸로 막는다.
+    // ⚠️ 막는 건 터지는 **자리**다 — 안개 원은 거기서 반경만큼 퍼지므로 아래쪽 절반은 여전히 레인 밑에 깔린다.
+    private Rect GrapeArea(float radius, float playerX)
     {
         Camera cam = Camera.main;
-        if (cam == null) return p;
+        if (cam == null) return Rect.MinMaxRect(float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        if (laneSpawner == null) laneSpawner = FindAnyObjectByType<EnemySpawner>();
+
         float halfH = cam.orthographicSize, halfW = halfH * cam.aspect;
         float margin = radius * 0.5f;
         Vector3 c = cam.transform.position;
-        float maxX = Mathf.Min(c.x + halfW - margin, playerX);
-        p.x = Mathf.Clamp(p.x, c.x - halfW + margin, Mathf.Max(c.x - halfW + margin, maxX));
-        p.y = Mathf.Clamp(p.y, c.y - halfH + margin, c.y + halfH - margin);
+        float xMin = c.x - halfW + margin;
+        float xMax = Mathf.Max(xMin, Mathf.Min(c.x + halfW - margin, playerX - BalanceConstants.ContactStopDistance));
+        float yMin = c.y - halfH + margin;
+        if (laneSpawner != null) yMin = Mathf.Max(yMin, laneSpawner.transform.position.y - BalanceConstants.EnemySpawnYJitter);
+        float yMax = Mathf.Max(yMin, c.y + halfH - margin);
+        return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+    }
+
+    private static Vector3 ClampGrapeSpot(Vector3 p, Rect area)
+    {
+        p.x = Mathf.Clamp(p.x, area.xMin, area.xMax);
+        p.y = Mathf.Clamp(p.y, area.yMin, area.yMax);
         return p;
     }
 
-    // 이미 고른 자리들에서 minGap만큼 떨어질 때까지 **가장 가까운 자리에서 밀어낸다**.
-    // 옮기는 거리를 최소로 두어 원래 노리던 지점(적 무리) 근처에 남는다.
-    private static Vector3 SpreadGrapeSpot(Vector3 want, List<Vector3> taken, float minGap)
+    private static bool GrapeSpotClear(Vector3 p, List<Vector3> taken, float minGap)
     {
-        for (int pass = 0; pass < 8; pass++)
-        {
-            int worst = -1;
-            float worstDist = minGap;
-            for (int i = 0; i < taken.Count; i++)
-            {
-                float d = Vector2.Distance(taken[i], want);
-                if (d < worstDist) { worstDist = d; worst = i; }
-            }
-            if (worst < 0) break;   // 전부 minGap 밖 — 끝
+        foreach (Vector3 t in taken)
+            if (Vector2.Distance(t, p) < minGap) return false;
+        return true;
+    }
 
-            Vector2 away = (Vector2)(want - taken[worst]);
-            // 정확히 겹쳐 방향이 없으면 아무 방향으로나 뗀다(0벡터를 정규화하면 0이 되어 영영 안 벌어진다).
-            if (away.sqrMagnitude < 0.0001f) away = Random.insideUnitCircle.normalized;
-            want = taken[worst] + (Vector3)(away.normalized * minGap);
-        }
-        return want;
+    // 이미 고른 자리들과 minGap만큼 떨어진 자리를 **칸 안에서** 찾는다. 옮기는 거리를 최소로 두어
+    // 원래 노리던 지점(적 무리) 근처에 남는다.
+    // 🔴 칸으로 자르는 건 **벌린 뒤가 아니라 벌리면서** 한다 — 벌린 뒤에 자르면 밀려난 알들이 정지선·레인 끝에
+    //    도로 몰려 서로 겹친다(2026-10-01 실측: 자른 뒤 겹침이 매 투척에서 났다).
+    private static Vector3 SpreadGrapeSpot(Vector3 want, List<Vector3> taken, float minGap, Rect area)
+    {
+        want = ClampGrapeSpot(want, area);
+        if (GrapeSpotClear(want, taken, minGap)) return want;
+
+        // 이미 고른 자리마다 그 둘레(minGap 원)를 돌며, 칸 안이면서 아무와도 안 겹치는 점 중 원래 자리에 가장 가까운 점.
+        const int Steps = 24;
+        bool found = false;
+        Vector3 best = want;
+        float bestDist = float.PositiveInfinity;
+        foreach (Vector3 t in taken)
+            for (int k = 0; k < Steps; k++)
+            {
+                float a = k * (Mathf.PI * 2f / Steps);
+                Vector3 cand = t + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * (minGap * 1.001f);
+                if (!area.Contains(cand) || !GrapeSpotClear(cand, taken, minGap)) continue;
+                float d = Vector2.Distance(cand, want);
+                if (d < bestDist) { bestDist = d; best = cand; found = true; }
+            }
+        if (found) return best;
+
+        // 칸이 꽉 차 minGap을 지킬 자리가 없으면(안개가 아주 클 때 — 칸 높이가 레인~화면 위 약 5유닛뿐이다)
+        // 칸 안을 격자로 훑어 **이미 고른 자리들과 가장 멀리 떨어진 점**을 고른다. 겹침은 감수하되 한 점에 쌓이지 않게.
+        // (밀어낸 뒤 칸으로 자르던 종전 방식은 칸 모서리에 알이 겹쳐 쌓였다 — 2026-10-01 실측 최소 간격 0.00)
+        if (float.IsInfinity(area.width) || float.IsInfinity(area.height)) return want; // 카메라가 없어 칸이 무한 — 격자를 못 깐다
+        const int GridX = 24, GridY = 12;
+        float bestClear = float.NegativeInfinity;
+        for (int ix = 0; ix <= GridX; ix++)
+            for (int iy = 0; iy <= GridY; iy++)
+            {
+                Vector3 cand = new Vector3(Mathf.Lerp(area.xMin, area.xMax, ix / (float)GridX),
+                                           Mathf.Lerp(area.yMin, area.yMax, iy / (float)GridY), want.z);
+                float clear = float.PositiveInfinity;
+                foreach (Vector3 t in taken) clear = Mathf.Min(clear, Vector2.Distance(t, cand));
+                // 거의 같은 여유면 원래 노리던 자리에 가까운 쪽(적 무리 쪽)
+                if (clear > bestClear + 0.01f || (clear > bestClear - 0.01f && Vector2.Distance(cand, want) < Vector2.Distance(best, want)))
+                { bestClear = clear; best = cand; }
+            }
+        return best;
     }
 
     // 착탄 시점의 위치를 미리 짚는다 — 포도알은 GrapeFlightTime만큼 날아가는데 그동안 적이 걸어 나가
