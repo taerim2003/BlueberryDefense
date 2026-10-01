@@ -510,8 +510,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Defense, 2, 1): HealthRetaliationMultiplier = DefenseThornsBase; break;
 
             // 가속 R0 「리프레쉬」 — 폐지된 리프레쉬의 "쿨타임 초기화"를 물려받는다(PlayerSkills.TryUseSkill이 소비).
-            case (PassiveSkillId.Accel, 1, 1): RefreshChance += 0.10f; break;
-            case (PassiveSkillId.Accel, 1, 2): RefreshChance += 0.08f; break;
+            // 🔴 진화 순간 = 정확히 10%(2026-10-01 사용자). 1차 진화는 T1·T2를 둘 다 밟고(LegacyTiersFor) 진화 도약으로
+            //    레벨업 1회분(+2%p, ApplyEvolvedLevelBonus)이 더 붙으므로 여기는 8%만 준다. 종전엔 10 + 8 + 2 = 20%였다.
+            case (PassiveSkillId.Accel, 1, 1): RefreshChance += 0.08f; break;
             // 가속 R1 「고통 가속」 — 맞을 때마다 전체 쿨타임이 앞당겨진다.
             case (PassiveSkillId.Accel, 2, 1): AccelCooldownCutOnHit += 0.5f; break;
         }
@@ -523,7 +524,7 @@ public class PlayerPassives : MonoBehaviour
     //    "다 찍으면 엄청난 체력을 가질 수 있게" 같은 요구가 여기서 만들어진다.
     //    루트를 안 탄 패시브(EvolutionStage 0)는 걸리지 않는다.
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
-    // 가속 R0 「리프레쉬」: 진화 즉시 10%(ApplyPassivePathTierEffect) + 레벨마다 +2%p (사용자 결정 2026-09-27).
+    // 가속 R0 「리프레쉬」: 진화 즉시 10%(티어 8% + 도약 2%p) + 레벨마다 +2%p (사용자 결정 2026-09-27 · 10/1 재확인). 만렙 28%.
     private const float RefreshChancePerLevel = 0.02f;
     private const float TreasureChancePerLevel = 0.0015f;  // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.15%p(2026-10-01 사용자)
     private const float StrengthQDamagePerLevel = 0.10f;   // 힘 R1 「생활 근육」: 레벨마다 Q스킬 피해 +10%(2026-10-01 사용자 — 15에서 정정)
@@ -561,7 +562,7 @@ public class PlayerPassives : MonoBehaviour
                 HealthRetaliationMultiplier += DefenseThornsBase * DefenseThornsPerLevel;
                 break;
             // 가속 R0 「리프레쉬」 — 레벨업마다 쿨타임 초기화 확률이 오른다(사용자 지시 2026-09-27).
-            // 진화 순간의 10%(ApplyPassivePathTierEffect)가 시작값이고, 여기가 레벨마다 더 얹는다.
+            // 진화 순간의 10%(티어 8% + 이 줄의 도약 1회)가 시작값이고, 여기가 레벨마다 더 얹는다.
             case (PassiveSkillId.Accel, 0):
                 RefreshChance += RefreshChancePerLevel;
                 break;
