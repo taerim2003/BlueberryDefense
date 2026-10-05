@@ -132,6 +132,10 @@ public class LevelUpUI : MonoBehaviour
     private int pendingTreasures;
     private int pendingEvolutions;
 
+    // 떠 있거나 곧 띄울 창이 남아 있는가 — GameManager가 이게 풀릴 때까지 스테이지 클리어를 미룬다.
+    public bool HasPendingWindows => isOpen || choiceOpen || handingOff
+        || pendingLevelUps > 0 || pendingTreasures > 0 || pendingEvolutions > 0;
+
     // 보물상자: 선택 없이 굴려서 나온 만큼 자동 레벨업(뱀서식).
     // 🔴 개수 분포는 사용자 지정이다(2026-09-19) — 1개 40% · 2개 30% · 3개 15% · 4개 10% · 5개 5%, 기댓값 2.10개.
     //    예전엔 "1에서 45%로 +2씩"이라 **2개·4개가 아예 안 나왔다**(1/3/5뿐, 기댓값 2.305).
@@ -297,6 +301,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ShowNextPendingWhenClosed()
     {
         yield return new WaitWhile(() => panel.activeSelf);
+        if (RunOver) yield break; // 닫히는 사이 게임오버가 났으면 결과 화면 위에 띄우지 않는다
 
         if (pendingEvolutions > 0) { pendingEvolutions--; ShowEvolution(); }
         else if (pendingTreasures > 0) { pendingTreasures--; ShowTreasureChoice(); } // 밀린 상자도 갈림길을 거친다
@@ -383,6 +388,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ReopenTreasureChoice()
     {
         yield return new WaitWhile(() => panel.activeSelf);
+        if (RunOver) yield break;
         ShowTreasureChoice();
     }
 
@@ -663,6 +669,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ResolveTreasureChoice(bool evolve)
     {
         yield return new WaitWhile(() => choicePanel != null && choicePanel.activeSelf);
+        if (RunOver) yield break;
 
         if (!evolve) { ShowTreasure(); yield break; }
 
@@ -1009,6 +1016,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ResolveEvolutionChoice(Option opt)
     {
         yield return new WaitWhile(() => panel.activeSelf); // 닫힘 연출이 끝나야 다음 모달이 안 꺼진다
+        if (RunOver) yield break;
 
         if (opt.IsEvolution)
         {

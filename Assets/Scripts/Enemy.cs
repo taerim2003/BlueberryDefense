@@ -639,8 +639,18 @@ public class Enemy : MonoBehaviour
     private void UpdateHop()
     {
         float cycle = hopDuration + hopGroundPause;
-        hopTimer += Time.deltaTime * MoveScale; // 기절하면 공중에 굳는 게 아니라 도약 자체가 느려진다
-        if (hopTimer >= cycle) hopTimer -= cycle;
+        if (IsStunned)
+        {
+            // 🔴 기절해도 공중에 굳지 않는다 — 떠 있던 도약은 마저 떨어지고, 땅에서 웅크린 채 기절이 풀리길 기다린다.
+            //    MoveScale(기절=0)을 그대로 곱하면 공중에 매달려 있다가 풀리는 순간 다시 움직여 끊겨 보였다
+            //    (10/1 사용자 — 도약이 높고 긴 우주콩콩이가 더 자주 걸렸다).
+            if (hopTimer < hopDuration) hopTimer = Mathf.Min(hopTimer + Time.deltaTime, hopDuration);
+        }
+        else
+        {
+            hopTimer += Time.deltaTime * MoveScale; // 둔화는 도약 자체를 느리게 한다
+            if (hopTimer >= cycle) hopTimer -= cycle;
+        }
 
         float lift = 0f;
         if (hopTimer < hopDuration)

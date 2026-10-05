@@ -244,7 +244,10 @@ public class OptionsMenu : MonoBehaviour
         }
         else
         {
-            var w = windowedSize.x > 0 ? windowedSize : new Vector2Int(Screen.width, Screen.height);
+            // 전체화면으로 시작했으면 기억해 둔 창 크기가 없다. 지금 크기(=모니터 크기)로 내리면 모니터를 덮는 창이 떠서
+            // 체크를 꺼도 화면이 그대로처럼 보였다(10/1 사용자). 모니터의 2/3 크기로 내린다(1920×1080 → 1280×720).
+            var native = Screen.currentResolution;
+            var w = windowedSize.x > 0 ? windowedSize : new Vector2Int(native.width * 2 / 3, native.height * 2 / 3);
             Screen.SetResolution(w.x, w.y, FullScreenMode.Windowed);
             SyncResolutionIndex(w.x, w.y);
         }
