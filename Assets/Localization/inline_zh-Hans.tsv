@@ -196,3 +196,4 @@ step.StunInterval	晕眩周期缩短{0}跳
 step.Lifesteal	护盾获取+{0}
 passive.lvl.TreasureFind	宝箱蓝莓转化几率 +{0}%
 passive.lvl.StrengthQ	Q技能伤害 +{0}%
+passive.lvl.StrengthCrit	暴击伤害 +{0}%

@@ -2303,6 +2303,10 @@ MonoBehaviour:
     m_Key: passive.lvl.StrengthQ
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162532
+    m_Key: passive.lvl.StrengthCrit
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -2432,6 +2432,10 @@ MonoBehaviour:
     m_Localized: "Q\uC2A4\uD0AC \uD53C\uD574\uB7C9 +{0}%"
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162532
+    m_Localized: "치명타 피해 +{0}%"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

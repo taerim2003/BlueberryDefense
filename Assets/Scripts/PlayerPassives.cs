@@ -257,11 +257,13 @@ public class PlayerPassives : MonoBehaviour
     // 진화 뒤 레벨업이 **루트 전용 축 하나만** 올리는 진화체(사용자 결정 2026-10-01). 카드 문구도 그 축만 보여준다.
     //   가속 R0 「리프레쉬」 — 쿨감 대신 초기화 확률 · 지식 R0 「보물 탐지」 — 경험치 대신 보물 확률
     //   힘 R1 「생활 근육」 — 전체 피해 대신 Q스킬 피해
+    //   힘 R0 「불타는 근육」 — 전체 피해 대신 치명타 피해(2026-10-02 사용자)
     private static bool RouteOnlyLevelUp(EquippedPassive p) =>
         p.EvolutionStage > 0 && (p.Id, p.Route) switch
         {
             (PassiveSkillId.Accel, 0) => true,
             (PassiveSkillId.Knowledge, 0) => true,
+            (PassiveSkillId.Strength, 0) => true,
             (PassiveSkillId.Strength, 1) => true,
             _ => false,
         };
@@ -303,7 +305,9 @@ public class PlayerPassives : MonoBehaviour
         {
             PassiveSkillId.Accel => Loc.F("passive.lvl.Refresh", Pct(RefreshChancePerLevel)),
             PassiveSkillId.Knowledge => Loc.F("passive.lvl.TreasureFind", (TreasureChancePerLevel * 100f).ToString("0.##")),
-            PassiveSkillId.Strength => Loc.F("passive.lvl.StrengthQ", Pct(StrengthQDamagePerLevel)),
+            PassiveSkillId.Strength => p.Route == 0
+                ? Loc.F("passive.lvl.StrengthCrit", Pct(StrengthCritDamagePerLevel))
+                : Loc.F("passive.lvl.StrengthQ", Pct(StrengthQDamagePerLevel)),
             _ => DescribePassiveLevelEffect(p.Id),
         };
     }
@@ -359,6 +363,9 @@ public class PlayerPassives : MonoBehaviour
                     string qSkill = skills != null && skills.EquippedSkills.Count > 0 ? skills.EquippedSkills[0].DisplayName : Loc.T("passive.cur.Strength.qfallback");
                     lines.Add(Loc.F("passive.cur.Strength.q", qSkill, Pct(FirstSlotDamageMultiplierBonus)));
                 }
+                // 불타는 근육은 레벨업이 치명타 피해만 올린다 — 그 값이 여기 안 보이면 레벨업 효과가 요약에서 사라진다.
+                if (p.EvolutionStage > 0 && p.Route == 0)
+                    lines.Add(Loc.F("passive.cur.Assassinate.mult", (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus).ToString("0.##")));
                 break;
 
             case PassiveSkillId.Health:
@@ -520,7 +527,7 @@ public class PlayerPassives : MonoBehaviour
 
     // ── 진화 루트가 레벨업마다 더 주는 몫 ────────────────────────────────────
     // 🔴 진화한 패시브는 레벨업이 **원래 축 + 루트 전용 축** 둘을 올린다(2026-09-08 사용자 지시).
-    //    예외: 리프레쉬·보물 탐지·생활 근육은 루트 축만 올린다(2026-10-01 — RouteOnlyLevelUp).
+    //    예외: 리프레쉬·보물 탐지·생활 근육·불타는 근육은 루트 축만 올린다(2026-10-01·02 — RouteOnlyLevelUp).
     //    "다 찍으면 엄청난 체력을 가질 수 있게" 같은 요구가 여기서 만들어진다.
     //    루트를 안 탄 패시브(EvolutionStage 0)는 걸리지 않는다.
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
@@ -528,6 +535,9 @@ public class PlayerPassives : MonoBehaviour
     private const float RefreshChancePerLevel = 0.02f;
     private const float TreasureChancePerLevel = 0.0015f;  // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.15%p(2026-10-01 사용자)
     private const float StrengthQDamagePerLevel = 0.10f;   // 힘 R1 「생활 근육」: 레벨마다 Q스킬 피해 +10%(2026-10-01 사용자 — 15에서 정정)
+    // 힘 R0 「불타는 근육」: 레벨마다 치명타 피해 배율 +0.2(= 카드 "+20%", 스킬트리 치명타 피해 노드와 같은 표기). 기본 배율 ×3에 더해진다.
+    //   진화 순간 +0.5(T1·T2) + 도약 1회 0.2, 만렙까지 9회 더 → ×3 기준 최대 ×5.5. 크기는 Claude가 골랐다(2026-10-02, HANDOFF 확인 대기).
+    private const float StrengthCritDamagePerLevel = 0.2f;
     private const float HealthSturdyBase = 0.5f;       // 건강 R0: 진화 즉시 최대체력 +50%
     // 🔴 0.3 → 0.1 (2026-09-20 사용자). 복리라 레벨당 30%면 만렙에 최대체력이 약 ×13.8이 되고,
     //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
@@ -568,6 +578,9 @@ public class PlayerPassives : MonoBehaviour
                 break;
             case (PassiveSkillId.Knowledge, 0):
                 EnemySpawner.ExtraTreasureChance += TreasureChancePerLevel;
+                break;
+            case (PassiveSkillId.Strength, 0):
+                AssassinateCritMultiplier += StrengthCritDamagePerLevel;
                 break;
             case (PassiveSkillId.Strength, 1):
                 FirstSlotDamageMultiplierBonus += StrengthQDamagePerLevel;

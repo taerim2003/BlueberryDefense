@@ -2331,6 +2331,10 @@ MonoBehaviour:
     m_Localized: Q skill damage +{0}%
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162532
+    m_Localized: "Critical damage +{0}%"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

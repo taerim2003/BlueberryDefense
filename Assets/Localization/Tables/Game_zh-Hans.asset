@@ -2069,6 +2069,10 @@ MonoBehaviour:
     m_Localized: "Q\u6280\u80FD\u4F24\u5BB3 +{0}%"
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162532
+    m_Localized: "暴击伤害 +{0}%"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

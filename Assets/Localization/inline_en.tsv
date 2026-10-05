@@ -196,3 +196,4 @@ step.StunInterval	Stun interval -{0} ticks
 step.Lifesteal	Shield gain +{0}
 passive.lvl.TreasureFind	Treasure blueberry conversion chance +{0}%
 passive.lvl.StrengthQ	Q skill damage +{0}%
+passive.lvl.StrengthCrit	Critical damage +{0}%
