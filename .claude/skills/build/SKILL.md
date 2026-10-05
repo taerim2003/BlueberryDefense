@@ -66,3 +66,5 @@ unzip -tq Builds/Release/BlueberryDefense.zip
 - `git rev-parse --short HEAD`와 `git status --porcelain | wc -l`로 **무엇이 들어갔는지**를 적는다: HEAD + 커밋 안 된 변경 N개.
 - 보고: 노션에 올라간 파일 이름 · 크기 · 들어간 변경(HEAD + 미커밋 N개) · dirty 씬 때문에 빠진 편집이 있으면 그것.
   **실행해 보지는 않았다**는 것도 적는다(압축 검사만 했다). 커밋하지 않는다.
+- `HANDOFF.md`의 `확인 대기`에 **"화면 캡처로 확인하지 않았다"고 적힌 변경이 이 빌드에 들어 있으면 보고 맨 위에 적는다.**
+  받는 사람이 보는 건 그 빌드다 — 사용자가 확인하기 전에 나가면 되돌려도 올라간 파일은 그대로 남는다.
