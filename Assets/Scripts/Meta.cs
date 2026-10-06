@@ -23,7 +23,7 @@ public enum MetaUpgradeId
     Crit,     // 치명타 — 치명타 확률 +N%p
     // ↓ 2026-09-03 스킬트리 재설계(칸반 「스킬트리 재설계」)에서 추가한 축.
     FlyDamage,  // 비행 추가피해 — 비행 적에게 +N%
-    CritDamage, // 치명타 피해 — 치명타 배율에 +N%p(기본 배율 3.0에 더해진다)
+    CritDamage, // 치명타 피해 — 치명타 배율에 +N%p(기본 배율 2.0에 더해진다)
     BossDamage, // 보스 추가피해 — 보스에게 +N%
     Reroll,     // 리롤 횟수 — 게임당 리롤 +N회(레벨당)
     // ↓ 2026-09-20 추가. 🔴 끝에만 붙일 것 — 중간에 끼우면 기존 노드 에셋의 effect 정수값이 통째로 밀린다.
@@ -45,7 +45,7 @@ public static class MetaBonuses
     public static float BossDamageBonus = 0f;     // 보스 적 추가 피해 배율 가산(0~)
     public static float CritDamageBonus = 0f;     // 치명타 피해 배율 가산 — PlayerPassives.AssassinateCritMultiplier에 더해진다
 
-    public static bool HomingMissileGrowth = false;     // 호밍: 20회 사용마다 미사일 +1 (스킬트리 해금 시에만)
+    public static bool HomingMissileGrowth = false;     // 호밍: 30회 사용마다 미사일 +1 (스킬트리 해금 시에만)
     public static bool WhirlwindCooldownBonus = false;  // 회오리는 쿨타임 감소 효과를 1.5배로 받음
     public static float ThunderCooldownPerStrike = 0f;  // 낙뢰 1회 타격마다 낙뢰 쿨타임 감소(초)
     public static bool SnipingExtraTarget = false;      // 스나이핑 저격 타겟 +1
@@ -231,7 +231,7 @@ public static class SkillEffects
         // ── 강화/해금 노드가 채우는 것(코드 주도) ──
         public float EagleFlyDmgPct;     // 독수리 비행 추가피해
         public float WhirlwindFlyDmgPct; // 회오리 비행 추가피해
-        public bool HomingGrowth;        // 호밍 20회 사용마다 미사일 +1
+        public bool HomingGrowth;        // 호밍 30회 사용마다 미사일 +1
         public bool WhirlwindCdBonus;    // 회오리 쿨감 1.5배
         public float ThunderCdPerStrike; // 낙뢰 타격당 쿨감(초)
         public int ArrowStartLevel;      // 화살 시작 레벨(0=미설정)

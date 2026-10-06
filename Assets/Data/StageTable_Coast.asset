@@ -15,7 +15,6 @@ MonoBehaviour:
   stages:
   - stageNumber: 1
     spawnCount: 6
-    duration: 15
     spawnInterval: 0.33
     burstSize: 0
     burstRest: 0
@@ -35,7 +34,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1
   - stageNumber: 2
     spawnCount: 12
-    duration: 15
     spawnInterval: 0.3
     burstSize: 0
     burstRest: 0
@@ -55,7 +53,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.08
   - stageNumber: 3
     spawnCount: 19
-    duration: 15
     spawnInterval: 0.1
     burstSize: 15
     burstRest: 2
@@ -75,7 +72,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.15
   - stageNumber: 4
     spawnCount: 27
-    duration: 15
     spawnInterval: 0.144444
     burstSize: 0
     burstRest: 0
@@ -95,7 +91,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.24
   - stageNumber: 5
     spawnCount: 42
-    duration: 15
     spawnInterval: 0.0499
     burstSize: 27
     burstRest: 1.9999
@@ -115,7 +110,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.32
   - stageNumber: 6
     spawnCount: 60
-    duration: 15
     spawnInterval: 0.07905
     burstSize: 0
     burstRest: 0
@@ -135,7 +129,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.42
   - stageNumber: 7
     spawnCount: 32
-    duration: 15
     spawnInterval: 0.0755625
     burstSize: 0
     burstRest: 0
@@ -155,7 +148,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.63
   - stageNumber: 8
     spawnCount: 82
-    duration: 15
     spawnInterval: 0.0202927
     burstSize: 35
     burstRest: 1.6999
@@ -175,7 +167,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.65
   - stageNumber: 9
     spawnCount: 35
-    duration: 15
     spawnInterval: 0.106229
     burstSize: 0
     burstRest: 0
@@ -195,7 +186,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.7
   - stageNumber: 10
     spawnCount: 126
-    duration: 15
     spawnInterval: 0.0407143
     burstSize: 0
     burstRest: 0
@@ -215,7 +205,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 1.9
   - stageNumber: 11
     spawnCount: 137
-    duration: 15
     spawnInterval: 0.0165667
     burstSize: 30
     burstRest: 2.01657
@@ -235,7 +224,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.05
   - stageNumber: 12
     spawnCount: 147
-    duration: 15
     spawnInterval: 0.0166531
     burstSize: 52
     burstRest: 2.36657
@@ -255,7 +243,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.55
   - stageNumber: 13
     spawnCount: 34
-    duration: 15
     spawnInterval: 0.193471
     burstSize: 0
     burstRest: 0
@@ -275,7 +262,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.26
   - stageNumber: 14
     spawnCount: 189
-    duration: 15
     spawnInterval: 0.0142222
     burstSize: 71
     burstRest: 2.9499
@@ -295,7 +281,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 2.8
   - stageNumber: 15
     spawnCount: 109
-    duration: 15
     spawnInterval: 0.024
     burstSize: 0
     burstRest: 0
@@ -315,7 +300,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 3.05
   - stageNumber: 16
     spawnCount: 128
-    duration: 15
     spawnInterval: 0.0334687
     burstSize: 0
     burstRest: 0
@@ -335,7 +319,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 3.2
   - stageNumber: 17
     spawnCount: 145
-    duration: 15
     spawnInterval: 0.0499
     burstSize: 65
     burstRest: 1.1999
@@ -355,7 +338,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 3.35
   - stageNumber: 18
     spawnCount: 182
-    duration: 15
     spawnInterval: 0.0499
     burstSize: 0
     burstRest: 0
@@ -375,7 +357,6 @@ MonoBehaviour:
     enemyDamageMultiplier: 3.45
   - stageNumber: 19
     spawnCount: 143
-    duration: 15
     spawnInterval: 0.0445455
     burstSize: 57
     burstRest: 2.58323
@@ -394,9 +375,8 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 3.55
   - stageNumber: 20
-    spawnCount: 85
-    duration: 15
-    spawnInterval: 0.051
+    spawnCount: 119
+    spawnInterval: 0.036429
     burstSize: 0
     burstRest: 0
     eliteChance: 0.088
@@ -414,10 +394,9 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 3.65
   - stageNumber: 21
-    spawnCount: 223
-    duration: 15
-    spawnInterval: 0.0165667
-    burstSize: 87
+    spawnCount: 312
+    spawnInterval: 0.011833
+    burstSize: 122
     burstRest: 2.03323
     eliteChance: 0.153
     evolutionItemDrops: 0
@@ -434,9 +413,8 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 3.8
   - stageNumber: 22
-    spawnCount: 25
-    duration: 15
-    spawnInterval: 0.216
+    spawnCount: 35
+    spawnInterval: 0.154286
     burstSize: 0
     burstRest: 0
     eliteChance: 0.185
@@ -454,9 +432,8 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 3.9
   - stageNumber: 23
-    spawnCount: 260
-    duration: 15
-    spawnInterval: 0.0165667
+    spawnCount: 364
+    spawnInterval: 0.011833
     burstSize: 0
     burstRest: 0
     eliteChance: 0.152
@@ -474,10 +451,9 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 4
   - stageNumber: 24
-    spawnCount: 92
-    duration: 15
-    spawnInterval: 0.0257065
-    burstSize: 50
+    spawnCount: 129
+    spawnInterval: 0.018362
+    burstSize: 70
     burstRest: 1.66657
     eliteChance: 0
     evolutionItemDrops: 1
@@ -494,9 +470,8 @@ MonoBehaviour:
     enemySpeedMultiplier: 1.318
     enemyDamageMultiplier: 4.1
   - stageNumber: 25
-    spawnCount: 219
-    duration: 15
-    spawnInterval: 0.03
+    spawnCount: 307
+    spawnInterval: 0.021429
     burstSize: 0
     burstRest: 0
     eliteChance: 0.146

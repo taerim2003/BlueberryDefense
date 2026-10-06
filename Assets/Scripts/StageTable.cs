@@ -6,7 +6,6 @@ public class StageData
 {
     public int stageNumber = 1;
     public int spawnCount = 20;   // 이 스테이지에 스폰할 총 적 수(물량 기반 클리어). 쿼터 소진 + 잔몹 0 → 클리어
-    public float duration = 45f;  // (레거시) 물량 기반 전환으로 미사용 — 참고용으로만 남김
     // 적 1마리 사이의 간격. burstSize가 2 이상이면 **무리 안에서의 간격**이 된다(무리끼리의 간격은 burstRest).
     public float spawnInterval = 1.5f;
 
@@ -90,7 +89,6 @@ public class StageTable : ScriptableObject
         {
             stageNumber = stageNumber,
             spawnCount = last.spawnCount + extendedSpawnCountStep * n,
-            duration = last.duration,
             spawnInterval = Mathf.Max(extendedSpawnIntervalMin, last.spawnInterval),
             burstSize = last.burstSize,
             burstRest = last.burstRest,

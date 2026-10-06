@@ -43,7 +43,7 @@
 | 이름 | 책임 | 누구를 부르나 |
 |---|---|---|
 | **GameManager** (싱글톤) | 스테이지 진행(물량 소진+잔몹 전멸→전환 텀), 게임오버/클리어(`FinalStage`) 판정, `Time.timeScale` 종료 정지. Awake에서 `DamageMeter.Reset`·`DOTween` 전역설정 | `EnemySpawner.StageSpawnComplete`·`PlayerSkills.ResetAllCooldowns`, `Enemy` 수 폴링 |
-| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 15라운드 마지막 물량=보스. 스폰 진행 상태(SpawnedThisStage/SpawnTarget) 소유. **중간 소환**(화면 안 예고→부대 투입)도 여기서 관장 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers`·`Enemy.PopIn`, `AmbushMarker` |
+| **EnemySpawner** | `StageData.spawnCount`만큼 적 스폰(물량 기반)하면 정지, HP/속도 스텝 보정 적용, 최종 스테이지(`AscensionTable.IsBossStage` — 승천별 15/20/25) 마지막 물량=보스. 스폰 진행 상태(SpawnedThisStage/SpawnTarget) 소유. **중간 소환**(화면 안 예고→부대 투입)도 여기서 관장 | `GameManager`(현재 스테이지/스폰정지 조회), `Enemy.ApplyStageMultipliers`·`Enemy.PopIn`, `AmbushMarker` |
 | **AmbushMarker** | 중간 소환 예고 링(런타임 생성, 씬 배선 없음). 커지며 점점 빠르게 깜빡이다 시간이 차면 콜백 호출 후 자멸 | `EnemySpawner`가 생성·소유 |
 | **PlayerSkills** | 액티브 4종(Q/W/E/R) 캐스트 로직, 스킬 레벨업/진화 트리, 전투 오브젝트 스폰(투사체·회오리·오브·독수리·설치기), 낙뢰 파라미터 설정 | `LightningStorm`, `BuffTracker`, `PlayerPassives`(연계 조건·static 보너스), 모든 전투 프리팹, `ObjectPool` |
 | **PlayerPassives** | 패시브 4종 보유/레벨업/진화, **연계 효과의 static 상태 필드**(치명타·반격·경험치 배율 등) 소유, 체력재생·반격·낙뢰연계 이벤트 처리 | `PlayerSkills`/`PlayerHealth`/`PlayerExperience`(스탯 반영), `LightningStorm.OnProc` 구독 |
@@ -67,7 +67,7 @@
 | **AudioThrottle** | 동일 클립 같은 프레임 중복재생 디바운스 |
 | **PlayerPassives.static 필드** | 위 표의 PlayerPassives 항목 참조 — 연계 보너스가 여기 모여 있음 |
 
-**의존성 방향**: UI(LevelUpUI/EvolutionTreeUI/HUD) → 플레이어 시스템(PlayerSkills/Passives/Health/Experience) → static 상태 홀더 + Enemy. 전투 오브젝트(Projectile/Whirlwind/Orb/SmallOrb/OrbAltar)는 `Enemy.TakeDamage`만 호출(상향 의존 없음). `Enemy`는 처치 시 `PlayerExperience`/`LevelUpUI`/`DamageMeter`를 부르는 예외적 상향 호출이 있음. **스킬 간 시너지는 정식 참조 대신 static 결합**으로 연결됨(`MiniWhirlwindDamageBonus`, `LightningStorm.*`, `PlayerPassives.*`) — 회오리에 투자하면 독수리투하의 미니 회오리도 강해지는 식.
+**의존성 방향**: UI(LevelUpUI/EvolutionTreeUI/HUD) → 플레이어 시스템(PlayerSkills/Passives/Health/Experience) → static 상태 홀더 + Enemy. 전투 오브젝트(Projectile/Whirlwind/Orb/SmallOrb/PoisonCloud)는 `Enemy.TakeDamage`만 호출(상향 의존 없음). `Enemy`는 처치 시 `PlayerExperience`/`LevelUpUI`/`DamageMeter`를 부르는 예외적 상향 호출이 있음. **스킬 간 시너지는 정식 참조 대신 static 결합**으로 연결됨(`MiniWhirlwindDamageBonus`, `LightningStorm.*`, `PlayerPassives.*`) — 회오리에 투자하면 독수리투하의 미니 회오리도 강해지는 식.
 
 ---
 
@@ -76,7 +76,7 @@
 ```
 [GameManager.Awake] DamageMeter 리셋 · 하트프리팹 주입 · DOTween unscaled 설정
   → [EnemySpawner.Update] StageData.spawnCount 만큼 적 스폰하면 정지 (물량 기반, HP/속도 스텝 보정)
-                          · 스폰 진행 상태(SpawnedThisStage/SpawnTarget)로 보물상자 후반 등장·15라운드 마지막 물량=보스 판정
+                          · 스폰 진행 상태(SpawnedThisStage/SpawnTarget)로 보물상자 후반 등장·최종 스테이지(15/20/25) 마지막 물량=보스 판정
   → [Enemy.Update] 왼쪽으로 행진 · sortingOrder를 x좌표로 갱신(원근)
       ├─ 플레이어와 충돌 → PlayerHealth.TakeDamage → (체력0) GameManager.GameOver
       └─ 스킬 피격 → Enemy.TakeSkillHit(멀티히트: 총뎀 유지·N분할·서브히트별 크리/첫히트만 낙뢰)
@@ -89,7 +89,7 @@
   → [DamageMeterUI] 게임오버/클리어 감지 → 딜미터 패널 표시
 ```
 
-**입력 처리**: 플레이어는 이동하지 않는다. 유일한 상시 입력은 `PlayerSkills.Update`에서 Q/W/E/R 키를 읽어(new Input System `Keyboard.current`) 해당 스킬을 `TryUseSkill`로 발동하는 것. 글로벌 쿨다운(0.4초) + 스킬별 쿨다운을 통과하면 캐스트. 나머지 상호작용은 모두 모달 UI 버튼 클릭(레벨업/진화).
+**입력 처리**: 플레이어는 이동하지 않는다. 키보드·마우스·게임패드는 전부 **`GameInput`**(static)으로 읽는다 — 장치 API 직접 읽기, `.inputactions` 안 씀. 상시 입력은 `PlayerSkills.Update`가 `GameInput.SkillHeld(Q/W/E/R)`로 묻는 스킬 4개(패드 X·Y·B·A, 보조 LT·LB·RB·RT)뿐이고, 글로벌 쿨다운(0.4초) + 스킬별 쿨다운을 통과하면 캐스트. 일시정지 = ESC·Start. 화면 이동·확정·취소는 아래 `UIFocusGroup`이 맡는다(타이틀부터 결과 화면까지 전 화면). 마지막에 만진 장치를 따라 `GameInput.Current`가 바뀌고, 패드 모드에선 커서가 숨고 키 표기(HUD 슬롯·`"<키>.pad"` 문구)가 바뀐다.
 
 **치명타 모델**: 캐스트 시점엔 확률만 확정하고, 실제 치명타 여부는 각 데미지 이벤트(투사체 명중·틱·낙뢰 등)마다 `PlayerPassives.ApplyCrit`로 개별적으로 굴린다("타격 기준 치명타").
 
@@ -132,7 +132,7 @@
   1. **적 참조를 프레임 넘어 들고 있으면 반드시 `Enemy.IsAlive`를 봐야 한다.** 예전엔 `Destroy`가 만든 가짜 null 덕에 `== null`만으로 정리됐지만, 풀은 비활성화만 하므로 참조가 살아남고 **재활용되면 엉뚱한 새 적을 가리킨다.** 현재 소비처는 `Orb`(overlapping·claimed)·`Whirlwind`(overlapping)·`HomingMissile`(target). 새 스킬이 적을 기억한다면 여기 합류할 것.
   - 🔴 **적을 찾을 땐 `FindObjectsByType<Enemy>`를 쓰지 않는다 — `Enemy.Active`(읽기) / `Enemy.GetSnapshot`(피해 주는 순회)을 쓴다.** 그 호출은 풀의 비활성 적까지 훑어 후반엔 1회 1ms 가까이 든다. 활성 목록은 `OnEnable/OnDisable`로 관리되고 "비활성 제외" 집합과 같다. `GameManager`의 "잔몹 0" 판정도 이 목록이다. 이유와 실측은 `Enemy.Active` 주석.
   2. **`Awake`는 재사용 시 다시 안 돈다.** 런타임에 변하는 필드는 전부 `Enemy.InitializeSpawn`에서 되돌린다. **`Enemy`에 런타임 상태 필드를 추가하면 거기도 같이 고칠 것** — 빠뜨리면 "소환되자마자 죽어 있는 적"처럼 간헐적으로만 재현되는 버그가 된다.
-- **`Enemy.TakeDamage`는 같은 프레임 재진입에 안전해야 한다.** `Destroy`는 프레임 끝에 실행되므로 낙뢰 재귀/체인이 같은 프레임에 사망 처리를 두 번 돌 수 있어 `isDead` 가드가 두 군데 있다. 낙뢰/체인 판정은 사망 처리보다 **앞**에 있어야 한다(한 방 킬 타격도 낙뢰를 굴릴 기회를 갖도록).
+- **`Enemy.TakeDamage`는 같은 프레임 재진입에 안전해야 한다.** 낙뢰 재귀/체인이 같은 프레임에 같은 적의 사망 처리를 두 번 돌 수 있어 `isDead` 가드가 두 군데 있다(적은 풀 반납이라 즉시 비활성화되지만, 재진입은 그 앞에서 난다). 낙뢰/체인 판정은 사망 처리보다 **앞**에 있어야 한다(한 방 킬 타격도 낙뢰를 굴릴 기회를 갖도록).
 - **호핑 적(`isHopper`)은 y를 매 프레임 덮어쓴다.** `UpdateHop`이 `hopBaseY + 포물선`을 **절대값으로** 대입한다(가산이 아님) — 박치기 돌진·기절처럼 x만 만지는 로직과 섞여도 높이가 어긋나 쌓이지 않는다. 부작용 두 가지가 **의도된 것**이다: ① 떠 있는 동안 지상 스킬 히트박스를 흘려보낸다(=이 적의 정체성), ② `BlockedAhead`의 레인 허용치(`EnemyLaneTolerance` 0.6)를 벗어나 **지상 무리를 뛰어넘는다**. `hopBaseY`는 스폰 시 확정되고, 팝인(중간 소환)으로 나온 개체는 착지 지점을 기준으로 갱신된다.
 - **적의 y를 흔드는 방식이 두 가지고, 서로 바꿔 쓰면 안 된다.** 이동 방식이 다르기 때문이다.
   - **콩콩이 도약 = 절대 대입** (`UpdateHop`). 전진이 `Vector2.right` 이동이라 y는 아무도 안 건드린다 → 매 프레임 `y = hopBaseY + 포물선`으로 **덮어써도** 안전하고, 박치기 돌진처럼 x만 만지는 로직과 섞여도 어긋나 쌓이지 않는다.
@@ -144,7 +144,7 @@
 - **낙뢰만 데이터 출처가 다르다.** `Prog_Lightning.baseDamage`(=0)는 무시되고 `LightningStorm.BaseProcDamage`(코드 상수)가 실제 시작 피해다 — `GetDefaultDamage`가 낙뢰만 특수 처리. 낙뢰 피해를 못 찾겠으면 여기.
 - 🔴 **이 프로젝트의 전방은 `-x`(`Vector2.left`)다.** 적은 왼쪽에서 오고 플레이어는 오른쪽에 서 있다. 대상이 없을 때의 폴백 방향도 전방으로 — 포도알은 전방에 세워 두고 적이 나오면 날리고(`GrapeProjectile.waiting`), 호밍 미사일은 멈추지 않고 진행 방향으로 직진한다.
 - 🔴 **스킬 아이콘 사본이 두 계통이다.** `Resources/SkillIconLibrary.asset`은 컬렉션 화면용, **전투 HUD·레벨업·진화창은 씬에 배선된 `Sprite[]`**(`HUDController`·`LevelUpUI`·`EvolutionTreeUI`, 2차는 `LevelUpUI.activeEvo2Icons`). 새 아이콘은 **양쪽 다** — 메뉴 「스킬 아이콘 라이브러리 굽기」 + 「진화 아이콘 배선」.
-- 🔴 **키보드 모달 이동은 `UIFocusGroup`**(MonoBehaviour 아님 — 각 UI가 필드로 들고 `Tick()`). 방향은 rect 좌표로 판정해 배치를 옮겨도 맞는다. 모달이 겹치므로 **static 스택 맨 위 그룹만** 입력을 먹는다 → 새 모달은 열 때 `Open`, 닫을 때 `Close`를 **짝으로**(빠뜨리면 다음 창이 입력을 못 받음). 포커스 테는 런타임 생성이고 머티리얼만 `UISkin.selectOutline`에 꽂혀 있다 — 비면 테가 안 나온다.
+- 🔴 **키보드·패드 화면 이동은 `UIFocusGroup`**(MonoBehaviour 아님 — 각 UI가 필드로 들고 `Tick()`). EventSystem 내비게이션은 씬 로드 때 꺼진다(`GameInput`) — 켜 두면 패드 입력이 두 번 처리된다. 취소(ESC·B)는 `Open`의 cancel 버튼 인자가 누른다. 확정으로 열린 창이 같은 프레임에 같은 입력을 또 읽지 않게 먹은 입력은 `GameInput.Consume()`. 방향은 rect 좌표로 판정해 배치를 옮겨도 맞는다. 모달이 겹치므로 **static 스택 맨 위 그룹만** 입력을 먹는다 → 새 모달은 열 때 `Open`, 닫을 때 `Close`를 **짝으로**(빠뜨리면 다음 창이 입력을 못 받음). 포커스 테는 런타임 생성이고 머티리얼만 `UISkin.selectOutline`에 꽂혀 있다 — 비면 테가 안 나온다.
 - **UI TMP는 오토사이즈 + `NoWrap`이 기본**이다(`fontSizeMax` = 원래 크기, `fontSizeMin` = ×0.6). 오토사이즈만 켜면 줄바꿈 때문에 안 줄어든다. **이름에 `Desc`·`Hint`·`Condition`·`Body`·`Detail`이 들어간 TMP만 설명문으로 보고 줄바꿈을 남겼다** — 새 설명문 TMP는 이 이름 규칙을 따를 것.
 - **폐지된 enum 값의 분기는 죽은 코드가 아닐 수 있다.** `CheatWindow`가 `Enum.GetValues`로 전체를 순회해 획득 버튼을 만들어서, 게임에서 폐지된 `PassiveSkillId.Refresh`도 에디터에서는 도달한다. 지우기 전에 `Assets/Editor`까지 grep.
 - **효과음 3중 안전장치.** `AudioThrottle`(같은 프레임 중복 차단) → `SfxPlayer`(라운드로빈 풀) → `SfxLimiter`(0dBFS 근접 원본 클립 브릭월 리미팅). 원본 VFX 팩 클립이 대부분 풀스케일이라 볼륨만 올리면 클리핑 남.

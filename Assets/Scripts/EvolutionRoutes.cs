@@ -27,12 +27,9 @@ public static class EvolutionRoutes
     // "만렙 찍고 진화, 다시 만렙 찍고 진화"가 된다. (누적 레벨 TotalLevel이 아니라 **표시 레벨**이 기준)
     public const int RequiredLevel = BalanceConstants.MaxSkillLevel;
 
-    // 진화 시 즉시 붙는 기본 스탯 도약. 레벨 표시가 1로 리셋되는 대신 이만큼 세져서
-    // "약해진 게 아니라 다른 스킬이 됐다"가 눈에 보이게 한다.
-    public const float EvolveDamageMult = 1.5f;
-    // 🔴 진화는 **쿨을 줄이지 않는다**(2026-09-07 사용자 결정 — 진화 스킬 쿨이 전부 너무 짧았다).
-    //    도약은 피해(EvolveDamageMult)로만 준다. 1로 두는 이유는 이 값을 지우면 위 규칙이 안 보여서다.
-    public const float EvolveCooldownMult = 1f;
+    // 🔴 진화 시 피해에 곱하던 공통 배수 1.5는 없앴다(사용자 결정 2026-09-28).
+    //    진화체의 시작 피해와 쿨타임은 `Evo_<스킬>_R<루트>_T<차수>.asset`의 baseDamage·baseCooldown 하나가 정한다.
+    //    곱해지는 값이 여러 층에 흩어져 있으면 어느 진화의 실제 값이 얼마인지 네 군데를 읽고 계산해야 했다.
 
     // ── 루트 → 기존 path 매핑 ────────────────────────────────────────────────
     // 버린 path와 이유:

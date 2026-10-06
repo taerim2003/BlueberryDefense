@@ -9,4 +9,5 @@ ui.options.language	언어
 ui.options.close	닫기
 ui.options.reset	세이브 초기화
 ui.options.reset_confirm	정말? 한 번 더 클릭
+ui.options.reset_confirm.pad	정말? 한 번 더 누르기
 ui.options.reset_done	초기화 완료

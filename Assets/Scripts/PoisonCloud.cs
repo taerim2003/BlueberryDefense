@@ -19,7 +19,7 @@ public class PoisonCloud : MonoBehaviour
     private const int PuffTexSize = 32;
     private const int SortingOrder = 250;     // 적(1~180)보다 앞, 만화 효과(600)·미사일(400)보다 뒤
     private const float MaxAlpha = 0.33f;     // 덩이 여러 장이 겹치므로 장당 알파를 낮춰야 뒤의 적이 보인다
-    private const float ReapplyInterval = 0.2f; // 적 탐색 주기. 매 프레임 FindObjects는 안개 여러 개면 비싸다
+    private const float ReapplyInterval = 0.2f; // 적 탐색 주기. 매 프레임 Enemy.GetSnapshot 순회는 안개 여러 개면 비싸다
     private const float FadeInTime = 0.15f;
     private const float FadeOutTime = 0.4f;
 

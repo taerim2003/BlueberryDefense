@@ -188,17 +188,45 @@ public class OptionsMenu : MonoBehaviour
 
         panel.SetActive(true);
         PlayShow();
+
+        // 한 줄에 한 칸: 음량 3 → 해상도 → 전체화면 → 언어 → 초기화 → 닫기. 위아래는 이 목록 순서로 옮긴다(ListOrderVertical).
+        // 해상도·언어 줄은 ▶ 칸 하나로 대표하고 좌우가 ◀/▶를 누른다(Update). 슬라이더는 좌우가 값 조절이다(UIFocusGroup).
+        // 초기화 줄이 숨겨진 전투 중엔 그 칸을 건너뛴다.
+        focus.ListOrderVertical = true;
+        focus.Open(new Selectable[] { masterSlider, bgmSlider, sfxSlider, resolutionNext,
+                                      fullscreenToggle, languageNext, saveResetButton, closeButton },
+                   0, closeButton);
+    }
+
+    // 해상도·언어 줄에 포커스가 있으면 좌우 = ◀/▶. 그 입력은 여기서 먹는다(Consume) — 그룹이 칸을 옮기지 않게.
+    private void StepRowFromPad()
+    {
+        if (!focus.IsActive) return;
+        Vector2 d = GameInput.NavPressed();
+        if (d.x == 0f) return;
+        Selectable f = focus.Focused;
+        Button target = f == resolutionNext ? (d.x < 0f ? resolutionPrev : resolutionNext)
+                      : f == languageNext ? (d.x < 0f ? languagePrev : languageNext)
+                      : null;
+        if (target == null) return;
+        GameInput.Consume();
+        if (target.IsInteractable()) target.onClick.Invoke();
     }
 
     public void Close()
     {
         if (!isOpen) return;
         isOpen = false;
+        focus.Close();
         PlayHide();
     }
 
+    // 키보드/패드 포커스. ESC·B = 닫기. 일시정지 위에서 열리면 이 그룹이 맨 위라 PauseMenu는 입력을 먹지 않는다.
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
     private void Update()
     {
+        if (isOpen) { StepRowFromPad(); focus.Tick(); }
         if (confirmUntil > 0f && Time.unscaledTime > confirmUntil) SetResetIdle();
     }
 
@@ -319,7 +347,7 @@ public class OptionsMenu : MonoBehaviour
         if (confirmUntil <= 0f)
         {
             confirmUntil = Time.unscaledTime + ConfirmWindow;
-            saveResetLabel.text = Loc.T("ui.options.reset_confirm");
+            saveResetLabel.text = Loc.T(GameInput.LocKey("ui.options.reset_confirm"));
             saveResetBg.color = DangerArmedColor;
             return;
         }

@@ -2307,6 +2307,54 @@ MonoBehaviour:
     m_Key: passive.lvl.StrengthCrit
     m_Metadata:
       m_Items: []
+  - m_Id: 17420478509162533
+    m_Key: passive.lvl.BountyXp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162534
+    m_Key: passive.lvl.SturdyHp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162535
+    m_Key: passive.lvl.HomingXp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162536
+    m_Key: passive.lvl.AutoSwing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162537
+    m_Key: passive.lvl.Thorns
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162538
+    m_Key: passive.lvl.PainAccel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162539
+    m_Key: step.SubDamage.chasearrow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074070814720
+    m_Key: ui.tree.clickUnlock.pad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017280
+    m_Key: ui.pause.hint.pad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017281
+    m_Key: ui.treasure.continue.pad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017282
+    m_Key: tutorial.skills.pad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017283
+    m_Key: ui.options.reset_confirm.pad
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

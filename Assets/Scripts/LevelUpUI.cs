@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using TMPro;
 using DG.Tweening;
 
@@ -44,7 +43,7 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Image iconC;
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
-    // 진화 아이콘 — 인덱스 = (int)id * 2 + route. 액티브 10종 × 2 = 20칸, 패시브 7종 × 2 = 14칸
+    // 진화 아이콘 — 인덱스 = (int)id * 2 + route. 액티브 11종 × 2 = 22칸, 패시브 7종 × 2 = 14칸
     // (폐지된 Refresh 자리도 비운 채 세어야 뒤가 안 밀린다). 배선은 Tools > 진화 아이콘 배선 메뉴가 한다.
     [SerializeField] private Sprite[] activeEvoIcons;
     [SerializeField] private Sprite[] passiveEvoIcons;
@@ -343,7 +342,8 @@ public class LevelUpUI : MonoBehaviour
         isOpen = true;
 
         // 세로 3장 + 오른쪽에 리롤. 배치는 좌표로 판정하므로 목록 순서는 상관없다(D를 누르면 리롤로 간다).
-        focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton }, 0);
+        // 되돌아가기(X)는 진화 대상 선택 화면에서만 켜진다 — 꺼져 있으면 포커스도 취소(ESC·B)도 건너뛴다.
+        focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton, choiceBackButton }, 0, choiceBackButton);
 
         // 진화 테(주황)와 포커스 테(노랑)는 같은 자리에 같은 두께로 그려진다 — 포커스가 보이도록 진화 테를 맨 밑에 깐다.
         // focus.Open이 SelectGlow를 처음 만들 때 맨 앞 형제로 끼어들므로 그 **뒤에서** 맞춘다.
@@ -758,13 +758,9 @@ public class LevelUpUI : MonoBehaviour
 
     // 보물 화면은 마우스 클릭 전용이었다 — 키보드로도 넘길 수 있게 한다(칸반 "플테후 제안사항").
     // ESC는 일부러 뺐다. 일시정지 메뉴가 같은 키를 먹는다.
-    private static bool TreasureSkipKeyPressed()
-    {
-        Keyboard kb = Keyboard.current;
-        if (kb == null || UIFocusGroup.ShortcutModifierHeld(kb)) return false; // Alt+Enter 등 단축키는 넘기기가 아니다
-        return kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame
-            || kb.numpadEnterKey.wasPressedThisFrame;
-    }
+    // 패드는 A. B도 일부러 뺐다 — ESC를 뺀 것과 같은 "취소" 계열이다.
+    // Alt+Enter 등 조합키 단축키는 넘기기가 아니다(GameInput.SubmitPressed가 거른다).
+    private static bool TreasureSkipKeyPressed() => GameInput.SubmitPressed();
 
     // 획득 아이콘 한 칸을 줄 끝에 붙인다(런타임 생성 — 씬에 아이콘을 미리 깔아두지 않는다).
     // HUD 스킬 슬롯과 같은 틀을 깔고 그 위에 아이콘을 얹는다. 딤 배경 위에서 아이콘만 두면 묻힌다.
@@ -1068,7 +1064,7 @@ public class LevelUpUI : MonoBehaviour
     // 루트마다 그림이 다르다(파일명 R1=루트0 / R2=루트1). 액티브는 2차 전용 그림이 따로 있고(activeEvo2Icons),
     // 아직 안 그린 2차는 1차 그림을 그대로 쓴다.
     // 진화 아이콘 배열은 **여기 하나만** 배선한다 — HUD·진화 트리는 LevelUpUI.Instance에서 빌려 간다.
-    // (원본 아이콘처럼 3곳에 중복 배선하면 32칸짜리 배열이 3벌이 되어 서로 어긋난다.)
+    // (원본 아이콘처럼 3곳에 중복 배선하면 22칸·14칸짜리 배열이 3벌이 되어 서로 어긋난다.)
     public Sprite GetActiveEvoIcon(ActiveSkillId id, int route, int stage = 1)
     {
         Sprite stage2 = stage >= 2 ? GetIcon(activeEvo2Icons, (int)id * 2 + route) : null;

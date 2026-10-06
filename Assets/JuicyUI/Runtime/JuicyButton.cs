@@ -186,9 +186,19 @@ public class JuicyButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     // rotation은 visualRoot(child)에만 적용 — root _rect를 rotate하면 hitbox가 어긋남
     private bool CanRotate => visualRoot != null;
 
+    // 커서를 숨긴 동안(키보드·패드로 고르는 중) 게임 쪽(GameInput)이 켠다. 숨은 커서 밑에 깔린 버튼이 호버되지 않게 한다.
+    public static bool HoverBlocked;
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         RememberPointer(eventData);
+        if (HoverBlocked) return;
+        BeginHover();
+    }
+
+    // 커서가 다시 켜졌을 때 게임 쪽(UIFocusGroup)이 커서 밑 버튼에 부른다 — 막아 둔 동안 지나간 Enter는 다시 오지 않는다.
+    public void BeginHover()
+    {
         if (_isHovering) return; // 회전이 밀어낸 뒤 다시 들어온 것 — 연출을 재시작하지 않는다
 
         _isHovering = true;

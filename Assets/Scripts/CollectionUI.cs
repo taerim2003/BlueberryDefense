@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using DG.Tweening;
 using TMPro;
 
@@ -78,6 +77,7 @@ public class CollectionUI : MonoBehaviour
         public Image icon;
         public Image glow;      // 고른 칸 바깥을 두르는 노란 테(`SelectGlow`). 맵·캐릭터 카드와 같은 장치.
         public JuicyButton juicy;  // 판·아이콘 색은 이 창구로 칠한다 — 아래 Recolor 주석 참고
+        public Button button;      // 키보드/패드 포커스 항목
         public bool isPassive;
         public int id;          // (int)ActiveSkillId 또는 (int)PassiveSkillId
     }
@@ -108,6 +108,7 @@ public class CollectionUI : MonoBehaviour
         BindNodes();
         CreateKeyLabels();
         if (backButton != null) backButton.onClick.AddListener(Close);
+        focus.FocusChanged += OnFocusChanged;
         panel.SetActive(false);
         Loc.LocaleChanged += ApplyText;
     }
@@ -156,6 +157,7 @@ public class CollectionUI : MonoBehaviour
             slots.Add(slot);
 
             var btn = tr.GetComponent<Button>();
+            slot.button = btn;
             if (btn != null) btn.onClick.AddListener(() => { Select(slot.isPassive, slot.id); Refresh(); });
         }
 
@@ -242,21 +244,49 @@ public class CollectionUI : MonoBehaviour
 
         panel.SetActive(true);
         PlayShow();
+
+        // 키보드/패드 포커스: 칸 17개 + 뒤로. 첫 포커스 = 지금 고른 칸. ESC·B = 뒤로.
+        var items = new List<Selectable>();
+        int initial = 0;
+        foreach (var slot in slots)
+        {
+            if (slot.button == null) continue;
+            if (slot.isPassive == selectedIsPassive && slot.id == selectedId) initial = items.Count;
+            items.Add(slot.button);
+        }
+        items.Add(backButton);
+        focus.Open(items, initial, backButton);
     }
 
     public void Close()
     {
         if (!isOpen) return;
         isOpen = false;
+        focus.Close();
         PlayHide();
     }
 
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
     private void Update()
     {
-        if (!isOpen) return;
+        if (isOpen) focus.Tick();
+    }
 
-        var kb = Keyboard.current;
-        if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+    // 키보드·패드로 칸에 오면 그 칸을 고른다(클릭과 같다). 마우스 호버로는 고르지 않는다.
+    // 포커스 표시가 고른 칸의 SelectGlow를 꺼 버리므로, 옮길 때마다 고른 칸 테를 다시 칠한다.
+    private void OnFocusChanged(Selectable s, bool viaPointer)
+    {
+        Slot hit = slots.Find(x => x.button != null && x.button == s);
+        if (!viaPointer && hit != null && !(hit.isPassive == selectedIsPassive && hit.id == selectedId))
+        {
+            Select(hit.isPassive, hit.id);
+            Refresh();
+            return;
+        }
+        foreach (var slot in slots)
+            if (slot.glow != null)
+                slot.glow.color = slot.isPassive == selectedIsPassive && slot.id == selectedId ? SelectedColor : UISkin.Transparent;
     }
 
     private void PlayShow()
@@ -487,7 +517,7 @@ public class CollectionUI : MonoBehaviour
         {
             node.icon.sprite = selectedIsPassive
                 ? SkillIconLibrary.PassiveEvo((PassiveSkillId)selectedId, route)
-                : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route);
+                : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route, tier);
             node.icon.enabled = node.icon.sprite != null;
             node.icon.color = evoFound ? Color.white : SilhouetteColor;
         }

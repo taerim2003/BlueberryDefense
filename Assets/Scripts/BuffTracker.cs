@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // 지속시간이 있는 플레이어 버프를 HUD에 표시하기 위한 범용 레지스트리.
-// 버프를 발생시키는 쪽(PlayerSkills, OrbAltar 등)이 Set/Clear만 호출하면 되고,
+// 버프를 발생시키는 쪽(PlayerSkills 등)이 Set/Clear만 호출하면 되고,
 // HUD는 GetActive()로 목록을 받아 아이콘/슬롯에 채우기만 하면 되므로 새 버프가 늘어나도 양쪽 다 손댈 곳이 최소화된다.
 public static class BuffTracker
 {

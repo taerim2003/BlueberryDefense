@@ -22,14 +22,20 @@ public class LocalizedTmp : MonoBehaviour
     {
         Apply();
         Loc.LocaleChanged += Apply;
+        GameInput.ModeChanged += Apply;
     }
 
-    private void OnDisable() => Loc.LocaleChanged -= Apply;
+    private void OnDisable()
+    {
+        Loc.LocaleChanged -= Apply;
+        GameInput.ModeChanged -= Apply;
+    }
 
+    // 패드를 쓰는 중이고 "<키>.pad" 문구가 있으면 그쪽을 보여준다("클릭하여 계속" → "A를 눌러 계속").
     public void Apply()
     {
         if (target == null) target = GetComponent<TMP_Text>();
         if (target == null || string.IsNullOrEmpty(key)) return;
-        target.text = Loc.T(key);
+        target.text = Loc.T(GameInput.LocKey(key));
     }
 }

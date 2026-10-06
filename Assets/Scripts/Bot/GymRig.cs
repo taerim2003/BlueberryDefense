@@ -72,7 +72,7 @@ public static class GymRig
 
     // 🔴 판 중 누적돼 세지는 스킬 = **호밍 미사일 하나뿐**이다(전수 조사 2026-09-27:
     //    PlayerSkills·PlayerPassives에서 판 중 증가하는 파워 카운터는 EquippedSkill.GrowthStacks가 유일).
-    //    FireHoming: 발당 피해 ×(1 + 0.05 × 스택), 그리고 Homing_MissileNum(은별) 보유 시 20스택마다 미사일 +1.
+    //    FireHoming: 발당 피해 ×(1 + 0.05 × 스택), 그리고 Homing_MissileNum(은별) 보유 시 30스택마다 미사일 +1.
     //    코드 주석의 실측: 우주 어려움 한 판에 600회 안팎 → 판 끝 피해가 첫 발의 수십 배.
     //    ⚠️ 그래서 45~60초 창만 재면 호밍을 **판 시작 상태로만** 재게 된다(10회 ≈ ×1.5).
     //    → 스택을 미리 채운 셀을 같이 돌려 **"스택 대비 파워 곡선"** 을 만든다. 실제로 몇 스택까지 가는지는
@@ -108,8 +108,10 @@ public static class GymRig
         try
         {
             ApplyTree(c, r);
-            PlayerSkills.ResetRunState();
-            PlayerPassives.ResetRunState();
+            // 🔴 판 상태 초기화는 **창구(RunState)로만** 한다. 여기서 클래스를 손으로 나열했다가
+            //    LightningStorm을 빠뜨려, 낙뢰의 ProcDamage·StackDamage가 다음 셀로 넘어가 baseline 분모를 부풀렸다.
+            //    RunState.ResetAll은 MetaBonuses/MetaRun을 건드리지 않으므로 위 ApplyTree가 얹은 트리 값은 남는다.
+            RunState.ResetAll();
             LockHealth(ph);
             SuppressLevelUps();
 

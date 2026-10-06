@@ -16,6 +16,7 @@ MonoBehaviour:
   description: 
   fieldScale: 1.8
   cameraYLift: 3
+  ambushShiftX: 2
   background: {fileID: 21300000, guid: a667d63a5ec828044b3f3cea71c89824, type: 3}
   backgroundFrames:
   - {fileID: 21300000, guid: a667d63a5ec828044b3f3cea71c89824, type: 3}
@@ -61,4 +62,4 @@ MonoBehaviour:
   bossFloatBobAmplitude: 0.3
   bossFloatBobSpeed: 0.9
   essenceMult: 1.6
-  bossHpMultiplier: 2
+  bossHpMultiplier: 2.6

@@ -25,6 +25,11 @@ public class MapDefinition : ScriptableObject
     //    자동으로 같이 올라가서 하늘 공간이 그만큼 넓어진다 — 이것도 노린 결과다.
     public float cameraYLift = 0f;
 
+    // 게릴라(중간 소환) 구간과 UFO 등장 범위를 이만큼 **플레이어 쪽(+x)으로** 민다(월드 유닛). 0 = 전 맵 공통 구간 그대로.
+    // 2026-10-06 사용자: 우주는 농장과 달리 앞에서 나와도 대응할 시간이 있다 → 우주만 2.
+    // (9/21의 "구간은 전 맵 동일"을 우주에 한해 푼 것이다 — 기준 구간은 BalanceConstants.AmbushBand*.)
+    public float ambushShiftX = 0f;
+
     [Header("표시")]
     public Sprite background;
     // 배경을 여러 컷으로 돌리고 싶을 때만 채운다(2장 이상이어야 동작). 비어 있으면 위 background로 정지 표시.

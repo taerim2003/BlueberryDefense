@@ -45,13 +45,26 @@ public class TutorialHint : MonoBehaviour
 
         foreach (string page in pages)
         {
-            label.text = Loc.T(page);
+            currentPage = page;
+            ApplyText();
             group.alpha = 0f;
             yield return Fade(1f);
             yield return new WaitForSeconds(hold);
             yield return Fade(0f);
         }
         Destroy(gameObject);
+    }
+
+    // 패드 판(X·Y·B·A)과 키보드 판(QWER)을 마지막에 만진 장치에 맞춘다. 떠 있는 동안 패드를 잡아도 바로 바뀐다 —
+    // 판 시작 직후라 마우스로 "시작"을 누르고 그제야 패드를 잡는 경우가 흔하다.
+    private string currentPage;
+
+    private void OnEnable() => GameInput.ModeChanged += ApplyText;
+    private void OnDisable() => GameInput.ModeChanged -= ApplyText;
+
+    private void ApplyText()
+    {
+        if (currentPage != null) label.text = Loc.T(GameInput.LocKey(currentPage));
     }
 
     // 스케일 시간 — 일시정지(ESC)·레벨업 창이 뜨면 안내도 같이 멈춘다(EndingSequence와 같은 규칙).

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using DG.Tweening;
 using TMPro;
 
@@ -76,16 +75,21 @@ public class PauseMenu : MonoBehaviour
 
         panel.SetActive(false);
         Loc.LocaleChanged += ApplyShellText;
+        GameInput.ModeChanged += ApplyShellText; // 힌트의 키 이름(ESC/B)이 마지막에 만진 장치를 따라간다
     }
 
-    private void OnDestroy() => Loc.LocaleChanged -= ApplyShellText;
+    private void OnDestroy()
+    {
+        Loc.LocaleChanged -= ApplyShellText;
+        GameInput.ModeChanged -= ApplyShellText;
+    }
 
     private void ApplyShellText()
     {
         if (titleText != null) titleText.text = Loc.T("ui.pause.title");
         if (settingsText != null) settingsText.text = Loc.T("ui.options.title");
         if (giveUpText != null) giveUpText.text = Loc.T("ui.pause.giveUp");
-        if (hintText != null) hintText.text = Loc.T("ui.pause.hint");
+        if (hintText != null) hintText.text = Loc.T(GameInput.LocKey("ui.pause.hint"));
     }
 
     private void Update()
@@ -94,18 +98,17 @@ public class PauseMenu : MonoBehaviour
         bool settingsOnTop = OptionsMenu.Instance != null && OptionsMenu.Instance.IsOpen;
         if (paused && !settingsOnTop) focus.Tick();
 
-        var kb = Keyboard.current;
-        if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
+        // 설정 패널이 이 창 위에 떠 있으면 ESC·B는 설정 창의 포커스 그룹(취소 = 닫기)이 먹는다(일시정지는 유지).
+        // 설정이 같은 프레임에 먼저 닫혔으면 그 입력은 GameInput.Consume으로 이미 먹혀서 아래에서 false가 된다.
+        if (settingsOnTop) return;
 
-        // 설정 패널이 이 창 위에 떠 있으면 ESC는 그것부터 닫는다(일시정지는 유지).
-        if (OptionsMenu.Instance != null && OptionsMenu.Instance.IsOpen)
+        // 열기 = ESC·패드 Start, 닫기 = 그 둘 + 패드 B.
+        bool pausePressed = GameInput.PausePressed();
+        if (paused)
         {
-            OptionsMenu.Instance.Close();
-            return;
+            if (pausePressed || GameInput.CancelPressed()) { GameInput.Consume(); Resume(); }
         }
-
-        if (paused) Resume();
-        else if (CanPause()) PauseAndShow();
+        else if (pausePressed && CanPause()) { GameInput.Consume(); PauseAndShow(); }
     }
 
     private bool CanPause()

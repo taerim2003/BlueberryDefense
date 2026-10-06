@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
@@ -13,6 +14,11 @@ public class SkillTreeEditorWindow : EditorWindow
     private const float NodeW = 210f;
     private const float TitleH = 20f;
 
+    // 🔴 세로 간격은 **편집기에서 그릴 때만** 벌린다. editorPos는 인게임 트리(SkillTreeUI.ToLocal)가
+    //    그대로 좌표로 쓰기 때문에, 저장값을 벌리면 게임 화면의 트리도 같이 늘어난다.
+    //    에셋 격자 270 × 1.2 = 324 > 가장 큰 노드(274) — 노드 사이에 50px이 남는다.
+    private const float YSpread = 1.2f;
+
     private SkillTreeData data;
     private Vector2 panOffset = new Vector2(60, 80);
     private string linkingFrom;
@@ -24,6 +30,9 @@ public class SkillTreeEditorWindow : EditorWindow
     private int pendingDelete = -1;
 
     private GUIStyle titleStyle;
+
+    // 노드 인덱스 → 마지막 Repaint에서 잰 본문 높이
+    private readonly Dictionary<int, float> measuredHeights = new Dictionary<int, float>();
 
     [MenuItem("Blueberry Defense/Skill Tree Editor")]
     public static void Open() => GetWindow<SkillTreeEditorWindow>("Skill Tree");
@@ -61,6 +70,7 @@ public class SkillTreeEditorWindow : EditorWindow
             string removedId = data.nodes[pendingDelete].id;
             data.nodes.RemoveAt(pendingDelete);
             foreach (SkillNode n in data.nodes) n.prereqIds.Remove(removedId);
+            measuredHeights.Clear(); // 인덱스가 밀리므로 잰 높이를 버리고 다시 잰다
             pendingDelete = -1;
             EditorUtility.SetDirty(data);
         }
@@ -112,7 +122,8 @@ public class SkillTreeEditorWindow : EditorWindow
             case EventType.MouseDrag:
                 if (draggingNode >= 0 && draggingNode < data.nodes.Count)
                 {
-                    data.nodes[draggingNode].editorPos += e.delta;
+                    // 화면에서 끈 거리를 저장 좌표로 되돌린다(세로는 YSpread로 벌려 그리므로 나눠 준다)
+                    data.nodes[draggingNode].editorPos += new Vector2(e.delta.x, e.delta.y / YSpread);
                     EditorUtility.SetDirty(data); // 배치 변경도 에셋 저장 대상으로 표시
                     e.Use();
                     Repaint();
@@ -145,18 +156,19 @@ public class SkillTreeEditorWindow : EditorWindow
 
     private bool IsOverAnyNode(Vector2 mouse)
     {
-        foreach (SkillNode n in data.nodes)
-            if (NodeRect(n).Contains(mouse)) return true;
+        for (int i = 0; i < data.nodes.Count; i++)
+            if (NodeRect(data.nodes[i], i).Contains(mouse)) return true;
         return false;
     }
 
     private void AddNode()
     {
+        Vector2 screen = new Vector2(position.width, position.height) * 0.4f - panOffset;
         SkillNode n = new SkillNode
         {
             id = "node_" + data.nodes.Count,
             displayName = "새 노드",
-            editorPos = new Vector2(position.width, position.height) * 0.4f - panOffset,
+            editorPos = new Vector2(screen.x, screen.y / YSpread), // 화면 좌표 → 저장 좌표
         };
         data.nodes.Add(n);
         EditorUtility.SetDirty(data);
@@ -164,19 +176,30 @@ public class SkillTreeEditorWindow : EditorWindow
 
     // 노드는 고정 크기 박스로 직접 그린다. (예전엔 GUILayout.Window를 썼는데, Unity가 창 밖으로 나간
     //  window를 뷰 안으로 강제로 끌어당기고 그 좌표를 editorPos에 되써서 배치가 통째로 망가졌다.)
-    private Rect NodeRect(SkillNode n) => new Rect(n.editorPos + panOffset, new Vector2(NodeW, NodeHeight(n)));
+    // 저장 좌표 → 화면 좌표. 세로만 YSpread배로 벌린다(저장값은 그대로).
+    private Vector2 CanvasPos(SkillNode n) => new Vector2(n.editorPos.x, n.editorPos.y * YSpread) + panOffset;
 
-    private static float NodeHeight(SkillNode n)
+    private Rect NodeRect(SkillNode n, int index) => new Rect(CanvasPos(n), new Vector2(NodeW, NodeHeight(n, index)));
+
+    // 박스 높이는 **실제로 그려진 본문**을 재서 쓴다(DrawNodeBody 끝에서 갱신).
+    // 상수로 계산하던 때는 칸을 하나 늘릴 때마다 이 식을 같이 고쳐야 했고, 잊으면 본문이 박스 밖으로
+    // 잘려 '여기로'·'삭제' 버튼이 통째로 안 보였다(가격·대역 칸이 늘었을 때 실제로 그랬다).
+    private float NodeHeight(SkillNode n, int index)
+        => measuredHeights.TryGetValue(index, out float measured) ? measured : EstimateHeight(n);
+
+    // 측정 전(그 노드를 아직 한 번도 안 그린 프레임) 임시값
+    private static float EstimateHeight(SkillNode n)
     {
-        float h = TitleH + 4 * 20f + 18f + 46f + 22f + 6f; // 제목 + 기본4필드 + 메모라벨 + 텍스트영역 + 버튼줄 + 여백
+        float h = TitleH + 5 * 20f + 18f + 46f + 22f + 8f; // 제목 + 기본5필드 + 메모라벨 + 텍스트영역 + 버튼줄 + 여백
         if (n.type == SkillNodeType.SkillUnlock || n.type == SkillNodeType.SkillEnhance) h += 20f; // 스킬 선택 줄
+        if (n.type == SkillNodeType.Normal) h += 40f; // 효과 축 + 효과량
         return h + n.prereqIds.Count * 20f;
     }
 
     private void DrawNode(int index)
     {
         SkillNode n = data.nodes[index];
-        Rect r = NodeRect(n);
+        Rect r = NodeRect(n, index);
 
         Color prevBg = GUI.backgroundColor;
         GUI.backgroundColor = TypeColor(n.type);
@@ -195,7 +218,9 @@ public class SkillTreeEditorWindow : EditorWindow
             e.Use();
         }
 
-        GUILayout.BeginArea(new Rect(r.x + 6f, r.y + TitleH, r.width - 12f, r.height - TitleH - 2f));
+        // 영역 높이는 잰 본문 높이와 **정확히** 같게 둔다(아래 여백 8f는 박스에만 준다) —
+        // 남는 공간이 있으면 늘어나는 컨트롤이 그걸 먹고 다시 재면서 높이가 매 프레임 커진다.
+        GUILayout.BeginArea(new Rect(r.x + 6f, r.y + TitleH, r.width - 12f, r.height - TitleH - 8f));
         DrawNodeBody(n, index);
         GUILayout.EndArea();
     }
@@ -273,6 +298,17 @@ public class SkillTreeEditorWindow : EditorWindow
             EditorGUILayout.EndHorizontal();
         }
 
+        // 그려진 본문의 바닥을 재서 다음 프레임 박스 높이로 쓴다(레이아웃 좌표는 Repaint에서만 유효).
+        if (Event.current.type == EventType.Repaint)
+        {
+            float h = TitleH + GUILayoutUtility.GetLastRect().yMax + 8f;
+            if (!measuredHeights.TryGetValue(id, out float prev) || Mathf.Abs(prev - h) > 0.5f)
+            {
+                measuredHeights[id] = h;
+                Repaint();
+            }
+        }
+
         EditorGUIUtility.labelWidth = prevLabelWidth;
     }
 
@@ -289,12 +325,12 @@ public class SkillTreeEditorWindow : EditorWindow
         Handles.BeginGUI();
         foreach (SkillNode n in data.nodes)
         {
-            Vector2 to = n.editorPos + panOffset + new Vector2(105, 8);
+            Vector2 to = CanvasPos(n) + new Vector2(105, 8);
             foreach (string pid in n.prereqIds)
             {
                 SkillNode p = data.Find(pid);
                 if (p == null) continue;
-                Vector2 from = p.editorPos + panOffset + new Vector2(105, 8);
+                Vector2 from = CanvasPos(p) + new Vector2(105, 8);
                 Handles.DrawBezier(from, to, from + Vector2.up * 45, to - Vector2.up * 45, TypeColor(n.type), null, 3f);
             }
         }

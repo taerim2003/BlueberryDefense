@@ -14,7 +14,7 @@ public static class SkillIconLibraryBake
     private const string SpriteDir = "Assets/Sprites/";
     private const int LevelCount = 6;
 
-    // 원본 아이콘 파일명. 진화 아이콘은 여기에 R1(루트0)·R2(루트1)를 붙인 이름이다.
+    // 원본 아이콘 파일명. 패시브 진화 아이콘은 여기에 R1(루트0)·R2(루트1)를 붙인 이름이다.
     private static string ActiveBase(ActiveSkillId id) => id switch
     {
         ActiveSkillId.BasicAttack => "Icon_BasicAttack",
@@ -30,10 +30,6 @@ public static class SkillIconLibraryBake
         ActiveSkillId.GrapeToss => "Icon_GrapeBomb", // 포도 독성 포도알 — 진화 아이콘은 R1/R2
         _ => null,
     };
-
-    // 기본공격만 진화 그림의 파일명이 다르다(Icon_BasicAttack → Icon_ArrowR1/R2).
-    private static string ActiveEvoBase(ActiveSkillId id) =>
-        id == ActiveSkillId.BasicAttack ? "Icon_Arrow" : ActiveBase(id);
 
     private static string PassiveBase(PassiveSkillId id) => id switch
     {
@@ -61,6 +57,7 @@ public static class SkillIconLibraryBake
         lib.active = new Sprite[actives.Length];
         lib.passive = new Sprite[passives.Length];
         lib.activeEvo = new Sprite[actives.Length * 2];
+        lib.activeEvo2 = new Sprite[actives.Length * 2];
         lib.passiveEvo = new Sprite[passives.Length * 2];
 
         var missing = new StringBuilder();
@@ -69,8 +66,13 @@ public static class SkillIconLibraryBake
         foreach (ActiveSkillId id in actives)
         {
             filled += Assign(lib.active, (int)id, ActiveBase(id), missing);
+            // 진화 아이콘의 경로는 EvolutionIconWiring이 단독으로 소유한다(폴더째 올라온 그림의 덮어쓰기 표가 거기 있다).
+            // 2차는 안 그린 칸이 있어도 정상이라 "빈 칸"으로 적지 않는다 — 1차 그림으로 떨어진다.
             for (int route = 0; route < 2; route++)
-                filled += Assign(lib.activeEvo, (int)id * 2 + route, Suffix(ActiveEvoBase(id), route), missing);
+            {
+                filled += AssignPath(lib.activeEvo, (int)id * 2 + route, EvolutionIconWiring.ActiveIconPath(id, route, 1), missing);
+                filled += AssignPath(lib.activeEvo2, (int)id * 2 + route, EvolutionIconWiring.ActiveIconPath(id, route, 2), null);
+            }
         }
 
         foreach (PassiveSkillId id in passives)
@@ -106,18 +108,18 @@ public static class SkillIconLibraryBake
 
         if (created) AssetDatabase.CreateAsset(lib, AssetPath);
         EditorUtility.SetDirty(lib);
-        AssetDatabase.SaveAssets();
+        AssetDatabase.SaveAssetIfDirty(lib); // SaveAssets는 다른 세션이 메모리에서 고치던 에셋까지 디스크로 밀어낸다
         AssetDatabase.Refresh();
 
         // 되읽어서 확인 — 코드로 만든 에셋의 스프라이트 대입이 조용히 무시된 전례가 있다.
         var reread = AssetDatabase.LoadAssetAtPath<SkillIconLibrary>(AssetPath);
         int rereadFilled = 0;
-        foreach (var arr in new[] { reread.active, reread.passive, reread.activeEvo, reread.passiveEvo, reread.level, reread.upgrade, reread.evolution })
+        foreach (var arr in new[] { reread.active, reread.passive, reread.activeEvo, reread.activeEvo2, reread.passiveEvo, reread.level, reread.upgrade, reread.evolution })
             foreach (var s in arr) if (s != null) rereadFilled++;
         rereadFilled += (reread.essence != null ? 1 : 0) + (reread.critDamage != null ? 1 : 0) + (reread.fly != null ? 1 : 0) + (reread.boss != null ? 1 : 0) + (reread.skilltree != null ? 1 : 0) + (reread.reroll != null ? 1 : 0);
 
         return $"SkillIconLibrary {(created ? "생성" : "갱신")}: {AssetPath}\n" +
-               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.passiveEvo.Length + lib.level.Length + lib.upgrade.Length + lib.evolution.Length + 6}개 중 " +
+               $"  칸 {lib.active.Length + lib.passive.Length + lib.activeEvo.Length + lib.activeEvo2.Length + lib.passiveEvo.Length + lib.level.Length + lib.upgrade.Length + lib.evolution.Length + 6}개 중 " +
                $"채움 {filled}개 (되읽기 {rereadFilled}개)\n" +
                (missing.Length == 0 ? "  빈 칸 없음" : "  빈 칸:\n" + missing);
     }
@@ -133,16 +135,20 @@ public static class SkillIconLibraryBake
     private static string Suffix(string base_, int route) =>
         string.IsNullOrEmpty(base_) ? null : base_ + (route == 0 ? "R1" : "R2");
 
-    private static int Assign(Sprite[] arr, int index, string fileName, StringBuilder missing)
-    {
-        if (string.IsNullOrEmpty(fileName)) return 0;
+    private static int Assign(Sprite[] arr, int index, string fileName, StringBuilder missing) =>
+        string.IsNullOrEmpty(fileName) ? 0 : AssignPath(arr, index, SpriteDir + fileName + ".png", missing);
 
-        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteDir + fileName + ".png");
+    // missing이 null이면 못 찾아도 적지 않는다(없어도 정상인 칸).
+    private static int AssignPath(Sprite[] arr, int index, string path, StringBuilder missing)
+    {
+        if (string.IsNullOrEmpty(path)) return 0;
+
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
         if (sprite == null)
         {
             // Multiple로 잘린 PNG는 메인 에셋이 Sprite가 아니라 여기서 null이 된다 — 파일명 오타와 구분해 적어 둔다.
-            bool exists = AssetDatabase.LoadAssetAtPath<Texture2D>(SpriteDir + fileName + ".png") != null;
-            missing.AppendLine($"    [{index}] {fileName} — {(exists ? "파일은 있으나 Sprite가 아님(Multiple 슬라이스?)" : "파일 없음")}");
+            bool exists = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
+            missing?.AppendLine($"    [{index}] {path} — {(exists ? "파일은 있으나 Sprite가 아님(Multiple 슬라이스?)" : "파일 없음")}");
             return 0;
         }
 

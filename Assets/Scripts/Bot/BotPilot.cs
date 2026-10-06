@@ -105,7 +105,7 @@ public class BotPilot : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = -1;
         // 창 없이(-batchmode -nographics) 뜨면 키보드 장치가 없어 `Keyboard.current`가 null이다. 게임은 PC라 키보드를 전제하고
-        // (PlayerSkills가 HoldSkills가 꺼진 프레임에 `Keyboard.current[...]`를 읽는다) 그 가정은 맞다 — 봇 쪽 환경을 맞춘다.
+        // (게임 입력은 GameInput이 null을 견디지만 BotChaos의 ESC 주입이 키보드 장치에 이벤트를 넣는다) 그 가정은 맞다 — 봇 쪽 환경을 맞춘다.
         if (UnityEngine.InputSystem.Keyboard.current == null) UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
 #endif
         Application.logMessageReceived += OnLog;

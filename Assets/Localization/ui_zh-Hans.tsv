@@ -9,4 +9,5 @@ ui.options.language	语言
 ui.options.close	关闭
 ui.options.reset	重置存档
 ui.options.reset_confirm	确定吗？再点击一次
+ui.options.reset_confirm.pad	确定吗？再按一次
 ui.options.reset_done	存档已重置

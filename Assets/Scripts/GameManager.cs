@@ -85,7 +85,9 @@ public class GameManager : MonoBehaviour
         CurrentStage++;
         stageBreakTimer = stageBreakDuration;
         SfxPlayer.Play(SfxId.StageClear);
-        FindAnyObjectByType<PlayerSkills>()?.ResetAllCooldowns();
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        skills?.ResetAllCooldowns();
+        skills?.ClearInstallations();   // 설치기(피뢰침·회오리 생성기)는 스테이지가 끝나면 사라진다
     }
 
     public void SkipToNextStage()
@@ -97,7 +99,9 @@ public class GameManager : MonoBehaviour
         }
         CurrentStage++;
         stageBreakTimer = stageBreakDuration;
-        FindAnyObjectByType<PlayerSkills>()?.ResetAllCooldowns();
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        skills?.ResetAllCooldowns();
+        skills?.ClearInstallations();
     }
 
     public void GameOver()

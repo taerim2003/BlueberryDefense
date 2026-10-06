@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Passive_Assassinate
   m_EditorClassIdentifier: Assembly-CSharp::PassiveProgression
   passive: 3
-  baseValue: 0.15
+  baseValue: 0.1
   perLevelBonus: 0.06

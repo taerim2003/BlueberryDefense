@@ -470,7 +470,8 @@ public class Enemy : MonoBehaviour
             // 플레이어(우측)에게 부대가 곧장 떨어지지 않도록 좌측에 등장한다.
             // 2026-09-20 사용자: 투하 부대가 너무 앞(플레이어 쪽)에 떨어진다 → 범위를 통째로 뒤(좌측)로 민다.
             //   전: -0.6 ~ +0.3 (중앙을 넘어 우측까지) / 후: -0.9 ~ -0.1 (전부 중앙 왼쪽)
-            float spawnX = camX + Random.Range(-halfW * 0.9f, -halfW * 0.1f);
+            //   2026-10-06 사용자: 우주는 앞에서 나와도 대응할 시간이 있다 → 맵이 정한 만큼 플레이어 쪽으로 민다(우주만 +2, 나머지 0).
+            float spawnX = camX + Random.Range(-halfW * 0.9f, -halfW * 0.1f) + EnemySpawner.AmbushShiftX;
             transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
             carrierPhase = CarrierPhase.Descend;
         }
@@ -550,7 +551,9 @@ public class Enemy : MonoBehaviour
             p.x += popVelX * Time.deltaTime;
             p.y += popVelY * Time.deltaTime;
             // 팝인으로 소환된 콩콩이는 튀어오른 자리가 곧 자기 지면이 된다 — 착지 높이를 도약 기준으로 넘겨받는다.
-            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; }
+            // 🔴 도약 위상도 "방금 착지함"으로 맞춘다. 스폰 때 흩어 둔 위상이 그대로면 착지 다음 프레임에
+            //    도약 중간 높이로 순간이동한다(게릴라 콩콩이가 텔레포트하듯 솟았다 — 2026-10-06 사용자).
+            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; hopTimer = hopDuration; }
             transform.position = p;
             return;
         }

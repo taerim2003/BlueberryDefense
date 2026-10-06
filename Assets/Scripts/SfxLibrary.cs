@@ -2,7 +2,7 @@ using UnityEngine;
 
 // 게임 전역 효과음의 단일 소스. 음원을 구해 오면 이 에셋 하나에 드래그하는 것으로 끝난다.
 //
-// ⚠️ 스킬 캐스트음(whirlwindCastSfx 등)은 PlayerSkills 인스펙터가 따로 쥔다 — 여기 중복해 넣지 말 것.
+// ⚠️ 스킬 효과음은 `Assets/Resources/SkillSfxLibrary.asset`(SkillSfx.Play("슬롯"))이 따로 쥔다 — 여기 중복해 넣지 말 것.
 //    VFX 프리팹에 딸려 붙은 AudioSource도 별개다(ObjectPool이 재생).
 //
 // 배선이 따로 없다: Assets/Resources/SfxLibrary.asset 에 두면 SfxPlayer가 알아서 찾는다.

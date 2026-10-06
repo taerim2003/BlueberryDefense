@@ -4,7 +4,7 @@ tree.name.atk_2	공격력 II
 tree.name.hp_1	체력 I
 tree.name.hp_2	체력 II
 tree.name.New_Reroll	리롤 해금
-tree.desc.New_Reroll	레벨 업 선택지를 게임당 1회 리롤할 수 있는 기능 해금
+tree.desc.New_Reroll	레벨업 선택지 리롤 해금 (게임당 1회)
 tree.name.reroll_2	리롤 I
 tree.name.crit_1	치명 I
 tree.name.crit_2	치명 II
@@ -13,48 +13,48 @@ tree.name.exp_2	경험 II
 tree.name.gold_1	부유 I
 tree.name.gold_2	부유 II
 tree.name.arrow_StartLev	화살 숙련
-tree.desc.arrow_StartLev	(딸기 선택 시) 화살 3레벨로 시작
+tree.desc.arrow_StartLev	(딸기 선택 시) 화살 사격 3레벨로 시작
 tree.name.fly_1	비행 I
 tree.name.eagle_fly	독수리 비행 추가 피해
-tree.desc.eagle_fly	독수리 투하의 비행 적 추가 피해 +30%
+tree.desc.eagle_fly	독수리 투하 비행 적 추가 피해 +30%
 tree.name.fly_2	비행 II
 tree.name.cool_1	쿨다운 I
 tree.name.cool_2	쿨다운 II
 tree.name.tornado_CoolDownBonus	신속한 회오리
-tree.desc.tornado_CoolDownBonus	회오리는 모든 쿨타임 감소 효과를 1.5배로 받음
+tree.desc.tornado_CoolDownBonus	회오리가 받는 쿨타임 감소 효과 1.5배
 tree.name.thunder_Cooldown	낙뢰 쿨타임 감소
-tree.desc.thunder_Cooldown	낙뢰가 칠 때마다 낙뢰 쿨타임 -0.01초
+tree.desc.thunder_Cooldown	낙뢰 1회마다 낙뢰 쿨타임 -0.01초
 tree.name.atk_3	공격력 III
 tree.name.gold_3	부유 III
 tree.name.Root_Skilltree	스킬트리 해금!
 tree.desc.Root_Skilltree	스킬트리를 해금합니다!
 tree.name.New_Orb	오브 해금
-tree.desc.New_Orb	<오브> 스킬이 등장할 수 있습니다.
+tree.desc.New_Orb	<오브> 스킬 해금
 tree.name.New_Lightning	낙뢰 해금
-tree.desc.New_Lightning	<낙뢰> 스킬이 등장할 수 있습니다.
+tree.desc.New_Lightning	<낙뢰> 스킬 해금
 tree.name.New_Homing	호밍 해금
-tree.desc.New_Homing	<호밍 미사일> 스킬이 등장할 수 있습니다.
+tree.desc.New_Homing	<호밍 미사일> 스킬 해금
 tree.name.New_Shotgun	산탄 해금
-tree.desc.New_Shotgun	<산탄 발사> 스킬이 등장할 수 있습니다.
+tree.desc.New_Shotgun	<산탄 발사> 스킬 해금
 tree.name.New_Rewind	되감기 해금
-tree.desc.New_Rewind	<되감기> 스킬이 등장할 수 있습니다.
+tree.desc.New_Rewind	<되감기> 스킬 해금
 tree.name.Rewind_Slow	블루베리 둔화
-tree.desc.Rewind_Slow	되감기 사용 시 블루베리의 시간을 천천히 감아\n모든 블루베리에게 둔화를 부여합니다.
+tree.desc.Rewind_Slow	되감기 사용 시 모든 블루베리 둔화
 tree.name.Homing_MissileNum	더 많은 폭격
-tree.desc.Homing_MissileNum	호밍 미사일을 20회 사용할 때마다\n날리는 미사일 수가 1개씩 증가합니다.
+tree.desc.Homing_MissileNum	호밍 미사일 30회 사용마다 미사일 +1
 tree.name.Sniping_TwoTarget	한 발에 두 놈
-tree.desc.Sniping_TwoTarget	스나이핑이 한 놈을 추가로 타겟팅합니다.
+tree.desc.Sniping_TwoTarget	스나이핑 대상 +1
 tree.name.swing_StartLev	휘두르기 숙련
 tree.desc.swing_StartLev	(파인애플 선택 시) 휘두르기 3레벨로 시작
 tree.name.tornado_Fly	회오리 대공
-tree.desc.tornado_Fly	회오리의 비행 적 추가 피해 +30%
+tree.desc.tornado_Fly	회오리 비행 적 추가 피해 +30%
 tree.name.cool_3	쿨다운 III
 tree.name.cool_4	쿨다운 IV
 tree.name.cool_5	쿨다운 V
 tree.name.accel_BaseCool	가속 단련
 tree.desc.accel_BaseCool	<가속> 획득 시 기본 쿨타임 감소 +5%
 tree.name.accel_FastSkillDmg	빠른 손
-tree.desc.accel_FastSkillDmg	<가속> 보유 시 쿨타임 4초 이하 스킬의 피해 +30%
+tree.desc.accel_FastSkillDmg	<가속> 보유 시 쿨타임 4초 이하 스킬 피해 +30%
 tree.name.critdmg_1	치명타 피해 I
 tree.name.critdmg_2	치명타 피해 II
 tree.name.critdmg_3	치명타 피해 III
@@ -67,20 +67,20 @@ tree.name.regen_2	재생 II
 tree.name.assassin_BaseCrit	암살 단련
 tree.desc.assassin_BaseCrit	<암살> 획득 시 기본 치명타 확률 +10%
 tree.name.assassin_FullCritHit	확인 사살
-tree.desc.assassin_FullCritHit	<암살> 보유 시 치명타 확률 100%인 스킬의 타수 +1
+tree.desc.assassin_FullCritHit	<암살> 보유 시 치명타 확률 100%인 스킬 타수 +1
 tree.name.reroll_3	리롤 II
 tree.name.reroll_4	리롤 III
 tree.name.reroll_5	리롤 IV
 tree.name.orb_BasicSlow	끈적한 오브
-tree.desc.orb_BasicSlow	오브가 맞힌 적을 둔화시킨다
+tree.desc.orb_BasicSlow	오브에 맞은 적 둔화
 tree.name.orb_Pierce	오브 관통
-tree.desc.orb_Pierce	오브가 방패 블루베리를 관통한다 · 유도 오브 +3
+tree.desc.orb_Pierce	기본 오브가 방패 블루베리 관통
 tree.name.eagle_DropNum	독수리 편대
 tree.desc.eagle_DropNum	독수리 투하 횟수 +1
 tree.name.shotgun_BonusHit	추가 장전
-tree.desc.shotgun_BonusHit	「보너스 탄환 장착」으로 진화한 산탄 발사의 타수 버프 +1
+tree.desc.shotgun_BonusHit	산탄 발사 피해 +10%
 tree.name.shotgun_Crit	급소 산탄
-tree.desc.shotgun_Crit	산탄 발사의 치명타 확률 +30%
+tree.desc.shotgun_Crit	산탄 발사 치명타 확률 +30%
 tree.name.exp_3	경험 III
 tree.name.exp_4	경험 IV
 tree.name.exp_5	경험 V
@@ -89,41 +89,41 @@ tree.desc.knowledge_BaseXp	<지식> 획득 시 기본 경험치 증가 +10%
 tree.name.knowledge_EvoHint	진화의 예감
 tree.desc.knowledge_EvoHint	레벨업 선택지에 진화 조건 표시
 tree.name.New_Evolution	진화 해금
-tree.desc.New_Evolution	스킬 1차 진화를 할 수 있게 된다
+tree.desc.New_Evolution	스킬 1차 진화 해금
 tree.name.arrow_Pierce	관통 화살
-tree.desc.arrow_Pierce	화살 사격의 기본 관통 +1
+tree.desc.arrow_Pierce	화살 사격 기본 관통 +1
 tree.name.swing_Knockback	묵직한 휘두르기
-tree.desc.swing_Knockback	휘두르기의 넉백 1.5배
+tree.desc.swing_Knockback	휘두르기 넉백 1.5배
 tree.name.gold_4	부유 IV
 tree.name.gold_5	부유 V
 tree.name.rewind_NoGcd	틈새 되감기
-tree.desc.rewind_NoGcd	되감기가 글로벌 쿨타임을 걸지 않는다
+tree.desc.rewind_NoGcd	되감기 사용 시 글로벌 쿨타임 없음
 tree.name.thunder_Stack	축전
-tree.desc.thunder_Stack	낙뢰 버프가 중첩되어 쌓일수록 피해가 커진다
+tree.desc.thunder_Stack	낙뢰 발동 확률 +10%
 tree.name.hp_3	체력 III
 tree.name.hp_4	체력 IV
 tree.name.sniping_Crit	급소 저격
-tree.desc.sniping_Crit	스나이핑의 치명타 확률 +30%
+tree.desc.sniping_Crit	스나이핑 치명타 확률 +30%
 tree.name.health_BaseHp	건강 단련
 tree.desc.health_BaseHp	<건강> 획득 시 기본 최대 체력 +30
 tree.name.health_HealItem	영양 만점
-tree.desc.health_HealItem	<건강> 보유 시 체력 회복 아이템의 회복량 2배
+tree.desc.health_HealItem	<건강> 보유 시 체력 회복 아이템 회복량 2배
 tree.name.hp_5	체력 V
 tree.name.defense_BaseReduce	방어 단련
 tree.desc.defense_BaseReduce	<방어> 획득 시 기본 받는 피해 감소 +10%
 tree.name.defense_Revive	불사
-tree.desc.defense_Revive	<방어> 보유 시 사망하면 한 번 최대 체력의 절반으로 부활한다
+tree.desc.defense_Revive	<방어> 보유 시 사망하면 최대 체력 50%로 1회 부활
 tree.name.hp_6	체력 VI
 tree.name.homing_Cooldown	빠른 재장전
-tree.desc.homing_Cooldown	호밍 미사일의 기본 쿨타임 -1초
+tree.desc.homing_Cooldown	호밍 미사일 기본 쿨타임 -1초
 tree.name.atk_4	공격력 IV
 tree.name.atk_5	공격력 V
 tree.name.strength_BaseDmg	힘 단련
 tree.desc.strength_BaseDmg	<힘> 획득 시 기본 피해 증가 +5%
 tree.name.strength_SlowSkill	한 방의 힘
-tree.desc.strength_SlowSkill	<힘>의 피해 증가가 쿨타임 5초 이상 스킬에 2배로 적용된다
+tree.desc.strength_SlowSkill	<힘> 피해 증가가 쿨타임 5초 이상 스킬에 2배 적용
 tree.name.New_Evolution2	2차 진화 해금
-tree.desc.New_Evolution2	스킬 2차 진화를 할 수 있게 된다
+tree.desc.New_Evolution2	스킬 2차 진화 해금
 tree.name.atk_6	공격력 VI
 tree.name.boss_1	보스 사냥 I
 tree.name.boss_2	보스 사냥 II
@@ -140,19 +140,19 @@ tree.name.fly_3	비행 III
 tree.name.heal_1	회복 I
 tree.name.heal_2	회복 II
 tree.name.heal_3	회복 III
-tree.effect.Attack	모든 피해가 {0}% 증가
-tree.effect.Health	최대 체력이 {0} 증가
-tree.effect.Regen	5초마다 체력을 {0} 회복
+tree.effect.Attack	모든 피해 +{0}%
+tree.effect.Health	최대 체력 +{0}
+tree.effect.Regen	5초마다 체력 회복 +{0}
 tree.effect.Cooldown	모든 스킬 쿨타임 -{0}%
 tree.effect.Xp	경험치 획득량 +{0}%
 tree.effect.Wealth	정수 획득량 +{0}%
-tree.effect.Crit	치명타 확률 {0}% 증가
+tree.effect.Crit	치명타 확률 +{0}%
 tree.effect.FlyDamage	비행 적 추가 피해 +{0}%
 tree.effect.CritDamage	치명타 피해 +{0}%
 tree.effect.BossDamage	보스에게 주는 피해 +{0}%
 tree.effect.Reroll	게임당 리롤 +{0}
-tree.effect.HealItem	체력 회복 아이템이 최대 체력의 +{0}%를 더 회복
-tree.name.grape_StartLev	포도 숙련
-tree.desc.grape_StartLev	(포도 선택 시) 포도 투척 3레벨로 시작
-tree.name.grape_CloudDuration	짙은 독안개
-tree.desc.grape_CloudDuration	포도 투척의 독안개가 2초 더 오래 남는다
+tree.effect.HealItem	체력 회복 아이템 회복량 +최대 체력의 {0}%
+tree.name.grape_StartLev	독성 포도알 숙련
+tree.desc.grape_StartLev	(포도 선택 시) 독성 포도알 3레벨로 시작
+tree.name.grape_CloudDuration	맹독 안개
+tree.desc.grape_CloudDuration	독성 포도알 안개 지속시간 +2초

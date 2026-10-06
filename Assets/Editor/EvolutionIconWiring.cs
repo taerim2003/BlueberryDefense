@@ -161,6 +161,15 @@ public static class EvolutionIconWiring
         return paths.Distinct().Where(System.IO.File.Exists);
     }
 
+    // 액티브 진화 아이콘의 파일 경로(덮어쓰기 표 포함). SkillIconLibraryBake도 이걸로 굽는다 — 표를 두 곳에 두지 않는다.
+    public static string ActiveIconPath(ActiveSkillId id, int route, int stage)
+    {
+        int i = (int)id;
+        if (i < 0 || i >= ActiveFileNames.Length) return null;
+        Dictionary<int, string> overrides = stage >= 2 ? ActiveStage2Overrides : ActiveOverrides;
+        return overrides.TryGetValue(i * 2 + route, out string o) ? o : PathFor(ActiveFileNames[i], route, stage);
+    }
+
     private static string PathFor(string name, int route, int stage) =>
         $"{SpriteDir}/Icon_{name}R{route + 1}{(stage >= 2 ? "_2" : "")}.png";
 

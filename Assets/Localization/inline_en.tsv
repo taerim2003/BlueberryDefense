@@ -9,7 +9,7 @@ passive.lvl.Accel	All skill cooldowns -{0}%
 passive.acq.Strength	Damage +{0}%
 passive.acq.Health	Max health +{0}
 passive.acq.Knowledge	Experience gain +{0}%
-passive.acq.Assassinate	All damage has a {0}% chance to deal triple damage
+passive.acq.Assassinate	All damage has a {0}% chance to deal double damage
 passive.acq.Refresh	{0}% chance to reset cooldowns on skill use
 passive.acq.Defense	Damage taken -{0}%
 passive.acq.Accel	All skill cooldowns -{0}%
@@ -88,6 +88,7 @@ ui.evotree.locked	[LOCKED]
 ui.essence	{0} Essence
 ui.tree.cost	{0} Essence
 ui.tree.clickUnlock	  > click to unlock
+ui.tree.clickUnlock.pad	  > press A to unlock
 ui.tree.unlocked	Unlocked
 ui.difficulty.0	Easy
 ui.difficulty.1	Normal
@@ -100,6 +101,7 @@ ui.ascension.nextUnlock	Clear this to unlock the next difficulty
 ui.pause.title	Paused
 ui.pause.giveUp	Return to Title
 ui.pause.hint	ESC — Resume
+ui.pause.hint.pad	B — Resume
 ui.pause.activeHeader	ACTIVE
 ui.pause.passiveHeader	PASSIVE
 ui.result.other	Other
@@ -130,6 +132,7 @@ ui.result.retry	Retry
 ui.result.upgrade	Upgrades
 ui.treasure.header	Treasure!
 ui.treasure.continue	Click to continue
+ui.treasure.continue.pad	Press A to continue
 ui.collection.title	Collection
 ui.collection.progress	Found {0} / {1}
 ui.collection.active	Active
@@ -157,6 +160,7 @@ ending.story2	and saved the world from the blueberry invasion!
 ending.cleared	Game Cleared!
 ui.evotree.title	Skill Evolution
 tutorial.skills	Use Q, W, E, R to cast skills\nand sweep away the swarming blueberries!
+tutorial.skills.pad	Use X, Y, B, A to cast skills\nand sweep away the swarming blueberries!
 tutorial.evolution.1	You can now evolve skills!
 tutorial.evolution.2	Raise a skill to Lv.10 and own its Synergy skill\nto evolve it into something stronger.
 step.Damage.mul.whirlwind	Tornado damage +{0}%
@@ -197,3 +201,10 @@ step.Lifesteal	Shield gain +{0}
 passive.lvl.TreasureFind	Treasure blueberry conversion chance +{0}%
 passive.lvl.StrengthQ	Q skill damage +{0}%
 passive.lvl.StrengthCrit	Critical damage +{0}%
+passive.lvl.BountyXp	Critical kill experience +{0}x
+passive.lvl.SturdyHp	Max health +{0}%
+passive.lvl.HomingXp	Homing Missile kill experience +{0}x
+passive.lvl.AutoSwing	Counter Swing damage +{0}%
+passive.lvl.Thorns	Reflected damage +{0}x
+passive.lvl.PainAccel	Cooldown cut when hit +{0}s
+step.SubDamage.chasearrow	Chasing arrow damage +{0}%

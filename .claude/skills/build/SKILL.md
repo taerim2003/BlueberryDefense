@@ -42,6 +42,11 @@ disable-model-invocation: true
 3. 끝날 때까지 백그라운드로 기다린다(보통 3분 안팎):
    `F=Builds/Release/status.txt; for i in $(seq 1 300); do grep -q "DONE\|FAILED" $F && break; sleep 5; done; cat $F` (`run_in_background`).
    `FAILED`면 그 줄을 그대로 보고하고 멈춘다.
+   **`queued`에서 2분 넘게 안 넘어가면** 에디터의 `delayCall`이 안 도는 것이다 — 다시 큐에 넣어도 같다.
+   `script-execute`로 `EditorApplication.update`에 한 번짜리 콜백을 걸어 `ReleaseBuild.Run`(private, 리플렉션)을 부르고,
+   남아 있는 `delayCall`의 `Run`은 `-=`로 뺀다(두 번 도는 것 방지).
+4. 그래픽 API를 바꾼 뒤의 첫 빌드라면 exe를 `-batchmode -logFile <스크래치패드>`로 10초쯤 띄웠다 끄고 로그의 `Direct3D:` 아래 `Version` 줄을 본다.
+   `PlayerSettings.GetGraphicsAPIs`는 낡은 값을 줄 수 있다 — 빌드는 직렬화 값(`m_BuildTargetGraphicsAPIs`)을 따른다.
 
 ## 3. zip
 

@@ -5,13 +5,11 @@
 //   2) 고유성 : 서로 같은 가격을 가진 노드 쌍(사용자 요구 — "겹치는 노드가 거의 없었으면")
 //   3) 도달성 : 루트에서 닿지 않는 노드
 //   4) 총비용 : Σ Σ_{L<maxLevel} round(cost × 1.5^L)  — BotTree.TotalCost()와 같은 식
+//              (레벨제 폐지(2026-09-28) 뒤 에셋에 maxLevel이 없어 전 노드 maxLevel=1 → 그냥 Σ cost 다)
 //   5) 기준 트리: BuildReferenceSave(ratio)와 같은 "싼 것부터" 규칙으로 무엇을 사는지 재현
 //
 // 사용법: node Tools/SkillTree/verify-costs.js [트리비율(기본 0.45)]
 // 위반이 있으면 exit 1 — pre-commit이나 CI에 그대로 걸 수 있다.
-//
-// ⚠️ cost 필드가 아직 없는 에셋에서도 돌아야 한다(도입 전 상태를 재는 것이 이 스크립트의 첫 임무다).
-//    그 경우 옛 공식(tier 등비 + 해금 0.6배)으로 가격을 계산해 같은 검사를 돌린다.
 
 const fs = require('fs');
 const path = require('path');
@@ -19,8 +17,6 @@ const path = require('path');
 const ASSET = path.join(__dirname, '..', '..', 'Assets', 'SkillTree', 'MainSkillTree.asset');
 const RATIO = Number(process.argv[2] || 0.45);
 
-// ── 옛 공식(SkillTreeData.cs) — cost 필드가 없을 때만 쓴다 ──
-const TIER_BASE = 20, TIER_RATIO = 3.2, UNLOCK_MULT = 0.6;
 const LEVEL_GROWTH = 1.5;
 const isUnlock = t => t === 1 || t === 3;
 // Unity의 Mathf.RoundToInt는 짝수 반올림(은행가 반올림)이다 — 0.5에서 갈리므로 맞춰 둔다.
@@ -29,10 +25,6 @@ const roundHalfEven = x => {
   if (d > 0.5) return f + 1;
   if (d < 0.5) return f;
   return f % 2 === 0 ? f : f + 1;
-};
-const legacyCost = n => {
-  const tierCost = n.tier <= 0 ? 1 : roundHalfEven(TIER_BASE * Math.pow(TIER_RATIO, n.tier - 1));
-  return isUnlock(n.type) && n.tier > 0 ? Math.max(1, roundHalfEven(tierCost * UNLOCK_MULT)) : tierCost;
 };
 
 // ── 파싱 ──
@@ -61,18 +53,20 @@ const nodes = blocks.map(b => {
   return {
     id, type,
     tier: num('tier') ?? 0,
-    costField: num('cost'),              // null이면 아직 도입 전
+    costField: num('cost'),
     // MaxLevelOf: Normal(0)만 maxLevel을 쓰고 나머지는 1로 강제된다
     maxLevel: type === 0 ? Math.max(1, maxLevelRaw) : 1,
     prereqIds: pre,
   };
 });
 
-const usingCostField = nodes.some(n => n.costField !== null);
-nodes.forEach(n => { n.cost = usingCostField ? Math.max(1, n.costField ?? 1) : legacyCost(n); });
+// 가격은 노드의 cost 필드가 유일한 출처다(옛 tier 등비 공식은 2026-09-19에 폐기, 폴백도 2026-09-29에 지움).
+const noCost = nodes.filter(n => n.costField === null).map(n => n.id);
+if (noCost.length) { console.error(`cost 필드가 없는 노드 ${noCost.length}개: ${noCost.join(', ')}`); process.exit(1); }
+nodes.forEach(n => { n.cost = Math.max(1, n.costField); });
 const byId = new Map(nodes.map(n => [n.id, n]));
 
-console.log(`노드 ${nodes.length}개 · 가격 출처: ${usingCostField ? 'cost 필드' : '옛 tier 공식(도입 전)'}`);
+console.log(`노드 ${nodes.length}개 · 가격 출처: cost 필드`);
 
 let problems = 0;
 

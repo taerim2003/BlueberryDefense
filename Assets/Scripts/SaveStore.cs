@@ -124,7 +124,8 @@ public static class SaveStore
     }
 
     // 세이브 파일이 없을 때 한 번만: 예전 빌드가 PlayerPrefs(레지스트리)에 남긴 값을 옮긴다.
-    // PlayerPrefs는 키 열거 API가 없어서 키를 박아 둔다. 레지스트리 쪽은 지우지 않는다(되돌릴 여지).
+    // PlayerPrefs는 키 열거 API가 없어서 키를 박아 둔다. 이관은 레지스트리 쪽을 지우지 않는다(되돌릴 여지) —
+    // 단 설정의 "세이브 초기화"(OptionsMenu)는 PlayerPrefs.DeleteAll로 레지스트리까지 통째로 지운다(안 지우면 다음 실행에 되살아난다).
     // 맵 키는 Assets/Data/Map_*.asset 에셋 이름 기준(MapClearSave 참고).
     private static readonly string[] LegacyIntKeys =
     {

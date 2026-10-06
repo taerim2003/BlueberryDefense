@@ -266,7 +266,7 @@ public class EvolutionTreeUI : MonoBehaviour
             foreach (var n in nodes)
                 if (n != null && n.button != null) items.Add(n.button);
         if (backButton != null) items.Add(backButton);
-        focus.Open(items, 0);
+        focus.Open(items, 0, backButton); // ESC·B = X(되돌아갈 데가 없어 X가 꺼져 있으면 취소도 없다)
     }
 
     // 키보드/패드 포커스. 노드 4칸에는 JuicyButton이 없어 **아웃라인만으로** 표시된다.
