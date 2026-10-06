@@ -9,4 +9,5 @@ ui.options.language	Language
 ui.options.close	Close
 ui.options.reset	Reset Save
 ui.options.reset_confirm	Are you sure? Click again
+ui.options.reset_confirm.pad	Are you sure? Press again
 ui.options.reset_done	Save reset

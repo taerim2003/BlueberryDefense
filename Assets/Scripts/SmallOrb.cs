@@ -87,6 +87,7 @@ public class SmallOrb : MonoBehaviour
             float maxRadBack = HomingTurnDegPerSec * Mathf.Deg2Rad * Time.deltaTime;
             direction = ((Vector2)Vector3.RotateTowards(direction, toOwner.normalized, maxRadBack, 0f)).normalized;
             transform.Translate(direction * speed * Time.deltaTime, Space.World);
+            FaceDirection();
             return;
         }
 
@@ -115,6 +116,16 @@ public class SmallOrb : MonoBehaviour
             speed = Mathf.Clamp(speed, moveSpeed * HomingMinSpeedMult, moveSpeed * HomingMaxSpeedMult);
         }
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
+        if (Homing) FaceDirection();
+    }
+
+    // 추적 오브는 날아가는 방향으로 그림을 돌린다(사용자 지시 2026-09-30: 플레이어 쪽으로 되돌아갈 때도 왼쪽을 봤다).
+    // 그림의 앞이 왼쪽(−x)이라 180°를 뺀다 — 왼쪽으로 날면 0°로 예전 모습 그대로다.
+    // 이동은 Space.World라 회전이 경로에 끼어들지 않는다.
+    private void FaceDirection()
+    {
+        float deg = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 180f;
+        transform.rotation = Quaternion.Euler(0f, 0f, deg);
     }
 
     // 아직 안 때린 산 적을 가까운 순으로 세워 TargetRank번째를 노린다. 오브가 적보다 많으면 순번이 돌아 겹친다(적이 적을 땐 몰리는 게 맞다).

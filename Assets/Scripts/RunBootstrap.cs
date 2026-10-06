@@ -138,7 +138,7 @@ public class RunBootstrap : MonoBehaviour
 
     // 필드 확장 = 카메라 줌아웃 + 절대 좌표를 같은 비율로 벌리기. 캐릭터/적 스케일은 손대지 않는다.
     // 카메라 기준으로 계산되는 것들(UFO 등장·호버 고도, 종이비행기 강하 시작 높이, 의성어 클램프)은 자동으로 따라온다.
-    // 중간 소환 구간(BalanceConstants.AmbushBand*)만 절대 좌표라 EnemySpawner가 따로 곱한다.
+    // 중간 소환 구간(BalanceConstants.AmbushBand*)은 절대 좌표지만 **곱하지 않는다** — 이유는 EnemySpawner의 bandMin/bandMax 주석.
     private void ApplyFieldScale(float scale, EnemySpawner spawner)
     {
         if (scale <= 0f || Mathf.Approximately(scale, 1f)) return;

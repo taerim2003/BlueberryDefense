@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using DG.Tweening;
 using TMPro;
 
@@ -78,6 +77,7 @@ public class CollectionUI : MonoBehaviour
         public Image icon;
         public Image glow;      // 고른 칸 바깥을 두르는 노란 테(`SelectGlow`). 맵·캐릭터 카드와 같은 장치.
         public JuicyButton juicy;  // 판·아이콘 색은 이 창구로 칠한다 — 아래 Recolor 주석 참고
+        public Button button;      // 키보드/패드 포커스 항목
         public bool isPassive;
         public int id;          // (int)ActiveSkillId 또는 (int)PassiveSkillId
     }
@@ -106,7 +106,9 @@ public class CollectionUI : MonoBehaviour
         Instance = this;
         BindSlots();
         BindNodes();
+        CreateKeyLabels();
         if (backButton != null) backButton.onClick.AddListener(Close);
+        focus.FocusChanged += OnFocusChanged;
         panel.SetActive(false);
         Loc.LocaleChanged += ApplyText;
     }
@@ -155,6 +157,7 @@ public class CollectionUI : MonoBehaviour
             slots.Add(slot);
 
             var btn = tr.GetComponent<Button>();
+            slot.button = btn;
             if (btn != null) btn.onClick.AddListener(() => { Select(slot.isPassive, slot.id); Refresh(); });
         }
 
@@ -196,6 +199,26 @@ public class CollectionUI : MonoBehaviour
             }
     }
 
+    // 2차 열쇠 라벨은 프리팹에 따로 두지 않고 **루트 라벨을 복제**해 2차 칸 위로 옮긴다 —
+    // 옮기는 거리는 프리팹의 1차 칸 → 2차 칸 간격이라, 칸을 옮기면 라벨도 따라간다(글꼴·루트 색도 그대로 이어받는다).
+    // 연계 아이콘(PrereqIcon)이 라벨 자식으로 생기기 전에 복제해야 해서 Awake에서 한다.
+    private void CreateKeyLabels()
+    {
+        for (int route = 0; route < 2; route++)
+        {
+            TMP_Text src = routeLabels[route];
+            Node t1 = nodes[route, 0], t2 = nodes[route, 1];
+            if (src == null || t1 == null || t2 == null) continue;
+
+            TMP_Text label = Instantiate(src, src.transform.parent);
+            label.name = "KeyLabel_R" + route;
+            label.raycastTarget = false;
+            float dx = ((RectTransform)t2.root.transform).anchoredPosition.x - ((RectTransform)t1.root.transform).anchoredPosition.x;
+            label.rectTransform.anchoredPosition += new Vector2(dx, 0f);
+            keyLabels[route] = label;
+        }
+    }
+
     // 언어가 바뀌면 고정 문구를 다시 채운다(나머지는 Open→Refresh가 채운다).
     // 예전엔 이 글자들이 Awake에 한 번만 정해져서, 언어를 바꾼 뒤 도감을 열면 옛 언어로 남아 있었다.
     private void ApplyText()
@@ -221,21 +244,49 @@ public class CollectionUI : MonoBehaviour
 
         panel.SetActive(true);
         PlayShow();
+
+        // 키보드/패드 포커스: 칸 17개 + 뒤로. 첫 포커스 = 지금 고른 칸. ESC·B = 뒤로.
+        var items = new List<Selectable>();
+        int initial = 0;
+        foreach (var slot in slots)
+        {
+            if (slot.button == null) continue;
+            if (slot.isPassive == selectedIsPassive && slot.id == selectedId) initial = items.Count;
+            items.Add(slot.button);
+        }
+        items.Add(backButton);
+        focus.Open(items, initial, backButton);
     }
 
     public void Close()
     {
         if (!isOpen) return;
         isOpen = false;
+        focus.Close();
         PlayHide();
     }
 
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
     private void Update()
     {
-        if (!isOpen) return;
+        if (isOpen) focus.Tick();
+    }
 
-        var kb = Keyboard.current;
-        if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+    // 키보드·패드로 칸에 오면 그 칸을 고른다(클릭과 같다). 마우스 호버로는 고르지 않는다.
+    // 포커스 표시가 고른 칸의 SelectGlow를 꺼 버리므로, 옮길 때마다 고른 칸 테를 다시 칠한다.
+    private void OnFocusChanged(Selectable s, bool viaPointer)
+    {
+        Slot hit = slots.Find(x => x.button != null && x.button == s);
+        if (!viaPointer && hit != null && !(hit.isPassive == selectedIsPassive && hit.id == selectedId))
+        {
+            Select(hit.isPassive, hit.id);
+            Refresh();
+            return;
+        }
+        foreach (var slot in slots)
+            if (slot.glow != null)
+                slot.glow.color = slot.isPassive == selectedIsPassive && slot.id == selectedId ? SelectedColor : UISkin.Transparent;
     }
 
     private void PlayShow()
@@ -353,13 +404,14 @@ public class CollectionUI : MonoBehaviour
 
             bool showPrereq = discovered && hasPrereq;
             routeLabels[route].text = showPrereq ? full : routeText;
-            SetPrereqIcon(route, showPrereq ? PrereqIcon(pre) : null,
-                spacerAt >= 0 ? full.Substring(0, spacerAt) : full);
+            SetPrereqIcon(prereqIcons, routeLabels[route], route, showPrereq ? PrereqIcon(pre) : null,
+                spacerAt >= 0 ? full.Substring(0, spacerAt) : full, RouteGap);
             // 🔴 패시브는 2차 진화가 없다(2026-09-08) — 도감에서도 2차 칸과 T1→T2 화살표를 감춘다.
             //    남기면 영원히 "미발견"인 칸이 도감에 두 개 뜬다.
             int maxTier = selectedIsPassive
                 ? EvolutionRoutes.MaxStageFor((PassiveSkillId)selectedId)
                 : EvolutionRoutes.MaxStageFor((ActiveSkillId)selectedId);
+            RefreshKeyLabel(route, discovered && maxTier >= 2);
             routeArrows[route].gameObject.SetActive(maxTier >= 2);
             routeArrows[route].color = discovered ? SubTextColor : LockedTextColor;
 
@@ -379,19 +431,48 @@ public class CollectionUI : MonoBehaviour
     private const float RouteGap = 40f;        // "루트 N"과 아이콘 사이
 
     private readonly Image[] prereqIcons = new Image[2];
+    private readonly TMP_Text[] keyLabels = new TMP_Text[2];   // 2차 진화 열쇠 — CreateKeyLabels가 만든다
+    private readonly Image[] keyIcons = new Image[2];
 
     private static Sprite PrereqIcon((PassiveSkillId? Passive, ActiveSkillId? Active) pre) =>
         pre.Passive.HasValue ? SkillIconLibrary.Passive(pre.Passive.Value)
         : pre.Active.HasValue ? SkillIconLibrary.Active(pre.Active.Value)
         : null;
 
-    private void SetPrereqIcon(int route, Sprite sprite, string textBeforeIcon)
+    // 2차의 열쇠는 스킬이 아니라 **그 스킬의 1차 진화체**라(§EvolutionRoutes.Stage2Prereq) 진화체 아이콘을 쓴다.
+    // 1차 연계 아이콘과 같은 스킬이라도 진화 아이콘이라 루트까지 구별된다.
+    private static Sprite KeyIcon((PassiveSkillId? Passive, ActiveSkillId? Active, int Route) key) =>
+        key.Passive.HasValue ? SkillIconLibrary.PassiveEvo(key.Passive.Value, key.Route)
+        : key.Active.HasValue ? SkillIconLibrary.ActiveEvo(key.Active.Value, key.Route)
+        : null;
+
+    // 2차 칸 위의 "(열쇠 아이콘) 연계". 1차 연계와 같은 문구를 쓰되 "루트 N" 접두사가 없어서
+    // 아이콘 앞 간격(RouteGap)도 두지 않는다 — 아이콘이 라벨 왼쪽 끝에서 시작한다.
+    private void RefreshKeyLabel(int route, bool show)
     {
-        Image img = prereqIcons[route];
+        TMP_Text label = keyLabels[route];
+        if (label == null) return;   // 프리팹에서 노드가 빠졌을 때 — Awake가 이미 경고를 찍었다
+
+        // 패시브는 2차가 없다 — show가 false라 여기까지 안 온다(Stage2Prereq도 액티브 전용이다).
+        var key = show ? EvolutionRoutes.Stage2Prereq((ActiveSkillId)selectedId, route) : default;
+        Sprite icon = show ? KeyIcon(key) : null;
+        label.gameObject.SetActive(icon != null);
+        if (icon == null) return;
+
+        string spacer = "<space=" + (PrereqIconSize + PrereqIconGap) + ">";
+        string full = Loc.F("ui.collection.prereq", spacer);
+        int spacerAt = full.IndexOf(spacer, StringComparison.Ordinal);
+        label.text = full;
+        SetPrereqIcon(keyIcons, label, route, icon, spacerAt >= 0 ? full.Substring(0, spacerAt) : full, 0f);
+    }
+
+    private void SetPrereqIcon(Image[] icons, TMP_Text label, int route, Sprite sprite, string textBeforeIcon, float gapBefore)
+    {
+        Image img = icons[route];
         if (img == null)
         {
             if (sprite == null) return;         // 쓸 일이 없으면 만들지도 않는다
-            img = prereqIcons[route] = CreatePrereqIcon(routeLabels[route]);
+            img = icons[route] = CreatePrereqIcon(label);
         }
 
         img.sprite = sprite;
@@ -403,7 +484,7 @@ public class CollectionUI : MonoBehaviour
         // ⚠️ RouteGap을 앞 글자에 태그로 붙여 재면 안 된다 — TMP는 **문자열 끝의 `<space>`는 폭에 안 센다**.
         //    그래서 간격은 재지 않고 여기서 더한다.
         var rt = img.rectTransform;
-        rt.anchoredPosition = new Vector2(routeLabels[route].GetPreferredValues(textBeforeIcon).x + RouteGap, 0f);
+        rt.anchoredPosition = new Vector2(label.GetPreferredValues(textBeforeIcon).x + gapBefore, 0f);
     }
 
     private static Image CreatePrereqIcon(TMP_Text label)
@@ -436,7 +517,7 @@ public class CollectionUI : MonoBehaviour
         {
             node.icon.sprite = selectedIsPassive
                 ? SkillIconLibrary.PassiveEvo((PassiveSkillId)selectedId, route)
-                : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route);
+                : SkillIconLibrary.ActiveEvo((ActiveSkillId)selectedId, route, tier);
             node.icon.enabled = node.icon.sprite != null;
             node.icon.color = evoFound ? Color.white : SilhouetteColor;
         }

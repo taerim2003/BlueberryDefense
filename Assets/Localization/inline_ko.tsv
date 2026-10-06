@@ -9,7 +9,7 @@ passive.lvl.Accel	모든 스킬 쿨타임 {0}%p 감소
 passive.acq.Strength	피해량 {0}% 증가
 passive.acq.Health	최대 체력 {0} 증가
 passive.acq.Knowledge	경험치 획득량 {0}% 증가
-passive.acq.Assassinate	모든 피해가 {0}% 확률로 3배 피해
+passive.acq.Assassinate	모든 피해가 {0}% 확률로 2배 피해
 passive.acq.Refresh	스킬 사용 시 {0}% 확률로 쿨타임 초기화
 passive.acq.Defense	받는 피해 {0}% 감소
 passive.acq.Accel	모든 스킬 쿨타임 {0}% 감소
@@ -88,6 +88,7 @@ ui.evotree.locked	[잠김]
 ui.essence	{0} 정수
 ui.tree.cost	{0} 정수
 ui.tree.clickUnlock	  > 클릭하여 해금
+ui.tree.clickUnlock.pad	  > A를 눌러 해금
 ui.tree.unlocked	해금됨
 ui.difficulty.0	쉬움
 ui.difficulty.1	보통
@@ -100,6 +101,7 @@ ui.ascension.nextUnlock	클리어하면 다음 난이도가 열립니다
 ui.pause.title	일시정지
 ui.pause.giveUp	타이틀로 돌아가기
 ui.pause.hint	ESC — 계속하기
+ui.pause.hint.pad	B — 계속하기
 ui.pause.activeHeader	액티브
 ui.pause.passiveHeader	패시브
 ui.result.other	기타
@@ -130,6 +132,7 @@ ui.result.retry	다시하기
 ui.result.upgrade	업그레이드
 ui.treasure.header	보물 획득!
 ui.treasure.continue	클릭하여 계속
+ui.treasure.continue.pad	A를 눌러 계속
 ui.collection.title	컬렉션
 ui.collection.progress	발견 {0} / {1}
 ui.collection.active	액티브
@@ -157,6 +160,7 @@ ending.story2	블루베리의 습격으로부터 세상을 구해냈습니다!
 ending.cleared	Game Cleared!
 ui.evotree.title	스킬 진화
 tutorial.skills	QWER로 스킬을 사용해 몰려오는 블루베리들을 쓸어버리세요!
+tutorial.skills.pad	X·Y·B·A로 스킬을 사용해 몰려오는 블루베리들을 쓸어버리세요!
 tutorial.evolution.1	스킬을 진화시킬 수 있어요!
 tutorial.evolution.2	스킬을 레벨 10까지 올리고 연계 스킬을 갖추면\n더 강한 스킬로 진화합니다.
 step.Damage.mul.whirlwind	회오리 피해량 {0}% 증가
@@ -194,3 +198,13 @@ step.EnemySlow	모든 적 이동속도 {0}% 감소
 step.StunDuration	기절 시간 {0}초 증가
 step.StunInterval	기절 주기 {0}틱 단축
 step.Lifesteal	보호막 획득량 +{0}
+passive.lvl.TreasureFind	보물 블루베리 변환 확률 +{0}%
+passive.lvl.StrengthQ	Q스킬 피해량 +{0}%
+passive.lvl.StrengthCrit	치명타 피해 +{0}%
+passive.lvl.BountyXp	치명타 처치 경험치 +{0}배
+passive.lvl.SturdyHp	최대 체력 {0}% 증가
+passive.lvl.HomingXp	호밍 미사일 처치 경험치 +{0}배
+passive.lvl.AutoSwing	반격 휘두르기 피해 +{0}%p
+passive.lvl.Thorns	반사 피해 +{0}배
+passive.lvl.PainAccel	피격 시 쿨타임 단축 +{0}초
+step.SubDamage.chasearrow	추격 화살 피해량 {0}% 증가

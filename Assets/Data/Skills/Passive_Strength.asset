@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PassiveProgression
   passive: 0
   baseValue: 0.1
-  perLevelBonus: 0.11
+  perLevelBonus: 0.08

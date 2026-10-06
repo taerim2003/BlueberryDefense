@@ -329,10 +329,10 @@ public class GymArena
     //  ② 캐시 없이 Instantiate만 되는 것 — 컴포넌트 **타입**이 계약이다(콜라이더가 없어 ②의 스윕에 안 걸린다).
     // 🔴 목록은 낡는다. 그래서 **`Residual()`이 감시자**다 — 셀 시작에 남의 것이 하나라도 있으면
     //    `residualAtStart`에 찍혀 분석기가 그 칸을 걸러낸다. 새 발생기가 생기면 그 숫자가 먼저 말해 준다.
-    //    (실측 2026-09-27: `OrbAltar`가 이 방식으로 잡혔다 — 오브 R1 1차 셀 18칸에서 잔존 1.
-    //     같은 스킬끼리의 오염이라 foreignDamage 가드에는 안 걸렸다.)
+    //    (실측 2026-09-27: 당시 있던 `OrbAltar`가 이 방식으로 잡혔다 — 오브 R1 1차 셀 18칸에서 잔존 1.
+    //     같은 스킬끼리의 오염이라 foreignDamage 가드에는 안 걸렸다. 오브 제단은 2026-09-29에 코드째 지워져 ②가 비었다.)
     private static readonly string[] EmitterFields = { "tornadoMaker", "skyShredderShip" };
-    private static readonly string[] EmitterTypes = { "OrbAltar" };
+    private static readonly string[] EmitterTypes = { };
     public List<string> MissingEmitterFields { get; } = new List<string>();
 
     private void DestroyCachedEmitters()

@@ -5,19 +5,15 @@ using UnityEngine.EventSystems;
 using TMPro;
 using DG.Tweening;
 
-// 트리 노드 하나의 입력 처리. 런타임에 SkillTreeUI가 각 노드에 붙인다(씬/프리팹에 저장되지 않아 같은 파일 OK).
-// 좌클릭=구매(해금), 호버=툴팁. (되돌리기 불가 — 우클릭 환불 없음)
-public class SkillNodeButton : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+// 트리 노드 하나의 호버 처리. 런타임에 SkillTreeUI가 각 노드에 붙인다(씬/프리팹에 저장되지 않아 같은 파일 OK).
+// 호버=툴팁. 구매(해금)는 노드의 Button.onClick이 한다 — 마우스 좌클릭과 키보드·패드 확정이 같은 길을 탄다.
+// 🔴 여기에 IPointerClickHandler를 다시 달지 말 것. 한 오브젝트의 클릭 핸들러는 전부 불려서(Button + 이것)
+//    클릭 한 번에 두 번 산다. (되돌리기 불가 — 우클릭 환불 없음)
+public class SkillNodeButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public string NodeId;
-    public System.Action<string> OnClickNode;
     public System.Action<string> OnHoverEnter;
     public System.Action<string> OnHoverExit;
-
-    public void OnPointerClick(PointerEventData e)
-    {
-        if (e.button == PointerEventData.InputButton.Left) OnClickNode?.Invoke(NodeId);
-    }
 
     public void OnPointerEnter(PointerEventData e) => OnHoverEnter?.Invoke(NodeId);
     public void OnPointerExit(PointerEventData e) => OnHoverExit?.Invoke(NodeId);
@@ -66,7 +62,7 @@ public class SkillTreeUI : MonoBehaviour
     private static readonly Color ColSpecial = new Color(0.95f, 0.95f, 0.15f);
     private static readonly Color ColLineDim = new Color(1f, 1f, 1f, 0.12f);
     private static readonly Color ColLineOn = new Color(1f, 1f, 1f, 0.6f);
-    // 노드 테두리 4상태(칸반 "폴리싱 할일 리스트업"): 만렙=파랑 / 지금 찍을 수 있음=초록 /
+    // 노드 테두리 4상태(칸반 "폴리싱 할일 리스트업"): 구매 완료=파랑 / 지금 살 수 있음=초록 /
     // 선행은 됐는데 정수가 모자람=빨강 / 선행이 안 됨=회색.
     private static readonly Color RingMaxed = new Color(0.35f, 0.62f, 1f, 1f);
     private static readonly Color RingBuyable = new Color(0.4f, 1f, 0.5f, 1f);
@@ -87,6 +83,16 @@ public class SkillTreeUI : MonoBehaviour
 
     private string hoveredId;
     private bool built;
+
+    // ── 키보드/패드 ──
+    // 포커스 = 호버다. 노드 칸엔 이름이 없어 정보가 툴팁에만 있으므로, 키보드·패드로 노드에 오면
+    // 마우스를 올린 것과 똑같이 툴팁을 띄우고 확대한다. (노드 루트 Image엔 그림이 없어 공용 포커스 테가 안 그려진다.)
+    // 안개에 가린 노드는 SetActive(false)라 포커스가 알아서 건너뛴다 — 사서 보이는 노드가 바뀌어도 목록은 그대로 둔다.
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+    private readonly List<Button> nodeButtons = new();
+    private readonly Dictionary<Button, string> nodeIdOf = new();
+    private string navLitId;     // 키보드·패드 포커스로 호버 연출을 켜 둔 노드
+    private TreePanDrag panDrag;
 
     // 🔴 테두리 그림(`..._투명`)은 불투명 픽셀이 **전부 순수 검정**이다. UI 셰이더가 텍스처에 색을 곱하므로
     //    `Image.color`를 무슨 색으로 줘도 검정 × 색 = 검정이 되어, 상태별 테두리색이 통째로 죽는다.
@@ -122,6 +128,8 @@ public class SkillTreeUI : MonoBehaviour
     private void Awake()
     {
         if (closeButton != null) closeButton.onClick.AddListener(Close);
+        focus.FocusChanged += OnFocusChanged;
+        if (content != null) panDrag = content.GetComponentInParent<TreePanDrag>(true); // Awake 때 패널이 꺼져 있다 — 비활성도 찾아야 한다
         if (tooltipRoot != null) tooltipRoot.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -136,10 +144,55 @@ public class SkillTreeUI : MonoBehaviour
         prevEssence = -1; // 재오픈 시 자원 펀치 생략
         RefreshAll();
         PlayOpenStagger();
+
+        // 첫 포커스 = 지금 화면 가운데에 가장 가까운 보이는 노드(시점이 튀지 않게). ESC·B = 닫기.
+        navLitId = null;
+        var items = new List<Selectable>(nodeButtons) { closeButton };
+        focus.Open(items, NearestVisibleNodeIndex(), closeButton);
+    }
+
+    private void Update()
+    {
+        focus.Tick();
+        if (focus.IsActive && panDrag != null) panDrag.PadTick();
+    }
+
+    private int NearestVisibleNodeIndex()
+    {
+        if (panelRect == null) return 0;
+        Vector3 center = panelRect.TransformPoint(panelRect.rect.center);
+        int best = 0;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < nodeButtons.Count; i++)
+        {
+            if (nodeButtons[i] == null || !nodeButtons[i].gameObject.activeSelf) continue;
+            float d = (nodeButtons[i].transform.position - center).sqrMagnitude;
+            if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return best;
+    }
+
+    private void OnFocusChanged(Selectable s, bool viaPointer)
+    {
+        // 키보드·패드로 켜 둔 노드는 끈다. 툴팁은 그 노드 것일 때만 내린다 —
+        // 마우스가 다른 노드에 올라가 이미 그 노드 툴팁을 띄웠을 수 있다(포인터 이벤트가 먼저 온다).
+        if (navLitId != null)
+        {
+            AnimateHover(navLitId, false);
+            if (hoveredId == navLitId) { hoveredId = null; if (tooltipRoot != null) tooltipRoot.SetActive(false); }
+            navLitId = null;
+        }
+        if (viaPointer || !(s is Button b) || !nodeIdOf.TryGetValue(b, out string id)) return; // 마우스는 노드의 포인터 이벤트가 직접 처리한다
+
+        navLitId = id;
+        OnNodeHoverEnter(id);
+        if (panDrag != null && views.TryGetValue(id, out NodeView v)) panDrag.Reveal(v.rt);
     }
 
     public void Close()
     {
+        focus.Close();
+        navLitId = null;
         KillAllTweens();
         if (panelTransition != null) panelTransition.Hide();
         else if (panelRoot != null) panelRoot.SetActive(false);
@@ -214,9 +267,12 @@ public class SkillTreeUI : MonoBehaviour
 
             var input = btn.gameObject.AddComponent<SkillNodeButton>();
             input.NodeId = n.id;
-            input.OnClickNode = OnNodeClick;
             input.OnHoverEnter = OnNodeHoverEnter;
             input.OnHoverExit = OnNodeHoverExit;
+            string id = n.id; // 클로저 캡처
+            btn.onClick.AddListener(() => OnNodeClick(id)); // 좌클릭(Button이 왼쪽 버튼만 받는다)·키보드·패드 확정
+            nodeButtons.Add(btn);
+            nodeIdOf[btn] = id;
 
             views[n.id] = view;
         }
@@ -243,6 +299,8 @@ public class SkillTreeUI : MonoBehaviour
             MetaUpgradeId.Reroll => SkillIconLibrary.Reroll(),
             // 「회복」 노드 — 건강 진화 R1(날개 달린 하트) 그림을 빌려 쓴다(사용자 지정 2026-09-20).
             MetaUpgradeId.HealItem => SkillIconLibrary.PassiveEvo(PassiveSkillId.Health, 0),
+            // 「재생」 노드 — 초록 십자가 달린 하트(Icon_HealthR2). 분기가 없어 빈 칸이었다(2026-09-30).
+            MetaUpgradeId.Regen => SkillIconLibrary.PassiveEvo(PassiveSkillId.Health, 1),
             _ => null,
         };
         if (n.type == SkillNodeType.SpecialUnlock) return n.id switch
@@ -424,9 +482,8 @@ public class SkillTreeUI : MonoBehaviour
             if (fog == Fog.Hidden) continue;
 
             bool isUnlocked = fog == Fog.Revealed;
-            bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 구매 + 보유 레벨업 모두 포함
-            int lv = SkillTreeSave.EffectiveLevel(v.node, SkillTreeSave.LevelOf(v.node.id));
-            int max = SkillTreeSave.MaxLevelOf(v.node);
+            bool buyable = SkillTreeSave.CanUpgrade(tree, v.node.id); // 미보유 + 선행 충족 + 정수 충분
+            int lv = SkillTreeSave.EffectiveLevel(v.node, SkillTreeSave.LevelOf(v.node.id)); // 0 = 안 삼, 1 = 삼
 
             // 미보유(힌트) 노드도 타입 색으로 내용을 공개하되, 아직 안 산 상태임을 어둡게 구분(구매 가능하면 살짝 밝게).
             Color c = isUnlocked ? BaseColor(v.node.type) : BaseColor(v.node.type) * (buyable ? 0.7f : 0.5f);
@@ -437,17 +494,14 @@ public class SkillTreeUI : MonoBehaviour
             if (v.icon != null) v.icon.color = iconTint;
             if (v.stage != null) v.stage.color = iconTint;
 
-            if (v.label != null)
-            {
-                // 노드는 이제 **네모 아이콘 칸**이라 이름을 담지 않는다 — 이름·설명·비용은 호버 툴팁이 전부 보여준다.
-                // 칸 안에 남기는 건 레벨제 노드의 진행도뿐(만렙>1 이고 보유 중일 때).
-                v.label.text = (isUnlocked && lv >= 1 && max > 1) ? lv + "/" + max : "";
-            }
+            // 노드는 **네모 아이콘 칸**이라 이름을 담지 않는다 — 이름·설명·비용은 호버 툴팁이 전부 보여준다.
+            // (레벨제 시절엔 "2/5" 진행도를 여기 찍었다. 2상태가 된 뒤로 칸 안 글자는 없다.)
+            if (v.label != null) v.label.text = "";
 
             if (v.ring != null)
             {
                 // 보이는 노드는 전부 테두리를 켠다 — 테두리 색 자체가 "지금 이 노드를 어떻게 할 수 있는가"의 표시다.
-                bool maxed = lv >= max;
+                bool maxed = lv >= 1; // 구매 완료
                 bool prereqOk = lv > 0 || SkillTreeSave.PrereqMet(tree, v.node);
                 v.ring.enabled = true;
                 v.ring.color = maxed ? RingMaxed
@@ -506,25 +560,14 @@ public class SkillTreeUI : MonoBehaviour
             {
                 int cost = SkillTreeSave.NextLevelCost(tree, n);
                 bool can = SkillTreeSave.CanUpgrade(tree, hoveredId);
-                tooltipCost.text = Loc.F("ui.tree.cost", cost) + (can ? Loc.T("ui.tree.clickUnlock") : "");
+                tooltipCost.text = Loc.F("ui.tree.cost", cost) + (can ? Loc.T(GameInput.LocKey("ui.tree.clickUnlock")) : "");
             }
         }
         else
         {
             if (tooltipName != null) tooltipName.text = n.Name;
             if (tooltipDesc != null) tooltipDesc.text = n.Desc;
-            if (tooltipCost != null)
-            {
-                int lv = SkillTreeSave.EffectiveLevel(n, SkillTreeSave.LevelOf(hoveredId));
-                int max = SkillTreeSave.MaxLevelOf(n);
-                bool canUp = SkillTreeSave.CanUpgrade(tree, hoveredId);
-                int nextCost = SkillTreeSave.NextLevelCost(tree, n);
-
-                if (lv >= max)
-                    tooltipCost.text = max > 1 ? "Lv." + lv + "/" + max + " " + Loc.T("ui.tree.maxed") : Loc.T("ui.tree.unlocked");
-                else
-                    tooltipCost.text = "Lv." + lv + "/" + max + Loc.F("ui.tree.next", nextCost) + (canUp ? Loc.T("ui.tree.click") : "");
-            }
+            if (tooltipCost != null) tooltipCost.text = Loc.T("ui.tree.unlocked"); // 산 노드는 2상태라 "해금됨" 한 줄
         }
 
         tooltipRoot.SetActive(true);

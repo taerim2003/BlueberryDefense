@@ -36,6 +36,7 @@ public class PlayerExperience : MonoBehaviour
         // 후반 경험치 과다 획득 완화: 스테이지별 XP 배율(ScalingTable, 스테이지1=최대→기준스테이지=최소로 선형 감소)
         float stageFactor = GameManager.Instance != null ? Scaling.XpStageFactor(GameManager.Instance.CurrentStage) : 1f;
         currentXP += Mathf.RoundToInt(amount * xpMultiplier * stageFactor);
+        BotInput.OnXpAdded?.Invoke(amount, xpMultiplier, stageFactor); // 봇 관측(평소 null)
 
         while (currentXP >= xpToNextLevel)
         {

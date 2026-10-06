@@ -41,17 +41,18 @@ public class PlayerPassives : MonoBehaviour
     // 아래 값들은 진화/레벨업으로 계속 갱신되는 정적 상태 — 플레이어가 한 명뿐이라 LightningStorm과 같은 방식으로 관리한다.
     // 치명타 확률·재사용 초기화 확률의 '기본값'은 PassiveProgression(SO)이 소유 → 획득 시 적용하므로 0에서 시작하고 Awake에서 판마다 리셋.
     public static float AssassinateCritChance = 0f;
-    public static float AssassinateCritMultiplier = 3f;
+    public static float AssassinateCritMultiplier = 2f; // 기본 치명타 배율 3 → 2 (2026-10-06 사용자: 치명타가 너무 강하다)
     public static float RefreshChance = 0f;
     public static float AssassinateKillXpMultiplier = 1f; // 암살 연계 path1: 치명타 처치 시 경험치 배율
     public static float RefreshHealOnResetAmount = 0f; // 리프레쉬 연계 path1: 쿨타임 초기화시 회복량
-    public static float RefreshLightningCooldownProcChance = 0f; // 리프레쉬 연계 path3 T2+: 낙뢰 발동시 전체 쿨타임 감소 확률
-    public static float BuffSkillCooldownMult = 1f; // 리프레쉬 연계 path3 T1: 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
+    // ⚠️ 아래 둘은 폐지된 리프레쉬 패시브의 path2 효과(case (Refresh, 2, 1)·(Refresh, 2, 2)) — 치트 창으로만 도달한다.
+    public static float RefreshLightningCooldownProcChance = 0f; // (Refresh, 2, 2): 낙뢰 발동시 전체 쿨타임 감소 확률
+    public static float BuffSkillCooldownMult = 1f; // (Refresh, 2, 1): 버프류 스킬(산탄·낙뢰) 쿨타임 감소 배율
     // 피격 시 받은 피해의 이 배수를 전체 적에게 되돌려준다.
     // ⚠️ 예전엔 건강 path2("가시 갑주")가 이걸 켰지만, 2026-08-06 명세에서 **방어 path2**로 옮겨졌다
     //    (건강 path2는 하트 드랍으로 교체). 소비처는 HandleDamageTaken 한 곳뿐이라 필드는 그대로 쓴다.
     public static float HealthRetaliationMultiplier = 0f;
-    // 힘 연계 path2("완력/괴력"): **Q키에 할당된 스킬** 전용 추가 피해 배율.
+    // 힘 R1 「생활 근육」(path2): **Q키에 할당된 스킬** 전용 추가 피해 배율.
     // ⚠️ 예전엔 기본공격(화살 쏘기) 고정이었는데 2026-08-07 명세대로 슬롯 기준으로 바꿨다.
     //    Q는 슬롯 이름이 아니라 **가장 먼저 얻은 스킬**에 붙는다(PlayerSkills.AcquireSkill) —
     //    화살 쏘기로 시작하지 않는 캐릭터(파인애플=휘두르기)에선 대상이 달라진다.
@@ -91,6 +92,9 @@ public class PlayerPassives : MonoBehaviour
     private readonly List<EquippedPassive> equippedPassives = new List<EquippedPassive>();
     private PlayerSkills skills;
     private PlayerHealth health;
+    // ESC 요약용 — 최종 스탯에는 스킬트리·캐릭터 기본값이 섞여 있어서 패시브가 올린 몫만 따로 센다.
+    private float knowledgeXpBonus;
+    private int healthBonus;
 
     public bool HasMaxPassives => equippedPassives.Count >= MaxPassives;
     public IReadOnlyList<EquippedPassive> EquippedPassives => equippedPassives;
@@ -121,7 +125,7 @@ public class PlayerPassives : MonoBehaviour
     public static void ResetRunState()
     {
         AssassinateCritChance = 0f;
-        AssassinateCritMultiplier = 3f;
+        AssassinateCritMultiplier = 2f;
         RefreshChance = 0f;
         AssassinateKillXpMultiplier = 1f;
         RefreshHealOnResetAmount = 0f;
@@ -173,6 +177,7 @@ public class PlayerPassives : MonoBehaviour
     //    보호막으로 다 막은 타격은 반사도 자동 휘두르기도 안 나간다(의도, PlayerHealth.TakeDamage 참고).
     private void HandleDamageTaken(int amount)
     {
+        BotInput.OnPlayerDamageTaken?.Invoke(amount); // 봇 관측(평소 null) — 반응이 돌기 전 쿨 상태를 재야 해서 맨 앞
         // 방어 path2(건강 연계): 받은 피해의 배수를 전체 적에게 되돌려준다.
         if (HealthRetaliationMultiplier > 0f)
         {
@@ -202,8 +207,9 @@ public class PlayerPassives : MonoBehaviour
     public static float ApplyCrit(float damage, float critChance, out bool isCrit)
     {
         isCrit = critChance > 0f && Random.value < critChance;
+        BotInput.OnCritRoll?.Invoke(critChance); // 봇 관측(평소 null)
         // 스킬트리 "치명타 피해" 노드는 여기서 더한다 — AssassinateCritMultiplier 자체를 올리면
-        // ResetRunState가 판마다 3f로 되돌려 놓아서 적용 순서에 따라 사라진다.
+        // ResetRunState가 판마다 2f로 되돌려 놓아서 적용 순서에 따라 사라진다.
         return isCrit ? damage * (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus) : damage;
     }
 
@@ -246,9 +252,39 @@ public class PlayerPassives : MonoBehaviour
 
     private void ApplyPassiveLevelEffect(EquippedPassive passive)
     {
-        ApplyPassiveValue(passive.Id, PerLevelBonus(passive.Id));
+        // 루트 축만 오르는 진화체는 원래 축을 올리지 않는다(RouteOnlyLevelUp).
+        if (!RouteOnlyLevelUp(passive)) ApplyPassiveValue(passive.Id, PerLevelBonus(passive.Id));
         ApplyEvolvedLevelBonus(passive);   // 진화 루트가 레벨마다 더 주는 몫(§ApplyEvolvedLevelBonus)
     }
+
+    // 진화 뒤 레벨업이 **루트 전용 축 하나만** 올리는 진화체(사용자 결정 2026-10-01). 카드 문구도 그 축만 보여준다.
+    //   가속 R0 「리프레쉬」 — 쿨감 대신 초기화 확률 · 지식 R0 「보물 탐지」 — 경험치 대신 보물 확률
+    //   힘 R1 「생활 근육」 — 전체 피해 대신 Q스킬 피해
+    //   힘 R0 「불타는 근육」 — 전체 피해 대신 치명타 피해(2026-10-02 사용자)
+    // 2026-10-06 사용자 승인으로 7종 추가 — 진화는 만렙에서만 열려 원래 축이 이미 다 올라 있다.
+    //   암살 R0 「현상금」 — 치명타 확률(상한 70%에 막혀 버려지던 것) 대신 치명타 처치 경험치
+    //   암살 R1 「필중 암살」 — 축은 그대로 치명타 확률이지만 값이 다르다(만렙에 100%가 되도록 4%p)
+    //   건강 R0 「강건함」 — 고정 체력 대신 최대체력 비율 · 지식 R1 「전투 통찰」 — 경험치 대신 호밍 처치 경험치
+    //   방어 R0 「망치 반격」 — 피해 감소 대신 반격 피해 · 방어 R1 「가시 갑주」 — 피해 감소 대신 반사 배율
+    //     (반사는 피해 감소가 적용된 뒤의 피해에 곱한다 — 둘을 같이 올리면 서로 상쇄된다)
+    //   가속 R1 「고통 가속」 — 쿨감 대신 피격 시 단축 초
+    // 원래 축을 그대로 올리는 진화체는 건강 R1 「풍요」 하나다.
+    private static bool RouteOnlyLevelUp(EquippedPassive p) =>
+        p.EvolutionStage > 0 && (p.Id, p.Route) switch
+        {
+            (PassiveSkillId.Accel, 0) => true,
+            (PassiveSkillId.Accel, 1) => true,
+            (PassiveSkillId.Knowledge, 0) => true,
+            (PassiveSkillId.Knowledge, 1) => true,
+            (PassiveSkillId.Strength, 0) => true,
+            (PassiveSkillId.Strength, 1) => true,
+            (PassiveSkillId.Assassinate, 0) => true,
+            (PassiveSkillId.Assassinate, 1) => true,
+            (PassiveSkillId.Health, 0) => true,
+            (PassiveSkillId.Defense, 0) => true,
+            (PassiveSkillId.Defense, 1) => true,
+            _ => false,
+        };
 
     // 패시브별 대상 스탯에 값을 더한다(획득=기본값·레벨업=상승값 공통 경로).
     private void ApplyPassiveValue(PassiveSkillId id, float amount)
@@ -259,10 +295,11 @@ public class PlayerPassives : MonoBehaviour
                 skills.IncreaseStrengthDamage(amount); // 힘의 몫은 따로 기억된다(스킬트리 "힘" 강화가 그 몫만 2배로 쓴다)
                 break;
             case PassiveSkillId.Health:
-                health.IncreaseMaxHealth(Mathf.RoundToInt(amount));
+                AddMaxHealth(Mathf.RoundToInt(amount));
                 break;
             case PassiveSkillId.Knowledge:
                 PlayerExperience.Instance.IncreaseXPMultiplier(amount);
+                knowledgeXpBonus += amount;
                 break;
             case PassiveSkillId.Assassinate:
                 AssassinateCritChance += amount;
@@ -277,6 +314,39 @@ public class PlayerPassives : MonoBehaviour
                 AccelCooldownReduction += amount;
                 break;
         }
+    }
+
+    // 건강 패시브가 최대 체력을 올리는 유일한 창구 — 올린 양을 ESC 요약용으로 같이 센다.
+    private void AddMaxHealth(int amount)
+    {
+        health.IncreaseMaxHealth(amount);
+        healthBonus += amount;
+    }
+
+    // 레벨업 카드 설명 — 보유 패시브용. 루트 축만 오르는 진화체는 실제로 오르는 것만 보여준다(ApplyPassiveLevelEffect와 같은 분기).
+    public static string DescribePassiveLevelEffect(EquippedPassive p)
+    {
+        if (!RouteOnlyLevelUp(p)) return DescribePassiveLevelEffect(p.Id);
+        return p.Id switch
+        {
+            PassiveSkillId.Accel => p.Route == 0
+                ? Loc.F("passive.lvl.Refresh", Pct(RefreshChancePerLevel))
+                : Loc.F("passive.lvl.PainAccel", PainAccelCutPerLevel.ToString("0.##")),
+            PassiveSkillId.Knowledge => p.Route == 0
+                ? Loc.F("passive.lvl.TreasureFind", (TreasureChancePerLevel * 100f).ToString("0.##"))
+                : Loc.F("passive.lvl.HomingXp", HomingKillXpPerLevel.ToString("0.##")),
+            PassiveSkillId.Strength => p.Route == 0
+                ? Loc.F("passive.lvl.StrengthCrit", Pct(StrengthCritDamagePerLevel))
+                : Loc.F("passive.lvl.StrengthQ", Pct(StrengthQDamagePerLevel)),
+            PassiveSkillId.Assassinate => p.Route == 0
+                ? Loc.F("passive.lvl.BountyXp", BountyKillXpPerLevel.ToString("0.##"))
+                : Loc.F("passive.lvl.Assassinate", Pct(AssassinCertainCritPerLevel)),
+            PassiveSkillId.Health => Loc.F("passive.lvl.SturdyHp", Pct(HealthSturdyPerLevel)),
+            PassiveSkillId.Defense => p.Route == 0
+                ? Loc.F("passive.lvl.AutoSwing", Pct(DefenseAutoSwingPerLevel))
+                : Loc.F("passive.lvl.Thorns", (DefenseThornsBase * DefenseThornsPerLevel).ToString("0.##")),
+            _ => DescribePassiveLevelEffect(p.Id),
+        };
     }
 
     // 레벨업 카드 설명 — 레벨당 상승값(SO) 반영
@@ -315,37 +385,42 @@ public class PlayerPassives : MonoBehaviour
 
     private static string Pct(float f) => (f * 100f).ToString("0.#");
 
-    // 일시정지(ESC) 요약용: 이 패시브가 **지금 실제로** 얼마나 적용되고 있는지.
-    // 레벨업 누적분과 진화로 붙은 보정이 이미 반영된 현재 수치를 그대로 읽어 보여준다.
+    // 일시정지(ESC) 요약용: **이번 판에서 이 패시브가 올린 몫만** 보여준다(사용자 결정 2026-10-06).
+    // 레벨업 누적분과 진화 보정은 들어가고, 스킬트리 스탯 노드·캐릭터 기본값은 빠진다.
+    // ⚠️ 플레이어 최종 스탯(총 피해 배율·경험치 배율·최대 체력)을 읽으면 트리 몫이 섞인다 — 패시브 전용 누적값만 읽을 것.
+    //    트리의 패시브 강화 노드("<힘> 획득 시 +5%")는 패시브 기본값에 얹히는 것이라 포함된다(획득 카드와 같은 수).
     public List<string> DescribeCurrentEffect(EquippedPassive p)
     {
         var lines = new List<string>();
         switch (p.Id)
         {
             case PassiveSkillId.Strength:
-                if (skills != null) lines.Add(Loc.F("passive.cur.Strength.dmg", Pct(skills.PassiveDamageMultiplier - 1f)));
+                if (skills != null) lines.Add(Loc.F("passive.cur.Strength.dmg", Pct(skills.StrengthDamageBonus)));
                 if (FirstSlotDamageMultiplierBonus > 0f)
                 {
                     // 대상이 캐릭터·획득 순서마다 달라서 이름을 박아 두면 틀린다 — 지금 Q에 있는 스킬을 그때그때 읽는다.
                     string qSkill = skills != null && skills.EquippedSkills.Count > 0 ? skills.EquippedSkills[0].DisplayName : Loc.T("passive.cur.Strength.qfallback");
                     lines.Add(Loc.F("passive.cur.Strength.q", qSkill, Pct(FirstSlotDamageMultiplierBonus)));
                 }
+                // 불타는 근육은 레벨업이 치명타 피해만 올린다 — 그 값이 여기 안 보이면 레벨업 효과가 요약에서 사라진다.
+                if (p.EvolutionStage > 0 && p.Route == 0)
+                    lines.Add(Loc.F("passive.cur.Assassinate.mult", AssassinateCritMultiplier.ToString("0.##")));
                 break;
 
             case PassiveSkillId.Health:
-                if (health != null) lines.Add(Loc.F("passive.cur.Health.max", health.MaxHealth));
+                lines.Add(Loc.F("passive.cur.Health.max", "+" + healthBonus));
                 if (HeartDropMultiplier > 1f) lines.Add(Loc.F("passive.cur.Health.heartDrop", HeartDropMultiplier.ToString("0.#")));
                 break;
 
             case PassiveSkillId.Knowledge:
-                if (PlayerExperience.Instance != null) lines.Add(Loc.F("passive.cur.Knowledge.xp", Pct(PlayerExperience.Instance.XpMultiplier - 1f)));
+                lines.Add(Loc.F("passive.cur.Knowledge.xp", Pct(knowledgeXpBonus)));
                 if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add(Loc.F("passive.cur.Knowledge.treasure", Pct(EnemySpawner.ExtraTreasureChance)));
                 if (HomingKillXpMultiplier > 1f) lines.Add(Loc.F("passive.cur.Knowledge.homingXp", HomingKillXpMultiplier.ToString("0.##")));
                 break;
 
             case PassiveSkillId.Assassinate:
                 lines.Add(Loc.F("passive.cur.Assassinate.chance", Pct(AssassinateCritChance)));
-                lines.Add(Loc.F("passive.cur.Assassinate.mult", (AssassinateCritMultiplier + MetaBonuses.CritDamageBonus).ToString("0.##")));
+                lines.Add(Loc.F("passive.cur.Assassinate.mult", AssassinateCritMultiplier.ToString("0.##")));
                 if (CritChanceCapOverride > 0f) lines.Add(Loc.F("passive.cur.Assassinate.critCap", Pct(CritChanceCapOverride)));
                 if (AssassinateKillXpMultiplier > 1f) lines.Add(Loc.F("passive.cur.Assassinate.killXp", AssassinateKillXpMultiplier.ToString("0.##")));
                 break;
@@ -445,9 +520,9 @@ public class PlayerPassives : MonoBehaviour
             // ⚠️ 예전엔 "최대체력 1당 피해"(HealthDamagePerHp)였다 — 피해 축이라 문구와 정반대였다.
             //    최대체력은 **현재 최대치 기준 배수**라 T1에 한 번만 얹는다(T1·T2에 나눠 걸면 순차 적용되어 두 번 곱해진다).
             case (PassiveSkillId.Health, 1, 1):
-                if (health != null) health.IncreaseMaxHealth(Mathf.RoundToInt(health.MaxHealth * HealthSturdyBase));
+                if (health != null) AddMaxHealth(Mathf.RoundToInt(health.MaxHealth * HealthSturdyBase));
                 break;
-            // 건강 R1 「풍요」 — 체력 회복 아이템이 **3배** 자주 나온다. 레벨마다 더 잦아져 만렙에 5~6배.
+            // 건강 R1 「풍요」 — 체력 회복 아이템이 **6배** 자주 나온다(2026-10-01 사용자: 3배 → 6배). 6배 고정 — 레벨업은 최대체력만 올린다(2026-10-06, 종전엔 레벨마다 숨어서 9배까지 올랐다).
             // ⚠️ 예전엔 1차 최종값이 5배였다(T1 3 → T2 5). 문구가 "3배"로 확정돼 T2 덮어쓰기를 걷어냈다.
             case (PassiveSkillId.Health, 2, 1): HeartDropMultiplier = HeartDropBase; break;
 
@@ -481,30 +556,41 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Defense, 2, 1): HealthRetaliationMultiplier = DefenseThornsBase; break;
 
             // 가속 R0 「리프레쉬」 — 폐지된 리프레쉬의 "쿨타임 초기화"를 물려받는다(PlayerSkills.TryUseSkill이 소비).
-            case (PassiveSkillId.Accel, 1, 1): RefreshChance += 0.10f; break;
-            case (PassiveSkillId.Accel, 1, 2): RefreshChance += 0.08f; break;
+            // 🔴 진화 순간 = 정확히 10%(2026-10-01 사용자). 1차 진화는 T1·T2를 둘 다 밟고(LegacyTiersFor) 진화 도약으로
+            //    레벨업 1회분(+2%p, ApplyEvolvedLevelBonus)이 더 붙으므로 여기는 8%만 준다. 종전엔 10 + 8 + 2 = 20%였다.
+            case (PassiveSkillId.Accel, 1, 1): RefreshChance += 0.08f; break;
             // 가속 R1 「고통 가속」 — 맞을 때마다 전체 쿨타임이 앞당겨진다.
             case (PassiveSkillId.Accel, 2, 1): AccelCooldownCutOnHit += 0.5f; break;
         }
     }
 
     // ── 진화 루트가 레벨업마다 더 주는 몫 ────────────────────────────────────
-    // 🔴 진화한 패시브는 레벨업이 **원래 축 + 루트 전용 축** 둘을 올린다(2026-09-08 사용자 지시).
+    // 🔴 진화한 패시브는 레벨업이 **루트 전용 축 하나만** 올린다(RouteOnlyLevelUp — 2026-10-06에 풍요를 뺀 전부로 넓혔다).
+    //    건강 R1 「풍요」만 원래 축(최대체력)을 그대로 올리고 여기엔 분기가 없다.
     //    "다 찍으면 엄청난 체력을 가질 수 있게" 같은 요구가 여기서 만들어진다.
     //    루트를 안 탄 패시브(EvolutionStage 0)는 걸리지 않는다.
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
-    // 가속 R0 「리프레쉬」: 진화 즉시 10%(ApplyPassivePathTierEffect) + 레벨마다 +2%p (사용자 결정 2026-09-27).
+    // 가속 R0 「리프레쉬」: 진화 즉시 10%(티어 8% + 도약 2%p) + 레벨마다 +2%p (사용자 결정 2026-09-27 · 10/1 재확인). 만렙 28%.
     private const float RefreshChancePerLevel = 0.02f;
+    private const float TreasureChancePerLevel = 0.0015f;  // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.15%p(2026-10-01 사용자)
+    private const float StrengthQDamagePerLevel = 0.10f;   // 힘 R1 「생활 근육」: 레벨마다 Q스킬 피해 +10%(2026-10-01 사용자 — 15에서 정정)
+    // 힘 R0 「불타는 근육」: 레벨마다 치명타 피해 배율 +0.2(= 카드 "+20%", 스킬트리 치명타 피해 노드와 같은 표기). 기본 배율 ×2에 더해진다.
+    //   진화 순간 +0.5(T1·T2) + 도약 1회 0.2, 만렙까지 9회 더 → ×2 기준 최대 ×4.5. 크기는 Claude가 골랐다(2026-10-02, HANDOFF 확인 대기).
+    private const float StrengthCritDamagePerLevel = 0.2f;
     private const float HealthSturdyBase = 0.5f;       // 건강 R0: 진화 즉시 최대체력 +50%
     // 🔴 0.3 → 0.1 (2026-09-20 사용자). 복리라 레벨당 30%면 만렙에 최대체력이 약 ×13.8이 되고,
     //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
     //    가른 것이 트리도 맵도 아니라 "이 패시브를 뽑았나"였다. 10%면 만렙 약 ×2.6이다.
     private const float HealthSturdyPerLevel = 0.1f;   //          레벨마다 최대체력 +10%(현재 최대치 기준 = 복리)
-    private const float HeartDropBase = 3f;            // 건강 R1: 회복템 3배
-    private const float HeartDropPerLevel = 0.3f;      //          진화 시 1회 + 레벨업 9회 = 만렙 6.0배
+    private const float HeartDropBase = 6f;            // 건강 R1: 회복템 6배 고정(2026-10-01 사용자: 3 → 6. 문구 evo.passive.desc.Health.1.1과 짝)
     private const float HomingKillXpBase = 2f;         // 지식 R1: 호밍 처치 경험치 2배
-    private const float HomingKillXpPerLevel = 0.15f;  //          진화 시 1회 + 레벨업 9회 = 만렙 3.5배
-    private const float AssassinCertainCritPerLevel = 0.03f; // 암살 R1: 레벨마다 치명타 확률 +3%p(상한이 100%로 열려 있다)
+    private const float HomingKillXpPerLevel = 0.3f;   //          진화 시 1회 + 레벨업 9회 = 만렙 5배(2026-10-06: 0.15 → 0.3, 전체 경험치 축을 대체하게 돼서)
+    // 암살 R1: 레벨마다 치명타 확률 +4%p — 원래 축(+6%p)을 대체한다. 진화 시점 64% + 10회 = 만렙 104%(상한 100%).
+    //   종전엔 6 + 3 = 9%p라 3~4레벨에 100%에 닿고 나머지 레벨업이 버려졌다(2026-10-06).
+    private const float AssassinCertainCritPerLevel = 0.04f;
+    private const float BountyKillXpPerLevel = 0.1f;      // 암살 R0: 레벨마다 치명타 처치 경험치 +0.1배(진화 2배 → 만렙 3배)
+    private const float DefenseAutoSwingPerLevel = 0.2f;  // 방어 R0: 레벨마다 반격 휘두르기 피해 +20%p(진화 100% → 만렙 300%)
+    private const float PainAccelCutPerLevel = 0.1f;      // 가속 R1: 레벨마다 피격 시 쿨타임 단축 +0.1초(진화 0.5초 → 만렙 1.5초)
     private const float DefenseThornsBase = 10f;       // 방어 R1: 받은 피해의 10배 반사
     private const float DefenseThornsPerLevel = 0.3f;  //          레벨마다 기본값의 30%씩(진화 1회 포함 만렙 40배)
 
@@ -514,13 +600,19 @@ public class PlayerPassives : MonoBehaviour
         switch (p.Id, p.Route)
         {
             case (PassiveSkillId.Health, 0):
-                if (health != null) health.IncreaseMaxHealth(Mathf.RoundToInt(health.MaxHealth * HealthSturdyPerLevel));
-                break;
-            case (PassiveSkillId.Health, 1):
-                HeartDropMultiplier += HeartDropPerLevel;
+                if (health != null) AddMaxHealth(Mathf.RoundToInt(health.MaxHealth * HealthSturdyPerLevel));
                 break;
             case (PassiveSkillId.Knowledge, 1):
                 HomingKillXpMultiplier += HomingKillXpPerLevel;
+                break;
+            case (PassiveSkillId.Assassinate, 0):
+                AssassinateKillXpMultiplier += BountyKillXpPerLevel;
+                break;
+            case (PassiveSkillId.Defense, 0):
+                DefenseAutoSwingDamageMult += DefenseAutoSwingPerLevel;
+                break;
+            case (PassiveSkillId.Accel, 1):
+                AccelCooldownCutOnHit += PainAccelCutPerLevel;
                 break;
             case (PassiveSkillId.Assassinate, 1):
                 AssassinateCritChance += AssassinCertainCritPerLevel;
@@ -529,9 +621,18 @@ public class PlayerPassives : MonoBehaviour
                 HealthRetaliationMultiplier += DefenseThornsBase * DefenseThornsPerLevel;
                 break;
             // 가속 R0 「리프레쉬」 — 레벨업마다 쿨타임 초기화 확률이 오른다(사용자 지시 2026-09-27).
-            // 진화 순간의 10%(ApplyPassivePathTierEffect)가 시작값이고, 여기가 레벨마다 더 얹는다.
+            // 진화 순간의 10%(티어 8% + 이 줄의 도약 1회)가 시작값이고, 여기가 레벨마다 더 얹는다.
             case (PassiveSkillId.Accel, 0):
                 RefreshChance += RefreshChancePerLevel;
+                break;
+            case (PassiveSkillId.Knowledge, 0):
+                EnemySpawner.ExtraTreasureChance += TreasureChancePerLevel;
+                break;
+            case (PassiveSkillId.Strength, 0):
+                AssassinateCritMultiplier += StrengthCritDamagePerLevel;
+                break;
+            case (PassiveSkillId.Strength, 1):
+                FirstSlotDamageMultiplierBonus += StrengthQDamagePerLevel;
                 break;
         }
     }

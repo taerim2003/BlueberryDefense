@@ -85,7 +85,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 83b4b04c30a496d4f95d014427e8ae90, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 356ca69a8cae36d45b1054b48d86f28f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -184,7 +184,6 @@ MonoBehaviour:
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}
-  chainLightningVfxPrefab: {fileID: 2139788027143211048, guid: 07ab3add344a1a746a3ea6c4012db20f, type: 3}
   deathVfxPrefab: {fileID: 4748681987041982144, guid: 3eccf8519d036954898bdcd007ae4e13, type: 3}
   hitParticlePrefab: {fileID: 8514423321508764034, guid: 694aef26ff233bd4bae11bd02d82c7dd, type: 3}
   hitParticleSprites:
@@ -194,12 +193,17 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 0867bbf6f7d6cf641aeada7282277cd0, type: 3}
   playerCollisionVfxPrefab: {fileID: 4748681987041982144, guid: 3e01d91f8713f0642b74a8180d67b988, type: 3}
   spawnYOffset: 0.7
+  spawnYJitter: 0
+  speedVariance: 0
   alwaysBackLayer: 0
   isFlying: 0
   blocksProjectiles: 0
   isDiveFlyer: 0
   diveSpawnHeightRatioMin: 0.4
   diveSpawnHeightRatioMax: 0.95
+  diveAimYSpread: 0
+  diveBobAmplitude: 0
+  diveBobSpeed: 2.2
   isHopper: 1
   hopHeight: 6.4
   hopDuration: 1.8
@@ -216,6 +220,7 @@ MonoBehaviour:
   deathSpawnPrefabs: []
   deathSpawnCount: 0
   deathSpawnRadius: 0.6
+  deathSpawnInheritsMultipliers: 0
   deathBurstVfxPrefab: {fileID: 0}
   deathBurstVfxScale: 1
   popGravity: 30
@@ -229,7 +234,7 @@ Animator:
   m_GameObject: {fileID: 4929157244831216748}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b5a2dca342155f54a909dd3193ba218a, type: 2}
+  m_Controller: {fileID: 9100000, guid: 4bfb33b0462732a46ab75c16d29166d1, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

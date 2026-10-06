@@ -807,12 +807,47 @@ function readAdvocates(reportDir) {
   return out;
 }
 
+// 스킬별 도달 층 표 — 행은 (스킬, 루트), 열은 맵. 맵마다 **그 맵을 측정한 가장 최근 회차**의 판만 씁니다
+// (회차 사이에 밸런스가 바뀌므로 여러 회차를 섞으면 서로 다른 상태의 평균이 됩니다).
+const SKILL_KO = { BasicAttack: '화살 사격', Whirlwind: '회오리', Orb: '오브', Lightning: '낙뢰', EagleDrop: '독수리 투하',
+  Sniping: '스나이핑', Homing: '호밍 미사일', Shotgun: '산탄 발사', Rewind: '되감기', Swing: '휘두르기', GrapeToss: '독성 포도알' };
+const MAP_COLS = [['Map_BlueberryField', '농장 어려움'], ['Map_Wide15', '해변 어려움'], ['Map_Wide20', '우주 어려움']];
+function buildStageTable(data) {
+  const byId = Object.fromEntries(loadSessions().map(s => [s.id, s]));
+  const latest = {};   // map → 그 맵의 판 목록(가장 최근 회차)
+  for (const it of data.iterations) {
+    const runs = (it.sessions || []).flatMap(id => (byId[id] ? byId[id].runs : [])).filter(r => r.mode === 'expedition');
+    const maps = [...new Set(runs.map(r => r.map))];
+    for (const m of maps) latest[m] = runs.filter(r => r.map === m);
+  }
+  const rows = [];
+  for (const skill of Object.keys(SKILL_KO)) for (const route of [0, 1]) {
+    const cells = MAP_COLS.map(([mapKey]) => {
+      const rs = (latest[mapKey] || []).filter(r => r.targetSkill === skill && r.targetRoute === route && r.result !== 'stuck');
+      if (!rs.length) return null;
+      return { avg: round(mean(rs.map(r => r.stageReached)), 1), n: rs.length, clears: rs.filter(r => r.result === 'clear').length,
+        sec: Math.round(mean(rs.map(r => r.gameTime || 0))) };   // 판당 평균 게임 시간(초)
+    });
+    rows.push({ skill: SKILL_KO[skill], route: `R${route}`, cells });
+  }
+  // 순위 — 같은 맵·같은 루트의 스킬끼리(사용자 요청 2026-09-30 "4/11 이런 식으로"). 평균 도달 층, 같으면 클리어 수. 둘 다 같으면 같은 순위.
+  for (let ci = 0; ci < MAP_COLS.length; ci++) for (const route of ['R0', 'R1']) {
+    const cs = rows.filter(r => r.route === route && r.cells[ci]).map(r => r.cells[ci]);
+    for (const c of cs) {
+      c.rank = 1 + cs.filter(o => o.avg > c.avg || (o.avg === c.avg && o.clears > c.clears)).length;
+      c.of = cs.length;
+    }
+  }
+  return { cols: MAP_COLS.map(c => c[1]), rows };
+}
+
 function buildReadout(data, reportDir) {
   const last = data.iterations[data.iterations.length - 1] || {};
-  const minutes = Math.round(last.realMinutes || 0);
-  const playtime = minutes >= 60
-    ? `${Math.floor(minutes / 60)}시간 ${String(minutes % 60).padStart(2, '0')}분`
-    : `${minutes}분`;
+  // 판당 평균 **게임** 시간(봇 측정에 걸린 실제 시간이 아니다 — 봇은 여러 판을 동시에, 실제보다 빠르게 돌린다).
+  const byId = Object.fromEntries(loadSessions().map(s => [s.id, s]));
+  const lastRuns = (last.sessions || []).flatMap(id => (byId[id] ? byId[id].runs : [])).filter(r => r.result !== 'stuck');
+  const minutes = lastRuns.length ? Math.round(mean(lastRuns.map(r => r.gameTime || 0)) / 60) : 0;
+  const playtime = `${minutes}분`;
 
   // 맵별 클리어. 원정 모드 집계가 들어오면 그쪽을 먼저 쓰고, 없으면 기존 캠페인 목표별 집계를 씁니다.
   // ⚠️ 원정 판 레코드의 구간 필드(effByEvoStage 등)는 대변인이 읽는 값이고, 이 그래프는 클리어 판수만 봅니다.
@@ -829,7 +864,7 @@ function buildReadout(data, reportDir) {
   return {
     iteration: last.iteration,
     generated: new Date().toISOString().slice(0, 10),
-    playtime, maps,
+    playtime, maps, stageTable: buildStageTable(data),
     skills: adv.skills, passives: adv.passives, crossExam: adv.crossExam,
   };
 }

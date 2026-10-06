@@ -89,8 +89,8 @@ public static class BotCooldownAudit
                     s.PathTier[path] = EvolutionRoutes.TargetPathTier(tier);
                     s.Route = route;
                     s.EvolutionStage = tier;
-                    s.Damage *= EvolutionRoutes.EvolveDamageMult;
-                    s.Cooldown = Mathf.Max(gcd, s.Cooldown * EvolutionRoutes.EvolveCooldownMult);
+                    // 진화 공통 배수(EvolveDamageMult 1.5 · EvolveCooldownMult 1)는 2026-09-28에 폐지됐다 —
+                    // 시작 피해·쿨은 아래 applyEvo가 `Evo_*` 에셋에서 읽는다(EvolutionRoutes.cs 머리 주석).
                     s.Level = 1;
                     applyEvo.Invoke(null, new object[] { s });
 

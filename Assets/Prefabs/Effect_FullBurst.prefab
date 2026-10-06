@@ -118,5 +118,5 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 2dca39f44c841a142bb147ac0fb6549a, type: 3}
   - {fileID: 21300000, guid: 37c5bd13124348146b78fa4ca62defdd, type: 3}
   fps: 20
-  loop: 0
-  despawnOnFinish: 1
+  loop: 1
+  despawnOnFinish: 0

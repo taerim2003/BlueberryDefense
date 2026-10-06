@@ -64,6 +64,10 @@ public class GameManager : MonoBehaviour
         if (spawner != null && !spawner.StageSpawnComplete) return;      // 아직 스폰 중
         if (Enemy.Active.Count > 0) return; // 잔몹 처리 대기
 
+        // 레벨업·보물·진화 창이 떠 있거나 대기열에 남아 있으면 클리어를 미룬다 — 다 고른 뒤에 클리어가 뜬다.
+        // 이 Update는 timeScale 0에도 돌아서, 마지막 적이 레벨업과 같은 순간에 죽으면 두 창이 겹쳐 떴다(10/1 사용자).
+        if (ModalPause.IsPaused || (LevelUpUI.Instance != null && LevelUpUI.Instance.HasPendingWindows)) return;
+
         AdvanceStage();
     }
 
@@ -81,7 +85,9 @@ public class GameManager : MonoBehaviour
         CurrentStage++;
         stageBreakTimer = stageBreakDuration;
         SfxPlayer.Play(SfxId.StageClear);
-        FindAnyObjectByType<PlayerSkills>()?.ResetAllCooldowns();
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        skills?.ResetAllCooldowns();
+        skills?.ClearInstallations();   // 설치기(피뢰침·회오리 생성기)는 스테이지가 끝나면 사라진다
     }
 
     public void SkipToNextStage()
@@ -93,7 +99,9 @@ public class GameManager : MonoBehaviour
         }
         CurrentStage++;
         stageBreakTimer = stageBreakDuration;
-        FindAnyObjectByType<PlayerSkills>()?.ResetAllCooldowns();
+        PlayerSkills skills = FindAnyObjectByType<PlayerSkills>();
+        skills?.ResetAllCooldowns();
+        skills?.ClearInstallations();
     }
 
     public void GameOver()

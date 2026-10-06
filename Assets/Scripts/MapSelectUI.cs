@@ -72,8 +72,7 @@ public class MapSelectUI : MonoBehaviour
         }
     }
 
-    // 2026-08-25에 씬 이름이 SampleScene → Battle로 바뀌었다. 이 문자열이 곧 배선이다 —
-    // 안 맞으면 "시작!"이 없는 씬을 로드해 게임이 아예 안 열린다(빌드 세팅은 Battle 하나뿐).
+    // 이 문자열이 곧 배선이다 — 안 맞으면 "시작!"이 없는 씬을 로드해 게임이 아예 안 열린다(빌드 세팅은 Title·Battle뿐).
     private const string GameSceneName = "Battle";
 
     private void Awake()
@@ -89,6 +88,7 @@ public class MapSelectUI : MonoBehaviour
         }
         if (ascPrevButton != null) ascPrevButton.onClick.AddListener(() => ChangeAscension(-1));
         if (ascNextButton != null) ascNextButton.onClick.AddListener(() => ChangeAscension(+1));
+        focus.FocusChanged += OnFocusChanged;
         if (cardTemplate != null) cardTemplate.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -101,6 +101,25 @@ public class MapSelectUI : MonoBehaviour
         else if (panelRoot != null) panelRoot.SetActive(true);
         Select(FirstUnlockedIndex()); // 난이도도 여기서 정해진다
         RefreshCharacter();
+
+        // 키보드/패드 포커스: 맵 카드 줄 + 승천 ◀▶ + 캐릭터 변경 + 시작 + 뒤로. ESC·B = 뒤로(캐릭터 선택으로).
+        // 꺼진 화살표(해금 안 된 등급)·잠긴 맵의 "시작"은 interactable이 꺼져 있어 건너뛴다.
+        var items = new List<Selectable>(cardButtons) { ascPrevButton, ascNextButton, changeCharacterButton, startButton, backButton };
+        focus.Open(items, Mathf.Max(0, selectedIndex), backButton);
+    }
+
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+    private readonly List<Button> cardButtons = new List<Button>(); // maps 순서 = 카드 순서
+
+    private void Update() => focus.Tick();
+
+    // 키보드·패드로 카드에 오면 그 맵을 고른다(클릭과 같다 — 잠긴 맵이면 해금 조건이 뜬다). 마우스 호버로는 고르지 않는다.
+    // 포커스 표시가 고른 카드의 SelectGlow를 꺼 버리므로, 옮길 때마다 고른 카드 표시를 다시 칠한다(CharacterSelectUI와 같다).
+    private void OnFocusChanged(Selectable s, bool viaPointer)
+    {
+        int idx = s is Button b ? cardButtons.IndexOf(b) : -1;
+        if (!viaPointer && idx >= 0 && idx != selectedIndex) Select(idx);
+        else PaintSelection(selectedIndex);
     }
 
     // ── 승천 선택 (StS식: 화살표로 등급 조절, 해금된 데까지만) ──
@@ -169,6 +188,7 @@ public class MapSelectUI : MonoBehaviour
 
     public void Close()
     {
+        focus.Close();
         if (splitTransition != null) splitTransition.Hide();
         else if (panelTransition != null) panelTransition.Hide();
         else if (panelRoot != null) panelRoot.SetActive(false);
@@ -231,6 +251,7 @@ public class MapSelectUI : MonoBehaviour
             cardJuicy.Add(juicy);
 
             var btn = card.GetComponent<Button>();
+            cardButtons.Add(btn); // null이어도 넣는다 — 인덱스가 maps와 맞아야 한다
             if (btn != null)
             {
                 // 잠긴 맵도 **누를 수는 있다** — 눌러야 해금 조건을 볼 수 있기 때문이다.
@@ -257,10 +278,7 @@ public class MapSelectUI : MonoBehaviour
     private void Select(int index)
     {
         selectedIndex = index;
-        for (int i = 0; i < cardGlows.Count; i++)
-            if (cardGlows[i] != null) cardGlows[i].color = i == index ? UISkin.Highlight : UISkin.Transparent;
-        for (int i = 0; i < cardJuicy.Count; i++)
-            if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == index);
+        PaintSelection(index);
         if (startButton != null) startButton.interactable = index >= 0 && SelectedIsUnlocked;
 
         PlayThumbAnimation(index);
@@ -270,6 +288,15 @@ public class MapSelectUI : MonoBehaviour
         ascensionLevel = MaxSelectableAscension;
         // 승천 상한은 맵마다 다르다 — 맵을 바꾸면 범위와 화살표 활성 상태를 다시 계산해야 한다.
         RefreshAscension();
+    }
+
+    // 고른 카드만 노란 테 + 원본 크기·색.
+    private void PaintSelection(int index)
+    {
+        for (int i = 0; i < cardGlows.Count; i++)
+            if (cardGlows[i] != null) cardGlows[i].color = i == index ? UISkin.Highlight : UISkin.Transparent;
+        for (int i = 0; i < cardJuicy.Count; i++)
+            if (cardJuicy[i] != null) cardJuicy[i].SetSelected(i == index);
     }
 
     // 고른 맵의 배경 컷을 한 바퀴 돌리고 정지 그림으로 돌아온다.

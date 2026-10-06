@@ -1,0 +1,301 @@
+{
+  "_readme": [
+    "2차 진화 원정 고정 로드아웃 표 (사용자 검수 반영 2026-09-29). 봇은 이 표대로만 픽한다 — 즉석 휴리스틱 없음.",
+    "조건의 원본은 Assets/Scripts/EvolutionRoutes.cs (RoutePrereq · Stage2Prereq)다. 이 파일은 그 조건을 만족하는 '선택'만 담고 조건 자체를 복사하지 않는다. 조건표가 바뀌면 이 파일을 다시 감사할 것.",
+    "서브·캐릭터 선택의 판단 기준은 balance 스킬 §「G5 추론 원칙」이다 — 커버리지 구멍(비행·보스·물량)·발동 경로·시간 축.",
+    "actives: 4칸 전부. 첫 항목은 캐릭터 시작 스킬(자동 보유). 나머지는 획득 우선순위 순 — 레벨업 제시에 목록의 스킬이 없으면 리롤, 리롤 후에도 없으면 목록 밖에서 아무거나(칸 굶주림 방지).",
+    "passives: 4칸 전부. 조건·열쇠가 앞. 뒤쪽 비강제 패시브는 사실상 동순위다('먼저 나오는 것' — 사용자 규칙: 파인애플은 건강·방어 중 1 필수, 힘>암살 중 1, 남는 칸은 지식·가속).",
+    "evolvePriority: 진화 아이템을 먹었을 때 시도 순서 — 첫 번째로 '가능한' 것을 진화시킨다. 4번째 이후 스텝은 아이템이 남을 때만 도는 보너스다.",
+    "character: Char_Strawberry=딸기(기본공격) · Char_Pineapple=파인애플(휘두르기) · Char_Slot3=포도(포도 투척). 전부 사용자가 지정한 값이다."
+  ],
+  "items": [
+    {
+      "id": "BasicAttack_R0",
+      "target": { "skill": "BasicAttack", "route": 0 },
+      "character": "Char_Strawberry",
+      "actives": ["BasicAttack", "Sniping", "Homing", "EagleDrop"],
+      "passives": ["Assassinate", "Knowledge", "Strength", "Accel"],
+      "evolvePriority": [
+        { "skill": "BasicAttack", "route": 0, "tier": 1 },
+        { "passive": "Assassinate", "route": 0, "tier": 1, "why": "2차 열쇠(현상금)" },
+        { "skill": "BasicAttack", "route": 0, "tier": 2 }
+      ],
+      "note": "기본공격은 비행 타격이 어렵다(실측 대공 몫 4.2%) — 서브 셋을 전부 대공 실측 상위(스나이핑·호밍·독수리)로 채운다. 강제: 암살(조건·열쇠)·지식(암살 R0 조건)."
+    },
+    {
+      "id": "BasicAttack_R1",
+      "target": { "skill": "BasicAttack", "route": 1 },
+      "character": "Char_Strawberry",
+      "actives": ["BasicAttack", "EagleDrop", "Whirlwind", "Sniping"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "BasicAttack", "route": 1, "tier": 1 },
+        { "skill": "EagleDrop", "route": 1, "tier": 1, "why": "2차 열쇠(회오리 폭격)" },
+        { "skill": "BasicAttack", "route": 1, "tier": 2 }
+      ],
+      "note": "보스 딜 부족이 우려 — 스나이핑(최대체력 대상 저격)으로 보강. 대안은 낙뢰인데, 화살의 멀티히트는 낙뢰 롤이 첫 타에만 있어 투사체 수가 늘 때만 도움이 된다. 강제: 독수리(조건·열쇠)·회오리(독수리 R1 조건)."
+    },
+    {
+      "id": "Whirlwind_R0",
+      "target": { "skill": "Whirlwind", "route": 0 },
+      "character": "Char_Strawberry",
+      "actives": ["Whirlwind", "BasicAttack", "EagleDrop", "Lightning"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Whirlwind", "route": 0, "tier": 1 },
+        { "skill": "BasicAttack", "route": 1, "tier": 1, "why": "2차 열쇠(화살비)" },
+        { "skill": "Whirlwind", "route": 0, "tier": 2 }
+      ],
+      "note": "딸기 전용(조건이 시작 스킬 기본공격). 서브 낙뢰 — 회오리는 틱마다 타격 이벤트라 낙뢰가 계속 발동한다. 회오리는 근접기가 아니라 몹이 몰린 곳에서 강한 스킬이다."
+    },
+    {
+      "id": "Whirlwind_R1",
+      "target": { "skill": "Whirlwind", "route": 1 },
+      "character": "Char_Strawberry",
+      "actives": ["Whirlwind", "Orb", "Rewind", "BasicAttack"],
+      "passives": ["Knowledge", "Strength", "Assassinate", "Accel"],
+      "evolvePriority": [
+        { "skill": "Whirlwind", "route": 1, "tier": 1 },
+        { "skill": "Orb", "route": 0, "tier": 1, "why": "2차 열쇠(강력한 마력)" },
+        { "skill": "Whirlwind", "route": 1, "tier": 2 }
+      ],
+      "note": "빠르게 접근하는 적에 약함 — 오브(조건이기도 함)가 커버. 되감기로 큰 회오리를 여러 개 소환하는 시너지 + 회오리 전용 쿨감 노드(WhirlwindCooldownBonus). 캐릭터는 크게 안 타서 딸기(사용자 지정)."
+    },
+    {
+      "id": "Orb_R0",
+      "target": { "skill": "Orb", "route": 0 },
+      "character": "Char_Slot3",
+      "actives": ["Orb", "Homing", "Sniping", "GrapeToss"],
+      "passives": ["Knowledge", "Accel", "Strength", "Assassinate"],
+      "evolvePriority": [
+        { "skill": "Orb", "route": 0, "tier": 1 },
+        { "passive": "Knowledge", "route": 0, "tier": 1, "why": "2차 열쇠(보물 탐지)" },
+        { "skill": "Orb", "route": 0, "tier": 2 }
+      ],
+      "note": "완전 원거리 조합 — 타수가 적어 낙뢰 대신 호밍·스나이핑 퓨어딜로 보스딜 보강. 캐릭터 포도(사용자): 둔화가 독뎀 들어갈 시간을 벌어준다. 오브 둔화는 트리 노드(orb_BasicSlow) 해금이지만 초반 노드라 기준 트리에 있다고 본다(사용자 2026-09-29)."
+    },
+    {
+      "id": "Orb_R1",
+      "target": { "skill": "Orb", "route": 1 },
+      "character": "Char_Slot3",
+      "actives": ["Orb", "GrapeToss", "Lightning", "Sniping"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Orb", "route": 1, "tier": 1 },
+        { "skill": "GrapeToss", "route": 1, "tier": 1, "why": "2차 열쇠(찌릿찌릿 포도알)" },
+        { "skill": "Orb", "route": 1, "tier": 2 }
+      ],
+      "note": "포도 전용. 액티브 3자리가 고정이라 남은 한 자리는 반드시 비행 특화 — 스나이핑. 오브·포도·낙뢰만으로는 초반 비행 몹을 못 넘긴다(낙뢰는 남의 타격에 반응하므로 비행을 못 때리면 같이 못 때린다)."
+    },
+    {
+      "id": "Lightning_R0",
+      "target": { "skill": "Lightning", "route": 0 },
+      "character": "Char_Strawberry",
+      "actives": ["Lightning", "Rewind", "Whirlwind", "BasicAttack"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Lightning", "route": 0, "tier": 1 },
+        { "skill": "Rewind", "route": 0, "tier": 1, "why": "2차 열쇠(충전 되감기)" },
+        { "skill": "Lightning", "route": 0, "tier": 2 }
+      ],
+      "note": "낙뢰는 반드시 타격 이벤트가 많은 스킬과 — 회오리가 최적(틱마다 롤). 낙뢰의 단일딜은 약하지 않다: 단일을 여러 번 때리는 파트너면 단일에 박힌다. 대안: 화살비(진화 아이템 1개 더 듦) 또는 포도 독틱."
+    },
+    {
+      "id": "Lightning_R1",
+      "target": { "skill": "Lightning", "route": 1 },
+      "character": "Char_Slot3",
+      "actives": ["Lightning", "Homing", "Sniping", "GrapeToss"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Lightning", "route": 1, "tier": 1 },
+        { "passive": "Strength", "route": 0, "tier": 1, "why": "2차 열쇠(불타는 근육)" },
+        { "skill": "Lightning", "route": 1, "tier": 2 }
+      ],
+      "note": "피뢰침 기절(초당 0.5초)이 적을 묶어 호밍을 더 돌린다 — 피뢰침 자체 피해는 세지 않고 유연성이 없어 호밍이 주 딜. 포도로 독뎀을 오래 주고, 독틱이 낙뢰도 발동시킨다. 강제: 힘(조건·열쇠)·암살(힘 R0 조건)."
+    },
+    {
+      "id": "EagleDrop_R0",
+      "target": { "skill": "EagleDrop", "route": 0 },
+      "character": "Char_Pineapple",
+      "actives": ["EagleDrop", "Shotgun", "Rewind", "Swing"],
+      "passives": ["Health", "Strength", "Defense", "Accel"],
+      "evolvePriority": [
+        { "skill": "EagleDrop", "route": 0, "tier": 1 },
+        { "skill": "Shotgun", "route": 1, "tier": 1, "why": "2차 열쇠(메카 버스터)" },
+        { "skill": "EagleDrop", "route": 0, "tier": 2 }
+      ],
+      "note": "파인애플 전용(열쇠 산탄 R1 ← 휘두르기). 서브 되감기 — 독수리 쿨이 길고, 근접(휘두르기·산탄)과 되감기 궁합: 몹 오기를 기다리며 쿨 돌려놓고 근접-되감기-근접으로 라인을 지운다."
+    },
+    {
+      "id": "EagleDrop_R1",
+      "target": { "skill": "EagleDrop", "route": 1 },
+      "character": "Char_Strawberry",
+      "actives": ["EagleDrop", "Whirlwind", "Orb", "BasicAttack"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "EagleDrop", "route": 1, "tier": 1 },
+        { "skill": "Whirlwind", "route": 1, "tier": 1, "why": "2차 열쇠(대회오리)" },
+        { "skill": "EagleDrop", "route": 1, "tier": 2 }
+      ],
+      "note": "액티브 꽉 참(회오리→R1·오브 강제). 사용자도 확신 없음 — 단일딜 부족 우려가 열린 문제. 오브가 단일에 강해 일부 커버할 것으로 보고 딸기로 시작. 첫 측정에서 단일 상황을 따로 볼 것."
+    },
+    {
+      "id": "Sniping_R0",
+      "target": { "skill": "Sniping", "route": 0 },
+      "character": "Char_Strawberry",
+      "actives": ["Sniping", "EagleDrop", "Shotgun", "BasicAttack"],
+      "passives": ["Assassinate", "Strength", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Sniping", "route": 0, "tier": 1 },
+        { "skill": "EagleDrop", "route": 0, "tier": 1, "why": "2차 열쇠(폭탄 독수리)" },
+        { "skill": "Sniping", "route": 0, "tier": 2 },
+        { "skill": "BasicAttack", "route": 1, "tier": 1, "why": "아이템 남으면 화살비(사용자 지정)" }
+      ],
+      "note": "액티브 꽉 참(독수리→R0·산탄 강제). 딸기 + 아이템이 남으면 화살비까지(사용자: \"딸기 쓰고 화살비 올리지 뭐\")."
+    },
+    {
+      "id": "Sniping_R1",
+      "target": { "skill": "Sniping", "route": 1 },
+      "character": "Char_Pineapple",
+      "actives": ["Sniping", "Shotgun", "Rewind", "Swing"],
+      "passives": ["Defense", "Health", "Strength", "Accel"],
+      "evolvePriority": [
+        { "skill": "Sniping", "route": 1, "tier": 1 },
+        { "passive": "Defense", "route": 1, "tier": 1, "why": "2차 열쇠(가시 갑주)" },
+        { "skill": "Sniping", "route": 1, "tier": 2 }
+      ],
+      "note": "가시 갑주는 반사만 준다(받은 피해 10배) — 맞아줘야 이득이라 파인애플 필수. 산탄으로 앞에 몰린 몹 정리, 되감기로 유연성."
+    },
+    {
+      "id": "Homing_R0",
+      "target": { "skill": "Homing", "route": 0 },
+      "character": "Char_Slot3",
+      "actives": ["Homing", "Shotgun", "Sniping", "GrapeToss"],
+      "passives": ["Accel", "Strength", "Assassinate", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Homing", "route": 0, "tier": 1 },
+        { "skill": "Shotgun", "route": 0, "tier": 1, "why": "2차 열쇠(보너스 탄환 장착)" },
+        { "skill": "Homing", "route": 0, "tier": 2 }
+      ],
+      "note": "액티브 꽉 참(산탄→R0·스나이핑 강제). 캐릭터는 큰 상관 없어 포도(사용자 지정). 가속 필수 — 호밍을 많이 써야 스택이 자란다."
+    },
+    {
+      "id": "Homing_R1",
+      "target": { "skill": "Homing", "route": 1 },
+      "character": "Char_Pineapple",
+      "actives": ["Homing", "Rewind", "Shotgun", "Swing"],
+      "passives": ["Accel", "Defense", "Strength", "Health"],
+      "evolvePriority": [
+        { "skill": "Homing", "route": 1, "tier": 1 },
+        { "passive": "Accel", "route": 1, "tier": 1, "why": "2차 열쇠(고통 가속)" },
+        { "skill": "Homing", "route": 1, "tier": 2 }
+      ],
+      "note": "액티브 칸이 자유로운 게 장점 — 되감기 무조건 채용해 호밍을 키운다. 고통 가속은 맞을수록 이득이라 파인애플. 남은 자리는 산탄(스나이핑 대안, 사용자 제시 둘 중 근접 시너지 쪽)."
+    },
+    {
+      "id": "Shotgun_R0",
+      "target": { "skill": "Shotgun", "route": 0 },
+      "character": "Char_Strawberry",
+      "actives": ["Shotgun", "Sniping", "Lightning", "BasicAttack"],
+      "passives": ["Defense", "Strength", "Assassinate", "Accel"],
+      "evolvePriority": [
+        { "skill": "Shotgun", "route": 0, "tier": 1 },
+        { "skill": "Sniping", "route": 1, "tier": 1, "why": "2차 열쇠(자동 방어 시스템)" },
+        { "skill": "Shotgun", "route": 0, "tier": 2 }
+      ],
+      "note": "캐릭터는 딸기 — 포도 독틱은 산탄 타수버프를 안 받는 것을 코드로 확인했다(사용자 조건부 지시의 답). 딸기 근거 둘: 기본공격이 유일한 natural 다타라 타수버프 수혜 최대. 낙뢰는 산탄 펠릿마다 롤이 돌아 잘 어울린다(단, 타수버프로 추가된 타는 롤 없음)."
+    },
+    {
+      "id": "Shotgun_R1",
+      "target": { "skill": "Shotgun", "route": 1 },
+      "character": "Char_Pineapple",
+      "actives": ["Shotgun", "Rewind", "Sniping", "Swing"],
+      "passives": ["Health", "Strength", "Assassinate", "Accel"],
+      "evolvePriority": [
+        { "skill": "Shotgun", "route": 1, "tier": 1 },
+        { "skill": "Swing", "route": 0, "tier": 1, "why": "2차 열쇠(쓸어치기)" },
+        { "skill": "Shotgun", "route": 1, "tier": 2 }
+      ],
+      "note": "파인애플 전용. 서브 되감기 무조건(근거리 활용). R1 2차는 확정 치명(critChance=1)이라 힘 — 덤으로 암살의 \"치명 100% 스킬 타수+1\"도 걸린다. 스나이핑으로 비행 커버."
+    },
+    {
+      "id": "Rewind_R0",
+      "target": { "skill": "Rewind", "route": 0 },
+      "character": "Char_Pineapple",
+      "actives": ["Rewind", "Shotgun", "Sniping", "Swing"],
+      "passives": ["Strength", "Health", "Defense", "Accel"],
+      "evolvePriority": [
+        { "skill": "Rewind", "route": 0, "tier": 1 },
+        { "passive": "Strength", "route": 1, "tier": 1, "why": "2차 열쇠(생활 근육)" },
+        { "skill": "Rewind", "route": 0, "tier": 2 },
+        { "skill": "Shotgun", "route": 1, "tier": 1, "why": "아이템 남으면 메카 버스터(사용자 지정)" }
+      ],
+      "note": "회오리 생성기 조합은 요구 레벨이 너무 많아 포기(사용자) — 파인애플 + 산탄/메카버스터에 싣는다. ⚠️ 과충전(피해 강화)은 R0 2차 전용·다음 시전 1회·2.5초 창이라 \"나가 있는 설치물 전부 강화\"는 아니다. 스나이핑으로 비행 커버."
+    },
+    {
+      "id": "Rewind_R1",
+      "target": { "skill": "Rewind", "route": 1 },
+      "character": "Char_Slot3",
+      "actives": ["Rewind", "Lightning", "Homing", "GrapeToss"],
+      "passives": ["Accel", "Strength", "Assassinate", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "Rewind", "route": 1, "tier": 1 },
+        { "passive": "Accel", "route": 0, "tier": 1, "why": "2차 열쇠(리프레쉬) — 가속 R0 조건이 되감기 자신" },
+        { "skill": "Rewind", "route": 1, "tier": 2 }
+      ],
+      "note": "밸류는 낮지만 조건이 쉬운 게 장점. 포도 + 낙뢰로 번개 스택 중첩(사용자 1안 — 독틱이 낙뢰를 발동시키는 것 확인됨). 호밍으로 비행 커버."
+    },
+    {
+      "id": "Swing_R0",
+      "target": { "skill": "Swing", "route": 0 },
+      "character": "Char_Pineapple",
+      "actives": ["Swing", "Rewind", "Shotgun", "Sniping"],
+      "passives": ["Health", "Strength", "Defense", "Accel"],
+      "evolvePriority": [
+        { "skill": "Swing", "route": 0, "tier": 1 },
+        { "passive": "Health", "route": 0, "tier": 1, "why": "2차 열쇠(강건함)" },
+        { "skill": "Swing", "route": 0, "tier": 2 }
+      ],
+      "note": "근거리의 친구 되감기 + 산탄(사용자). 스나이핑으로 비행 커버. 강제: 건강(조건·열쇠)·힘(건강 R0 조건)."
+    },
+    {
+      "id": "Swing_R1",
+      "target": { "skill": "Swing", "route": 1 },
+      "character": "Char_Pineapple",
+      "actives": ["Swing", "Lightning", "Sniping", "Rewind"],
+      "passives": ["Strength", "Health", "Defense", "Accel"],
+      "evolvePriority": [
+        { "skill": "Swing", "route": 1, "tier": 1 },
+        { "skill": "Lightning", "route": 1, "tier": 1, "why": "2차 열쇠(피뢰침)" },
+        { "skill": "Swing", "route": 1, "tier": 2 }
+      ],
+      "note": "휘두르기·낙뢰만으로는 비행을 못 때린다(사용자 지적 — 낙뢰는 남의 타격을 따라감) → 비행 전담 스나이핑. 되감기는 근접 콤보용."
+    },
+    {
+      "id": "GrapeToss_R0",
+      "target": { "skill": "GrapeToss", "route": 0 },
+      "character": "Char_Slot3",
+      "actives": ["GrapeToss", "Orb", "Sniping", "Homing"],
+      "passives": ["Health", "Strength", "Assassinate", "Accel"],
+      "evolvePriority": [
+        { "skill": "GrapeToss", "route": 0, "tier": 1 },
+        { "passive": "Health", "route": 1, "tier": 1, "why": "2차 열쇠(풍요)" },
+        { "skill": "GrapeToss", "route": 0, "tier": 2 }
+      ],
+      "note": "보스 딜이 약할 것(사용자) — 스나이핑(최대체력 대상)으로 보강, 호밍이 퓨어딜+비행 겸용. 강제: 건강(조건·열쇠)·오브(건강 R1 조건)."
+    },
+    {
+      "id": "GrapeToss_R1",
+      "target": { "skill": "GrapeToss", "route": 1 },
+      "character": "Char_Slot3",
+      "actives": ["GrapeToss", "Lightning", "Rewind", "Homing"],
+      "passives": ["Strength", "Assassinate", "Accel", "Knowledge"],
+      "evolvePriority": [
+        { "skill": "GrapeToss", "route": 1, "tier": 1 },
+        { "skill": "Lightning", "route": 0, "tier": 1, "why": "2차 열쇠(뇌운 축적)" },
+        { "skill": "GrapeToss", "route": 1, "tier": 2 }
+      ],
+      "note": "보스딜이 문제 — 스톨링이 좋으니 호밍(사용자). 독틱이 낙뢰를 발동시켜 뇌운 축적과도 맞물린다. 강제: 낙뢰(조건·열쇠)·되감기(낙뢰 R0 조건)."
+    }
+  ]
+}

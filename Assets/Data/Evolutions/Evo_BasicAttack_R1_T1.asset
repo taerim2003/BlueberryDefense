@@ -15,7 +15,7 @@ MonoBehaviour:
   skill: 0
   route: 1
   stage: 1
-  baseDamage: 67.9601
+  baseDamage: 115
   baseCooldown: 8
   baseDuration: 0
   baseHits: 1

@@ -103,7 +103,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983048
-    m_Localized: Unlocks the ability to reroll level-up choices once per run
+    m_Localized: Unlocks level-up reroll (once per run)
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983049
@@ -183,7 +183,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983070
-    m_Localized: Eagle Drop's bonus damage to flying enemies +30%
+    m_Localized: Eagle Drop bonus damage to flying enemies +30%
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983071
@@ -215,7 +215,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983078
-    m_Localized: Whirlwind receives 1.5x the effect of all cooldown reduction
+    m_Localized: Whirlwind gets 1.5x cooldown reduction
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983079
@@ -223,7 +223,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983080
-    m_Localized: Every lightning strike cuts Lightning's cooldown by 0.01s
+    m_Localized: Lightning cooldown -0.01s per strike
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983081
@@ -255,7 +255,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983088
-    m_Localized: <Orb> can now appear as a skill choice
+    m_Localized: Unlocks <Orb> skill
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983089
@@ -263,7 +263,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983090
-    m_Localized: <Lightning> can now appear as a skill choice
+    m_Localized: Unlocks <Lightning> skill
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983091
@@ -271,7 +271,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983092
-    m_Localized: <Homing Missile> can now appear as a skill choice
+    m_Localized: Unlocks <Homing Missile> skill
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983093
@@ -279,7 +279,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983094
-    m_Localized: <Buckshot Blast> can now appear as a skill choice
+    m_Localized: Unlocks <Buckshot Blast> skill
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983095
@@ -287,7 +287,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983096
-    m_Localized: <Rewind> can now appear as a skill choice
+    m_Localized: Unlocks <Rewind> skill
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983097
@@ -295,10 +295,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983098
-    m_Localized: 'Rewind winds back the blueberries'' time as well,
-
-      slowing
-      every blueberry on the field'
+    m_Localized: Rewind slows all blueberries
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983101
@@ -306,10 +303,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983102
-    m_Localized: 'Every 20 uses of Homing Missile
-
-      adds one more missile per
-      volley'
+    m_Localized: Homing Missile +1 missile every 30 casts
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983103
@@ -317,7 +311,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983104
-    m_Localized: Sniping targets one additional enemy
+    m_Localized: Sniping targets +1
     m_Metadata:
       m_Items: []
   - m_Id: 269044864983105
@@ -700,7 +694,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 709095006302
-    m_Localized: Health pickups appear three times as often.
+    m_Localized: Health pickups appear six times as often.
     m_Metadata:
       m_Items: []
   - m_Id: 709095006314
@@ -832,7 +826,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873162
-    m_Localized: All damage has a {0}% chance to deal triple damage
+    m_Localized: All damage has a {0}% chance to deal double damage
     m_Metadata:
       m_Items: []
   - m_Id: 269049805873163
@@ -1533,7 +1527,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594496
-    m_Localized: Whirlwind's bonus damage to flying enemies +30%
+    m_Localized: Whirlwind bonus damage to flying enemies +30%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594497
@@ -1573,8 +1567,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594506
-    m_Localized: While you have <Haste>, skills with a cooldown of 4s or less deal
-      +30% damage
+    m_Localized: With <Haste>, skills with 4s or less cooldown deal +30% damage
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594507
@@ -1614,8 +1607,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594516
-    m_Localized: While you have <Assassination>, skills with 100% critical chance
-      hit 1 extra time
+    m_Localized: With <Assassination>, skills with 100% critical chance hit +1
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594517
@@ -1655,7 +1647,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594526
-    m_Localized: "Orbs pierce Shield Blueberries \xB7 +3 homing orbs"
+    m_Localized: Basic orbs pierce Shield Blueberries
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594527
@@ -1663,7 +1655,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594528
-    m_Localized: Eagle Drop drops 1 more time
+    m_Localized: Eagle Drop drop count +1
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594529
@@ -1671,8 +1663,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594530
-    m_Localized: "Buckshot Blast evolved into \u300CBonus Rounds Loaded\u300D grants
-      +1 more hit"
+    m_Localized: Buckshot Blast damage +10%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594531
@@ -1720,8 +1711,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594542
-    m_Localized: While you have <Knowledge>, level-up choices show the evolution
-      requirements of your skills
+    m_Localized: Level-up choices show evolution requirements
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594543
@@ -1729,7 +1719,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594544
-    m_Localized: Skills can now reach Evolution 1
+    m_Localized: Unlocks skill Evolution 1
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594545
@@ -1737,7 +1727,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594546
-    m_Localized: Arrow Shot pierces 1 more enemy
+    m_Localized: Arrow Shot base pierce +1
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594547
@@ -1745,7 +1735,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594548
-    m_Localized: Swing knocks enemies back 1.5x farther
+    m_Localized: Swing knockback 1.5x
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594549
@@ -1769,7 +1759,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594554
-    m_Localized: Rewind no longer triggers the global cooldown
+    m_Localized: Rewind triggers no global cooldown
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594555
@@ -1777,7 +1767,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594556
-    m_Localized: Lightning's buff stacks, dealing more damage per stack
+    m_Localized: Lightning proc chance +10%
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594557
@@ -1817,7 +1807,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594566
-    m_Localized: While you have <Vitality>, health pickups restore twice as much
+    m_Localized: With <Vitality>, health pickups heal 2x
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594567
@@ -1841,8 +1831,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594572
-    m_Localized: While you have <Defense>, revive once with half your max health
-      when you die
+    m_Localized: With <Defense>, revive once at 50% max health on death
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594573
@@ -1858,7 +1847,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594576
-    m_Localized: Homing Missile's base cooldown -1s
+    m_Localized: Homing Missile base cooldown -1s
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594577
@@ -1890,8 +1879,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594584
-    m_Localized: <Strength>'s damage bonus is doubled for skills with a cooldown
-      of 5s or more
+    m_Localized: <Strength> damage bonus 2x on skills with 5s+ cooldown
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594585
@@ -1899,7 +1887,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594586
-    m_Localized: Skills can now reach Evolution 2
+    m_Localized: Unlocks skill Evolution 2
     m_Metadata:
       m_Items: []
   - m_Id: 11636173631594587
@@ -2075,11 +2063,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 14830538013220866
-    m_Localized: All damage increased by {0}%
+    m_Localized: All damage +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 14830538013220867
-    m_Localized: Max health increased by {0}
+    m_Localized: Max health +{0}
     m_Metadata:
       m_Items: []
   - m_Id: 14830538013220868
@@ -2095,7 +2083,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 14830538021609474
-    m_Localized: Critical chance increased by {0}%
+    m_Localized: Critical chance +{0}%
     m_Metadata:
       m_Items: []
   - m_Id: 14830538021609475
@@ -2111,11 +2099,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 14830538021609478
-    m_Localized: +{0} reroll per run
+    m_Localized: Rerolls per run +{0}
     m_Metadata:
       m_Items: []
   - m_Id: 14830538021609479
-    m_Localized: Health pickups restore an extra {0}% of max health
+    m_Localized: Health pickups heal +{0}% of max health
     m_Metadata:
       m_Items: []
   - m_Id: 14830546141782016
@@ -2130,23 +2118,23 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 15035493462515712
-    m_Localized: Restores {0} health every 5 seconds
+    m_Localized: Health regen +{0} every 5s
     m_Metadata:
       m_Items: []
   - m_Id: 15968906537279488
-    m_Localized: Grape Mastery
+    m_Localized: Toxic Grapes Mastery
     m_Metadata:
       m_Items: []
   - m_Id: 15968906759577600
-    m_Localized: (With Grape) Start Grape Toss at level 3
+    m_Localized: (With Grape) Start Toxic Grapes at level 3
     m_Metadata:
       m_Items: []
   - m_Id: 15968906759577601
-    m_Localized: Thick Toxic Fog
+    m_Localized: Deadly Fog
     m_Metadata:
       m_Items: []
   - m_Id: 15968906759577602
-    m_Localized: Grape Toss toxic fog lingers 2 seconds longer
+    m_Localized: Toxic Grapes fog duration +2s
     m_Metadata:
       m_Items: []
   - m_Id: 16338893739335680
@@ -2322,6 +2310,69 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 17420478509162529
     m_Localized: Shield gain +{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162530
+    m_Localized: Treasure blueberry conversion chance +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162531
+    m_Localized: Q skill damage +{0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162532
+    m_Localized: "Critical damage +{0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162533
+    m_Localized: "Critical kill experience +{0}x"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162534
+    m_Localized: "Max health +{0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162535
+    m_Localized: "Homing Missile kill experience +{0}x"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162536
+    m_Localized: "Counter Swing damage +{0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162537
+    m_Localized: "Reflected damage +{0}x"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162538
+    m_Localized: "Cooldown cut when hit +{0}s"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 17420478509162539
+    m_Localized: "Chasing arrow damage +{0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074070814720
+    m_Localized: '  > press A to unlock'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017280
+    m_Localized: "B \u2014 Resume"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017281
+    m_Localized: Press A to continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017282
+    m_Localized: 'Use X, Y, B, A to cast skills
+
+      and sweep away the swarming
+      blueberries!'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18003074658017283
+    m_Localized: Are you sure? Press again
     m_Metadata:
       m_Items: []
   references:

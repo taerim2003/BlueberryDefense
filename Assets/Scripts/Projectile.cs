@@ -20,12 +20,27 @@ public class Projectile : MonoBehaviour
     public bool PiercesShields { get; set; }
     public System.Action<Enemy, bool> OnHitBonus { get; set; } // (적, 이번 타격의 치명타 여부)
 
-    // ── 유도(암살 사격의 추격 화살 전용) ────────────────────────────────────
-    // 기본 화살·화살비는 끄고 쓴다(직선). 켜면 매 프레임 기수를 목표 쪽으로 조금씩 돌리고,
-    // 목표가 죽으면 가장 가까운 산 적으로 갈아탄다 — HomingMissile과 같은 장치다.
-    public bool Homing { get; set; }
-    public Enemy HomingTarget { get; set; }
-    public float TurnDegPerSec { get; set; } = 540f;
+    // ── 포물선(암살 사격의 추격 화살 전용) ──────────────────────────────────
+    // 기본 화살·화살비는 쓰지 않는다(직선). LaunchArc를 부르면 발사점에서 목표까지 **포물선**으로 날아가 꽂힌다.
+    // 🔴 2026-10-06 사용자: "유도된다는 느낌보다는 목표까지 포물선을 그리면서, 진짜 화살이 날아가는 것처럼."
+    //    종전엔 호밍 미사일처럼 매 프레임 기수를 돌리는 유도(Homing·Steer)였다 — 통째로 이것으로 바꿨다.
+    // 목표가 움직이면 착탄점이 따라가고, 목표가 죽으면 가장 가까운 산 적으로 그 자리에서 새 포물선을 그린다.
+    private const float ArcMaxHeight = 3.5f;   // 먼 적을 노려도 화면 위로 솟구치지 않게 막는다
+    private bool arcing;
+    private Enemy arcTarget;
+    private Vector3 arcFrom, arcTo;
+    private float arcT, arcHeightRatio;
+
+    // heightPerDistance: 비행 거리 대비 정점 높이(0.2면 10유닛을 날 때 2유닛 솟는다).
+    public void LaunchArc(Enemy target, float heightPerDistance)
+    {
+        arcing = true;
+        arcTarget = target;
+        arcFrom = transform.position;
+        arcTo = target != null ? target.transform.position : transform.position;
+        arcT = 0f;
+        arcHeightRatio = heightPerDistance;
+    }
 
     private readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
@@ -70,9 +85,8 @@ public class Projectile : MonoBehaviour
         PierceRemaining = 0;
         PiercesShields = false;   // 🔴 안 되돌리면 재사용된 화살이 일반 화살·화살비인데도 방패를 뚫는다
         OnHitBonus = null;
-        Homing = false;
-        HomingTarget = null;
-        TurnDegPerSec = 540f;
+        arcing = false;
+        arcTarget = null;
         hitEnemies.Clear();
         consumed = false;
         if (TryGetComponent(out Collider2D col)) col.enabled = true;
@@ -88,26 +102,45 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
-        if (Homing) Steer();
         if (Acceleration != 0f) SpeedMultiplier += Acceleration * Time.deltaTime;
+        if (arcing) { UpdateArc(); return; } // 포물선은 목표에 닿으면 스스로 끝난다 — 화면 밖 판정이 필요 없다
         transform.Translate(Vector2.left * moveSpeed * SpeedMultiplier * Time.deltaTime);
         if (IsFarOffscreen(transform.position, -transform.right)) Consume(); // 로컬 left로 날아간다
     }
 
-    private void Steer()
+    private void UpdateArc()
     {
         // ⚠️ null만 보면 안 된다 — 풀링된 적은 죽어도 참조가 살아 있어서 시체를 영영 쫓는다(HomingMissile과 같은 이유).
-        if (HomingTarget == null || !HomingTarget.IsAlive)
-            HomingTarget = NearestLivingEnemy(transform.position, hitEnemies);
-        if (HomingTarget == null) return;
+        if (arcTarget != null && arcTarget.IsAlive)
+            arcTo = arcTarget.transform.position;   // 걸어오는 적을 따라 착탄점이 움직인다
+        else
+        {
+            // 목표가 죽었다 — 가장 가까운 산 적으로 갈아타고 **지금 자리에서** 새 포물선을 그린다(경로가 튀지 않게).
+            // 산 적이 없으면 마지막 착탄점까지 그대로 날아가 사라진다.
+            Enemy next = NearestLivingEnemy(transform.position, hitEnemies);
+            arcTarget = next;
+            if (next != null) { arcFrom = transform.position; arcTo = next.transform.position; arcT = 0f; }
+        }
 
-        Vector2 desired = (Vector2)HomingTarget.transform.position - (Vector2)transform.position;
-        if (desired.sqrMagnitude < 0.0001f) return;
+        float dist = Mathf.Max(0.01f, Vector2.Distance(arcFrom, arcTo));
+        arcT += moveSpeed * SpeedMultiplier * Time.deltaTime / dist;
 
-        // 이 컴포넌트는 **로컬 left**로 날아간다 → left가 목표를 향하도록 기수를 돌린다(+180).
-        float want = Mathf.Atan2(desired.y, desired.x) * Mathf.Rad2Deg + 180f;
-        transform.rotation = Quaternion.Euler(0f, 0f,
-            Mathf.MoveTowardsAngle(transform.eulerAngles.z, want, TurnDegPerSec * Time.deltaTime));
+        if (arcT >= 1f)
+        {
+            transform.position = arcTo;
+            // 빠른 화살은 한 프레임에 콜라이더를 건너뛸 수 있어 트리거를 기다리지 않고 직접 맞힌다.
+            if (arcTarget != null && arcTarget.IsAlive && !hitEnemies.Contains(arcTarget)) Hit(arcTarget);
+            if (!consumed) Consume();
+            return;
+        }
+
+        float height = Mathf.Min(dist * arcHeightRatio, ArcMaxHeight);
+        Vector3 next3 = Vector3.Lerp(arcFrom, arcTo, arcT) + Vector3.up * (height * 4f * arcT * (1f - arcT));
+        Vector2 step = next3 - transform.position;
+        // 화살촉이 진행 방향을 본다 — 이 컴포넌트의 앞은 **로컬 left**다(+180).
+        if (step.sqrMagnitude > 0.000001f)
+            transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(step.y, step.x) * Mathf.Rad2Deg + 180f);
+        transform.position = next3;
     }
 
     // 가장 가까운 산 적. 이미 때린 적은 후보에서 뺀다
@@ -153,6 +186,12 @@ public class Projectile : MonoBehaviour
 
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy == null || hitEnemies.Contains(enemy)) return;
+        Hit(enemy);
+    }
+
+    // 한 번의 명중. 트리거와 포물선 착탄(UpdateArc)이 같이 쓴다.
+    private void Hit(Enemy enemy)
+    {
         hitEnemies.Add(enemy);
 
         // 기본공격 멀티히트: baseDamage를 N회로 쪼개 각각 크리 개별 판정(총 데미지 유지). 반환=서브히트 중 크리 있었는지

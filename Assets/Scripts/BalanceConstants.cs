@@ -7,7 +7,6 @@ public static class BalanceConstants
     // 스킬/패시브 표시 레벨 상한 = 만렙. 여기 도달해야 진화가 열리고, 진화하면 Lv.1로 리셋되어 다시 이 값까지 큰다.
     // (레벨업 커브 Prog_*가 정확히 10레벨까지만 저작돼 있다 — 이 값을 올리면 11+가 옛 폴백 커브를 탄다)
     public const int MaxSkillLevel = 10;
-    public const float OrbAltarCooldown = 15f;      // 오브 제단(Orb path2 T2+) 쿨타임
     public const float MaxCritChance = 0.7f;        // 치명타 확률 상한(상시 100% 크리 방지)
     public const int BasicAttackBaseHits = 3;       // 기본공격 기본 멀티히트 수
     // 기본공격 추가 발사체는 한 줄로 동시에 나가지 않고 "두두두둑" 연사된다 — 여러 발이 나간다는 게 눈에 보이게.
@@ -19,13 +18,7 @@ public static class BalanceConstants
 
     // ── 레벨업 성장축의 "시작값" ──
     // 레벨업이 눈에 보이려면 시작이 낮아야 한다(2→5마리가 5→8마리보다 훨씬 크게 느껴짐).
-    // 오브가 사라지기 전까지 붙잡을 수 있는 총 적 수(소모성 예산). 이게 곧 체감상 "오브 관통력"이다 —
-    // 예산을 다 쓰면 오브가 그 자리에서 사라져 무리를 끝까지 뚫지 못한다.
-    // 8/24 플레이스루: 기본 오브 관통력이 낮다 → 4에서 6으로.
-    // 2026-09-20 사용자: 오브는 관통이 충분해야 파워가 난다 → 6에서 10으로.
-    //   레벨업(Prog_Orb의 관통 대상 +5 × 3단계)과 합쳐 만렙 25가 된다.
-    public const int OrbBaseTargets = 10;
-    public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 12발이 된다)
+    public const int HomingBaseMissiles = 3;  // 호밍 미사일 수(시작값. 레벨업이 +1/+2로 붙어 만렙에 14발이 된다 — Prog_Homing 카드 합 +11, 4회차 판 기록으로 확인)
     public const int EagleBaseDrops = 3;      // 독수리 투하 횟수. 3→2→3, 9/14 5로(대신 Prog_EagleDrop.baseDamage 6→3, 9/17 버프로 5), 9/21 3으로(레벨업 +1×3 → 10렙 6회)
     public const int ShotgunBasePellets = 12;     // 산탄 알 수. 9/14 3→6, 9/17 12
     public const float ShotgunSpreadDegrees = 22f; // 산탄 부채꼴 반각 — 알이 늘수록 같은 각도 안이 촘촘해진다
@@ -42,7 +35,7 @@ public static class BalanceConstants
     public const float HeadbuttDamageScale = 0.35f;   // EnemyDefinition.damage에 곱해지는 1회 피해 배율
     // ⚠️ 돌진 거리는 ContactStopDistance와 한 세트다 — 대기 위치를 뒤로 물리면 이만큼 더 튀어나가야
     //    최전방에서 실제로 플레이어에 닿는 그림이 된다(안 늘리면 허공을 향해 박치기한다).
-    //    현재: 2.55에서 서서 1.4 튀어나가 최근접 1.15 (물리기 전 0.85와 같은 급).
+    //    현재: 2.3에서 서서 1.4 튀어나가 최근접 0.9.
     public const float HeadbuttLungeDistance = 1.4f;  // 박치기할 때 앞으로 튀어나가는 거리
     public const float HeadbuttLungeDuration = 0.32f; // 나갔다 제자리로 돌아오는 총 시간(피해는 최전방 도달 순간)
     public const float HeadbuttLungeTilt = 18f;       // 돌진하며 앞으로 기우는 각도(도) — 튀어나간 만큼 같이 기울었다 돌아온다

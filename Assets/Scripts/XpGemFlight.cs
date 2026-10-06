@@ -22,7 +22,7 @@ public class XpGemFlight : MonoBehaviour
     [SerializeField] private RectTransform barPunch;       // 바탕+채움 층(선택, 미할당이면 생략)
     [SerializeField] private RectTransform barPunchOuter;  // 테두리 층 — barPunch 와 반드시 같이 튕긴다
     [SerializeField] private Sprite gemSprite;
-    [SerializeField] private Color gemColor = new Color(1f, 0.85f, 0.15f, 1f); // 임시 노란 사각형
+    [SerializeField] private Color gemColor = new Color(1f, 0.85f, 0.15f, 1f); // 씬에서 흰색으로 덮여 있다(gemSprite 원색 그대로)
     [SerializeField] private Vector2 gemSize = new Vector2(44f, 44f);
 
     [Header("연출")]

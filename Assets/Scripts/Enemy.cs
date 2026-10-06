@@ -254,7 +254,26 @@ public class Enemy : MonoBehaviour
 
     // 도메인 리로드를 끈 에디터에서 지난 플레이의 목록이 남지 않게.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetActiveList() => active.Clear();
+    private static void ResetActiveList() { active.Clear(); nextSpawnSortingOrder = SpawnSortingTop; }
+
+    // 🔴 그리는 순서는 **스폰할 때 한 번만** 정한다(사용자 지시 2026-09-30: 촘촘할 때 앞뒤가 바뀌며 움찔거린다).
+    //    예전엔 매 프레임 `100 + x×10`으로 다시 계산해서, x가 0.1 안으로 붙은 두 적이 반올림 경계를
+    //    다른 프레임에 넘거나 추월·넉백·돌진으로 x가 교차할 때마다 위아래가 뒤집혔다.
+    //    먼저 나온 적이 위다 — 먼저 나온 적이 대체로 앞(플레이어 쪽)에 있어서 예전 그림과 같다.
+    //    범위(156~2)는 예전 공식의 값 범위 안이다: 156 = 정지선(x≈5.6)에 선 적. 이펙트(120~150)·독안개(250)와의
+    //    앞뒤도 예전처럼 "앞줄 적은 이펙트 위, 뒷줄은 아래"로 남는다. 바닥에 닿으면 위로 돌아간다.
+    private const int SpawnSortingTop = 156;
+    private const int SpawnSortingBottom = 2;   // 1은 alwaysBackLayer 전용
+    private static int nextSpawnSortingOrder = SpawnSortingTop;
+
+    private int TakeSpawnSortingOrder()
+    {
+        // 살아 있는 다른 적이 없으면 번호를 처음부터 — 웨이브 사이에 맞춰 두면 한 무리 안에서 번호가 한 바퀴 도는 일이 드물다.
+        if (active.Count == 0 || (active.Count == 1 && active[0] == this)) nextSpawnSortingOrder = SpawnSortingTop;
+        int order = nextSpawnSortingOrder;
+        nextSpawnSortingOrder = order <= SpawnSortingBottom ? SpawnSortingTop : order - 1;
+        return order;
+    }
 
     // 지금 실제로 걷는 속도(둔화·기절 반영). 포도알이 착탄 지점을 미리 짚는 데 쓴다.
     public float CurrentMoveSpeed => moveSpeed * MoveScale;
@@ -336,7 +355,9 @@ public class Enemy : MonoBehaviour
     private void ClampInsideArena()
     {
         PlayerHealth player = Player;
-        if (player == null || isCarrier) return;
+        // 박치기 돌진 중엔 자르지 않는다 — 돌진은 정지선 너머로 HeadbuttLungeDistance만큼 튀어나갔다가
+        // 제자리(holdBaseX)로 돌아오는 동작이라, 여기서 자르면 앞으로 나간 거리가 지워지고 기울기만 남는다.
+        if (player == null || isCarrier || lungeTimer >= 0f) return;
 
         float limit = player.transform.position.x - BalanceConstants.ContactStopDistance - skinHoldbackX;
         if (transform.position.x <= limit) return;
@@ -428,6 +449,7 @@ public class Enemy : MonoBehaviour
         SetAnimatorFrozen(false); // 기절/정지로 animator.speed=0인 채 반납됐을 수 있다
 
         baseRotation = transform.localRotation;
+        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : TakeSpawnSortingOrder();
 
         // 스폰 순간부터 y를 살짝 흔들어 둔다 — 겹쳐 쌓일 때 자로 잰 듯한 일렬이 아니라 두께 있는 무리로 보이게.
         // (캐리어는 스스로 화면 위로 재배치하므로 제외)
@@ -448,7 +470,8 @@ public class Enemy : MonoBehaviour
             // 플레이어(우측)에게 부대가 곧장 떨어지지 않도록 좌측에 등장한다.
             // 2026-09-20 사용자: 투하 부대가 너무 앞(플레이어 쪽)에 떨어진다 → 범위를 통째로 뒤(좌측)로 민다.
             //   전: -0.6 ~ +0.3 (중앙을 넘어 우측까지) / 후: -0.9 ~ -0.1 (전부 중앙 왼쪽)
-            float spawnX = camX + Random.Range(-halfW * 0.9f, -halfW * 0.1f);
+            //   2026-10-06 사용자: 우주는 앞에서 나와도 대응할 시간이 있다 → 맵이 정한 만큼 플레이어 쪽으로 민다(우주만 +2, 나머지 0).
+            float spawnX = camX + Random.Range(-halfW * 0.9f, -halfW * 0.1f) + EnemySpawner.AmbushShiftX;
             transform.position = new Vector3(spawnX, carrierTopY, transform.position.z);
             carrierPhase = CarrierPhase.Descend;
         }
@@ -528,9 +551,10 @@ public class Enemy : MonoBehaviour
             p.x += popVelX * Time.deltaTime;
             p.y += popVelY * Time.deltaTime;
             // 팝인으로 소환된 콩콩이는 튀어오른 자리가 곧 자기 지면이 된다 — 착지 높이를 도약 기준으로 넘겨받는다.
-            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; }
+            // 🔴 도약 위상도 "방금 착지함"으로 맞춘다. 스폰 때 흩어 둔 위상이 그대로면 착지 다음 프레임에
+            //    도약 중간 높이로 순간이동한다(게릴라 콩콩이가 텔레포트하듯 솟았다 — 2026-10-06 사용자).
+            if (popVelY < 0f && p.y <= popGroundY) { p.y = popGroundY; popping = false; hopBaseY = popGroundY; hopTimer = hopDuration; }
             transform.position = p;
-            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
 
@@ -578,7 +602,6 @@ public class Enemy : MonoBehaviour
             SetAnimatorFrozen(true);
             if (isHopper) UpdateHop();
             if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(false);
-            spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
             return;
         }
 
@@ -611,8 +634,6 @@ public class Enemy : MonoBehaviour
 
         if (isHopper) UpdateHop();
         if ((isDiveFlyer || skinFloatBob) && diveBobAmplitude > 0f) UpdateDiveBob(holding);
-
-        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
 
     // 포물선 도약을 반복한다. y를 "지면 + 도약 높이"로 **덮어쓰는** 방식이라(누적 아님)
@@ -621,8 +642,18 @@ public class Enemy : MonoBehaviour
     private void UpdateHop()
     {
         float cycle = hopDuration + hopGroundPause;
-        hopTimer += Time.deltaTime * MoveScale; // 기절하면 공중에 굳는 게 아니라 도약 자체가 느려진다
-        if (hopTimer >= cycle) hopTimer -= cycle;
+        if (IsStunned)
+        {
+            // 🔴 기절해도 공중에 굳지 않는다 — 떠 있던 도약은 마저 떨어지고, 땅에서 웅크린 채 기절이 풀리길 기다린다.
+            //    MoveScale(기절=0)을 그대로 곱하면 공중에 매달려 있다가 풀리는 순간 다시 움직여 끊겨 보였다
+            //    (10/1 사용자 — 도약이 높고 긴 우주콩콩이가 더 자주 걸렸다).
+            if (hopTimer < hopDuration) hopTimer = Mathf.Min(hopTimer + Time.deltaTime, hopDuration);
+        }
+        else
+        {
+            hopTimer += Time.deltaTime * MoveScale; // 둔화는 도약 자체를 느리게 한다
+            if (hopTimer >= cycle) hopTimer -= cycle;
+        }
 
         float lift = 0f;
         if (hopTimer < hopDuration)
@@ -794,7 +825,6 @@ public class Enemy : MonoBehaviour
                 break;
         }
         transform.position = p;
-        spriteRenderer.sortingOrder = alwaysBackLayer ? 1 : 100 + Mathf.RoundToInt(transform.position.x * 10f);
     }
 
     // 호버 지점에서 잡몹 부대를 팝콘처럼 흩뿌린다. 각 투하물은 레인 지면(carrierLaneY)으로 낙하하며,
@@ -1003,7 +1033,7 @@ public class Enemy : MonoBehaviour
         if (isBoss) actualDamage *= 1f + MetaBonuses.BossDamageBonus;
         currentHealth -= actualDamage;
         DamageMeter.Record(isLightningProc ? ActiveSkillId.Lightning : source, actualDamage);
-        BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage);
+        BotInput.OnEnemyDamaged?.Invoke(this, isLightningProc ? ActiveSkillId.Lightning : source, actualDamage, currentHealth + actualDamage, isCrit, amount);
         SpawnDamageNumber(actualDamage, isCrit, hitIndex);
         SpawnHitParticles(actualDamage, statusIcon);
         SfxPlayer.Play(SfxId.EnemyHit); // 광역기로 여러 마리를 동시에 때려도 AudioThrottle이 프레임당 한 번으로 묶는다
@@ -1087,6 +1117,7 @@ public class Enemy : MonoBehaviour
             // ⚠️ 예전엔 "독수리 투하 시전마다 즉시 XP"였다 — 문구가 바뀌면서 대상이 통째로 옮겨갔다.
             if (source == ActiveSkillId.Homing) xpMult *= PlayerPassives.HomingKillXpMultiplier;
             int grantedXp = Mathf.RoundToInt(xpValue * xpMult);
+            BotInput.OnKillXp?.Invoke(this, xpValue, isCrit, source); // 봇 관측(평소 null)
             // 경험치 보석이 경험치 바까지 날아가 도착하는 순간 적립된다. 연출이 불가능하면(HUD 없는 씬 등) 즉시 적립.
             if (!XpGemFlight.TrySpawn(transform.position, grantedXp))
                 PlayerExperience.Instance?.AddXP(grantedXp);

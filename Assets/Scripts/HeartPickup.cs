@@ -57,6 +57,7 @@ public class HeartPickup : MonoBehaviour
             // 고정값만 두면 최대 체력이 오를수록 비중이 떨어진다 — 딸기 기준 맨몸 30% → 풀트리 4%.
             int heal = healAmount + Mathf.RoundToInt(target.MaxHealth * MetaBonuses.HealItemPct * 0.01f);
             // 스킬트리 "건강: 체력회복템 회복량 2배"(건강 패시브를 얻었을 때만 켜진다)
+            BotInput.OnHeartPickup?.Invoke(target, heal); // 봇 관측(평소 null)
             target.Heal(PlayerPassives.HealItemDouble ? heal * 2 : heal);
             SfxPlayer.Play(SfxId.HeartPickup);
 

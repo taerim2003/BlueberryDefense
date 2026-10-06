@@ -1,0 +1,21 @@
+{
+  "_readme": [
+    "봇 시전 판단 수치 (사용자 승인 2026-09-30). 판단은 세 겹: ① maxHoldSeconds 상한 대기 ② 강화 라우팅(empowerPriority) ③ 상태 규칙(rules).",
+    "rules: route -1(기본)/0/1, minTier 0(무관)/1/2 — 루트·차수가 일치하는 더 구체적인 규칙이 기본 규칙을 이긴다.",
+    "type=always: 게이트 없음(즉시). type=enemiesWithin: 플레이어와 가로 거리 range 안 적 count마리 이상이면 발사. type=cooldownDebt: 자기를 뺀 남은 쿨 합 seconds 이상이면 발사.",
+    "empowerPriority: 충전 되감기·과충전의 '다음 스킬 강화'가 대기 중일 때 소비 우선순위(앞이 센 스킬). 준비된 스킬 중 최상위만 발사되고 나머지는 양보한다.",
+    "목록에 없는 스킬·상태는 즉시 발사. 낙뢰는 사용자 지시로 규칙 없음(스택 유지가 이득이라 바로바로 쓴다).",
+    "이 파일을 고치는 것은 봇 정책 단절이 아니라 데이터 조정이다(BotCastPolicy.cs). ⚠️ 파일이 없으면 BotCastPolicy.Defaults()가 쓰인다 — 값을 바꾸면 그쪽도 같게 맞출 것(QA 빌드 폴더에는 이 파일이 없다).",
+    "거리 앵커: 접촉 위협선 = ContactStopDistance 2.3 + HeadbuttLungeDistance 1.4 ≈ 3.7 (BalanceConstants.cs)."
+  ],
+  "maxHoldSeconds": 3.0,
+  "empowerPriority": ["Sniping", "Swing", "Shotgun", "EagleDrop", "Orb", "GrapeToss", "Homing", "Whirlwind", "BasicAttack", "Lightning"],
+  "rules": [
+    { "skill": "Swing",     "type": "enemiesWithin", "range": 4.5, "count": 2 },
+    { "skill": "Swing",     "route": 1, "minTier": 1, "type": "always" },
+    { "skill": "Shotgun",   "type": "enemiesWithin", "range": 6.0, "count": 2 },
+    { "skill": "Shotgun",   "route": 0, "minTier": 1, "type": "always" },
+    { "skill": "EagleDrop", "type": "enemiesWithin", "range": 10.0, "count": 3 },
+    { "skill": "Rewind",    "type": "cooldownDebt",  "seconds": 6.0 }
+  ]
+}

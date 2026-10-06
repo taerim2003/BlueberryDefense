@@ -63,6 +63,7 @@ public class CharacterSelectUI : MonoBehaviour
         Achievements.SyncCharacters(characters); // 해금 조건을 복사하지 않고 로스터 에셋에 직접 묻는다 — 타이틀에 올 때마다 돈다
         if (backButton != null) backButton.onClick.AddListener(Close);
         if (confirmButton != null) confirmButton.onClick.AddListener(Confirm);
+        focus.FocusChanged += OnFocusChanged;
         if (cardTemplate != null) cardTemplate.SetActive(false);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -90,13 +91,33 @@ public class CharacterSelectUI : MonoBehaviour
         else if (panelTransition != null) panelTransition.Show();
         else if (panelRoot != null) panelRoot.SetActive(true);
         Highlight(selectedIndex);
+
+        // 키보드/패드 포커스: 카드 줄 + 선택·뒤로. 잠긴 카드는 interactable이 꺼져 있어 건너뛴다. ESC·B = 뒤로.
+        var items = new List<Selectable>(cardButtons) { confirmButton, backButton };
+        focus.Open(items, selectedIndex, backButton);
     }
 
     public void Close()
     {
+        focus.Close();
         if (splitTransition != null) splitTransition.Hide();
         else if (panelTransition != null) panelTransition.Hide();
         else if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+    private readonly List<Button> cardButtons = new List<Button>(); // 로스터 순서 = 카드 순서
+
+    private void Update() => focus.Tick();
+
+    // 키보드·패드로 카드에 오면 그 카드를 고른다(클릭과 같다). 마우스 호버로는 고르지 않는다.
+    // 포커스가 카드를 떠나 "선택"·"뒤로"로 가도 고른 카드의 테는 남아야 한다 — 포커스 표시가
+    // 같은 SelectGlow를 꺼 버리므로, 옮길 때마다 고른 카드 표시를 다시 칠한다.
+    private void OnFocusChanged(Selectable s, bool viaPointer)
+    {
+        int idx = s is Button b ? cardButtons.IndexOf(b) : -1;
+        if (!viaPointer && idx >= 0 && idx != selectedIndex) Pick(idx);
+        else RefreshFrames();
     }
 
     // "선택" 버튼: 여기서만 다음 단계로 넘어간다(카드 클릭은 고르기까지만).
@@ -146,6 +167,7 @@ public class CharacterSelectUI : MonoBehaviour
             cardJuicy.Add(juicy);
 
             var btn = card.GetComponent<Button>();
+            cardButtons.Add(btn); // null이어도 넣는다 — 인덱스가 로스터와 맞아야 한다(UIFocusGroup은 null을 거른다)
             if (btn != null)
             {
                 btn.interactable = !locked; // 잠긴 카드는 눌러도 선택되지 않는다

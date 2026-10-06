@@ -25,6 +25,11 @@ public class MapDefinition : ScriptableObject
     //    자동으로 같이 올라가서 하늘 공간이 그만큼 넓어진다 — 이것도 노린 결과다.
     public float cameraYLift = 0f;
 
+    // 게릴라(중간 소환) 구간과 UFO 등장 범위를 이만큼 **플레이어 쪽(+x)으로** 민다(월드 유닛). 0 = 전 맵 공통 구간 그대로.
+    // 2026-10-06 사용자: 우주는 농장과 달리 앞에서 나와도 대응할 시간이 있다 → 우주만 2.
+    // (9/21의 "구간은 전 맵 동일"을 우주에 한해 푼 것이다 — 기준 구간은 BalanceConstants.AmbushBand*.)
+    public float ambushShiftX = 0f;
+
     [Header("표시")]
     public Sprite background;
     // 배경을 여러 컷으로 돌리고 싶을 때만 채운다(2장 이상이어야 동작). 비어 있으면 위 background로 정지 표시.
@@ -103,9 +108,12 @@ public class MapDefinition : ScriptableObject
     //    실루엣과 피격 범위가 어긋나므로 캡처로 한 번 볼 것.
     public Sprite[] bossSpriteFrames;
 
-    // 보스 BoxCollider2D 크기(로컬). 같은 이유로 맵 쪽에 둔다. 중심(offset)은 프리팹 값 그대로 두고 크기만 바꾼다.
-    // (0,0)이면 프리팹 크기 그대로. 2026-09-29 사용자: 크라켄 히트박스를 "가운데 중심으로 가로세로 두 배".
+    // 보스 BoxCollider2D 크기(로컬). 같은 이유로 맵 쪽에 둔다.
+    // (0,0)이면 프리팹 크기·중심 그대로. 2026-09-30 사용자: 크라켄 히트박스를 "스프라이트 크기랑 비슷하게".
     public Vector2 bossColliderSize;
+    // 보스 BoxCollider2D 중심(로컬). **bossColliderSize가 (0,0)이 아닐 때만** 같이 적용된다 — (0,0)도 유효한 중심이라
+    // 크기 칸이 스위치 역할을 한다. 프리팹 중심은 (0, −0.4)이고, 그림 중심에 맞추려면 (0,0)이다.
+    public Vector2 bossColliderOffset;
 
     // 보스 정지선을 이만큼 더 앞(왼쪽)에서 잡는다(2026-09-30 사용자: 베리크루저가 "너무 가까워. 좀 뒤에 서있어야").
     // 정지선(플레이어 x − ContactStopDistance)은 적 **중심** 기준이라, 그림이 큰 보스는 몸통이 플레이어를 덮는다. 0이면 종전.
@@ -115,4 +123,12 @@ public class MapDefinition : ScriptableObject
     // 강하 유닛(diveBob)의 출렁임 곡선을 그대로 빌린다 — 참고로 우주 종이비행기는 진폭 1.5 · 속도 1.
     public float bossFloatBobAmplitude;
     public float bossFloatBobSpeed = 1f;
+
+    // 이 맵의 정수 획득 기본 배율. 스킬트리(부유)·승천 배율 위에 곱한다(MetaRunApplier). 1이면 보너스 없음.
+    // 2026-10-01 사용자: 해안가 1.3 · 우주 1.6.
+    public float essenceMult = 1f;
+
+    // 보스 체력 배율(층·승천 배율 위에 곱한다, EnemySpawner의 보스 슬롯에서만). bossSpriteFrames와 같은 이유로 맵 쪽에 둔다 —
+    // 보스 정의의 maxHealth를 바꾸면 세 맵이 같이 바뀐다. 1이면 종전. 2026-10-01 사용자: 우주 2.
+    public float bossHpMultiplier = 1f;
 }

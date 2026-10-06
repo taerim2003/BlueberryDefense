@@ -11,6 +11,7 @@ public class SkillIconLibrary : ScriptableObject
     public Sprite[] active;       // index = (int)ActiveSkillId
     public Sprite[] passive;      // index = (int)PassiveSkillId
     public Sprite[] activeEvo;    // index = (int)ActiveSkillId * 2 + route
+    public Sprite[] activeEvo2;   // 액티브 2차 전용 그림. index는 activeEvo와 같다 — 빈 칸은 1차 그림으로 떨어진다
     public Sprite[] passiveEvo;   // index = (int)PassiveSkillId * 2 + route
     public Sprite essence;        // 정수 픽업 그림 — 스킬트리 「부유」 노드
     public Sprite critDamage;     // 스킬트리 「치명타 피해」 노드
@@ -41,6 +42,12 @@ public class SkillIconLibrary : ScriptableObject
     public static Sprite Active(ActiveSkillId id) => Pick(Instance != null ? Instance.active : null, (int)id);
     public static Sprite Passive(PassiveSkillId id) => Pick(Instance != null ? Instance.passive : null, (int)id);
     public static Sprite ActiveEvo(ActiveSkillId id, int route) => Pick(Instance != null ? Instance.activeEvo : null, (int)id * 2 + route);
+    // stage = 화면 기준 진화 차수(1·2). 2차 전용 그림이 없으면 1차 그림(LevelUpUI와 같은 규칙).
+    public static Sprite ActiveEvo(ActiveSkillId id, int route, int stage)
+    {
+        Sprite stage2 = stage >= 2 ? Pick(Instance != null ? Instance.activeEvo2 : null, (int)id * 2 + route) : null;
+        return stage2 != null ? stage2 : ActiveEvo(id, route);
+    }
     public static Sprite PassiveEvo(PassiveSkillId id, int route) => Pick(Instance != null ? Instance.passiveEvo : null, (int)id * 2 + route);
 
     public static Sprite Essence() => Instance != null ? Instance.essence : null;

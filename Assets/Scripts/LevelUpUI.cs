@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using TMPro;
 using DG.Tweening;
 
@@ -44,7 +43,7 @@ public class LevelUpUI : MonoBehaviour
     [SerializeField] private Image iconC;
     [SerializeField] private Sprite[] activeIcons;
     [SerializeField] private Sprite[] passiveIcons;
-    // 진화 아이콘 — 인덱스 = (int)id * 2 + route. 액티브 10종 × 2 = 20칸, 패시브 7종 × 2 = 14칸
+    // 진화 아이콘 — 인덱스 = (int)id * 2 + route. 액티브 11종 × 2 = 22칸, 패시브 7종 × 2 = 14칸
     // (폐지된 Refresh 자리도 비운 채 세어야 뒤가 안 밀린다). 배선은 Tools > 진화 아이콘 배선 메뉴가 한다.
     [SerializeField] private Sprite[] activeEvoIcons;
     [SerializeField] private Sprite[] passiveEvoIcons;
@@ -124,9 +123,17 @@ public class LevelUpUI : MonoBehaviour
     // 모달이 열려 있는 동안 들어온 레벨업/보물상자 요청 — 닫힐 때 하나씩 이어서 띄운다.
     // (보물상자 블루베리 2마리를 연달아 먹으면 두 번째 보상이 첫 번째를 덮어써 사라지던 문제)
     private bool isOpen;
+    // 앞 창을 닫고 다음 창(진화 트리·대상 선택·갈림길·보물)이 열리기를 기다리는 중. Close가 ModalPause를 먼저 풀어서
+    // 닫힘 연출(스케일 시간 0.45초) 동안 게임이 돈다 — 그 틈에 난 레벨업이 대기열을 건너뛰고 진화 창보다 먼저 떴다
+    // (10/1 사용자). 이 동안 들어온 레벨업·상자는 대기열로 보낸다. 다음 창이 열리거나 대기열이 비면 내린다.
+    private bool handingOff;
     private int pendingLevelUps;
     private int pendingTreasures;
     private int pendingEvolutions;
+
+    // 떠 있거나 곧 띄울 창이 남아 있는가 — GameManager가 이게 풀릴 때까지 스테이지 클리어를 미룬다.
+    public bool HasPendingWindows => isOpen || choiceOpen || handingOff
+        || pendingLevelUps > 0 || pendingTreasures > 0 || pendingEvolutions > 0;
 
     // 보물상자: 선택 없이 굴려서 나온 만큼 자동 레벨업(뱀서식).
     // 🔴 개수 분포는 사용자 지정이다(2026-09-19) — 1개 40% · 2개 30% · 3개 15% · 4개 10% · 5개 5%, 기댓값 2.10개.
@@ -236,7 +243,7 @@ public class LevelUpUI : MonoBehaviour
     public void Show()
     {
         if (RunOver) return;
-        if (isOpen) { pendingLevelUps++; return; }
+        if (isOpen || handingOff) { pendingLevelUps++; return; }
         ShowLevelUp();
     }
 
@@ -286,13 +293,14 @@ public class LevelUpUI : MonoBehaviour
     // 열어야 연출이 새 모달을 다시 꺼버리지 않는다.
     private void QueueNextPending()
     {
-        if (pendingEvolutions <= 0 && pendingTreasures <= 0 && pendingLevelUps <= 0) return;
+        if (pendingEvolutions <= 0 && pendingTreasures <= 0 && pendingLevelUps <= 0) { handingOff = false; return; }
         StartCoroutine(ShowNextPendingWhenClosed());
     }
 
     private IEnumerator ShowNextPendingWhenClosed()
     {
         yield return new WaitWhile(() => panel.activeSelf);
+        if (RunOver) yield break; // 닫히는 사이 게임오버가 났으면 결과 화면 위에 띄우지 않는다
 
         if (pendingEvolutions > 0) { pendingEvolutions--; ShowEvolution(); }
         else if (pendingTreasures > 0) { pendingTreasures--; ShowTreasureChoice(); } // 밀린 상자도 갈림길을 거친다
@@ -308,6 +316,7 @@ public class LevelUpUI : MonoBehaviour
 
     private void ShowOptions()
     {
+        handingOff = false;
         bool alreadyOpen = isOpen;
         // 되돌아가기는 "갈림길에서 진화로 들어온 진화 대상 선택" 화면에서만 뜬다.
         // 여기서 매번 끄고 켜야 3택·보물 화면에 X가 남지 않는다.
@@ -333,7 +342,8 @@ public class LevelUpUI : MonoBehaviour
         isOpen = true;
 
         // 세로 3장 + 오른쪽에 리롤. 배치는 좌표로 판정하므로 목록 순서는 상관없다(D를 누르면 리롤로 간다).
-        focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton }, 0);
+        // 되돌아가기(X)는 진화 대상 선택 화면에서만 켜진다 — 꺼져 있으면 포커스도 취소(ESC·B)도 건너뛴다.
+        focus.Open(new[] { optionButtonA, optionButtonB, optionButtonC, rerollButton, choiceBackButton }, 0, choiceBackButton);
 
         // 진화 테(주황)와 포커스 테(노랑)는 같은 자리에 같은 두께로 그려진다 — 포커스가 보이도록 진화 테를 맨 밑에 깐다.
         // focus.Open이 SelectGlow를 처음 만들 때 맨 앞 형제로 끼어들므로 그 **뒤에서** 맞춘다.
@@ -369,6 +379,7 @@ public class LevelUpUI : MonoBehaviour
         evolutionMode = false;
         evolutionCameFromChoice = false;
         Close();
+        handingOff = true;
         StartCoroutine(ReopenTreasureChoice());
     }
 
@@ -377,6 +388,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ReopenTreasureChoice()
     {
         yield return new WaitWhile(() => panel.activeSelf);
+        if (RunOver) yield break;
         ShowTreasureChoice();
     }
 
@@ -490,6 +502,8 @@ public class LevelUpUI : MonoBehaviour
     {
         Title = Loc.T("ui.levelup.essenceTitle"),
         Description = Loc.F("ui.levelup.essenceDesc", EssenceReward),
+        // 정수 픽업과 같은 그림. 없으면 보물 칸에 흰 틀 위 흰 글자만 남아 빈칸으로 보였다(2026-09-30 사용자).
+        Icon = SkillIconLibrary.Essence(),
         Apply = () => MetaRun.Collect(EssenceReward),
     };
 
@@ -504,7 +518,7 @@ public class LevelUpUI : MonoBehaviour
         // 그래서 아직 아무것도 안 고른 레벨업 모달은 뒤로 미루고 보물 보상을 먼저 띄운다.
         // 갈림길 패널이 이미 떠 있으면 그대로 대기열로 — 새 상자가 지금 고르는 화면을 덮으면 안 된다.
         if (RunOver) return;
-        if (choiceOpen) { pendingTreasures++; return; }
+        if (choiceOpen || handingOff) { pendingTreasures++; return; }
         if (isOpen)
         {
             if (treasureMode) { pendingTreasures++; return; } // 보물 모달이 이미 떠 있으면 순서대로
@@ -525,6 +539,7 @@ public class LevelUpUI : MonoBehaviour
         int evolvable = CountEvolvable(skills, passives);
         if (evolvable == 0 || choicePanel == null) { ShowTreasure(); return; }
 
+        handingOff = false;
         treasureMode = false;
         evolutionMode = false;
 
@@ -554,6 +569,7 @@ public class LevelUpUI : MonoBehaviour
     {
         if (!choiceOpen) return;
         CloseChoice();
+        handingOff = true;
         StartCoroutine(ResolveTreasureChoice(evolve));
     }
 
@@ -580,17 +596,44 @@ public class LevelUpUI : MonoBehaviour
     // ── 지식 강화(스킬트리 knowledge_EvoHint): 레벨업 카드에 진화 조건을 한 줄 덧붙인다 ──
     // 조건은 둘이다 — 진화가 열리는 **레벨**과, 루트를 고르려면 **함께 들고 있어야 하는 것**(연계 대상).
     // 이미 만렙 진화까지 끝난 스킬엔 붙이지 않는다(고를 게 없다).
-    private const string EvoHintColor = "#9BE86B";
+    // 🔴 줄 전체는 카드 본문 색 그대로 두고, **이미 가진 스킬 이름만** 초록으로 칠한다(2026-10-01 사용자).
+    //    예전엔 줄 전체가 이 초록이었다 — 그대로 두면 가진 것과 못 가진 것이 안 갈린다.
+    private const string EvoHintOwnedColor = "#9BE86B";
 
     private static string EvoHintText(List<string> prereqNames)
     {
         string names = prereqNames.Count > 0 ? string.Join(" / ", prereqNames) : Loc.T("ui.levelup.evoHintNone");
-        return "\n<size=78%><color=" + EvoHintColor + ">"
-             + Loc.F("ui.levelup.evoHint", EvolutionRoutes.RequiredLevel, names)
-             + "</color></size>";
+        return "\n<size=78%>" + Loc.F("ui.levelup.evoHint", EvolutionRoutes.RequiredLevel, names) + "</size>";
     }
 
-    private static string EvolutionHint(EquippedSkill s)
+    private static string Owned(string name, bool owned) =>
+        owned ? "<color=" + EvoHintOwnedColor + ">" + name + "</color>" : name;
+
+    // 연계 대상 하나(패시브 또는 액티브)의 이름 — 보유 중이면 초록.
+    private static string PrereqLabel(PassiveSkillId? p, ActiveSkillId? a, PlayerSkills skills, PlayerPassives passives)
+    {
+        if (p.HasValue) return Owned(PlayerSkills.GetPassiveSkillName(p.Value), passives != null && passives.HasPassive(p.Value));
+        if (a.HasValue) return Owned(PlayerSkills.GetActiveSkillName(a.Value), skills != null && skills.HasSkill(a.Value));
+        return null;
+    }
+
+    // 열쇠 진화체 이름 + 조합식 — "풍요 (건강 + 오브)"(2026-10-01 사용자: 이름만으론 무엇을 키워야 하는지 모른다).
+    // 조합식 = 열쇠의 원래 스킬 + 그 열쇠 루트의 1차 조건(EvolutionRoutes.RoutePrereq). 지식 노드의 이 줄에서만 쓴다.
+    // 열쇠 이름은 그 진화체를 이미 만들었으면(IsStage2KeyReady) 초록, 괄호 안 둘은 각자 보유 중이면 초록.
+    private static string Stage2KeyWithRecipe(ActiveSkillId id, int route, PlayerSkills skills, PlayerPassives passives)
+    {
+        string name = EvolutionRoutes.Stage2PrereqName(id, route);
+        if (string.IsNullOrEmpty(name)) return null;
+        var (p, a, keyRoute) = EvolutionRoutes.Stage2Prereq(id, route);
+        string keyName = Owned(name, skills != null && skills.IsStage2KeyReady(id, route));
+        string baseName = PrereqLabel(p, a, skills, passives);
+        string partner = p.HasValue
+            ? PrereqLabel(EvolutionRoutes.RoutePassivePrereq(p.Value, keyRoute), EvolutionRoutes.RouteActivePrereq(p.Value, keyRoute), skills, passives)
+            : PrereqLabel(EvolutionRoutes.RoutePassivePrereq(a.Value, keyRoute), EvolutionRoutes.RouteActivePrereq(a.Value, keyRoute), skills, passives);
+        return string.IsNullOrEmpty(partner) ? $"{keyName} ({baseName})" : $"{keyName} ({baseName} + {partner})";
+    }
+
+    private static string EvolutionHint(EquippedSkill s, PlayerSkills skills, PlayerPassives passives)
     {
         // 스킬트리 노드(knowledge_EvoHint)만 보면 된다 — 지식 패시브 보유와 무관한 편의 기능이다(2026-09-19 사용자).
         if (!MetaBonuses.ShowEvolutionHint || s.EvolutionStage >= EvolutionRoutes.MaxStageFor(s.Id)) return "";
@@ -598,25 +641,25 @@ public class LevelUpUI : MonoBehaviour
         // 2차를 앞둔 스킬은 조건이 "보유"가 아니라 **열쇠 진화체**다 — 그쪽 이름을 보여준다.
         if (s.EvolutionStage >= 1)
         {
-            string k = EvolutionRoutes.Stage2PrereqName(s.Id, s.Route);
+            string k = Stage2KeyWithRecipe(s.Id, s.Route, skills, passives);
             if (!string.IsNullOrEmpty(k)) names.Add(k);
             return EvoHintText(names);
         }
         foreach (int r in PlayerSkills.SelectableRoutes(s))
         {
-            string n = EvolutionRoutes.RoutePrereqName(s.Id, r);
+            string n = PrereqLabel(EvolutionRoutes.RoutePassivePrereq(s.Id, r), EvolutionRoutes.RouteActivePrereq(s.Id, r), skills, passives);
             if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
         }
         return EvoHintText(names);
     }
 
-    private static string EvolutionHint(EquippedPassive p)
+    private static string EvolutionHint(EquippedPassive p, PlayerSkills skills, PlayerPassives passives)
     {
         if (!MetaBonuses.ShowEvolutionHint || p.EvolutionStage >= EvolutionRoutes.MaxStageFor(p.Id)) return "";
         var names = new List<string>();
         foreach (int r in PlayerPassives.SelectableRoutes(p))
         {
-            string n = EvolutionRoutes.RoutePrereqName(p.Id, r);
+            string n = PrereqLabel(EvolutionRoutes.RoutePassivePrereq(p.Id, r), EvolutionRoutes.RouteActivePrereq(p.Id, r), skills, passives);
             if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
         }
         return EvoHintText(names);
@@ -626,6 +669,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ResolveTreasureChoice(bool evolve)
     {
         yield return new WaitWhile(() => choicePanel != null && choicePanel.activeSelf);
+        if (RunOver) yield break;
 
         if (!evolve) { ShowTreasure(); yield break; }
 
@@ -644,6 +688,7 @@ public class LevelUpUI : MonoBehaviour
     // 보물상자는 선택지가 없다 — 전용 패널에 획득 아이콘만 하나씩 쌓인다.
     private void ShowTreasure()
     {
+        handingOff = false;
         rerollable = false;   // 보물상자 보상은 리롤 불가
         treasureMode = true;
         evolutionMode = false;
@@ -713,13 +758,9 @@ public class LevelUpUI : MonoBehaviour
 
     // 보물 화면은 마우스 클릭 전용이었다 — 키보드로도 넘길 수 있게 한다(칸반 "플테후 제안사항").
     // ESC는 일부러 뺐다. 일시정지 메뉴가 같은 키를 먹는다.
-    private static bool TreasureSkipKeyPressed()
-    {
-        Keyboard kb = Keyboard.current;
-        if (kb == null) return false;
-        return kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame
-            || kb.numpadEnterKey.wasPressedThisFrame;
-    }
+    // 패드는 A. B도 일부러 뺐다 — ESC를 뺀 것과 같은 "취소" 계열이다.
+    // Alt+Enter 등 조합키 단축키는 넘기기가 아니다(GameInput.SubmitPressed가 거른다).
+    private static bool TreasureSkipKeyPressed() => GameInput.SubmitPressed();
 
     // 획득 아이콘 한 칸을 줄 끝에 붙인다(런타임 생성 — 씬에 아이콘을 미리 깔아두지 않는다).
     // HUD 스킬 슬롯과 같은 틀을 깔고 그 위에 아이콘을 얹는다. 딤 배경 위에서 아이콘만 두면 묻힌다.
@@ -801,7 +842,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetActiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1) + EvolutionHint(captured),
+                Description = PlayerSkills.DescribeUpgradeEffect(captured, captured.Level + 1) + EvolutionHint(captured, skills, passives),
                 Icon = GetActiveIcon(captured),
                 Apply = () => skills.UpgradeSkillLevel(captured.Id),
                 SkillId = captured.Id,
@@ -816,7 +857,7 @@ public class LevelUpUI : MonoBehaviour
             {
                 Title = PlayerSkills.GetPassiveSkillTitleWithTags(captured),
                 LevelText = Loc.F("ui.levelup.level", captured.Level + 1),
-                Description = PlayerPassives.DescribePassiveLevelEffect(captured.Id) + EvolutionHint(captured),
+                Description = PlayerPassives.DescribePassiveLevelEffect(captured) + EvolutionHint(captured, skills, passives),
                 Icon = GetPassiveIcon(captured),
                 Apply = () => passives.UpgradePassiveLevel(captured.Id),
                 PassiveId = captured.Id,
@@ -971,6 +1012,7 @@ public class LevelUpUI : MonoBehaviour
     private IEnumerator ResolveEvolutionChoice(Option opt)
     {
         yield return new WaitWhile(() => panel.activeSelf); // 닫힘 연출이 끝나야 다음 모달이 안 꺼진다
+        if (RunOver) yield break;
 
         if (opt.IsEvolution)
         {
@@ -1022,7 +1064,7 @@ public class LevelUpUI : MonoBehaviour
     // 루트마다 그림이 다르다(파일명 R1=루트0 / R2=루트1). 액티브는 2차 전용 그림이 따로 있고(activeEvo2Icons),
     // 아직 안 그린 2차는 1차 그림을 그대로 쓴다.
     // 진화 아이콘 배열은 **여기 하나만** 배선한다 — HUD·진화 트리는 LevelUpUI.Instance에서 빌려 간다.
-    // (원본 아이콘처럼 3곳에 중복 배선하면 32칸짜리 배열이 3벌이 되어 서로 어긋난다.)
+    // (원본 아이콘처럼 3곳에 중복 배선하면 22칸·14칸짜리 배열이 3벌이 되어 서로 어긋난다.)
     public Sprite GetActiveEvoIcon(ActiveSkillId id, int route, int stage = 1)
     {
         Sprite stage2 = stage >= 2 ? GetIcon(activeEvo2Icons, (int)id * 2 + route) : null;
@@ -1059,6 +1101,7 @@ public class LevelUpUI : MonoBehaviour
         {
             evolutionMode = false;
             Close();
+            handingOff = true;
             StartCoroutine(ResolveEvolutionChoice(opt));
             return;
         }

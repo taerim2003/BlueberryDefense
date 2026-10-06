@@ -65,7 +65,7 @@ public class Whirlwind : MonoBehaviour
         float baseLife = BaseLifetimeOverride > 0f ? BaseLifetimeOverride : lifetime;
         // 🔴 타격 횟수로 사라지는 회오리(미니)에도 수명을 건다(사용자 결정 2026-09-18). 예전엔 MaxHitCount > 0이면
         //    수명이 없어 적이 없을 때 왼쪽으로 끝없이 걸어가 쌓였다(봇 실측: 적 0에 미니 463개, x=-295, 4fps).
-        Destroy(gameObject, (baseLife + ExtraLifetime) * MetaBonuses.DurationMult);
+        Destroy(gameObject, baseLife + ExtraLifetime);
     }
 
     private void Update()

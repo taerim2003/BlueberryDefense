@@ -16,7 +16,7 @@ MonoBehaviour:
   route: 1
   stage: 1
   baseDamage: 71.9538
-  baseCooldown: 5
+  baseCooldown: 7
   baseDuration: 0
   baseHits: 2
   basePierce: 0

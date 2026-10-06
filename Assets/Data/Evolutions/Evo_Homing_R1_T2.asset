@@ -15,7 +15,7 @@ MonoBehaviour:
   skill: 6
   route: 1
   stage: 2
-  baseDamage: 45.8435
+  baseDamage: 19.3304
   baseCooldown: 6
   baseDuration: 0
   baseHits: 1
@@ -24,25 +24,25 @@ MonoBehaviour:
   levels:
   - stat: 0
     op: 1
-    amount: 1.5
+    amount: 1.15
   - stat: 2
     op: 0
     amount: 0.15
   - stat: 0
     op: 1
-    amount: 1.5
+    amount: 1.15
   - stat: 4
     op: 0
     amount: 2
   - stat: 0
     op: 1
-    amount: 1.5
+    amount: 1.15
   - stat: 2
     op: 0
     amount: 0.15
   - stat: 0
     op: 1
-    amount: 1.5
+    amount: 1.15
   - stat: 4
     op: 0
     amount: 2

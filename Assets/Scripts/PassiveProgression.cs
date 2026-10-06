@@ -18,7 +18,7 @@ public class PassiveProgression : ScriptableObject
         PassiveSkillId.Strength => 0.07f,   // 피해 배율
         PassiveSkillId.Health => 20f,       // 최대 체력
         PassiveSkillId.Knowledge => 0.08f,  // 경험치 배율
-        PassiveSkillId.Assassinate => 0.15f, // 치명타 확률
+        PassiveSkillId.Assassinate => 0.10f, // 치명타 확률
         PassiveSkillId.Refresh => 0.10f,    // 재사용 초기화 확률
         PassiveSkillId.Defense => 0.06f,    // 받는 피해 감소 비율
         PassiveSkillId.Accel => 0.05f,      // 전 스킬 쿨타임 감소 비율

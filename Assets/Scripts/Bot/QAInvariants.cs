@@ -39,7 +39,11 @@ public class QAInvariants : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void OnDestroy() => SceneManager.sceneLoaded -= OnSceneLoaded;
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        foreach (var (_, rec) in memRecorders) rec.Dispose();
+    }
 
     // 씬 로드 프레임의 멈칫은 렉으로 치지 않는다.
     private void OnSceneLoaded(Scene s, LoadSceneMode m)
@@ -112,10 +116,51 @@ public class QAInvariants : MonoBehaviour
         }
     }
 
+    // 메모리 추적 — 명령줄에 `-memTrace`를 줄 때만 5초마다 `<세션>/mem.jsonl`에 Unity가 세는 항목별 메모리를 적는다.
+    // 봇 한 명이 3GB를 쓰는데(타이틀만 띄우면 0.36GB) 어느 할당자가 먹는지 가르려고 넣었다(2026-10-01).
+    // 기본은 꺼져 있어 밸런스 측정에는 영향이 없다.
+    private static readonly bool memTrace = Array.IndexOf(Environment.GetCommandLineArgs(), "-memTrace") >= 0;
+    private static readonly string[] MemCounterNames = {
+        "Total Used Memory", "Total Reserved Memory", "GC Used Memory", "GC Reserved Memory",
+        "Gfx Used Memory", "Gfx Reserved Memory", "Audio Used Memory", "Audio Reserved Memory",
+        "Profiler Used Memory", "Profiler Reserved Memory", "System Used Memory",
+        "Texture Memory", "Mesh Memory", "Material Memory",
+        "Object Count", "Texture Count", "Mesh Count", "Material Count", "Total Objects In Scenes",
+    };
+    private readonly List<(string name, Unity.Profiling.ProfilerRecorder rec)> memRecorders = new List<(string, Unity.Profiling.ProfilerRecorder)>();
+    private float nextMemTrace;
+
+    private void TraceMemory(float now)
+    {
+        if (!memTrace || now < nextMemTrace || string.IsNullOrEmpty(perfPath)) return;
+        nextMemTrace = now + 5f;
+        if (memRecorders.Count == 0)
+            foreach (string n in MemCounterNames)
+                memRecorders.Add((n, Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, n)));
+        const int MB = 1024 * 1024;
+        var d = BotJson.Obj();
+        d["t"] = Mathf.RoundToInt(now);
+        d["scene"] = SceneManager.GetActiveScene().name;
+        d["stage"] = GameManager.Instance != null ? GameManager.Instance.CurrentStage : 0;
+        Dictionary<string, object> h = pilot != null ? pilot.RunHeader : null;
+        d["run"] = h != null && h.TryGetValue("run", out object run) ? run : null;
+        d["allocatedMB"] = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / MB;
+        d["reservedMB"] = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong() / MB;
+        d["unusedReservedMB"] = UnityEngine.Profiling.Profiler.GetTotalUnusedReservedMemoryLong() / MB;
+        d["monoHeapMB"] = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong() / MB;
+        d["monoUsedMB"] = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() / MB;
+        d["gfxDriverMB"] = UnityEngine.Profiling.Profiler.GetAllocatedMemoryForGraphicsDriver() / MB;
+        foreach (var (name, rec) in memRecorders)
+            if (rec.Valid) d[name] = name.EndsWith("Count") || name.EndsWith("In Scenes") ? rec.LastValue : rec.LastValue / MB;
+        try { File.AppendAllText(Path.Combine(Path.GetDirectoryName(perfPath), "mem.jsonl"), BotJson.Write(d) + "\n"); }
+        catch (Exception) { }
+    }
+
     private void Update()
     {
         if (markers.Count == 0) InitMarkers();
         float now = Time.realtimeSinceStartup;
+        TraceMemory(now);
         float dt = now - lastReal;
         lastReal = now;
         gcPrev = gcNow;

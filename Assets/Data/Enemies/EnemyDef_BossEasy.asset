@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: EnemyDef_BossEasy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   moveSpeed: 0.5
-  damage: 100
-  maxHealth: 400
-  xpValue: 36
+  damage: 70
+  maxHealth: 280
+  xpValue: 360
   essenceDropChance: 1
   essenceDropAmount: 8
   crowdControlResistance: 0

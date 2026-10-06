@@ -31,5 +31,5 @@ MonoBehaviour:
   xpToNextLevelBase: 18
   xpToNextLevelPerLevel: 27
   xpFactorMax: 1
-  xpFactorMin: 0.5
+  xpFactorMin: 0.8
   xpDecayReferenceStage: 20

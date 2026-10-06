@@ -27,7 +27,7 @@ public class SkillNode
     public ActiveSkillId skill = ActiveSkillId.BasicAttack;
 
     // 노드 "대역"(0=루트, 1~6). 일반 노드 이름의 숫자 I~VI와 같다.
-    // 🔴 2026-09-19부터 **비용과 무관하다** — 표시·그룹용으로만 남겼다(지우면 84노드 YAML의 tier 값이 날아간다).
+    // 🔴 2026-09-19부터 **비용과 무관하다** — 표시·그룹용으로만 남겼다(지우면 96노드 YAML의 tier 값이 날아간다).
     public int tier = 1;
 
     // 이 노드의 1레벨 정수 가격. **이 값이 곧 가격이다**(2026-09-19 사용자 — 등비 공식 폐기).
@@ -105,12 +105,12 @@ public static class SkillTreeSave
     // 🔴 **레벨제는 폐지됐다 — 모든 노드가 "구매/미구매" 2상태다**(사용자 결정 2026-09-27).
     //    예전엔 Normal 노드만 에셋의 maxLevel까지 여러 번 찍을 수 있었다. 폐지하면서
     //    노드 에셋을 **등가 변환**했다: 가격 = 옛 1~만렙 누적 비용의 합, 효과 = perLevel × 옛 만렙.
-    //    그래서 트리 전체 비용(201,924)도 만렙 총효과도 그대로다.
+    //    그래서 트리 전체 비용(201,938)도 만렙 총효과도 그대로다.
     // 함수를 남겨 두는 이유: 호출부(업적·봇·UI)가 "다 찍었나"를 이걸로 묻는데, 1을 돌려주면 전부 그대로 맞는다.
     public static int MaxLevelOf(SkillNode n) => 1;
 
-    // 저장된 레벨이 에셋 만렙보다 높으면 만렙으로 본다 — 에셋에서 만렙을 줄인 뒤 남은 옛 세이브용.
-    // 효과·표시·지불액이 전부 이 값을 쓴다. 그래서 넘친 레벨에 냈던 정수는 Spent가 안 세어 **자동으로 돌려준다.**
+    // 저장된 레벨이 1보다 크면 1로 본다 — 레벨제 시절 세이브(2~N레벨)를 "구매함"으로 읽는 창구.
+    // 효과·표시·지불액이 전부 이 값을 쓴다(가격 소급분은 MigrateFlattenedCosts가 따로 보정한다).
     public static int EffectiveLevel(SkillNode n, int savedLevel) => Mathf.Min(savedLevel, MaxLevelOf(n));
 
     // ── 스킬 해금 게이팅 ──
@@ -141,7 +141,7 @@ public static class SkillTreeSave
     //   🔴 대역(tier) 등비 공식은 **폐기됐다**(2026-09-19 사용자: "3.2배 등비 공식 아예 버려").
     //      예전엔 20·64·205·655·2097·6711 여섯 값뿐이라 **같은 대역 노드가 전부 같은 가격**이었고
     //      (tier 1에 13개 노드가 전부 20정수) "8 → 15 → 20" 같은 촘촘한 간격을 만들 수가 없었다.
-    //      이제 가격은 노드가 직접 갖는다(SkillNode.cost) — 84노드가 서로 다른 값이다.
+    //      이제 가격은 노드가 직접 갖는다(SkillNode.cost) — 96노드가 서로 다른 값이다. 검사는 `node Tools/SkillTree/verify-costs.js`.
     //   ⚠️ Max(1,…)은 안전망이다. cost가 안 적힌 옛/백업 에셋이 0으로 읽혀 노드가 공짜가 되는 걸 막는다.
     public static int CostOf(SkillNode n) => Mathf.Max(1, n.cost);
 
@@ -152,7 +152,7 @@ public static class SkillTreeSave
     // ── available 정수 = earned − Σ(해금된 노드에 지불한 정수) ──
     public static int AvailableEssence(SkillTreeData tree)
     {
-        if (!flattenChecked) { flattenChecked = true; MigrateFlattenedCosts(tree); }
+        if (!flattenChecked) { flattenChecked = true; MigrateFlattenedCosts(tree); MigrateLate20Costs(tree); }
         return EssenceEarned - Spent(tree);
     }
 
@@ -175,12 +175,46 @@ public static class SkillTreeSave
         {
             SkillNode n = tree.Find(kv.Key);
             if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
-            int now = CostOf(n);
+            int now = Late20OldCost(n);   // 극후반 인상분은 MigrateLate20Costs가 따로 얹는다 — 여기서 새 가격을 쓰면 두 번 얹힌다
             int old = Mathf.Max(1, Mathf.RoundToInt(now / FlattenCostScale));
             delta += now - old;
         }
         if (delta > 0) SaveStore.SetInt(EssenceKey, SaveStore.GetInt(EssenceKey, 0) + delta);
         SaveStore.SetInt(FlattenMigrationKey, 1);
+        SaveStore.Save();
+    }
+
+    // 🔴 가격 상위 20개 노드의 가격을 올렸다(2026-10-06 사용자 — 가격순 n번째에 (50000/3686)^(n/20)배,
+    //    가장 비싼 strength_SlowSkill이 50,000정수). 트리 총비용 114,380 → 393,378.
+    //    위 flatten과 같은 문제다: 이미 산 노드의 지출액이 소급해서 올라 보유 정수가 음수가 된다.
+    //    산 노드의 차액만큼 earned에 얹어 가진 정수를 그대로 보존한다. 한 번만 돈다.
+    private const string Late20MigrationKey = "skilltree.late20.v1";
+    // 인상 **전** 가격. 에셋의 새 가격과 짝이다 — 이 노드들의 가격을 또 바꾸면 여기가 아니라 새 보정을 만든다.
+    private static readonly Dictionary<string, int> Late20OldCosts = new Dictionary<string, int>
+    {
+        { "knowledge_EvoHint", 2509 }, { "cool_5", 2541 }, { "exp_5", 2604 }, { "hp_5", 2635 },
+        { "assassin_FullCritHit", 2667 }, { "health_HealItem", 2698 }, { "regen_1", 2713 }, { "heal_1", 2736 },
+        { "swing_Knockback", 2758 }, { "heal_2", 2846 }, { "boss_4", 2871 }, { "crit_4", 3224 }, { "hp_6", 3344 },
+        { "heal_3", 3375 }, { "regen_2", 3383 }, { "atk_6", 3432 }, { "accel_FastSkillDmg", 3518 },
+        { "critdmg_5", 3537 }, { "defense_Revive", 3603 }, { "strength_SlowSkill", 3686 },
+    };
+
+    private static int Late20OldCost(SkillNode n) =>
+        Late20OldCosts.TryGetValue(n.id, out int old) ? old : CostOf(n);
+
+    private static void MigrateLate20Costs(SkillTreeData tree)
+    {
+        if (tree == null || SaveStore.GetInt(Late20MigrationKey, 0) == 1) return;
+
+        int delta = 0;
+        foreach (var kv in Levels())
+        {
+            SkillNode n = tree.Find(kv.Key);
+            if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
+            delta += Mathf.Max(0, CostOf(n) - Late20OldCost(n));
+        }
+        if (delta > 0) SaveStore.SetInt(EssenceKey, SaveStore.GetInt(EssenceKey, 0) + delta);
+        SaveStore.SetInt(Late20MigrationKey, 1);
         SaveStore.Save();
     }
 
@@ -209,7 +243,7 @@ public static class SkillTreeSave
     }
 
     // ── 업그레이드(구매) 가능 여부 / 실행 ──
-    // 첫 레벨(cur 0) 구매엔 선행조건이 필요하고, 이미 보유(레벨업)면 만렙 미만 + 자원만 확인.
+    // 미보유(cur 0) 구매엔 선행조건 + 자원이 필요하다. 이미 산 노드는 MaxLevelOf가 1이라 항상 false — 레벨업 구매 경로는 없다.
     public static bool CanUpgrade(SkillTreeData tree, string id)
     {
         if (tree == null) return false;

@@ -13,7 +13,6 @@ public class HUDController : MonoBehaviour
         public TMP_Text keyLabel;
         public TMP_Text cooldownText;
         public TMP_Text levelLabel;
-        public Image[] gemIcons;
     }
 
     [System.Serializable]
@@ -53,7 +52,6 @@ public class HUDController : MonoBehaviour
 
     [SerializeField] private Sprite[] passiveIcons;
     [SerializeField] private Sprite[] activeIcons;
-    [SerializeField] private Sprite[] gemIconSprites;
 
     private float healthFillTarget = -1f;
     private float overhealFillTarget = -1f;
@@ -73,13 +71,14 @@ public class HUDController : MonoBehaviour
     private void OnEnable() => PlayerSkills.OnRefreshProc += PulseRefreshIcon;
     private void OnDisable() => PlayerSkills.OnRefreshProc -= PulseRefreshIcon;
 
-    // 리프레쉬 발동 시 리프레쉬 패시브 아이콘에 보잉(액티브 쿨타임 완료 연출과 동일)
+    // 쿨 초기화 발동 시 **가속** 패시브 아이콘에 보잉(액티브 쿨타임 완료 연출과 동일).
+    // 리프레쉬는 독립 패시브에서 가속 R0 진화체 「리프레쉬」로 들어갔다 — 확률의 공급처가 가속이라 가속 칸을 튕긴다.
     private void PulseRefreshIcon()
     {
         if (playerPassives == null || passiveSlots == null) return;
         var acquired = playerPassives.EquippedPassives;
         for (int i = 0; i < passiveSlots.Length && i < acquired.Count; i++)
-            if (acquired[i].Id == PassiveSkillId.Refresh && passiveSlots[i].icon != null)
+            if (acquired[i].Id == PassiveSkillId.Accel && passiveSlots[i].icon != null)
             {
                 PunchIcon(passiveSlots[i].icon.rectTransform);
                 return;
@@ -197,7 +196,6 @@ public class HUDController : MonoBehaviour
     private Sprite GetBuffIcon(string key) => key switch
     {
         "Lightning" => GetIcon(activeIcons, (int)ActiveSkillId.Lightning),
-        "OrbAltar" => GetIcon(activeIcons, (int)ActiveSkillId.Orb),
         "LightningDamageBuff" => GetIcon(passiveIcons, (int)PassiveSkillId.Strength),
         // 🔴 아래 셋은 **진화 아이콘이 그대로 버프 아이콘**이 된다(2026-09-19 사용자 지시).
         //    산탄 R0은 1차 「보너스 탄환 장착」·2차 「내 지휘를 따라!」가 같은 키를 쓰고, 아이콘만 차수를 따라 바뀐다.
@@ -392,7 +390,6 @@ public class HUDController : MonoBehaviour
                 slot.cooldownOverlay.fillAmount = 0f;
                 slot.cooldownText.enabled = false;
                 if (slot.levelLabel != null) slot.levelLabel.enabled = false;
-                SetPathIcons(slot, null);
                 activeSlotWasFilled[i] = false;
                 activeSlotWasOnCooldown[i] = false;
                 continue;
@@ -403,7 +400,7 @@ public class HUDController : MonoBehaviour
 
             EquippedSkill skill = equipped[i];
             slot.icon.sprite = EvoIcon(skill) ?? GetIcon(activeIcons, (int)skill.Id);
-            slot.keyLabel.text = skill.Key.ToString();
+            slot.keyLabel.text = GameInput.SkillLabel(skill.Key); // 패드를 쓰는 중이면 X·Y·B·A
 
             if (slot.levelLabel != null)
             {
@@ -423,20 +420,7 @@ public class HUDController : MonoBehaviour
             if (activeSlotWasOnCooldown[i] && !onCooldown) PunchIcon(slot.icon.rectTransform);
             activeSlotWasOnCooldown[i] = onCooldown;
 
-            SetPathIcons(slot, skill);
         }
-    }
-
-    // 슬롯 아래 보석 = 진화 횟수(0~2). 예전엔 투자한 path 수였지만 진화가 2루트×2티어로 바뀌면서
-    // 루트는 항상 하나뿐이라 "몇 차 진화까지 갔나"를 보여주는 게 맞다.
-    // 🔴 2026-09-19 사용자 결정: 진화 차수 보석을 화면에서 뺀다(슬롯 좌측 상단에 뜨는 게 보기 싫다).
-    //    씬 배선(gemIcons)과 그림 배열(gemIconSprites)은 그대로 둔다 — 되살리려면 아래 false를 `i < stage`로만 되돌리면 된다.
-    private void SetPathIcons(ActiveSlot slot, EquippedSkill skill)
-    {
-        if (slot.gemIcons == null) return;
-
-        for (int i = 0; i < slot.gemIcons.Length; i++)
-            slot.gemIcons[i].enabled = false;
     }
 
     private static Sprite GetIcon(Sprite[] icons, int index) =>

@@ -9,7 +9,7 @@ passive.lvl.Accel	所有技能冷却缩短{0}%
 passive.acq.Strength	伤害提高{0}%
 passive.acq.Health	最大生命值提高{0}
 passive.acq.Knowledge	经验获取提高{0}%
-passive.acq.Assassinate	所有伤害有{0}%几率变为3倍
+passive.acq.Assassinate	所有伤害有{0}%几率变为2倍
 passive.acq.Refresh	使用技能时有{0}%几率重置冷却
 passive.acq.Defense	受到的伤害降低{0}%
 passive.acq.Accel	所有技能冷却缩短{0}%
@@ -88,6 +88,7 @@ ui.evotree.locked	[未解锁]
 ui.essence	{0}精华
 ui.tree.cost	{0}精华
 ui.tree.clickUnlock	  > 点击解锁
+ui.tree.clickUnlock.pad	  > 按 A 解锁
 ui.tree.unlocked	已解锁
 ui.difficulty.0	简单
 ui.difficulty.1	普通
@@ -100,6 +101,7 @@ ui.ascension.nextUnlock	通关后解锁下一难度
 ui.pause.title	暂停
 ui.pause.giveUp	返回标题画面
 ui.pause.hint	ESC——继续游戏
+ui.pause.hint.pad	B——继续游戏
 ui.pause.activeHeader	主动
 ui.pause.passiveHeader	被动
 ui.result.other	其他
@@ -130,6 +132,7 @@ ui.result.retry	再来一局
 ui.result.upgrade	强化
 ui.treasure.header	获得宝藏！
 ui.treasure.continue	点击继续
+ui.treasure.continue.pad	按 A 继续
 ui.collection.title	图鉴
 ui.collection.progress	已发现 {0} / {1}
 ui.collection.active	主动
@@ -157,6 +160,7 @@ ending.story2	从蓝莓的袭击中拯救了世界！
 ending.cleared	Game Cleared!
 ui.evotree.title	技能进化
 tutorial.skills	用 QWER 释放技能，横扫蜂拥而来的蓝莓吧！
+tutorial.skills.pad	用 X·Y·B·A 释放技能，横扫蜂拥而来的蓝莓吧！
 tutorial.evolution.1	现在可以进化技能了！
 tutorial.evolution.2	将技能升到 10 级并拥有联动技能，\n即可进化为更强的技能。
 step.Damage.mul.whirlwind	龙卷风伤害提高{0}%
@@ -194,3 +198,13 @@ step.EnemySlow	所有敌人移动速度降低{0}%
 step.StunDuration	晕眩时间+{0}秒
 step.StunInterval	晕眩周期缩短{0}跳
 step.Lifesteal	护盾获取+{0}
+passive.lvl.TreasureFind	宝箱蓝莓转化几率 +{0}%
+passive.lvl.StrengthQ	Q技能伤害 +{0}%
+passive.lvl.StrengthCrit	暴击伤害 +{0}%
+passive.lvl.BountyXp	暴击击杀经验 +{0}倍
+passive.lvl.SturdyHp	最大生命值提高{0}%
+passive.lvl.HomingXp	追踪导弹击杀经验 +{0}倍
+passive.lvl.AutoSwing	反击挥击伤害 +{0}%
+passive.lvl.Thorns	反弹伤害 +{0}倍
+passive.lvl.PainAccel	受击时冷却缩短 +{0}秒
+step.SubDamage.chasearrow	追击箭矢伤害提高{0}%

@@ -85,7 +85,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 340b9d9396cb0f54b8fcf6a2e3184517, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0af84a830569cb34292ff23f9fe294eb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -133,13 +133,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 3.40625, y: 2.125}
+    oldSize: {x: 3.96875, y: 2.65625}
     newSize: {x: 0.875, y: 0.875}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.7250001, y: 1.4875}
+  m_Size: {x: 3.175, y: 1.859375}
   m_EdgeRadius: 0
 --- !u!50 &7959234050693227520
 Rigidbody2D:
@@ -206,7 +206,6 @@ MonoBehaviour:
   isTreasure: 0
   damageNumberPrefab: {fileID: 814123299270241205, guid: 2571e6cd4edc32d4c96aacb755b281f5, type: 3}
   lightningVfxPrefab: {fileID: 4748681987041982144, guid: 00275982938128d4da3ff90ef019e97c, type: 3}
-  chainLightningVfxPrefab: {fileID: 2139788027143211048, guid: 07ab3add344a1a746a3ea6c4012db20f, type: 3}
   deathVfxPrefab: {fileID: 4748681987041982144, guid: 3eccf8519d036954898bdcd007ae4e13, type: 3}
   hitParticlePrefab: {fileID: 8514423321508764034, guid: 694aef26ff233bd4bae11bd02d82c7dd, type: 3}
   hitParticleSprites:

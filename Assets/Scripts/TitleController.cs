@@ -32,12 +32,20 @@ public class TitleController : MonoBehaviour
 
         ApplyCollectionGate();
 
+        // 키보드/패드 포커스. 메인 메뉴는 닫히지 않는 바닥 그룹이고, 위에 뜨는 전체화면 패널들이
+        // 자기 그룹을 쌓으면 그동안은 입력을 먹지 않는다(UIFocusGroup 스택). 잠긴 컬렉션은 건너뛴다.
+        focus.Open(new[] { playButton, upgradeButton, collectionButton, settingsButton, quitButton, creditsButton }, 0);
+
         if (OpenSkillTreeOnStart)
         {
             OpenSkillTreeOnStart = false;
             OpenUpgrade();
         }
     }
+
+    private readonly UIFocusGroup focus = new UIFocusGroup();
+
+    private void Update() => focus.Tick();
 
     // ── 컬렉션(도감) 게이팅 ────────────────────────────────────────────────
     // 🔴 1차 진화 노드를 사기 전에는 컬렉션이 잠긴다(2026-09-27 사용자) — 도감 내용이 전부 진화라

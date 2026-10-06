@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// ⚠️ **UFO가 떨구는 투하물은 물량 쿼터에 안 잡힌다.** UFO 벽 스테이지(13·22)가 게임에서 제일 무거운 판인 이유고,
-//    프레임이 떨어진다는 신고가 오면 여기부터 의심할 것. 쿼터를 올려 잡으면 그 두 판이 먼저 터진다.
+// ⚠️ **UFO가 떨구는 투하물은 물량 쿼터에 안 잡힌다.** UFO 벽 스테이지(층은 맵마다 다르다 — `StageTable*.asset`의 ufoChance 0.95인 층)가
+//    게임에서 제일 무거운 판인 이유고, 프레임이 떨어진다는 신고가 오면 여기부터 의심할 것. 쿼터를 올려 잡으면 그 판들이 먼저 터진다.
 public class EnemySpawner : MonoBehaviour
 {
     // 적 로스터·스폰 파라미터는 MapDefinition이 소유한다. RunBootstrap이 판 시작 시 ActiveMap을 세팅(Start 전).
@@ -44,8 +44,12 @@ public class EnemySpawner : MonoBehaviour
     // 첫 프레임에 GameManager.Update가 EnemySpawner.Update보다 먼저 돌면 SpawnTarget이 0이라
     // StageSpawnComplete가 참이 되어 1스테이지가 즉시 넘어가버린다(첫 판이 2스테이지에서 시작).
     // Start(모든 Awake 이후·첫 Update 이전)에서 현재 스테이지 물량을 미리 셋업해 방지.
+    // 이 판의 맵이 정한 게릴라·UFO 등장 범위 이동량(MapDefinition.ambushShiftX). UFO는 자기 Awake에서 x를 고르므로 static으로 읽게 한다.
+    public static float AmbushShiftX { get; private set; }
+
     private void Start()
     {
+        AmbushShiftX = Map != null ? Map.ambushShiftX : 0f; // ActiveMap은 Start 전에 세팅된다 — 매 판 다시 읽는다
         BeginStageCount(GameManager.Instance);
     }
 
@@ -132,6 +136,30 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
+        // 🔴 한 프레임에 여러 마리를 내보낼 수 있다(2026-10-06 사용자). 종전엔 프레임당 1마리에 timer를 0으로 되돌려서
+        //    ① 간격이 한 프레임(60fps면 0.0167초)보다 짧은 층은 아무리 줄여도 초당 60마리에서 막혔고
+        //    ② 그보다 긴 간격도 프레임 배수로 올림돼 **주사율에 따라 속도가 달랐다**(0.02초가 60Hz에선 0.033초, 144Hz에선 0.021초).
+        //    이제 남는 시간을 다음 칸으로 넘겨서 표에 적은 간격이 어느 주사율에서나 그대로 나온다.
+        timer += Time.deltaTime;
+        int ticks = 0;
+        while (SpawnTick(stage, currentStage, map, isBossStage, treasureStage, reservedTail))
+            if (++ticks >= MaxSpawnTicksPerFrame) { timer = 0f; break; } // 프레임이 크게 튄 뒤 밀린 몫을 한꺼번에 쏟지 않는다
+    }
+
+    private const int MaxSpawnTicksPerFrame = 8;
+
+    // 스폰 한 칸. true = 한 마리를 내보냈고 이 프레임에 더 내보낼 수도 있다 / false = 이 프레임은 여기까지.
+    private bool SpawnTick(StageData stage, int currentStage, MapDefinition map, bool isBossStage, bool treasureStage, int reservedTail)
+    {
+        // 같은 프레임의 앞 칸이 상태를 바꿨을 수 있다 — Update 머리의 정지 조건을 칸마다 다시 본다.
+        if (StageSpawnComplete || pendingAmbushes.Count > 0) return false;
+        // 일반 몹을 다 쏟았다 — 다음은 보물상자 차례다(Update의 상자 블록이 "마지막 스폰 이후 경과"를 timer로 잰다).
+        if (treasureStage && treasureSpawnedForStage != currentStage && SpawnedThisStage >= SpawnTarget - reservedTail)
+        {
+            timer = 0f;
+            return false;
+        }
+
         float interval = stage != null ? stage.spawnInterval : map.spawnInterval;
         float eliteChance = stage != null ? stage.eliteChance : 0f;
         float paperPlaneChance = stage != null ? stage.paperPlaneChance : 0f;
@@ -148,10 +176,9 @@ public class EnemySpawner : MonoBehaviour
         bool resting = burstSize > 1 && spawnedInBurst >= burstSize;
         float wait = resting ? stage.burstRest : interval;
 
-        timer += Time.deltaTime;
-        if (timer < wait) return;
+        if (timer < wait) return false;
 
-        timer = 0f;
+        timer -= wait; // 0으로 되돌리지 않는다 — 남는 시간이 다음 칸으로 넘어간다
         if (resting) spawnedInBurst = 0; // 휴식 끝 — 다음 무리 시작
 
         // 벽 스테이지 진화 엘리트: 확률이 아니라 확정으로, 스테이지 물량을 균등 분할한 지점마다 1마리씩.
@@ -170,7 +197,7 @@ public class EnemySpawner : MonoBehaviour
                 // 진화는 보물상자로 통합됐다(세션25) — 엘리트는 벽 스테이지의 난이도 요소로 그대로 남기고 아이템은 안 떨군다.
                 // ⚠️ 필드명(`evolutionItemDrops`)만 낡았다. 0으로 만들면 벽 스테이지 엘리트까지 사라진다.
                 SpawnEnemies(map.eliteEnemyPrefab, 1, stage, currentStage);
-                return;
+                return true;
             }
         }
 
@@ -183,7 +210,8 @@ public class EnemySpawner : MonoBehaviour
             {
                 ambushesTriggeredThisStage++;
                 TriggerAmbush(stage, currentStage, reservedTail);
-                return;
+                timer = 0f;   // 예고가 끝난 뒤 정문 스폰은 새 간격부터 센다
+                return false;
             }
         }
 
@@ -196,7 +224,7 @@ public class EnemySpawner : MonoBehaviour
         {
             // 빈 화면이 될 때까지 **기다린다**. 이 조건을 위 if에 붙여 두면 거짓일 때 아래 else로 새서 일반 몹이 나오고,
             // 그 한 마리가 보스 칸을 먹어 StageSpawnComplete가 되어 **보스가 영영 안 나온다**(9/21 봇: 15·20층 75판 중 보스 5판).
-            if (Enemy.Active.Count > 0) return;
+            if (Enemy.Active.Count > 0) { timer = 0f; return false; }
             // 승천 티어별 전용 보스. 꽂혀 있으면 그걸 쓰고, 비어 있으면 bossEnemyPrefab으로 떨어진다
             // (= 안 꽂은 맵은 종전과 완전히 같다. MapDefinition 주석 참고).
             prefabToSpawn = map.bossEnemyPrefab;
@@ -224,6 +252,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         SpawnEnemies(prefabToSpawn, 1, stage, currentStage, spawnAsBoss);
+        return true;
     }
 
     // 화면 안 빈 구간에 예고 마커를 띄운다. 실제 부대는 마커가 다 찬 뒤 콜백에서 나온다.
@@ -240,14 +269,15 @@ public class EnemySpawner : MonoBehaviour
 
         SfxPlayer.Play(SfxId.WaveWarning); // 마커가 뜨는 순간 — 예고 2.5초 동안 정문 스폰이 멈추므로 시선을 끌 곳이다
 
-        // 소환 구간은 절대 좌표라 맵 필드 배율만큼 같이 벌려야 한다(넓은 맵에서 화면 왼쪽에만 몰리지 않게).
-        // 부대원이 흩어지는 폭(AmbushSquadSpreadX)은 적 크기 기준이라 안 곱한다.
-        float fieldScale = Map != null ? Map.fieldScale : 1f;
+        // 소환 구간은 절대 좌표지만 맵 필드 배율을 **곱하지 않는다**(아래 두 결정). 부대원이 흩어지는 폭(AmbushSquadSpreadX)도 적 크기 기준이라 안 곱한다.
         float bandMin = BalanceConstants.AmbushBandMinX;   // 🔴 fieldScale을 곱하지 않는다(2026-09-21) — 곱하면 우주에서 -12.6이 되어 정문(-9)보다 뒤에 매복이 생긴다. MaxX도 같은 이유로 안 곱한다
         // 🔴 상한은 **플레이어 기준**이라 맵 배율을 곱하지 않는다(2026-09-19 사용자).
         // 곱하면 넓은 맵일수록 박치기선에 붙는다 — 우주(fieldScale 1.8)에서 4.14까지 와서
         // 박치기선(5.36)과 1.22유닛밖에 안 떨어졌다(이 상수 주석이 요구하는 최소 1.5 위반).
         float bandMax = BalanceConstants.AmbushBandMaxX;
+        // 맵별 이동(2026-10-06 — 우주만 +2). 구간 폭은 그대로 두고 통째로 플레이어 쪽으로 옮긴다.
+        bandMin += AmbushShiftX;
+        bandMax += AmbushShiftX;
 
         // 인스펙터에서 0이 들어와도 한 부대는 나오게 막아 둔다(필드가 없던 옛 에셋은 초기값 1로 읽히므로 무관).
         int squads = Mathf.Max(1, stage != null ? stage.ambushSquads : 1);
@@ -354,12 +384,12 @@ public class EnemySpawner : MonoBehaviour
         if (gm != null) ApplyStageScaling(enemy, gm.CurrentStageData, gm.CurrentStage);
     }
 
-    private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage)
+    private void ApplyStageScaling(Enemy enemy, StageData stage, int currentStage, float extraHpMult = 1f)
     {
         if (stage == null) return;
         int step = currentStage / 3;
         AscensionTier asc = Ascension.Get(RunConfig.AscensionLevel); // 승천 등급 배율(체력·이속·데미지)
-        float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult;
+        float hpMult = stage.enemyHpMultiplier * (1f + Scaling.HpStepBonusAt(step)) * asc.hpMult * extraHpMult;
         float speedMult = stage.enemySpeedMultiplier * (1f + Scaling.SpeedStepBonusAt(step)) * asc.speedMult;
         enemy.ApplyStageMultipliers(hpMult, speedMult, stage.enemyDamageMultiplier * asc.damageMult);
     }
@@ -375,8 +405,8 @@ public class EnemySpawner : MonoBehaviour
             {
                 // 군중제어 감쇄 대상 — 프리팹이 아니라 이 슬롯으로 스폰됐는지가 기준.
                 // 사망 분출 풀도 여기서 넘긴다(보스 프리팹은 세 맵 공유 — MapDefinition 주석 참고).
-                if (isBoss) enemy.MarkAsBoss(Map.bossDeathSpawnPrefabs);
-                ApplyStageScaling(enemy, stage, currentStage);
+                if (isBoss) { enemy.MarkAsBoss(Map.bossDeathSpawnPrefabs); ApplyBossSkin(enemy); }
+                ApplyStageScaling(enemy, stage, currentStage, isBoss ? Map.bossHpMultiplier : 1f);
             }
         }
 
@@ -388,7 +418,10 @@ public class EnemySpawner : MonoBehaviour
     private void ApplyBossSkin(Enemy enemy)
     {
         if (Map.bossColliderSize != Vector2.zero && enemy.TryGetComponent(out BoxCollider2D box))
+        {
             box.size = Map.bossColliderSize;
+            box.offset = Map.bossColliderOffset;
+        }
 
         enemy.SetBossSkinMotion(Map.bossHoldbackX, Map.bossFloatBobAmplitude, Map.bossFloatBobSpeed);
 

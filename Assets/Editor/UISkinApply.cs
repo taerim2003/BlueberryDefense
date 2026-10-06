@@ -14,8 +14,8 @@ using TMPro;
 // 씬을 손으로 고치면 다음 실행에 되돌아가므로, 예외를 두고 싶으면 Skip 목록에 넣을 것.
 //
 // 🧰 이 도구가 **전 화면의 UI 스킨을 단독 소유**한다:
-//  - 런타임 코드가 `Assets/Resources/UISkin.asset`에서 집어 가는 것은 이제 **글자(폰트·머티리얼)와 강조색뿐**이다.
-//    설정·일시정지·컬렉션은 프리팹 주도로 바뀌어 판·바 스프라이트를 런타임에 입히지 않는다(UISkin.cs 머리말 참고).
+//  - 런타임 코드가 `Assets/Resources/UISkin.asset`에서 집어 가는 것은 이제 **강조색과 선택 테 머티리얼뿐**이다.
+//    설정·일시정지·컬렉션은 프리팹 주도로 바뀌어 판·바 스프라이트·폰트를 런타임에 입히지 않는다(UISkin.cs 머리말 참고).
 //    그 에셋은 손으로 만들지 말고 `Window > Blueberry Defense > UI 스킨 에셋 만들기`로 굽는다.
 //  - 버튼 손맛(호버 배율·idleDim)은 `JuicyTuning.cs`가 단독 소유 — 인스펙터에서 고쳐도 이 도구가 덮는다.
 //  - ⚠️ `UISkin.FitSlice`는 아직 `img.type = Sliced`를 강제한다. CLAUDE.md §5-1("무조건 Simple")과
@@ -249,7 +249,7 @@ public static class UISkinApply
         Debug.Log(CreateAsset());
     }
 
-    // 런타임 코드가 글자·강조색을 집어 갈 `Assets/Resources/UISkin.asset`을 굽는다.
+    // 런타임 코드가 강조색·선택 테 머티리얼을 집어 갈 `Assets/Resources/UISkin.asset`을 굽는다.
     // 경로·파일명이 곧 배선이라 손으로 만들지 말 것 — 여기 값이 위 토큰과 같아야 두 쪽이 같은 옷이 된다.
     public static string CreateAsset()
     {
@@ -261,27 +261,8 @@ public static class UISkinApply
         bool isNew = skin == null;
         if (isNew) skin = ScriptableObject.CreateInstance<UISkin>();
 
-        // 판·바 스프라이트 5종 — 지금 런타임에서 읽는 코드는 없고 에셋의 기록으로만 남는다.
-        skin.panel = Load(SpritePath(SPillow));  // 설정 980x850 · 일시정지 1760x940
-        skin.bar = Load(SpritePath(SBar));
-        skin.box = Load(SpritePath(SSquare));
-        // 컬렉션 화면은 판을 원본 크기 위로 늘리지 않는 게 규칙이라, 넓은 칸/아이콘 칸용 그림이 따로 필요하다.
-        skin.barWide = Load(SpritePath(SBarWide));
-        skin.iconBox = Load(SpritePath(SIconBox));
-        skin.bigBox  = Load(SpritePath(SBigBox));   // 여러 행을 묶는 그룹 상자(설정 화면)
-        // 볼륨 슬라이더처럼 "차오르는 바"가 쓴다. 셋 다 Multiple이라 LoadSub로 집는다.
-        skin.gaugeTrack = Load(SpritePath(SHealth)) ?? LoadSub(SpritePath(SHealth));
-        skin.gaugeFill  = LoadSub(SpritePath(SHealthFill));
-        skin.gaugeOuter = LoadSub(SpritePath(SHealthOuter));
-        skin.skin = Skin;
+        // 런타임이 읽는 건 강조색·선택 테 머티리얼뿐이다(UISkin.cs 머리말). 스프라이트·폰트 필드는 2026-09-29에 걷어냈다.
         skin.highlight = Highlight;
-        skin.dim = new Color(DimRgb.r, DimRgb.g, DimRgb.b, 0.8f);
-        skin.pixelFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(PixelFont);
-        skin.bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BodyFont);
-        skin.pixelBig = Mat(PixelFont, MatBig);
-        skin.pixelSmall = Mat(PixelFont, MatSmall);
-        skin.bodyBig = Mat(BodyFont, MatBig);
-        skin.bodySmall = Mat(BodyFont, MatSmall);
 
         if (isNew) AssetDatabase.CreateAsset(skin, path);
         EditorUtility.SetDirty(skin);
@@ -290,10 +271,7 @@ public static class UISkinApply
         // 조용한 실패를 막으려고 되읽어 확인한다(코드로 만든 에셋의 참조가 안 들어간 적이 있다).
         var back = AssetDatabase.LoadAssetAtPath<UISkin>(path);
         return (isNew ? "생성" : "갱신") + " " + path
-            + " | panel=" + N(back.panel) + " bar=" + N(back.bar) + " box=" + N(back.box)
-            + " barWide=" + N(back.barWide) + " iconBox=" + N(back.iconBox)
-            + " | pixel=" + N(back.pixelFont) + "/" + N(back.pixelBig) + "," + N(back.pixelSmall)
-            + " body=" + N(back.bodyFont) + "/" + N(back.bodyBig) + "," + N(back.bodySmall);
+            + " | highlight=" + back.highlight + " selectOutline=" + N(back.selectOutline);
     }
 
     static Material Mat(string fontAssetPath, string suffix)

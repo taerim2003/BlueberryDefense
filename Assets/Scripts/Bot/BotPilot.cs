@@ -44,6 +44,7 @@ public class BotPilot : MonoBehaviour
 
     private QAErrorLog errors;
     private QAInvariants invariants;
+    private ExpeditionLoadout expedition;   // 원정 모드에서 현재 판의 고정 로드아웃. 그 외엔 null — 픽 분기의 스위치다.
 
     // QAErrorLog·QAInvariants가 오류 기록에 붙일 문맥.
     public BotChaos Chaos { get; private set; }
@@ -104,7 +105,7 @@ public class BotPilot : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = -1;
         // 창 없이(-batchmode -nographics) 뜨면 키보드 장치가 없어 `Keyboard.current`가 null이다. 게임은 PC라 키보드를 전제하고
-        // (PlayerSkills가 HoldSkills가 꺼진 프레임에 `Keyboard.current[...]`를 읽는다) 그 가정은 맞다 — 봇 쪽 환경을 맞춘다.
+        // (게임 입력은 GameInput이 null을 견디지만 BotChaos의 ESC 주입이 키보드 장치에 이벤트를 넣는다) 그 가정은 맞다 — 봇 쪽 환경을 맞춘다.
         if (UnityEngine.InputSystem.Keyboard.current == null) UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
 #endif
         Application.logMessageReceived += OnLog;
@@ -132,6 +133,7 @@ public class BotPilot : MonoBehaviour
         Application.logMessageReceived -= OnLog;
         recorder?.Unsubscribe();
         BotInput.HoldSkills = false;
+        BotCastPolicy.Clear();
         Time.captureDeltaTime = 0f;
     }
 
@@ -184,6 +186,7 @@ public class BotPilot : MonoBehaviour
         if (cfg.mode == "campaign") yield return Campaigns();
         else if (cfg.mode == "probe") yield return Probe();
         else if (cfg.mode == "gym") yield return Gym();
+        else if (cfg.mode == "expedition") yield return Expedition();
         else if (cfg.mode != "audit") Fail("알 수 없는 mode: " + cfg.mode);
         Finish("done", null);
     }
@@ -385,6 +388,54 @@ public class BotPilot : MonoBehaviour
             recorder.WriteRun(run);
             Trace("writeRun 끝");
             st.nextProbeIndex = i + 1;
+            SaveResume(st);
+            if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png 참고");
+        }
+    }
+
+    // ───────────────────────── 2차 진화 원정 (expedition) ─────────────────────────
+    // 한 판 = 로드아웃 항목 하나(목표 2차 진화 + 고정 픽). 픽·진화·리롤이 전부 expedition_loadouts.json을 따른다.
+    // 판정 단위는 진화 차수별 구간이다 — BotRecorder의 effByEvoStage와 evolutions 이벤트(경계 시각)로 분석기가 가른다.
+    private IEnumerator Expedition()
+    {
+        ExpeditionLoadout[] all = ExpeditionLoadoutFile.Load(Path.Combine(BotConfig.ProjectRoot, cfg.expeditionLoadouts));
+        if (all == null || all.Length == 0) { Fail("원정 로드아웃이 없다: " + cfg.expeditionLoadouts); yield break; }
+        ExpeditionLoadout[] items = cfg.expeditionItems != null && cfg.expeditionItems.Length > 0
+            ? all.Where(l => cfg.expeditionItems.Contains(l.id)).ToArray() : all;
+        if (items.Length == 0) { Fail("expeditionItems 필터에 맞는 항목이 없다"); yield break; }
+        BotGoal goal = new BotGoal { map = cfg.expeditionMap, ascension = cfg.expeditionAscension };
+        string[] mapNames = BotConfig.DefaultGoals.Select(g => g.map).Distinct().ToArray();
+
+        var cells = new List<(ExpeditionLoadout item, int rep)>();
+        foreach (ExpeditionLoadout it in items)
+            for (int rep = 0; rep < cfg.expeditionRuns; rep++) cells.Add((it, rep));
+
+        BotResumeState st = LoadResume("expedition");
+        for (int i = st.nextExpeditionIndex; i < cells.Count; i++)
+        {
+            if (YieldRequested()) { st.nextExpeditionIndex = i; Yield(st); yield break; }
+            var cell = cells[i];
+            Trace("expedition cell " + i + " " + cell.item.id + " rep=" + cell.rep);
+            BotTree.BuildReferenceSave(cfg.expeditionTreeRatio, mapNames);
+            CharacterDefinition ch = BotTree.LoadByName<CharacterDefinition>(cell.item.character);
+            if (ch == null) Fail("캐릭터 에셋 없음: " + cell.item.character);
+
+            var header = BotJson.Obj();
+            header["mode"] = "expedition"; header["label"] = cfg.label; header["run"] = i; header["cells"] = cells.Count;
+            header["loadoutId"] = cell.item.id;
+            header["targetSkill"] = cell.item.target.skill; header["targetRoute"] = cell.item.target.route;
+            header["treeRatio"] = cfg.expeditionTreeRatio; header["map"] = goal.map; header["ascension"] = goal.ascension;
+            header["character"] = cell.item.character; header["rep"] = cell.rep;
+
+            expedition = cell.item;
+            SetProgress(0, i, goal, cell.item.character);
+            yield return EnterRun(goal, ch);
+            Dictionary<string, object> run = null;
+            yield return PlayBattle(header, r => run = r);
+            expedition = null;
+            if ((string)run["result"] == "yielded") { st.nextExpeditionIndex = i; Yield(st); yield break; }
+            recorder.WriteRun(run);
+            st.nextExpeditionIndex = i + 1;
             SaveResume(st);
             if ((string)run["result"] == "stuck") Fail("판이 멈춤 — stuck_*.png 참고");
         }
@@ -782,6 +833,8 @@ public class BotPilot : MonoBehaviour
     {
         header["seed"] = cfg.seed;
         if (!string.IsNullOrEmpty(cfg.kind)) { header["kind"] = cfg.kind; header["buildId"] = cfg.buildId; header["instance"] = cfg.instance; }
+        BotCastPolicy.Install();                       // 시전 판단(스킬별 발사 허가) — 전투 동안만
+        header["castPolicy"] = BotCastPolicy.Description;
         RunHeader = header;
         recorder.BeginRun(header);
         errors.TakeRunCounts();
@@ -831,6 +884,7 @@ public class BotPilot : MonoBehaviour
 
         if (Chaos != null) Chaos.BattleActive = false;
         BotInput.HoldSkills = false;
+        BotCastPolicy.Clear();
         if (result == "stuck" || result == "timeout")
             errors.Record(result == "stuck" ? "Stuck" : "Timeout", "[QA-INV] " + result + ": 판이 " + (result == "stuck" ? cfg.stuckRealSeconds + "초 동안 진행 없음" : "실시간 상한 초과"));
         Dictionary<string, object> run = recorder.EndRun(result);
@@ -900,17 +954,49 @@ public class BotPilot : MonoBehaviour
                 {
                     var evoIdx = pool.Where(i => OptField<bool>(opts.GetValue(i), "IsEvolution")).ToList();
                     if (evoIdx.Count > 0) { pool = evoIdx; rule = "evolution"; }
-                    // 2차 열쇠로 필요한(아직 진화 전인) 스킬을 먼저 진화시킨다 — 사용자 지정 2026-09-18.
-                    NeededKeyRoutes(out var keyA, out var keyP);
-                    var keyIdx = pool.Where(i =>
+                    if (expedition != null)
                     {
-                        object o = opts.GetValue(i);
-                        var sid = OptField<ActiveSkillId?>(o, "SkillId");
-                        var pid = OptField<PassiveSkillId?>(o, "PassiveId");
-                        return OptField<bool>(o, "IsEvolution")
-                            && ((sid.HasValue && keyA.ContainsKey(sid.Value)) || (pid.HasValue && keyP.ContainsKey(pid.Value)));
-                    }).ToList();
-                    if (keyIdx.Count > 0) { pool = keyIdx; rule = "stage2KeyEvolve"; }
+                        // 원정: 로드아웃 evolvePriority 순서 — 순번이 가장 낮은 스텝의 대상만 남긴다.
+                        var ranked = pool.Select(i => (i, rank: ExpeditionEvoRank(opts.GetValue(i))))
+                                         .Where(t => t.rank < int.MaxValue).ToList();
+                        if (ranked.Count > 0)
+                        {
+                            int best = ranked.Min(t => t.rank);
+                            pool = ranked.Where(t => t.rank == best).Select(t => t.i).ToList();
+                            rule = "expeditionEvolve";
+                        }
+                    }
+                    else
+                    {
+                        // 2차 열쇠로 필요한(아직 진화 전인) 스킬을 먼저 진화시킨다 — 사용자 지정 2026-09-18.
+                        NeededKeyRoutes(out var keyA, out var keyP);
+                        var keyIdx = pool.Where(i =>
+                        {
+                            object o = opts.GetValue(i);
+                            var sid = OptField<ActiveSkillId?>(o, "SkillId");
+                            var pid = OptField<PassiveSkillId?>(o, "PassiveId");
+                            return OptField<bool>(o, "IsEvolution")
+                                && ((sid.HasValue && keyA.ContainsKey(sid.Value)) || (pid.HasValue && keyP.ContainsKey(pid.Value)));
+                        }).ToList();
+                        if (keyIdx.Count > 0) { pool = keyIdx; rule = "stage2KeyEvolve"; }
+                    }
+                }
+                else if (expedition != null)
+                {
+                    pool = ExpeditionPool(opts, out rule, out bool wantReroll);
+                    // 로드아웃 미완성인데 목록의 새 카드가 안 나왔으면 리롤(스킬트리 리롤 잔여가 있을 때만 버튼이 산다).
+                    if (wantReroll)
+                    {
+                        Button rr = Get<Button>(lu, "rerollButton");
+                        if (Usable(rr))
+                        {
+                            var offeredR = new List<object>();
+                            for (int i = 0; i < opts.Length; i++) offeredR.Add(DescribeOption(opts.GetValue(i)));
+                            RecordPick("levelUp", offeredR, "reroll", false, "expeditionReroll");
+                            rr.onClick.Invoke();
+                            return Acted();
+                        }
+                    }
                 }
                 else pool = LevelUpPriorityPool(opts, out rule);
                 int oi = pool[rng.Next(pool.Count)];
@@ -939,18 +1025,39 @@ public class BotPilot : MonoBehaviour
                 Button nb = node != null ? OptField<Button>(node, "button") : null;
                 if (Usable(nb)) usable.Add((i / 2, nb)); // index = route*2 + (tier-1)
             }
-            if (usable.Count == 0) return false;
+            if (usable.Count == 0)
+            {
+                // 살 수 있는 2차 노드가 없다(열쇠 미충족 등) — 정상 플레이어처럼 취소로 닫고 판을 계속한다.
+                // 취소 버튼(backButton)은 진화 창이 늘 onCancel과 함께 열려 활성이다(LevelUpUI.ResolveEvolutionChoice).
+                // 없으면(취소 불가) 예전대로 대기 → 상위 stuck 감지가 잡는다.
+                Button back = Get<Button>(et, "backButton");
+                if (Usable(back)) { back.onClick.Invoke(); return Acted(); }
+                return false;
+            }
             EquippedSkill s = Get<EquippedSkill>(et, "currentSkill");
             EquippedPassive p = Get<EquippedPassive>(et, "currentPassive");
-            // 이 스킬이 다른 스킬의 2차 열쇠면 **열쇠가 요구하는 루트**로 진화시킨다(열쇠는 루트까지 맞아야 한다).
-            NeededKeyRoutes(out var keyA, out var keyP);
-            int wantRoute = s != null && keyA.TryGetValue(s.Id, out int ra) ? ra
+            // 원정이면 로드아웃 evolvePriority가 루트를 정한다. 스텝이 없으면 아래 열쇠 로직으로 떨어진다.
+            int wantRoute = -1;
+            string routeRule = "random";
+            if (expedition != null)
+            {
+                wantRoute = s != null ? expedition.RouteFor(false, s.Id.ToString(), s.EvolutionStage + 1)
+                          : p != null ? expedition.RouteFor(true, p.Id.ToString(), p.EvolutionStage + 1) : -1;
+                if (wantRoute >= 0) routeRule = "expeditionRoute";
+            }
+            if (wantRoute < 0)
+            {
+                // 이 스킬이 다른 스킬의 2차 열쇠면 **열쇠가 요구하는 루트**로 진화시킨다(열쇠는 루트까지 맞아야 한다).
+                NeededKeyRoutes(out var keyA, out var keyP);
+                wantRoute = s != null && keyA.TryGetValue(s.Id, out int ra) ? ra
                           : p != null && keyP.TryGetValue(p.Id, out int rp) ? rp : -1;
+                if (wantRoute >= 0) routeRule = "keyRoute";
+            }
             var keyed = usable.Where(u => u.route == wantRoute).ToList();
             var pick = keyed.Count > 0 ? keyed[rng.Next(keyed.Count)] : usable[rng.Next(usable.Count)];
             RecordPick("evolutionRoute", usable.Select(u => (object)u.route).Distinct().ToList(),
                 (s != null ? s.Id.ToString() : p != null ? "P:" + p.Id : "?") + ":R" + pick.route, true,
-                keyed.Count > 0 ? "keyRoute" : "random");
+                keyed.Count > 0 ? routeRule : "random");
             pick.button.onClick.Invoke();
             return Acted();
         }
@@ -1105,6 +1212,112 @@ public class BotPilot : MonoBehaviour
 
         rule = "random";
         return all;
+    }
+
+    // ───────────────────────── 원정 픽 (expedition_loadouts.json이 정한다) ─────────────────────────
+    // 진화 선택지의 로드아웃 순번. 다음 티어 = 그 스킬의 현재 차수 + 1로 스텝을 찾는다. 목록 밖이면 MaxValue.
+    private int ExpeditionEvoRank(object opt)
+    {
+        var sid = OptField<ActiveSkillId?>(opt, "SkillId");
+        var pid = OptField<PassiveSkillId?>(opt, "PassiveId");
+        if (sid.HasValue)
+        {
+            PlayerSkills ps = FindAnyObjectByType<PlayerSkills>();
+            EquippedSkill s = ps != null ? ps.EquippedSkills.FirstOrDefault(x => x.Id == sid.Value) : null;
+            return s == null ? int.MaxValue : expedition.EvolveRank(false, sid.Value.ToString(), s.EvolutionStage + 1);
+        }
+        if (pid.HasValue)
+        {
+            PlayerPassives pp = FindAnyObjectByType<PlayerPassives>();
+            EquippedPassive p = pp != null ? pp.GetPassive(pid.Value) : null;
+            return p == null ? int.MaxValue : expedition.EvolveRank(true, pid.Value.ToString(), p.EvolutionStage + 1);
+        }
+        return int.MaxValue;
+    }
+
+    // 레벨업 3택(원정): ① 로드아웃의 미보유 카드(적힌 순서 — 액티브 먼저) ② 목표 스킬 레벨업(진화는 만렙 요구)
+    // ③ 다음 진화 스텝 스킬의 레벨업 ④ 로드아웃 액티브 레벨업 ⑤ 아무 레벨업 ⑥ 아무 카드(칸 굶주림 방지).
+    // wantReroll: 로드아웃이 미완성인데 ①이 없을 때 — 호출부가 리롤 버튼을 시도한다.
+    private List<int> ExpeditionPool(Array opts, out string rule, out bool wantReroll)
+    {
+        var all = Enumerable.Range(0, opts.Length).ToList();
+        PlayerSkills ps = FindAnyObjectByType<PlayerSkills>();
+        PlayerPassives pp = FindAnyObjectByType<PlayerPassives>();
+
+        var newRanked = all.Select(i =>
+        {
+            object o = opts.GetValue(i);
+            int rank = OptField<bool>(o, "IsNew")
+                ? expedition.PickRank(OptField<ActiveSkillId?>(o, "SkillId"), OptField<PassiveSkillId?>(o, "PassiveId"))
+                : -1;
+            return (i, rank);
+        }).Where(t => t.rank >= 0).ToList();
+        if (newRanked.Count > 0)
+        {
+            int best = newRanked.Min(t => t.rank);
+            rule = "expeditionNew"; wantReroll = false;
+            return newRanked.Where(t => t.rank == best).Select(t => t.i).ToList();
+        }
+        wantReroll = expedition.Incomplete(ps, pp);
+
+        List<int> LevelUpOf(Func<object, bool> match) => all.Where(i =>
+        {
+            object o = opts.GetValue(i);
+            return !OptField<bool>(o, "IsNew") && match(o);
+        }).ToList();
+
+        List<int> pool = LevelUpOf(o =>
+        {
+            var sid = OptField<ActiveSkillId?>(o, "SkillId");
+            return sid.HasValue && sid.Value == expedition.TargetSkill;
+        });
+        if (pool.Count > 0) { rule = "expeditionTargetLevel"; return pool; }
+
+        ExpeditionEvolveStep next = NextEvolveStep(ps, pp);
+        if (next != null)
+        {
+            pool = LevelUpOf(o =>
+            {
+                var sid = OptField<ActiveSkillId?>(o, "SkillId");
+                var pid = OptField<PassiveSkillId?>(o, "PassiveId");
+                return (sid.HasValue && !string.IsNullOrEmpty(next.skill) && sid.Value.ToString() == next.skill)
+                    || (pid.HasValue && !string.IsNullOrEmpty(next.passive) && pid.Value.ToString() == next.passive);
+            });
+            if (pool.Count > 0) { rule = "expeditionKeyLevel"; return pool; }
+        }
+
+        pool = LevelUpOf(o =>
+        {
+            var sid = OptField<ActiveSkillId?>(o, "SkillId");
+            return sid.HasValue && expedition.ListsActive(sid.Value);
+        });
+        if (pool.Count > 0) { rule = "expeditionActiveLevel"; return pool; }
+
+        pool = LevelUpOf(o => OptField<ActiveSkillId?>(o, "SkillId").HasValue || OptField<PassiveSkillId?>(o, "PassiveId").HasValue);
+        if (pool.Count > 0) { rule = "expeditionAnyLevel"; return pool; }
+
+        rule = "expeditionOffTable";   // 목록 밖 새 카드뿐 — 리롤이 안 살면 이거라도 집는다
+        return all;
+    }
+
+    // 로드아웃 evolvePriority에서 아직 안 끝난 첫 스텝. 전부 끝났으면 null.
+    private ExpeditionEvolveStep NextEvolveStep(PlayerSkills ps, PlayerPassives pp)
+    {
+        foreach (ExpeditionEvolveStep step in expedition.evolvePriority)
+        {
+            if (!string.IsNullOrEmpty(step.skill))
+            {
+                EquippedSkill eq = ps != null ? ps.EquippedSkills.FirstOrDefault(x => x.Id.ToString() == step.skill) : null;
+                if (eq == null || eq.EvolutionStage < step.tier) return step;
+            }
+            else if (!string.IsNullOrEmpty(step.passive))
+            {
+                EquippedPassive eq = pp != null
+                    ? pp.EquippedPassives.FirstOrDefault(x => x.Id.ToString() == step.passive) : null;
+                if (eq == null || eq.EvolutionStage < step.tier) return step;
+            }
+        }
+        return null;
     }
 
     // 보유한 1차 진화 액티브의 2차 열쇠 중 **보유는 했지만 아직 진화 전**인 것 → 요구 루트. 진화 대상·루트 선택이 우선한다.

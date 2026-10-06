@@ -4,7 +4,7 @@ tree.name.atk_2	Attack II
 tree.name.hp_1	Health I
 tree.name.hp_2	Health II
 tree.name.New_Reroll	Unlock Reroll
-tree.desc.New_Reroll	Unlocks the ability to reroll level-up choices once per run
+tree.desc.New_Reroll	Unlocks level-up reroll (once per run)
 tree.name.reroll_2	Reroll I
 tree.name.crit_1	Crit I
 tree.name.crit_2	Crit II
@@ -16,34 +16,34 @@ tree.name.arrow_StartLev	Arrow Mastery
 tree.desc.arrow_StartLev	(With Strawberry) Start Arrow Shot at level 3
 tree.name.fly_1	Anti-Air I
 tree.name.eagle_fly	Eagle Anti-Air
-tree.desc.eagle_fly	Eagle Drop's bonus damage to flying enemies +30%
+tree.desc.eagle_fly	Eagle Drop bonus damage to flying enemies +30%
 tree.name.fly_2	Anti-Air II
 tree.name.cool_1	Cooldown I
 tree.name.cool_2	Cooldown II
 tree.name.tornado_CoolDownBonus	Swift Whirlwind
-tree.desc.tornado_CoolDownBonus	Whirlwind receives 1.5x the effect of all cooldown reduction
+tree.desc.tornado_CoolDownBonus	Whirlwind gets 1.5x cooldown reduction
 tree.name.thunder_Cooldown	Lightning Cooldown
-tree.desc.thunder_Cooldown	Every lightning strike cuts Lightning's cooldown by 0.01s
+tree.desc.thunder_Cooldown	Lightning cooldown -0.01s per strike
 tree.name.atk_3	Attack III
 tree.name.gold_3	Wealth III
 tree.name.Root_Skilltree	Skill Tree Unlocked!
 tree.desc.Root_Skilltree	Unlocks the skill tree!
 tree.name.New_Orb	Unlock Orb
-tree.desc.New_Orb	<Orb> can now appear as a skill choice
+tree.desc.New_Orb	Unlocks <Orb> skill
 tree.name.New_Lightning	Unlock Lightning
-tree.desc.New_Lightning	<Lightning> can now appear as a skill choice
+tree.desc.New_Lightning	Unlocks <Lightning> skill
 tree.name.New_Homing	Unlock Homing
-tree.desc.New_Homing	<Homing Missile> can now appear as a skill choice
+tree.desc.New_Homing	Unlocks <Homing Missile> skill
 tree.name.New_Shotgun	Unlock Buckshot
-tree.desc.New_Shotgun	<Buckshot Blast> can now appear as a skill choice
+tree.desc.New_Shotgun	Unlocks <Buckshot Blast> skill
 tree.name.New_Rewind	Unlock Rewind
-tree.desc.New_Rewind	<Rewind> can now appear as a skill choice
+tree.desc.New_Rewind	Unlocks <Rewind> skill
 tree.name.Rewind_Slow	Blueberry Slow
-tree.desc.Rewind_Slow	Rewind winds back the blueberries' time as well,\nslowing every blueberry on the field
+tree.desc.Rewind_Slow	Rewind slows all blueberries
 tree.name.Homing_MissileNum	More Bombardment
-tree.desc.Homing_MissileNum	Every 20 uses of Homing Missile\nadds one more missile per volley
+tree.desc.Homing_MissileNum	Homing Missile +1 missile every 30 casts
 tree.name.Sniping_TwoTarget	Two With One Shot
-tree.desc.Sniping_TwoTarget	Sniping targets one additional enemy
+tree.desc.Sniping_TwoTarget	Sniping targets +1
 tree.name.swing_StartLev	Swing Mastery
 tree.desc.swing_StartLev	(With Pineapple) Start Swing at level 3
 char.name.Char_Pineapple	Pineapple
@@ -53,14 +53,14 @@ map.name.Map_BlueberryField	Blueberry Field
 map.name.Map_Wide15	Seaside
 map.name.Map_Wide20	Vast Space
 tree.name.tornado_Fly	Whirlwind Anti-Air
-tree.desc.tornado_Fly	Whirlwind's bonus damage to flying enemies +30%
+tree.desc.tornado_Fly	Whirlwind bonus damage to flying enemies +30%
 tree.name.cool_3	Cooldown III
 tree.name.cool_4	Cooldown IV
 tree.name.cool_5	Cooldown V
 tree.name.accel_BaseCool	Haste Training
 tree.desc.accel_BaseCool	<Haste> starts with +5% cooldown reduction
 tree.name.accel_FastSkillDmg	Quick Hands
-tree.desc.accel_FastSkillDmg	While you have <Haste>, skills with a cooldown of 4s or less deal +30% damage
+tree.desc.accel_FastSkillDmg	With <Haste>, skills with 4s or less cooldown deal +30% damage
 tree.name.critdmg_1	Crit Damage I
 tree.name.critdmg_2	Crit Damage II
 tree.name.critdmg_3	Crit Damage III
@@ -73,18 +73,18 @@ tree.name.regen_2	Regeneration II
 tree.name.assassin_BaseCrit	Assassination Training
 tree.desc.assassin_BaseCrit	<Assassination> starts with +10% critical chance
 tree.name.assassin_FullCritHit	Double Tap
-tree.desc.assassin_FullCritHit	While you have <Assassination>, skills with 100% critical chance hit 1 extra time
+tree.desc.assassin_FullCritHit	With <Assassination>, skills with 100% critical chance hit +1
 tree.name.reroll_3	Reroll II
 tree.name.reroll_4	Reroll III
 tree.name.reroll_5	Reroll IV
 tree.name.orb_BasicSlow	Sticky Orb
 tree.desc.orb_BasicSlow	Orb hits slow enemies
 tree.name.orb_Pierce	Orb Pierce
-tree.desc.orb_Pierce	Orbs pierce Shield Blueberries · +3 homing orbs
+tree.desc.orb_Pierce	Basic orbs pierce Shield Blueberries
 tree.name.eagle_DropNum	Eagle Squadron
-tree.desc.eagle_DropNum	Eagle Drop drops 1 more time
+tree.desc.eagle_DropNum	Eagle Drop drop count +1
 tree.name.shotgun_BonusHit	Extra Load
-tree.desc.shotgun_BonusHit	Buckshot Blast evolved into 「Bonus Rounds Loaded」 grants +1 more hit
+tree.desc.shotgun_BonusHit	Buckshot Blast damage +10%
 tree.name.shotgun_Crit	Vital Buckshot
 tree.desc.shotgun_Crit	Buckshot Blast critical chance +30%
 tree.name.exp_3	Experience III
@@ -93,19 +93,19 @@ tree.name.exp_5	Experience V
 tree.name.knowledge_BaseXp	Knowledge Training
 tree.desc.knowledge_BaseXp	<Knowledge> starts with +10% experience gain
 tree.name.knowledge_EvoHint	Evolution Insight
-tree.desc.knowledge_EvoHint	While you have <Knowledge>, level-up choices show the evolution requirements of your skills
+tree.desc.knowledge_EvoHint	Level-up choices show evolution requirements
 tree.name.New_Evolution	Unlock Evolution
-tree.desc.New_Evolution	Skills can now reach Evolution 1
+tree.desc.New_Evolution	Unlocks skill Evolution 1
 tree.name.arrow_Pierce	Piercing Arrow
-tree.desc.arrow_Pierce	Arrow Shot pierces 1 more enemy
+tree.desc.arrow_Pierce	Arrow Shot base pierce +1
 tree.name.swing_Knockback	Heavy Swing
-tree.desc.swing_Knockback	Swing knocks enemies back 1.5x farther
+tree.desc.swing_Knockback	Swing knockback 1.5x
 tree.name.gold_4	Wealth IV
 tree.name.gold_5	Wealth V
 tree.name.rewind_NoGcd	Seamless Rewind
-tree.desc.rewind_NoGcd	Rewind no longer triggers the global cooldown
+tree.desc.rewind_NoGcd	Rewind triggers no global cooldown
 tree.name.thunder_Stack	Charge Up
-tree.desc.thunder_Stack	Lightning's buff stacks, dealing more damage per stack
+tree.desc.thunder_Stack	Lightning proc chance +10%
 tree.name.hp_3	Health III
 tree.name.hp_4	Health IV
 tree.name.sniping_Crit	Vital Shot
@@ -113,23 +113,23 @@ tree.desc.sniping_Crit	Sniping critical chance +30%
 tree.name.health_BaseHp	Vitality Training
 tree.desc.health_BaseHp	<Vitality> starts with +30 max health
 tree.name.health_HealItem	Nutritious
-tree.desc.health_HealItem	While you have <Vitality>, health pickups restore twice as much
+tree.desc.health_HealItem	With <Vitality>, health pickups heal 2x
 tree.name.hp_5	Health V
 tree.name.defense_BaseReduce	Defense Training
 tree.desc.defense_BaseReduce	<Defense> starts with +10% damage reduction
 tree.name.defense_Revive	Undying
-tree.desc.defense_Revive	While you have <Defense>, revive once with half your max health when you die
+tree.desc.defense_Revive	With <Defense>, revive once at 50% max health on death
 tree.name.hp_6	Health VI
 tree.name.homing_Cooldown	Quick Reload
-tree.desc.homing_Cooldown	Homing Missile's base cooldown -1s
+tree.desc.homing_Cooldown	Homing Missile base cooldown -1s
 tree.name.atk_4	Attack IV
 tree.name.atk_5	Attack V
 tree.name.strength_BaseDmg	Strength Training
 tree.desc.strength_BaseDmg	<Strength> starts with +5% damage
 tree.name.strength_SlowSkill	Heavy Hitter
-tree.desc.strength_SlowSkill	<Strength>'s damage bonus is doubled for skills with a cooldown of 5s or more
+tree.desc.strength_SlowSkill	<Strength> damage bonus 2x on skills with 5s+ cooldown
 tree.name.New_Evolution2	Unlock Evolution 2
-tree.desc.New_Evolution2	Skills can now reach Evolution 2
+tree.desc.New_Evolution2	Unlocks skill Evolution 2
 tree.name.atk_6	Attack VI
 tree.name.boss_1	Boss Hunter I
 tree.name.boss_2	Boss Hunter II
@@ -140,19 +140,19 @@ tree.name.fly_3	Anti-Air III
 tree.name.heal_1	Recovery I
 tree.name.heal_2	Recovery II
 tree.name.heal_3	Recovery III
-tree.effect.Attack	All damage increased by {0}%
-tree.effect.Health	Max health increased by {0}
-tree.effect.Regen	Restores {0} health every 5 seconds
+tree.effect.Attack	All damage +{0}%
+tree.effect.Health	Max health +{0}
+tree.effect.Regen	Health regen +{0} every 5s
 tree.effect.Cooldown	All skill cooldowns -{0}%
 tree.effect.Xp	Experience gain +{0}%
 tree.effect.Wealth	Essence gain +{0}%
-tree.effect.Crit	Critical chance increased by {0}%
+tree.effect.Crit	Critical chance +{0}%
 tree.effect.FlyDamage	Bonus damage to flying enemies +{0}%
 tree.effect.CritDamage	Critical damage +{0}%
 tree.effect.BossDamage	Damage to bosses +{0}%
-tree.effect.Reroll	+{0} reroll per run
-tree.effect.HealItem	Health pickups restore an extra {0}% of max health
-tree.name.grape_StartLev	Grape Mastery
-tree.desc.grape_StartLev	(With Grape) Start Grape Toss at level 3
-tree.name.grape_CloudDuration	Thick Toxic Fog
-tree.desc.grape_CloudDuration	Grape Toss toxic fog lingers 2 seconds longer
+tree.effect.Reroll	Rerolls per run +{0}
+tree.effect.HealItem	Health pickups heal +{0}% of max health
+tree.name.grape_StartLev	Toxic Grapes Mastery
+tree.desc.grape_StartLev	(With Grape) Start Toxic Grapes at level 3
+tree.name.grape_CloudDuration	Deadly Fog
+tree.desc.grape_CloudDuration	Toxic Grapes fog duration +2s
