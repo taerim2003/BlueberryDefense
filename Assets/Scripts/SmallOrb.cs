@@ -27,8 +27,14 @@ public class SmallOrb : MonoBehaviour
     // ── 오브 R1 2차 「저글러」 전용 ──────────────────────────────────────────
     // "화면 내 **무작위** 적을 추적해서 한 번 맞춘 후 다시 캐릭터 쪽으로 돌아온다"(2026-09-19 사용자).
     public bool RandomTarget { get; set; }      // 가까운 순 대신 무작위로 고른다 — 오브가 한 적에게 몰리지 않는다
-    public Transform ReturnTo { get; set; }     // 설정하면 첫 명중 뒤 이쪽으로 돌아온다. null이면 기존 동작.
+    // 🔴 2026-10-07 사용자: 첫 명중 즉시 복귀 → **관통(PierceRemaining)을 다 쓰거나 근처에 적이 없으면** 복귀.
+    //    맞힌 뒤에는 JugglerSeekRange 안의 다른 적을 무작위로 골라 계속 쫓는다. 첫 표적만 거리 제한이 없다
+    //    (출발점이 캐릭터라 제한을 걸면 적이 멀 때 나가자마자 돌아와 사라진다).
+    public Transform ReturnTo { get; set; }     // 설정하면 위 조건에서 이쪽으로 돌아온다. null이면 기존 동작.
     private bool returning;
+    private bool hitOnce;   // 저글러가 한 번이라도 맞혔나 — 그 뒤부터 재표적에 거리 제한이 걸린다
+    private bool spent;     // 저글러가 관통을 다 썼다 — 돌아가는 길에 닿는 적을 더는 때리지 않는다
+    private const float JugglerSeekRange = 5f;         // 맞힌 뒤 다음 적을 찾는 반경(유닛). 이 안에 없으면 돌아간다
     private const float ReturnArriveDistance = 0.5f;   // 이만큼 가까워지면 임무 완료
     // Start에서 소멸 예약에 쓰인다 — Start 전에(생성 직후) 바꿔야 먹는다.
     public float Lifetime { get => lifetime; set => lifetime = value; }
@@ -77,7 +83,7 @@ public class SmallOrb : MonoBehaviour
     private void Update()
     {
         // 저글러의 복귀 구간: 적이 아니라 **캐릭터**를 향해 돌아온다. 도착하면 그 자리에서 사라진다.
-        // 돌아오는 길에 닿는 적도 그대로 때린다(OnTriggerEnter2D가 계속 돈다).
+        // 돌아오는 길에 닿는 적도 관통이 남아 있는 동안은 때린다(OnTriggerEnter2D가 계속 돈다).
         if (returning)
         {
             if (ReturnTo == null) { Destroy(gameObject); return; }
@@ -96,7 +102,11 @@ public class SmallOrb : MonoBehaviour
         if (Homing)
         {
             if (homingTarget == null || !homingTarget.IsAlive || hitEnemies.Contains(homingTarget))
+            {
                 homingTarget = AcquireTarget();
+                // 저글러: 한 번 맞힌 뒤 근처에 쫓을 적이 없으면 돌아간다.
+                if (homingTarget == null && ReturnTo != null && hitOnce) { BeginReturn(); return; }
+            }
 
             float turnedRad = 0f;
             if (homingTarget != null)
@@ -135,11 +145,14 @@ public class SmallOrb : MonoBehaviour
         Vector2 self = transform.position;
         // 인덱스 for로 도는 건 박싱 때문이다 — IReadOnlyList의 foreach는 List<T>.Enumerator를 박싱해 힙에 올린다.
         IReadOnlyList<Enemy> active = Enemy.Active;
+        // 저글러는 한 번 맞힌 뒤부터 JugglerSeekRange 안에서만 다음 적을 찾는다.
+        float maxSqr = ReturnTo != null && hitOnce ? JugglerSeekRange * JugglerSeekRange : float.MaxValue;
         for (int i = 0; i < active.Count; i++)
         {
             Enemy e = active[i];
-            if (e != null && e.IsAlive && !hitEnemies.Contains(e))
-                candidates.Add((((Vector2)e.transform.position - self).sqrMagnitude, e));
+            if (e == null || !e.IsAlive || hitEnemies.Contains(e)) continue;
+            float sqr = ((Vector2)e.transform.position - self).sqrMagnitude;
+            if (sqr <= maxSqr) candidates.Add((sqr, e));
         }
         if (candidates.Count == 0) return null;
 
@@ -152,7 +165,7 @@ public class SmallOrb : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (hasHit) return;
+        if (hasHit || spent) return;
         Enemy enemy = other.GetComponent<Enemy>();
         if (enemy == null || hitEnemies.Contains(enemy)) return;
         hitEnemies.Add(enemy);
@@ -163,13 +176,16 @@ public class SmallOrb : MonoBehaviour
         if (impactVfxPrefab != null)
             ObjectPool.Instance.SpawnImpactVfx(impactVfxPrefab, enemy.transform.position, ObjectPool.ImpactVfxLifetime);
 
-        // 저글러: **첫 명중과 동시에 복귀로 전환**한다(2026-09-19 사용자 "한번 맞춘 후 다시 캐릭터 쪽으로 돌아와").
-        // 돌아오는 길에 닿는 적도 때려야 해서 hitEnemies를 비운다 — 안 비우면 왔던 길의 적이 전부 면역이 된다.
-        if (ReturnTo != null && !returning)
+        // 저글러: 관통이 남아 있으면 다음 적을 찾아가고, 다 썼으면 캐릭터에게 돌아간다(2026-10-07 사용자).
+        // 방패는 관통과 무관하게 끊는다 — 쫓는 중이면 거기서 돌아가고, 돌아가는 중이면 종전대로 사라진다.
+        if (ReturnTo != null)
         {
-            returning = true;
-            homingTarget = null;
-            hitEnemies.Clear();
+            hitOnce = true;
+            bool blocked = enemy.BlocksProjectiles;
+            if (returning && blocked) { hasHit = true; Destroy(gameObject); return; }
+            if (PierceRemaining <= 0 || blocked) { spent = true; BeginReturn(); return; }
+            PierceRemaining--;
+            homingTarget = null;   // 즉시 재타겟(복귀 중이면 Update가 표적을 안 본다)
             return;
         }
 
@@ -183,5 +199,14 @@ public class SmallOrb : MonoBehaviour
 
         hasHit = true;
         Destroy(gameObject);
+    }
+
+    // 저글러의 복귀 전환. 돌아오는 길에 닿는 적도 때려야 해서 hitEnemies를 비운다 — 안 비우면 왔던 길의 적이 전부 면역이 된다.
+    private void BeginReturn()
+    {
+        if (returning) return;
+        returning = true;
+        homingTarget = null;
+        hitEnemies.Clear();
     }
 }

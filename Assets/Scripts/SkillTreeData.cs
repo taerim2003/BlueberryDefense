@@ -152,7 +152,7 @@ public static class SkillTreeSave
     // ── available 정수 = earned − Σ(해금된 노드에 지불한 정수) ──
     public static int AvailableEssence(SkillTreeData tree)
     {
-        if (!flattenChecked) { flattenChecked = true; MigrateFlattenedCosts(tree); MigrateLate20Costs(tree); }
+        if (!flattenChecked) { flattenChecked = true; MigrateFlattenedCosts(tree); MigrateLate20Costs(tree); MigrateOct07Costs(tree); }
         return EssenceEarned - Spent(tree);
     }
 
@@ -175,7 +175,10 @@ public static class SkillTreeSave
         {
             SkillNode n = tree.Find(kv.Key);
             if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
-            int now = Late20OldCost(n);   // 극후반 인상분은 MigrateLate20Costs가 따로 얹는다 — 여기서 새 가격을 쓰면 두 번 얹힌다
+            // 극후반 인상분은 MigrateLate20Costs가, 10/7 인상분은 MigrateOct07Costs가 따로 얹는다 — 여기서 새 가격을 쓰면 두 번 얹힌다.
+            // 두 표에 다 있는 노드(극후반 중 5,000 이하 4개)는 더 옛 가격인 Late20 쪽을 쓴다.
+            int now = Late20OldCosts.TryGetValue(n.id, out int late) ? late
+                    : Oct07OldCosts.TryGetValue(n.id, out int pre) ? pre : CostOf(n);
             int old = Mathf.Max(1, Mathf.RoundToInt(now / FlattenCostScale));
             delta += now - old;
         }
@@ -199,9 +202,6 @@ public static class SkillTreeSave
         { "critdmg_5", 3537 }, { "defense_Revive", 3603 }, { "strength_SlowSkill", 3686 },
     };
 
-    private static int Late20OldCost(SkillNode n) =>
-        Late20OldCosts.TryGetValue(n.id, out int old) ? old : CostOf(n);
-
     private static void MigrateLate20Costs(SkillTreeData tree)
     {
         if (tree == null || SaveStore.GetInt(Late20MigrationKey, 0) == 1) return;
@@ -211,10 +211,59 @@ public static class SkillTreeSave
         {
             SkillNode n = tree.Find(kv.Key);
             if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
-            delta += Mathf.Max(0, CostOf(n) - Late20OldCost(n));
+            // 10/7에 또 오른 4개는 10/6 가격까지만 여기서 얹는다 — 그 뒤 몫은 MigrateOct07Costs가 얹는다(CostOf를 쓰면 두 번 얹힌다).
+            if (!Late20OldCosts.TryGetValue(n.id, out int old)) continue;
+            int after = Oct07OldCosts.TryGetValue(n.id, out int oct) ? oct : CostOf(n);
+            delta += Mathf.Max(0, after - old);
         }
         if (delta > 0) SaveStore.SetInt(EssenceKey, SaveStore.GetInt(EssenceKey, 0) + delta);
         SaveStore.SetInt(Late20MigrationKey, 1);
+        SaveStore.Save();
+    }
+
+    // 🔴 극후반 20개를 뺀 앞 75노드의 가격을 올렸다(2026-10-07 사용자 — 756정수 이하 53개는 1.3배,
+    //    880~2,476정수 22개는 가격이 오를수록 배율이 1.3 → 1.0으로 줄어 극후반 첫 노드(2,858)에 이어진다).
+    //    같은 날 1,000~5,000정수 구간을 가파르게 했다 — 1,110에서 5,118(고정) 직전까지 한 칸 6%씩 오르는 선을 긋고
+    //    그보다 싼 16노드를 선까지 올렸다(2,117~2,547에 몰려 한 번에 사지던 덩어리를 편다. 극후반 중 5,000 이하 4개 포함).
+    //    트리 총비용 393,378 → 410,483. 위 둘과 같은 문제라 산 노드의 차액만큼 earned에 얹는다. 한 번만 돈다.
+    private const string Oct07MigrationKey = "skilltree.cost1007.v1";
+    // 인상 **전** 가격. 에셋의 새 가격과 짝이다 — 이 노드들의 가격을 또 바꾸면 여기가 아니라 새 보정을 만든다.
+    private static readonly Dictionary<string, int> Oct07OldCosts = new Dictionary<string, int>
+    {
+        { "Root_Skilltree", 3 }, { "New_Orb", 7 }, { "atk_1", 9 }, { "New_Lightning", 18 }, { "hp_1", 21 },
+        { "crit_1", 26 }, { "gold_1", 27 }, { "fly_1", 32 }, { "thunder_Stack", 45 }, { "New_Evolution", 50 },
+        { "New_Reroll", 53 }, { "exp_1", 55 }, { "critdmg_1", 56 }, { "cool_1", 59 }, { "reroll_2", 65 },
+        { "tornado_CoolDownBonus", 73 }, { "New_Homing", 88 }, { "critdmg_2", 94 }, { "orb_BasicSlow", 150 },
+        { "fly_2", 154 }, { "Sniping_TwoTarget", 160 }, { "atk_2", 182 }, { "New_Rewind", 188 },
+        { "arrow_StartLev", 200 }, { "crit_2", 205 }, { "cool_2", 213 }, { "reroll_3", 229 },
+        { "eagle_DropNum", 230 }, { "gold_2", 230 }, { "rewind_NoGcd", 243 }, { "Homing_MissileNum", 270 },
+        { "exp_2", 279 }, { "reroll_4", 290 }, { "New_Shotgun", 300 }, { "hp_2", 320 }, { "shotgun_BonusHit", 330 },
+        { "swing_StartLev", 350 }, { "atk_3", 358 }, { "gold_3", 387 }, { "hp_3", 419 }, { "knowledge_BaseXp", 449 },
+        { "assassin_BaseCrit", 481 }, { "boss_1", 500 }, { "grape_StartLev", 505 }, { "critdmg_3", 510 },
+        { "boss_2", 520 }, { "health_BaseHp", 542 }, { "cool_3", 570 }, { "exp_3", 620 }, { "accel_BaseCool", 695 },
+        { "boss_3", 720 }, { "defense_BaseReduce", 727 }, { "strength_BaseDmg", 756 }, { "atk_4", 880 },
+        { "cool_4", 962 }, { "exp_4", 1026 }, { "arrow_Pierce", 1074 }, { "hp_4", 1311 }, { "shotgun_Crit", 1364 },
+        { "gold_4", 1466 }, { "tornado_Fly", 1514 }, { "grape_CloudDuration", 1790 }, { "eagle_fly", 1857 },
+        { "homing_Cooldown", 1913 }, { "orb_Pierce", 1967 }, { "Rewind_Slow", 2021 }, { "sniping_Crit", 2076 },
+        { "thunder_Cooldown", 2126 }, { "crit_3", 2127 }, { "reroll_5", 2178 }, { "fly_3", 2275 },
+        { "critdmg_4", 2333 }, { "atk_5", 2445 }, { "New_Evolution2", 2456 }, { "gold_5", 2476 },
+        // 극후반 20개 중 5,000정수 이하 4개 — 여기 값은 10/6 인상 **뒤** 가격이다(그 앞 가격은 Late20OldCosts).
+        { "knowledge_EvoHint", 2858 }, { "cool_5", 3298 }, { "exp_5", 3850 }, { "hp_5", 4439 },
+    };
+
+    private static void MigrateOct07Costs(SkillTreeData tree)
+    {
+        if (tree == null || SaveStore.GetInt(Oct07MigrationKey, 0) == 1) return;
+
+        int delta = 0;
+        foreach (var kv in Levels())
+        {
+            SkillNode n = tree.Find(kv.Key);
+            if (n == null || EffectiveLevel(n, kv.Value) <= 0) continue;
+            if (Oct07OldCosts.TryGetValue(n.id, out int old)) delta += Mathf.Max(0, CostOf(n) - old);
+        }
+        if (delta > 0) SaveStore.SetInt(EssenceKey, SaveStore.GetInt(EssenceKey, 0) + delta);
+        SaveStore.SetInt(Oct07MigrationKey, 1);
         SaveStore.Save();
     }
 

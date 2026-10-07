@@ -303,6 +303,11 @@ public class PlayerSkills : MonoBehaviour
 
     private readonly List<EquippedSkill> equippedSkills = new List<EquippedSkill>();
     private float globalCooldownTimer;
+    // 스테이지 시작 잠금(사용자 결정 2026-10-07) — 판 시작과 스테이지 전환(쿨타임 초기화) 직후 이 시간 동안 스킬이 나가지 않는다.
+    // 수동·자동 시전 둘 다 막는다. 상태형 진화(하늘 파쇄기 등)는 시전이 아니라서 계속 돈다.
+    private const float StageStartLock = 0.5f;
+    private float stageStartLockTimer = StageStartLock;
+    public bool IsStageStartLocked => stageStartLockTimer > 0f; // HUD가 자동 시전 전용 스킬과 같은 마스크로 덮는다
     private float passiveDamageMultiplier = 1f;
     private float strengthDamageBonus;  // 위 배율 중 **힘 패시브가 얹은 몫**만 따로(스킬트리 "힘" 강화가 이 몫만 2배로 쓴다)
     private PlayerPassives passives;
@@ -414,11 +419,13 @@ public class PlayerSkills : MonoBehaviour
             // 스나이핑 R1 「자동 방어 시스템」(path2 T2+): 수동 사용 불가, 쿨타임마다 자동 시전
             // 🔴 상태형 진화(하늘 파쇄기·절멸의 시간)는 여기서 빠진다 — 쿨타임으로 시전하는 것이 아니다.
             if (IsAutoCastOnly(skill) && !IsPassiveState(skill)
-                && skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f)
+                && skill.CooldownTimer <= 0f && globalCooldownTimer <= 0f && stageStartLockTimer <= 0f)
                 TryUseSkill(skill);
         }
 
         UpdateSkyShredderRain();
+
+        if (stageStartLockTimer > 0f) stageStartLockTimer -= Time.deltaTime;
 
         // 🔴 한 번 누름 = 한 번 시전이다. 꾹 누르고 있어도 다시 나가지 않는다(사용자 결정 2026-10-01 — 예전엔 쿨마다 재발동했다).
         //    누른 입력은 PressBuffer 동안 살려 둔다. 전역 쿨(0.4초) 중에 누른 키를 버리면 Q 직후 W를 누를 때 W가 씹힌다 —
@@ -431,7 +438,7 @@ public class PlayerSkills : MonoBehaviour
         //    쿨이 전역 쿨(0.4초)보다 짧아진 스킬이 매 창을 가져가 뒤 슬롯이 거의 안 나갔다
         //    (풀트리 파인애플: 휘두르기 0.33초 → 독수리·회오리·산탄이 가능 횟수의 약 10%만 발동).
         //    동시에 준비됐으면(같은 ReadySince) 목록 순서 = 슬롯 순서로 갈린다.
-        if (globalCooldownTimer > 0f) return;
+        if (globalCooldownTimer > 0f || stageStartLockTimer > 0f) return;
         castQueue.Clear();
         foreach (EquippedSkill skill in equippedSkills)
         {
@@ -1042,6 +1049,8 @@ public class PlayerSkills : MonoBehaviour
                 // 🔴 스택 유지 시간 = 진화 전 10초 × 차수 배율(2026-10-01 사용자 "R0 쿨이 길어 스택이 안 쌓인다").
                 //    동시 스택 ≈ 유지 시간 ÷ 쿨. 종전 ×1.3(13초)은 1차 쿨 10→6초에서 스택 1.3~2.2개라 상한 4~10과 "최대 스택" 카드가 빈 칸이었고,
                 //    2차 초대형 번개(15스택)는 쿨 6초로 사실상 발동 불가였다. 1차 ×3(30초 → 3~5스택) · 2차 ×9(90초 → 약 15스택).
+                //    ⚠️ 2026-10-07부터 "동시 스택 ≈ 유지 시간 ÷ 쿨"은 성립하지 않는다 — 재시전이 스택 전부를 갱신한다(LightningStorm.AddStack).
+                //    이 시간은 이제 **다시 안 쓰면 스택이 통째로 꺼지기까지의 여유**다.
                 float baseDuration = BaseDuration(skill.Id, 10f) * (skill.PathTier[0] >= 3 ? 9f : skill.PathTier[0] >= 2 ? 3f : 1f);
                 // 🔴 스택은 R0 진화부터만 쌓인다(사용자 결정 2026-09-17). 진화 전엔 AddStack이 기존 버프를 갈아끼운다 —
                 //    쿨감이 쌓여 쿨이 지속시간보다 짧아지면 진화 없이도 스택이 겹치던 버그.
@@ -1149,6 +1158,7 @@ public class PlayerSkills : MonoBehaviour
         globalCooldownTimer = 0f;
         foreach (EquippedSkill s in equippedSkills)
             s.CooldownTimer = 0f;
+        stageStartLockTimer = StageStartLock;
     }
 
     // 방어 진화 path1(휘두르기 연계): 피격 시 휘두르기를 쿨타임과 무관하게 한 번 자동 발동한다.
@@ -1474,7 +1484,9 @@ public class PlayerSkills : MonoBehaviour
     //    "한 발이 무겁다"의 나머지 절반이고, 속도만으로 답답함이 풀리는지 먼저 본다.
     private const float AssassinArrowSpeedMult = 0.85f;  // 정면 화살 속도의 85%
 
-    private const int ChaseArrowBaseCount = 5;   // 치명타 1회에 따라붙는 추격 화살 수("수많은" — 2026-09-19)
+    // 치명타 1회에 따라붙는 추격 화살 수. 🔴 5 → 2 (2026-10-07 사용자: "너무 많다, 절반 정도로").
+    //    진화 전 화살의 투사체 카드(최대 +3)가 그대로 넘어와 더해진다 — 여기 값만 보고 "2발"이라 읽지 말 것.
+    private const int ChaseArrowBaseCount = 2;
     // 🔴 0.5 → 0.05 (사용자 결정 2026-09-28: 본체 피해의 5%). 치명타 한 번에 5발 이상이 붙고
     //    본체 피해가 2차에서 1,100을 넘으므로, 0.5면 추격 화살 쪽이 본체보다 총 피해가 커졌다.
     private const float ChasingArrowDamageRatio = 0.05f;
@@ -1915,7 +1927,8 @@ public class PlayerSkills : MonoBehaviour
     // 🔴 R0 2차 「로열 팔라딘의 망치」 = 노션 "공격당한 적들이 **긴 시간** 동안 기절한다".
     //    0.5초는 포도 찌릿찌릿의 "**짧게** 기절"(GrapeStunDuration)과 **같은 값**이라 둘이 구분이 안 됐다.
     //    4배로 벌려 문구대로 "긴 시간"이 되게 한다. 보스·비행선은 CrowdControlScale이 따로 깎는다.
-    private const float SwingStunDuration = 2f;
+    //    2 → 1.4(2026-10-07 사용자 "스턴시간 30% 줄여줘"). 레벨업 "기절 시간" 카드(+0.2초 × 2)는 이 위에 더해진다.
+    private const float SwingStunDuration = 1.4f;
     // 1루트 진화 1차: 맞은 적 **한 마리당** 초과체력 회복(독수리 "흡혈 군단"과 같은 방식).
     // 광역이라 여럿 맞히면 그만큼 크게 회복된다 — 근접으로 파고드는 위험의 보상.
     private const int SwingLifestealPerHit = 2;
@@ -3229,6 +3242,7 @@ public class PlayerSkills : MonoBehaviour
     // ── 오브 R1(호밍 연계, path2): 작은 추적 오브 무리 ──
     // 산탄 알 프리팹(SmallOrb)을 재사용하되 추적·관통을 켠다. 알 하나당 관통 3 = 최대 4마리를 때린다.
     private const int HomingOrbPierce = 3;
+    private const int JugglerPierce = 8;   // 2차 「저글러」: 알 하나당 최대 9마리(2026-10-07 사용자 — 종전 무한)
     // 🔴 추적 오브는 큰 오브를 대체하므로 작은 오브 한 개가 곧 본체다 — 비율 1, 저글러 배율 1.5도 제거(2026-09-28).
     private const float HomingOrbDamageRatio = 1f;
     // 🔴 추적 오브는 **기본 오브의 1/4 크기로 고정**한다(사용자 지시 2026-09-27).
@@ -3270,8 +3284,8 @@ public class PlayerSkills : MonoBehaviour
     {
         if (shotgunPelletPrefab == null) yield break; // 전용 그림이 나오면 여기만 교체하면 된다
 
-        // 2차 「저글러」 = 부메랑. 무작위 적을 하나 때리고 **캐릭터에게 돌아온다**(2026-09-19 사용자 명세).
-        // 관통 무한이라 오가는 길에 닿는 적이 전부 맞는다 — 그래서 관통 예산 대신 왕복 거리가 한도다.
+        // 2차 「저글러」 = 부메랑. 무작위 적을 때린 뒤 근처의 적을 옮겨 다니다 **캐릭터에게 돌아온다**(2026-09-19 사용자 명세).
+        // 🔴 2026-10-07 사용자: 관통 무한·첫 명중 즉시 복귀 → 관통 8(최대 9마리), 다 쓰거나 근처에 적이 없으면 복귀(SmallOrb).
         bool juggler = skill.PathTier[2] >= 3;
 
         int count = HomingOrbCount(skill);
@@ -3303,7 +3317,7 @@ public class PlayerSkills : MonoBehaviour
             orb.Homing = true;
             orb.TargetRank = i;                // 오브마다 다른 적을 노린다
             orb.Lifetime = HomingOrbLifetime;  // Start 전이라 먹는다
-            orb.PierceRemaining = juggler ? int.MaxValue : HomingOrbPierce;
+            orb.PierceRemaining = juggler ? JugglerPierce : HomingOrbPierce;
             orb.Source = ActiveSkillId.Orb;
             if (juggler)
             {
@@ -3355,7 +3369,14 @@ public class PlayerSkills : MonoBehaviour
     private const float SuperEagleHitInterval = 0.08f;
     // 🔴 다이너마이트 독수리는 평소 투하를 대체하므로 그 타격이 곧 본체다 — 비율 1(2026-09-28).
     private const float SuperEagleDamageRatio = 1f;
-    private const float NuclearVfxScale = 4f;
+    // 🔴 핵 폭발은 고정 배율이 아니라 **화면에 맞춘다**(2026-10-06 사용자 "폭발 이펙트가 화면을 벗어났잖아").
+    //    예전엔 프리팹(1.5배)에 4배를 더 곱해 108×61유닛 — 우주 맵 화면(31×17.5)의 3.5배였고,
+    //    캔버스 한가운데를 지면에 놓아 밑동이 땅속에 있었다. 맵마다 카메라 크기가 달라(fieldScale) 상수로는 못 맞춘다.
+    //    아래 셋은 `Nuclear_1~14.png`(576×324)를 알파로 잰 값이다 — 그림을 다시 그리면 다시 재야 한다.
+    private const float NuclearArtWidthPx = 496f;    // 14프레임 불투명 영역 합집합의 폭(x 49~545)
+    private const float NuclearArtGroundPx = 75f;    // 캔버스 아래에서 지면선(버섯구름 밑동)까지
+    private const float NuclearArtAbovePx = 230f;    // 지면선에서 불투명 영역 위끝(305)까지
+    private const float NuclearScreenMargin = 0.3f;  // 화면 가장자리에 남기는 여유(유닛)
     private const float NuclearVfxLifetime = 2.5f;
     private const float SuperEagleShakeDuration = 0.5f;
 
@@ -3375,7 +3396,9 @@ public class PlayerSkills : MonoBehaviour
         if (superEaglePrefab != null)
         {
             eagle = Instantiate(superEaglePrefab, start, Quaternion.identity);
-            eagle.transform.localScale *= SuperEagleScale * skill.Scale;
+            // 🔴 skill.Scale을 곱하지 않는다(2026-10-07 사용자 "독수리는 아직 크다") — 1차 폭탄 독수리의 "폭발 범위" 카드가
+            //    그대로 넘어와 독수리가 최대 1.9배까지 커졌다. 폭발 그림은 10/6에 같은 이유로 이미 뺐다.
+            eagle.transform.localScale *= SuperEagleScale;
         }
 
         float t = 0f;
@@ -3390,7 +3413,7 @@ public class PlayerSkills : MonoBehaviour
         if (nuclearVfxPrefab != null)
         {
             GameObject nuke = Instantiate(nuclearVfxPrefab, landPos, Quaternion.identity);
-            nuke.transform.localScale *= NuclearVfxScale * skill.Scale;
+            FitNuclearVfxToScreen(nuke, camPos, halfW, halfH, landPos.y);
             Destroy(nuke, NuclearVfxLifetime);
         }
         ScreenShake.Shake(ScreenShake.SwingStrength * 2f, SuperEagleShakeDuration);
@@ -3411,6 +3434,23 @@ public class PlayerSkills : MonoBehaviour
             }
             yield return new WaitForSeconds(SuperEagleHitInterval);
         }
+    }
+
+    // 버섯구름 전체가 화면 안에 들어오는 가장 큰 크기로 맞추고, 그림 안의 지면선을 groundY에 놓는다.
+    // 스킬 크기 배율(skill.Scale)은 곱하지 않는다 — 화면이 기준이라 곱하면 다시 벗어난다(판정은 원래 화면 전체다).
+    private void FitNuclearVfxToScreen(GameObject nuke, Vector3 camPos, float halfW, float halfH, float groundY)
+    {
+        SpriteRenderer sr = nuke.GetComponentInChildren<SpriteRenderer>(true);
+        if (sr == null || sr.sprite == null) return;
+        float ppu = sr.sprite.pixelsPerUnit;
+
+        float fitWidth = (halfW * 2f - NuclearScreenMargin * 2f) / (NuclearArtWidthPx / ppu);
+        float fitHeight = (camPos.y + halfH - NuclearScreenMargin - groundY) / (NuclearArtAbovePx / ppu);
+        float scale = Mathf.Min(fitWidth, fitHeight);
+
+        nuke.transform.localScale = Vector3.one * scale;
+        float groundBelowPivot = (sr.sprite.pivot.y - NuclearArtGroundPx) / ppu * scale;
+        nuke.transform.position = new Vector3(camPos.x, groundY + groundBelowPivot, 0f);
     }
 
     private readonly List<Enemy> superEagleTargets = new List<Enemy>(64);
@@ -3457,7 +3497,8 @@ public class PlayerSkills : MonoBehaviour
         // 레벨업 주 성장축: 투하 간격(TickIntervalMult)
         float interval = skill.TickIntervalMult;
 
-        for (int i = 0; i < dropCount; i++)
+        int epoch = eagleDropEpoch;   // 스테이지가 넘어가면 값이 바뀐다 — 남은 투하를 버린다
+        for (int i = 0; i < dropCount && epoch == eagleDropEpoch; i++)
         {
             List<Enemy> enemies = new List<Enemy>(Enemy.Active); // 복사본 — 아래에서 피해를 주면 활성 목록이 바뀐다
 
@@ -3467,7 +3508,10 @@ public class PlayerSkills : MonoBehaviour
             {
                 if (enemy == null || !enemy.IsAlive) continue;
                 Enemy target = enemy;
-                StartCoroutine(MeteorImpact(target.transform.position, skill.Scale, target, (pos, stillOnTarget) =>
+                // 🔴 폭탄 독수리의 크기 축은 **폭발 범위**다 — 독수리 그림·착탄 이펙트에는 곱하지 않는다(2026-10-07 사용자:
+                //    "폭발 반경을 넓히라 했는데 왜 독수리 크기가 커졌냐"). 폭발 반경과 폭발 그림만 skill.Scale을 따른다.
+                float eagleScale = bombEagle ? 1f : skill.Scale;
+                StartCoroutine(MeteorImpact(target.transform.position, eagleScale, target, (pos, stillOnTarget) =>
                 {
                     if (stillOnTarget) target.TakeSkillHit(damage, critChance, ActiveSkillId.EagleDrop);
                     if (bombEagle) EagleBombExplode(pos, damage * bombRatio, critChance, bombRadius, target, skill.Scale);
@@ -3517,6 +3561,7 @@ public class PlayerSkills : MonoBehaviour
     }
 
     private Coroutine eagleRainRoutine;
+    private int eagleDropEpoch;   // 연속 투하(EagleDropRoutine)를 끊는 표시 — ClearInstallations가 올린다
 
     // 한 마리가 떨어져 그 자리 반경을 때린다. 낙하 연출이 끝난 **뒤에** 판정한다(그림보다 먼저 죽으면 안 보인다).
     private IEnumerator EagleRainStrike(Vector3 pos, float damage, float critChance, EquippedSkill skill, float miniMult, int miniHits)
@@ -3733,7 +3778,9 @@ public class PlayerSkills : MonoBehaviour
                 foreach (Enemy e in enemies)
                 {
                     if (e == null || !e.IsAlive) continue;
-                    if (Vector2.Distance(center, e.transform.position) > radius) continue;
+                    // 🔴 2차 「제우스의 은총」은 **맵 전체**가 대상이다(2026-10-07 사용자 — 대신 시작 피해 −30%).
+                    //    거리 제한만 없앤다. 줄기 폭(boltRadius)과 빈 줄기가 흩어지는 폭은 종전 반경에서 그대로 계산한다.
+                    if (!empowered && Vector2.Distance(center, e.transform.position) > radius) continue;
                     inRange.Add(e);
                 }
 
@@ -3769,7 +3816,7 @@ public class PlayerSkills : MonoBehaviour
 
                 // 🔴 판정은 **줄기가 떨어진 자리마다** 한다(사용자 결정 2026-09-30 — 9/27에 확인했던 "반경 안 전원 광역"을 대체).
                 //    줄기 둘 이상의 범위에 겹친 적은 겹친 만큼 전부 맞는다(사용자 지시) — 낙뢰 수 카드가 곧 화력이다.
-                //    피뢰침 반경 밖의 적은 줄기 범위 안이어도 맞지 않는다(inRange만 본다).
+                //    피뢰침 반경 밖의 적은 줄기 범위 안이어도 맞지 않는다(inRange만 본다). 제우스는 반경 제한이 없어 전원이 inRange다.
                 foreach (float bx in boltXs)
                 {
                     for (int i = 0; i < inRange.Count; i++)
@@ -3816,6 +3863,11 @@ public class PlayerSkills : MonoBehaviour
         if (tornadoMakerRoutine != null) { StopCoroutine(tornadoMakerRoutine); tornadoMakerRoutine = null; }
         if (tornadoMaker != null) { Destroy(tornadoMaker); tornadoMaker = null; }
         tornadoMakerUntil = 0f;   // 다음 스테이지 첫 시전이 새 기계를 세우고 루틴을 새로 돌리게
+
+        // 독수리 투하도 스테이지를 넘기면 끊는다(2026-10-07 사용자) — 연속 투하의 남은 횟수와 「독수리의 비」.
+        // 이미 떨어지기 시작한 독수리는 그대로 떨어진다(재시전 때와 같은 규칙).
+        eagleDropEpoch++;
+        if (eagleRainRoutine != null) { StopCoroutine(eagleRainRoutine); eagleRainRoutine = null; }
     }
 
     private IEnumerator MiniEagleBonus(Enemy target, float damage, float critChance, float scale, ActiveSkillId source)

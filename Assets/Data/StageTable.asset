@@ -77,15 +77,15 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.04
     evolutionItemDrops: 0
-    ambushCount: 2
-    ambushSquads: 1
+    ambushCount: 1
+    ambushSquads: 2
     paperPlaneChance: 0.04
     ufoChance: 0
     shieldChance: 0
     riderChance: 0
     hopperChance: 0.08
     surferChance: 0
-    airshipChance: 0.059
+    airshipChance: 0
     enemyHpMultiplier: 0.9582
     enemySpeedMultiplier: 1.067
     enemyDamageMultiplier: 1.3
@@ -96,15 +96,15 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.076
     evolutionItemDrops: 0
-    ambushCount: 3
-    ambushSquads: 2
+    ambushCount: 2
+    ambushSquads: 3
     paperPlaneChance: 0.048
     ufoChance: 0
     shieldChance: 0
     riderChance: 0.01
     hopperChance: 0.095
     surferChance: 0
-    airshipChance: 0.104
+    airshipChance: 0
     enemyHpMultiplier: 1.2424
     enemySpeedMultiplier: 1.078
     enemyDamageMultiplier: 1.39
@@ -115,15 +115,15 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.094
     evolutionItemDrops: 0
-    ambushCount: 3
-    ambushSquads: 2
+    ambushCount: 2
+    ambushSquads: 3
     paperPlaneChance: 0.047
     ufoChance: 0
     shieldChance: 0
     riderChance: 0.01
     hopperChance: 0.093
     surferChance: 0
-    airshipChance: 0.112
+    airshipChance: 0
     enemyHpMultiplier: 1.6324
     enemySpeedMultiplier: 1.1
     enemyDamageMultiplier: 1.49
@@ -143,7 +143,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 3.3856
+    enemyHpMultiplier: 3.3461
     enemySpeedMultiplier: 1.122
     enemyDamageMultiplier: 1.71
   - stageNumber: 8
@@ -153,16 +153,16 @@ MonoBehaviour:
     burstRest: 0.683233
     eliteChance: 0.257
     evolutionItemDrops: 0
-    ambushCount: 5
-    ambushSquads: 2
+    ambushCount: 3
+    ambushSquads: 3
     paperPlaneChance: 0.049
     ufoChance: 0.029
     shieldChance: 0
     riderChance: 0.014
     hopperChance: 0.124
     surferChance: 0
-    airshipChance: 0.089
-    enemyHpMultiplier: 9.3358
+    airshipChance: 0
+    enemyHpMultiplier: 9.1191
     enemySpeedMultiplier: 1.133
     enemyDamageMultiplier: 1.73
   - stageNumber: 9
@@ -172,8 +172,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0
     evolutionItemDrops: 1
-    ambushCount: 3
-    ambushSquads: 2
+    ambushCount: 2
+    ambushSquads: 3
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0.671
@@ -181,7 +181,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 10.27
+    enemyHpMultiplier: 9.9145
     enemySpeedMultiplier: 1.155
     enemyDamageMultiplier: 1.79
   - stageNumber: 10
@@ -191,16 +191,16 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.301
     evolutionItemDrops: 0
-    ambushCount: 12
-    ambushSquads: 2
+    ambushCount: 6
+    ambushSquads: 4
     paperPlaneChance: 0.06
     ufoChance: 0.03
     shieldChance: 0.13
     riderChance: 0.015
     hopperChance: 0.171
     surferChance: 0
-    airshipChance: 0.122
-    enemyHpMultiplier: 16.9092
+    airshipChance: 0
+    enemyHpMultiplier: 16.1332
     enemySpeedMultiplier: 1.166
     enemyDamageMultiplier: 2
   - stageNumber: 11
@@ -219,7 +219,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 20.956
+    enemyHpMultiplier: 19.7609
     enemySpeedMultiplier: 1.188
     enemyDamageMultiplier: 2.15
   - stageNumber: 12
@@ -229,8 +229,8 @@ MonoBehaviour:
     burstRest: 0.766567
     eliteChance: 0.422
     evolutionItemDrops: 0
-    ambushCount: 9
-    ambushSquads: 2
+    ambushCount: 5
+    ambushSquads: 4
     paperPlaneChance: 0.06
     ufoChance: 0.05
     shieldChance: 0.14
@@ -238,7 +238,7 @@ MonoBehaviour:
     hopperChance: 0.189
     surferChance: 0
     airshipChance: 0.07
-    enemyHpMultiplier: 37.3472
+    enemyHpMultiplier: 34.8061
     enemySpeedMultiplier: 1.199
     enemyDamageMultiplier: 2.68
   - stageNumber: 13
@@ -257,7 +257,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0.95
-    enemyHpMultiplier: 37.3472
+    enemyHpMultiplier: 34.3997
     enemySpeedMultiplier: 1.221
     enemyDamageMultiplier: 2.37
   - stageNumber: 14
@@ -267,8 +267,8 @@ MonoBehaviour:
     burstRest: 0.516567
     eliteChance: 0.294
     evolutionItemDrops: 0
-    ambushCount: 14
-    ambushSquads: 2
+    ambushCount: 7
+    ambushSquads: 4
     paperPlaneChance: 0.054
     ufoChance: 0.033
     shieldChance: 0.115
@@ -276,7 +276,7 @@ MonoBehaviour:
     hopperChance: 0.155
     surferChance: 0
     airshipChance: 0.278
-    enemyHpMultiplier: 34.398
+    enemyHpMultiplier: 31.3133
     enemySpeedMultiplier: 1.243
     enemyDamageMultiplier: 2.94
   - stageNumber: 15
@@ -295,7 +295,7 @@ MonoBehaviour:
     hopperChance: 0.16
     surferChance: 0
     airshipChance: 0.283
-    enemyHpMultiplier: 50.232
+    enemyHpMultiplier: 38.4145
     enemySpeedMultiplier: 1.254
     enemyDamageMultiplier: 3.2
   - stageNumber: 16
@@ -305,8 +305,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0
     evolutionItemDrops: 0
-    ambushCount: 5
-    ambushSquads: 1
+    ambushCount: 3
+    ambushSquads: 2
     paperPlaneChance: 0
     ufoChance: 0.95
     shieldChance: 0
@@ -314,7 +314,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 95.004
+    enemyHpMultiplier: 71.8051
     enemySpeedMultiplier: 1.4674
     enemyDamageMultiplier: 3.36
   - stageNumber: 17
@@ -324,8 +324,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0
     evolutionItemDrops: 0
-    ambushCount: 7
-    ambushSquads: 1
+    ambushCount: 4
+    ambushSquads: 2
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0
@@ -333,7 +333,7 @@ MonoBehaviour:
     hopperChance: 0.95
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 126.1231
+    enemyHpMultiplier: 94.2123
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 3.52
   - stageNumber: 18
@@ -343,8 +343,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.293
     evolutionItemDrops: 0
-    ambushCount: 5
-    ambushSquads: 1
+    ambushCount: 3
+    ambushSquads: 2
     paperPlaneChance: 0.053
     ufoChance: 0.035
     shieldChance: 0.13
@@ -352,7 +352,7 @@ MonoBehaviour:
     hopperChance: 0.243
     surferChance: 0
     airshipChance: 0.12
-    enemyHpMultiplier: 162.9573
+    enemyHpMultiplier: 120.3058
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 3.62
   - stageNumber: 19
@@ -371,7 +371,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 205.842
+    enemyHpMultiplier: 150.1918
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 3.73
   - stageNumber: 20
@@ -390,7 +390,7 @@ MonoBehaviour:
     hopperChance: 0.245
     surferChance: 0
     airshipChance: 0.16
-    enemyHpMultiplier: 272.6967
+    enemyHpMultiplier: 196.6489
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 3.83
   - stageNumber: 21
@@ -400,8 +400,8 @@ MonoBehaviour:
     burstRest: 1.48323
     eliteChance: 0.12
     evolutionItemDrops: 0
-    ambushCount: 3
-    ambushSquads: 9
+    ambushCount: 2
+    ambushSquads: 14
     paperPlaneChance: 0.064
     ufoChance: 0.0645
     shieldChance: 0.162
@@ -409,7 +409,7 @@ MonoBehaviour:
     hopperChance: 0.185
     surferChance: 0
     airshipChance: 0.16
-    enemyHpMultiplier: 370.868
+    enemyHpMultiplier: 264.3202
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 3.99
   - stageNumber: 22
@@ -419,8 +419,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.126
     evolutionItemDrops: 0
-    ambushCount: 4
-    ambushSquads: 3
+    ambushCount: 2
+    ambushSquads: 6
     paperPlaneChance: 0
     ufoChance: 0.412
     shieldChance: 0.412
@@ -428,7 +428,7 @@ MonoBehaviour:
     hopperChance: 0
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 504.381
+    enemyHpMultiplier: 355.2788
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 4.1
   - stageNumber: 23
@@ -438,8 +438,8 @@ MonoBehaviour:
     burstRest: 0
     eliteChance: 0.12
     evolutionItemDrops: 0
-    ambushCount: 7
-    ambushSquads: 6
+    ambushCount: 4
+    ambushSquads: 11
     paperPlaneChance: 0.064
     ufoChance: 0.0645
     shieldChance: 0.162
@@ -447,7 +447,7 @@ MonoBehaviour:
     hopperChance: 0.185
     surferChance: 0
     airshipChance: 0.16
-    enemyHpMultiplier: 685.958
+    enemyHpMultiplier: 477.5374
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 4.2
   - stageNumber: 24
@@ -457,8 +457,8 @@ MonoBehaviour:
     burstRest: 1.2999
     eliteChance: 0
     evolutionItemDrops: 1
-    ambushCount: 6
-    ambushSquads: 3
+    ambushCount: 3
+    ambushSquads: 6
     paperPlaneChance: 0
     ufoChance: 0
     shieldChance: 0.321
@@ -466,7 +466,7 @@ MonoBehaviour:
     hopperChance: 0.5
     surferChance: 0
     airshipChance: 0
-    enemyHpMultiplier: 932.904
+    enemyHpMultiplier: 641.869
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 4.31
   - stageNumber: 25
@@ -485,7 +485,7 @@ MonoBehaviour:
     hopperChance: 0.185
     surferChance: 0
     airshipChance: 0.16
-    enemyHpMultiplier: 1268.75
+    enemyHpMultiplier: 862.75
     enemySpeedMultiplier: 1.2474
     enemyDamageMultiplier: 4.51
   extendedHpGrowth: 1.28

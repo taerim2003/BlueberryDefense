@@ -19,7 +19,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 0
-    cost: 3
+    cost: 4
     effect: 0
     perLevel: 5
     prereqIds: []
@@ -30,7 +30,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 9
+    cost: 12
     effect: 0
     perLevel: 20
     prereqIds:
@@ -42,7 +42,7 @@ MonoBehaviour:
     type: 1
     skill: 2
     tier: 1
-    cost: 7
+    cost: 9
     effect: 0
     perLevel: 5
     prereqIds:
@@ -54,7 +54,7 @@ MonoBehaviour:
     type: 1
     skill: 3
     tier: 1
-    cost: 18
+    cost: 23
     effect: 0
     perLevel: 5
     prereqIds:
@@ -66,7 +66,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 21
+    cost: 27
     effect: 1
     perLevel: 20
     prereqIds:
@@ -78,7 +78,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 27
+    cost: 35
     effect: 6
     perLevel: 160
     prereqIds:
@@ -90,7 +90,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 26
+    cost: 34
     effect: 7
     perLevel: 6
     prereqIds:
@@ -102,7 +102,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 32
+    cost: 42
     effect: 8
     perLevel: 20
     prereqIds:
@@ -114,7 +114,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 2
-    cost: 50
+    cost: 65
     effect: 0
     perLevel: 0
     prereqIds:
@@ -126,7 +126,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 55
+    cost: 72
     effect: 5
     perLevel: 12
     prereqIds:
@@ -139,7 +139,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 1
-    cost: 53
+    cost: 69
     effect: 0
     perLevel: 5
     prereqIds:
@@ -151,7 +151,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 56
+    cost: 73
     effect: 9
     perLevel: 12
     prereqIds:
@@ -163,7 +163,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 59
+    cost: 77
     effect: 3
     perLevel: 4
     prereqIds:
@@ -175,7 +175,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 65
+    cost: 85
     effect: 11
     perLevel: 1
     prereqIds:
@@ -187,7 +187,7 @@ MonoBehaviour:
     type: 1
     skill: 7
     tier: 2
-    cost: 300
+    cost: 390
     effect: 0
     perLevel: 5
     prereqIds:
@@ -199,7 +199,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 1
-    cost: 500
+    cost: 650
     effect: 10
     perLevel: 10
     prereqIds:
@@ -211,7 +211,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 213
+    cost: 277
     effect: 3
     perLevel: 4
     prereqIds:
@@ -223,7 +223,7 @@ MonoBehaviour:
     type: 1
     skill: 6
     tier: 2
-    cost: 88
+    cost: 114
     effect: 0
     perLevel: 5
     prereqIds:
@@ -235,7 +235,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 94
+    cost: 122
     effect: 9
     perLevel: 13
     prereqIds:
@@ -247,7 +247,7 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 2
-    cost: 230
+    cost: 299
     effect: 0
     perLevel: 0
     prereqIds:
@@ -259,7 +259,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 320
+    cost: 416
     effect: 1
     perLevel: 26
     prereqIds:
@@ -272,7 +272,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 118
-    cost: 200
+    cost: 260
     effect: 0
     perLevel: 5
     prereqIds:
@@ -284,7 +284,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 230
+    cost: 299
     effect: 6
     perLevel: 235
     prereqIds:
@@ -296,7 +296,7 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 2
-    cost: 150
+    cost: 195
     effect: 0
     perLevel: 0
     prereqIds:
@@ -309,7 +309,7 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 2
-    cost: 73
+    cost: 95
     effect: 0
     perLevel: 5
     prereqIds:
@@ -321,7 +321,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 154
+    cost: 200
     effect: 8
     perLevel: 40
     prereqIds:
@@ -333,7 +333,7 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 2
-    cost: 330
+    cost: 429
     effect: 0
     perLevel: 0
     prereqIds:
@@ -345,7 +345,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 182
+    cost: 237
     effect: 0
     perLevel: 29
     prereqIds:
@@ -357,7 +357,7 @@ MonoBehaviour:
     type: 1
     skill: 8
     tier: 3
-    cost: 188
+    cost: 244
     effect: 0
     perLevel: 5
     prereqIds:
@@ -369,7 +369,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 520
+    cost: 676
     effect: 10
     perLevel: 12
     prereqIds:
@@ -381,7 +381,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 205
+    cost: 267
     effect: 7
     perLevel: 6
     prereqIds:
@@ -394,7 +394,7 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 2
-    cost: 270
+    cost: 351
     effect: 0
     perLevel: 5
     prereqIds:
@@ -406,7 +406,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 229
+    cost: 298
     effect: 11
     perLevel: 1
     prereqIds:
@@ -419,7 +419,7 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 2
-    cost: 243
+    cost: 316
     effect: 0
     perLevel: 0
     prereqIds:
@@ -431,7 +431,7 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 2
-    cost: 160
+    cost: 208
     effect: 0
     perLevel: 5
     prereqIds:
@@ -443,7 +443,7 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 2
-    cost: 45
+    cost: 59
     effect: 0
     perLevel: 0
     prereqIds:
@@ -455,7 +455,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 290
+    cost: 377
     effect: 11
     perLevel: 1
     prereqIds:
@@ -467,7 +467,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 2
-    cost: 279
+    cost: 363
     effect: 5
     perLevel: 14
     prereqIds:
@@ -480,7 +480,7 @@ MonoBehaviour:
     type: 2
     skill: 10
     tier: 2
-    cost: 505
+    cost: 657
     effect: 0
     perLevel: 0
     prereqIds:
@@ -492,7 +492,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 358
+    cost: 465
     effect: 0
     perLevel: 55
     prereqIds:
@@ -504,7 +504,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 387
+    cost: 503
     effect: 6
     perLevel: 450
     prereqIds:
@@ -516,7 +516,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 419
+    cost: 545
     effect: 1
     perLevel: 44
     prereqIds:
@@ -529,7 +529,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 449
+    cost: 584
     effect: 0
     perLevel: 0
     prereqIds:
@@ -542,7 +542,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 481
+    cost: 625
     effect: 0
     perLevel: 0
     prereqIds:
@@ -554,7 +554,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 510
+    cost: 663
     effect: 9
     perLevel: 14
     prereqIds:
@@ -567,7 +567,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 542
+    cost: 705
     effect: 0
     perLevel: 0
     prereqIds:
@@ -580,7 +580,7 @@ MonoBehaviour:
     type: 2
     skill: 9
     tier: 3
-    cost: 350
+    cost: 455
     effect: 0
     perLevel: 5
     prereqIds:
@@ -592,7 +592,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 0
-    cost: 720
+    cost: 936
     effect: 10
     perLevel: 16
     prereqIds:
@@ -604,7 +604,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 570
+    cost: 741
     effect: 3
     perLevel: 5
     prereqIds:
@@ -616,7 +616,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 3
-    cost: 620
+    cost: 806
     effect: 5
     perLevel: 20
     prereqIds:
@@ -629,7 +629,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 695
+    cost: 904
     effect: 0
     perLevel: 0
     prereqIds:
@@ -642,7 +642,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 727
+    cost: 945
     effect: 0
     perLevel: 0
     prereqIds:
@@ -655,7 +655,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 3
-    cost: 756
+    cost: 983
     effect: 0
     perLevel: 0
     prereqIds:
@@ -667,7 +667,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 880
+    cost: 1110
     effect: 0
     perLevel: 105
     prereqIds:
@@ -679,7 +679,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 28
-    cost: 962
+    cost: 1193
     effect: 3
     perLevel: 7
     prereqIds:
@@ -691,7 +691,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 1026
+    cost: 1256
     effect: 5
     perLevel: 30
     prereqIds:
@@ -703,7 +703,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 4
-    cost: 1074
+    cost: 1324
     effect: 0
     perLevel: 0
     prereqIds:
@@ -715,7 +715,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 1311
+    cost: 1529
     effect: 1
     perLevel: 75
     prereqIds:
@@ -727,7 +727,7 @@ MonoBehaviour:
     type: 2
     skill: 7
     tier: 4
-    cost: 1364
+    cost: 1578
     effect: 0
     perLevel: 0
     prereqIds:
@@ -751,7 +751,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 1466
+    cost: 1672
     effect: 6
     perLevel: 815
     prereqIds:
@@ -764,7 +764,7 @@ MonoBehaviour:
     type: 2
     skill: 1
     tier: 4
-    cost: 1514
+    cost: 1716
     effect: 0
     perLevel: 0
     prereqIds:
@@ -777,7 +777,7 @@ MonoBehaviour:
     type: 2
     skill: 10
     tier: 4
-    cost: 1790
+    cost: 1963
     effect: 0
     perLevel: 0
     prereqIds:
@@ -790,7 +790,7 @@ MonoBehaviour:
     type: 2
     skill: 4
     tier: 4
-    cost: 1857
+    cost: 2022
     effect: 0
     perLevel: 5
     prereqIds:
@@ -803,7 +803,7 @@ MonoBehaviour:
     type: 2
     skill: 6
     tier: 4
-    cost: 1913
+    cost: 2071
     effect: 0
     perLevel: 0
     prereqIds:
@@ -816,7 +816,7 @@ MonoBehaviour:
     type: 2
     skill: 2
     tier: 4
-    cost: 1967
+    cost: 2119
     effect: 0
     perLevel: 0
     prereqIds:
@@ -829,7 +829,7 @@ MonoBehaviour:
     type: 2
     skill: 8
     tier: 4
-    cost: 2021
+    cost: 2247
     effect: 0
     perLevel: 5
     prereqIds:
@@ -841,7 +841,7 @@ MonoBehaviour:
     type: 2
     skill: 5
     tier: 4
-    cost: 2076
+    cost: 2383
     effect: 0
     perLevel: 0
     prereqIds:
@@ -854,7 +854,7 @@ MonoBehaviour:
     type: 2
     skill: 3
     tier: 4
-    cost: 2126
+    cost: 2528
     effect: 0
     perLevel: 5
     prereqIds:
@@ -866,7 +866,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 2127
+    cost: 2681
     effect: 7
     perLevel: 7
     prereqIds:
@@ -878,7 +878,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 4
-    cost: 2178
+    cost: 2843
     effect: 11
     perLevel: 1
     prereqIds:
@@ -890,7 +890,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 2275
+    cost: 3015
     effect: 8
     perLevel: 100
     prereqIds:
@@ -902,7 +902,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 2333
+    cost: 3198
     effect: 9
     perLevel: 17
     prereqIds:
@@ -914,7 +914,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 2445
+    cost: 3391
     effect: 0
     perLevel: 170
     prereqIds:
@@ -926,7 +926,7 @@ MonoBehaviour:
     type: 3
     skill: 0
     tier: 5
-    cost: 2456
+    cost: 3597
     effect: 0
     perLevel: 0
     prereqIds:
@@ -938,7 +938,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 2476
+    cost: 3815
     effect: 6
     perLevel: 1325
     prereqIds:
@@ -951,7 +951,7 @@ MonoBehaviour:
     type: 2
     skill: 0
     tier: 5
-    cost: 2858
+    cost: 4046
     effect: 0
     perLevel: 0
     prereqIds:
@@ -963,7 +963,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 3298
+    cost: 4291
     effect: 3
     perLevel: 10
     prereqIds:
@@ -975,7 +975,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 3850
+    cost: 4550
     effect: 5
     perLevel: 44
     prereqIds:
@@ -987,7 +987,7 @@ MonoBehaviour:
     type: 0
     skill: 0
     tier: 5
-    cost: 4439
+    cost: 4826
     effect: 1
     perLevel: 115
     prereqIds:
@@ -1018,7 +1018,7 @@ MonoBehaviour:
     perLevel: 0
     prereqIds:
     - hp_5
-    editorPos: {x: 275, y: 1415}
+    editorPos: {x: 274, y: 1416.667}
   - id: regen_1
     displayName: "\uC7AC\uC0DD I"
     description: "5\uCD08\uB9C8\uB2E4 \uCCB4\uB825 \uD68C\uBCF5 +9"
@@ -1120,13 +1120,13 @@ MonoBehaviour:
     editorPos: {x: -825, y: 1415}
   - id: atk_6
     displayName: "\uACF5\uACA9\uB825 VI"
-    description: "\uBAA8\uB4E0 \uD53C\uD574 +250%"
+    description: "\uBAA8\uB4E0 \uD53C\uD574 +300%"
     type: 0
     skill: 0
     tier: 6
     cost: 27636
     effect: 0
-    perLevel: 250
+    perLevel: 300
     prereqIds:
     - regen_2
     editorPos: {x: -1100, y: 1415}

@@ -574,9 +574,9 @@ public class PlayerPassives : MonoBehaviour
     private const float RefreshChancePerLevel = 0.02f;
     private const float TreasureChancePerLevel = 0.0015f;  // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.15%p(2026-10-01 사용자)
     private const float StrengthQDamagePerLevel = 0.10f;   // 힘 R1 「생활 근육」: 레벨마다 Q스킬 피해 +10%(2026-10-01 사용자 — 15에서 정정)
-    // 힘 R0 「불타는 근육」: 레벨마다 치명타 피해 배율 +0.2(= 카드 "+20%", 스킬트리 치명타 피해 노드와 같은 표기). 기본 배율 ×2에 더해진다.
-    //   진화 순간 +0.5(T1·T2) + 도약 1회 0.2, 만렙까지 9회 더 → ×2 기준 최대 ×4.5. 크기는 Claude가 골랐다(2026-10-02, HANDOFF 확인 대기).
-    private const float StrengthCritDamagePerLevel = 0.2f;
+    // 힘 R0 「불타는 근육」: 레벨마다 치명타 피해 배율 +0.1(= 카드 "+10%", 스킬트리 치명타 피해 노드와 같은 표기). 기본 배율 ×2에 더해진다.
+    //   진화 순간 +0.5(T1·T2) + 도약 1회 0.1, 만렙까지 9회 더 → ×2 기준 최대 ×3.5. 0.2 → 0.1(2026-10-07 사용자).
+    private const float StrengthCritDamagePerLevel = 0.1f;
     private const float HealthSturdyBase = 0.5f;       // 건강 R0: 진화 즉시 최대체력 +50%
     // 🔴 0.3 → 0.1 (2026-09-20 사용자). 복리라 레벨당 30%면 만렙에 최대체력이 약 ×13.8이 되고,
     //    봇 측정에서 **같은 풀트리인데 판마다 최대체력이 404~6144로 15배 갈렸다** — 풀트리 클리어를
