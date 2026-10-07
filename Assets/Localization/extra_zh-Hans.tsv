@@ -1,0 +1,63 @@
+tree.desc.atk_1	所有伤害 +10%
+tree.desc.atk_2	所有伤害 +10%
+tree.desc.atk_3	所有伤害 +10%
+tree.desc.atk_4	所有伤害 +10%
+tree.desc.atk_5	所有伤害 +10%
+tree.desc.atk_6	所有伤害 +10%
+tree.desc.hp_1	最大生命值 +8
+tree.desc.hp_2	最大生命值 +8
+tree.desc.hp_3	最大生命值 +8
+tree.desc.hp_4	最大生命值 +8
+tree.desc.hp_5	最大生命值 +8
+tree.desc.hp_6	最大生命值 +8
+tree.desc.reroll_2	每局重抽次数 +1
+tree.desc.reroll_3	每局重抽次数 +1
+tree.desc.reroll_4	每局重抽次数 +1
+tree.desc.reroll_5	每局重抽次数 +1
+tree.desc.crit_1	暴击率 +5%
+tree.desc.crit_2	暴击率 +5%
+tree.desc.critdmg_1	暴击伤害 +12%
+tree.desc.critdmg_2	暴击伤害 +12%
+tree.desc.critdmg_3	暴击伤害 +12%
+tree.desc.exp_1	经验获取 +13%
+tree.desc.exp_2	经验获取 +13%
+tree.desc.exp_3	经验获取 +13%
+tree.desc.exp_4	经验获取 +13%
+tree.desc.exp_5	经验获取 +13%
+tree.desc.gold_1	精华获取 +40%
+tree.desc.gold_2	精华获取 +90%
+tree.desc.gold_3	精华获取 +180%
+tree.desc.gold_4	精华获取 +360%
+tree.desc.gold_5	精华获取 +720%
+tree.desc.fly_1	对飞行敌人的额外伤害 +20%
+tree.desc.fly_2	对飞行敌人的额外伤害 +20%
+tree.desc.fly_3	对飞行敌人的额外伤害 +30%
+tree.desc.cool_1	所有技能冷却 -2%
+tree.desc.cool_2	所有技能冷却 -2%
+tree.desc.cool_3	所有技能冷却 -2%
+tree.desc.cool_4	所有技能冷却 -2%
+tree.desc.cool_5	所有技能冷却 -2%
+tree.desc.boss_1	对首领的伤害 +10%
+tree.desc.boss_2	对首领的伤害 +10%
+tree.desc.boss_3	对首领的伤害 +10%
+tree.desc.boss_4	对首领的伤害 +10%
+tree.desc.boss_5	对首领的伤害 +10%
+skill.gain.dmg	伤害 {0}%  ({1}→{2})
+skill.gain.cd	冷却时间 {0}%  ({1}→{2}秒)
+skill.gain.projSpeed	投射物速度 +{0}%
+skill.gain.pierce	穿透 +{0}次
+skill.gain.projCount	发射数 +{0}
+skill.gain.targets.orb	穿透目标 +{0}
+skill.gain.targets	同时攻击目标 +{0}
+skill.gain.tickRate	攻击间隔 -{0}%
+skill.gain.procChance	触发几率 +{0}%p
+skill.gain.duration	持续时间 +{0}秒
+skill.gain.scale	大小 +{0}%
+skill.gain.rewind	回溯时间 {0}秒
+skill.gain.growth	成长层数 {0}（使用越多越强）
+ui.evotree.tier1Bonus	伤害提高{0}% · 从1级重新成长
+credits.music	音乐
+credits.sfx	音效
+credits.vfx	视觉特效
+credits.fonts	字体
+credits.tools	工具

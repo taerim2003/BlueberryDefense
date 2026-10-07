@@ -10,6 +10,9 @@ public class SpriteFlipbook : MonoBehaviour
     [SerializeField] private bool loop = false;
     [SerializeField] private bool despawnOnFinish = true; // 비루프 재생이 끝나면 풀로 자동 반환 — 마지막 프레임이 얼어붙어 남는 잔상 방지
 
+    // 재생이 끝나면 스스로 풀로 돌아가는가. 호출측이 반환 타이머를 따로 걸지 말지 정할 때 본다.
+    public bool DespawnsItself => !loop && despawnOnFinish;
+
     private SpriteRenderer sr;
     private float timer;
     private bool finished;

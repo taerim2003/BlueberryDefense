@@ -43,7 +43,9 @@ public class EndingSequence : MonoBehaviour
 
     [Header("연출")]
     [SerializeField] private float zoomScale = 0.7f;          // 확대 시 화면 높이 배율
-    [SerializeField] private float clusterStopRatio = 0.22f;   // 군집체가 멈추는 자리 = 화면 왼쪽에서 폭의 이 비율
+    // 군집체가 멈추는 자리 = 화면 왼쪽에서 폭의 이 비율. 0.22 → 0.5(2026-10-07 사용자 "맵 가운데까지 굴러오도록" —
+    // 왼쪽에 서 있으면 근거리 스킬 빌드가 때리기 어렵다). ⚠️ 실제 값은 `Resources/EndingSequence.prefab`이 갖고 있다.
+    [SerializeField] private float clusterStopRatio = 0.5f;
     [SerializeField] private int burstChunks = 40;
 
     public static bool ShouldPlay()

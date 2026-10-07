@@ -44,6 +44,21 @@ public static class ReleaseBuild
             AddressableAssetSettings.BuildPlayerContent(out var addr);
             if (!string.IsNullOrEmpty(addr.Error)) { Log("FAILED addressables: " + addr.Error); return; }
 
+            // 🔴 DX11 고정을 빌드 직전에 API로 다시 건다. 활성 빌드 프로필(`Assets/Settings/Build Profiles/Windows.asset`)이
+            //    플레이어 설정 사본을 따로 갖고 `ProjectSettings.asset`을 덮는다 — 거기가 "자동(DX12, DX11)"이라
+            //    `ProjectSettings.asset`만 고친 10/6 13:16 빌드가 DX12로 나갔고 10/7에 또 크래시했다. 이 API는 프로필 쪽에 쓴다.
+            //    ⚠️ 빌드가 어느 API로 도는지는 `-batchmode`로 재지 말 것(배치모드는 DX12 빌드도 DX11로 뜬다). 창으로 띄운 `Player.log`를 본다.
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64, new[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11 });
+            Log("gfx auto=" + PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64)
+                + " apis=" + string.Join(",", PlayerSettings.GetGraphicsAPIs(BuildTarget.StandaloneWindows64)));
+
+            // 스플래시 끔 · 중복 실행 방지(2026-10-07 사용자). 그래픽 API와 같은 이유로 빌드 직전에 API로 건다 —
+            // 활성 빌드 프로필이 플레이어 설정 사본을 따로 갖고 있어 `ProjectSettings.asset`만 고치면 빌드에 안 들어간다.
+            PlayerSettings.SplashScreen.show = false;
+            PlayerSettings.forceSingleInstance = true;
+            Log("splash=" + PlayerSettings.SplashScreen.show + " singleInstance=" + PlayerSettings.forceSingleInstance);
+
             Log("player");
             var opts = new BuildPlayerOptions
             {

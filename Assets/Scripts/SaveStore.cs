@@ -91,14 +91,36 @@ public static class SaveStore
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(tmp, JsonUtility.ToJson(data, true));
-            if (File.Exists(path)) File.Replace(tmp, path, null);
-            else File.Move(tmp, path);
         }
         catch (Exception e)
         {
-            Debug.LogWarning("[SaveStore] 저장 실패: " + path + "\n" + e);
+            Debug.LogWarning("[SaveStore] 저장 실패(임시 파일): " + tmp + "\n" + e);
+            return;
         }
+
+        // 🔴 교체는 몇 번 다시 시도한다 — 다른 프로세스(Steam 클라우드 동기화·백신·색인)가 세이브를 잠깐 잡고 있으면
+        //    `File.Replace`가 "바꿀 파일을 제거할 수 없습니다"로 실패한다(2026-10-07 빌드 로그 실측, 클리어 직후 연속 저장 중 1건).
+        //    그 저장이 종료 직전의 마지막 저장이면 진행이 통째로 사라진다. 잠금은 수십 ms면 풀리므로 짧게 쉬고 다시 한다.
+        Exception last = null;
+        for (int attempt = 0; attempt < ReplaceAttempts; attempt++)
+        {
+            try
+            {
+                if (File.Exists(path)) File.Replace(tmp, path, null);
+                else File.Move(tmp, path);
+                return;
+            }
+            catch (Exception e)
+            {
+                last = e;
+                System.Threading.Thread.Sleep(ReplaceRetryMs);
+            }
+        }
+        Debug.LogWarning("[SaveStore] 저장 실패(" + ReplaceAttempts + "번 시도): " + path + "\n" + last);
     }
+
+    private const int ReplaceAttempts = 5;
+    private const int ReplaceRetryMs = 30;   // 최악 150ms 멈춤 — 저장은 판 종료·구매 같은 멈춘 순간에만 나간다
 
     private static void EnsureLoaded()
     {

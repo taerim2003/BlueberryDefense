@@ -14,6 +14,13 @@ public class ScalingTable : ScriptableObject
     public int xpToNextLevelBase = 18;     // 1→2레벨 필요 XP
     public int xpToNextLevelPerLevel = 9;  // 레벨당 필요 XP 증가
 
+    // 🔴 후반 레벨은 필요 XP에 배율을 더 곱한다(2026-10-07 사용자 — "40렙 이후 경험치가 너무 잘 찬다.
+    //    30렙부터 점진적으로 늘려 50렙쯤 기존의 2배"). 시작 레벨까지 1배 → 끝 레벨에서 최대(직선), 그 뒤로는 최대 유지.
+    [Header("후반 레벨 필요 XP 배율 (시작 레벨 1배 → 끝 레벨 최대, 이후 유지)")]
+    public int xpLateStartLevel = 30;
+    public int xpLateEndLevel = 50;
+    public float xpLateMultiplier = 2f;
+
     [Header("후반 XP 감쇠 (스테이지1=최대 → 기준스테이지=최소, 선형)")]
     public float xpFactorMax = 1f;
     public float xpFactorMin = 0.5f;
@@ -33,6 +40,10 @@ public class ScalingTable : ScriptableObject
 
     public float HpStepBonusAt(int step) => hpStepBonus[Mathf.Clamp(step, 0, hpStepBonus.Length - 1)];
     public float SpeedStepBonusAt(int step) => speedStepBonus[Mathf.Clamp(step, 0, speedStepBonus.Length - 1)];
+
+    // 그 레벨에서 다음 레벨로 가는 데 드는 XP에 곱하는 배율(위 후반 레벨 배율).
+    public float XpLevelFactor(int level) =>
+        Mathf.Lerp(1f, xpLateMultiplier, Mathf.InverseLerp(xpLateStartLevel, xpLateEndLevel, level));
 
     // 스테이지별 XP 획득 배율: stage1=Max → referenceStage=Min으로 선형 감소, 이후 Min 유지.
     public float XpStageFactor(int stage)

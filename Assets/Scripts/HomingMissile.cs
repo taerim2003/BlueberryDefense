@@ -192,7 +192,10 @@ public class HomingMissile : MonoBehaviour
                 vfx.transform.localScale = Vector3.one * explodeVfxScale * ExplodeVfxMult;
                 // Effect_Explosion은 4프레임 16fps(0.25초)에 `despawnOnFinish`가 꺼져 있다 —
                 // 반환을 늦추면 **마지막 연기 프레임이 그대로 얼어붙어** 남는다. 재생 길이 바로 뒤에 회수한다.
-                ObjectPool.Instance.Despawn(vfx, 0.3f);
+                // 🔴 스스로 반환하는 폭발(슈퍼 로켓의 Effect_SuperExplosion — 7프레임 1.3초)엔 이 타이머를 걸지 않는다.
+                //    걸면 0.3초에 잘려서 프리팹의 fps를 낮춰도 뒤 프레임이 안 보인다.
+                if (!(vfx.TryGetComponent(out SpriteFlipbook book) && book.DespawnsItself))
+                    ObjectPool.Instance.Despawn(vfx, 0.3f);
             }
             using (Enemy.GetSnapshot(out List<Enemy> enemies))
                 foreach (Enemy o in enemies)

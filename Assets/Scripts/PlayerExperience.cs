@@ -11,6 +11,7 @@ public class PlayerExperience : MonoBehaviour
     [SerializeField] private ScalingTable scaling; // XP 커브·후반 감쇠(전역). 미할당 시 기본값 폴백
 
     private float xpMultiplier = 1f;
+    private int xpToNextBase;   // 후반 레벨 배율을 곱하기 전의 필요 XP(레벨마다 일정하게 는다). xpToNextLevel = 이 값 × 배율
 
     public int Level => level;
     public int CurrentXP => currentXP;
@@ -21,7 +22,8 @@ public class PlayerExperience : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        xpToNextLevel = Scaling.xpToNextLevelBase;
+        xpToNextBase = Scaling.xpToNextLevelBase;
+        xpToNextLevel = Mathf.RoundToInt(xpToNextBase * Scaling.XpLevelFactor(level));
     }
 
     public float XpMultiplier => xpMultiplier; // ESC 요약에서 현재 경험치 획득 배율 표기용
@@ -42,7 +44,8 @@ public class PlayerExperience : MonoBehaviour
         {
             currentXP -= xpToNextLevel;
             level++;
-            xpToNextLevel += Scaling.xpToNextLevelPerLevel;
+            xpToNextBase += Scaling.xpToNextLevelPerLevel;
+            xpToNextLevel = Mathf.RoundToInt(xpToNextBase * Scaling.XpLevelFactor(level));
 
             if (levelUpVfxPrefab != null)
                 ObjectPool.Instance.SpawnTimed(levelUpVfxPrefab, transform.position, 2f);

@@ -1703,7 +1703,9 @@ public class PlayerSkills : MonoBehaviour
     // ⚠️ 그 폭발은 루트의 `Effect_Explosion`(호밍 1차·폭탄 독수리 공용)과 **다른 에셋**이다. 섞지 말 것.
     // 미배선이면 평범한 호밍 미사일 프리팹으로 떨어진다(판정은 그대로, 그림만 수수해진다).
     [SerializeField] private GameObject superRocketPrefab;
-    private const float SuperRocketScale = 2.6f;         // "거대한" 로켓 — 평소 미사일의 2.6배
+    // 🔴 프리팹 `Super_Rocket`의 localScale(0.75)에 **곱해진다** — 화면 배율은 0.75 × 이 값이다.
+    //    2.6이던 때는 1.95배라 로켓(120×70px)이 화면 폭의 41%였다. 2 = 프로젝트 규약 1.5배(2026-10-07 사용자 "좀 크다").
+    private const float SuperRocketScale = 2f;
     // 🔴 슈퍼 로켓은 다발 발사를 통째로 대체하므로 그 한 발이 곧 본체다 — 배율 1(2026-09-28).
     private const float SuperRocketDamageMult = 1f;
     private const float SuperRocketExplodeRadius = 5f;   // "주위 적들에게 큰 데미지"
@@ -3221,8 +3223,9 @@ public class PlayerSkills : MonoBehaviour
 
         if (skill.PathTier[1] >= 3)
         {
+            // 🔴 지속시간을 없앴다(2026-10-07 사용자 "지속시간 없이 맵 끝까지, 맵을 벗어나면 없어지게").
+            //    위 9/19 명세의 "대신 지속시간이 있다"를 뒤집은 결정이다. 소멸은 기본 오브와 같이 화면 왼쪽 밖(Orb.despawnX).
             orb.SpeedMultiplier = HugeOrbSpeedMult;
-            orb.LifetimeOverride = HugeOrbBaseLifetime + skill.ExtraWhirlwindDuration;
             // 레벨업 "빨아들이기 주기"(TickRate) — 작을수록 자주 끌어당긴다.
             orb.PullInterval = Mathf.Max(0.2f, HugeOrbPullInterval * skill.TickIntervalMult);
             orb.PullRadius = HugeOrbPullRadius;
@@ -3233,8 +3236,7 @@ public class PlayerSkills : MonoBehaviour
     // ── 초대형 오브(오브 R0 2차) 손잡이 ─────────────────────────────────────
     // 1차 「강력한 마력」의 이동속도(2026-09-29 사용자: 기본 오브보다 느리게). 초대형은 여기서 더 내려간다.
     private const float BigOrbSpeedMult = 0.6f;
-    private const float HugeOrbSpeedMult = 0.25f;      // "엄청 천천히" — 기본 이동속도의 1/4
-    private const float HugeOrbBaseLifetime = 6f;      // 레벨업 "지속시간"이 여기에 더해진다
+    private const float HugeOrbSpeedMult = 0.375f;     // "엄청 천천히" — 0.25 → 0.375(2026-10-07 사용자 "속도 50% 빠르게")
     private const float HugeOrbPullInterval = 1.2f;    // 끌어당기기 주기(초)
     private const float HugeOrbPullRadius = 4.5f;      // 끌어당기는 반경(유닛)
     private const float HugeOrbPullDistance = 1.6f;    // 한 번에 끌려오는 거리(유닛) — 넉백과 같은 이징·저항을 탄다

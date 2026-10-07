@@ -50,6 +50,8 @@ public class PlayerHealth : MonoBehaviour
             int absorbed = Mathf.Min(Overheal, amount);
             Overheal -= absorbed;
             amount -= absorbed;
+            // 보호막만 깎이고 끝나는 피격도 체력 피격과 같은 소리를 낸다(체력까지 뚫리면 아래에서 한 번 울린다).
+            if (absorbed > 0 && amount <= 0) SfxPlayer.Play(SfxId.PlayerHit);
         }
         if (amount <= 0) return;
 

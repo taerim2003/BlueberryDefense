@@ -42,6 +42,9 @@ disable-model-invocation: true
 3. 끝날 때까지 백그라운드로 기다린다(보통 3분 안팎):
    `F=Builds/Release/status.txt; for i in $(seq 1 300); do grep -q "DONE\|FAILED" $F && break; sleep 5; done; cat $F` (`run_in_background`).
    `FAILED`면 그 줄을 그대로 보고하고 멈춘다.
+   🔴 **`DONE`이 찍혀도 바로 zip으로 가지 말 것 — 40초쯤 `status.txt`에 새 줄이 안 붙는지 본다.**
+   한 번 큐에 넣은 빌드가 끝나자마자 다시 도는 일이 있다(10/7에 5회·2회, 원인 미확인). 다시 돌 때 출력 폴더를 먼저 지우므로
+   그 사이에 묶으면 **빈 zip**이 나온다. `DONE` 뒤에 `addressables` 줄이 또 붙었으면 마지막 `DONE`까지 기다린다.
    **`queued`에서 2분 넘게 안 넘어가면** 에디터의 `delayCall`이 안 도는 것이다 — 다시 큐에 넣어도 같다.
    `script-execute`로 `EditorApplication.update`에 한 번짜리 콜백을 걸어 `ReleaseBuild.Run`(private, 리플렉션)을 부르고,
    남아 있는 `delayCall`의 `Run`은 `-=`로 뺀다(두 번 도는 것 방지).

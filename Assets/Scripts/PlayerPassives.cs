@@ -333,7 +333,7 @@ public class PlayerPassives : MonoBehaviour
                 ? Loc.F("passive.lvl.Refresh", Pct(RefreshChancePerLevel))
                 : Loc.F("passive.lvl.PainAccel", PainAccelCutPerLevel.ToString("0.##")),
             PassiveSkillId.Knowledge => p.Route == 0
-                ? Loc.F("passive.lvl.TreasureFind", (TreasureChancePerLevel * 100f).ToString("0.##"))
+                ? Loc.F("passive.lvl.TreasureFind", (TreasureChancePerLevel * 100f).ToString("0.###"))
                 : Loc.F("passive.lvl.HomingXp", HomingKillXpPerLevel.ToString("0.##")),
             PassiveSkillId.Strength => p.Route == 0
                 ? Loc.F("passive.lvl.StrengthCrit", Pct(StrengthCritDamagePerLevel))
@@ -414,7 +414,7 @@ public class PlayerPassives : MonoBehaviour
 
             case PassiveSkillId.Knowledge:
                 lines.Add(Loc.F("passive.cur.Knowledge.xp", Pct(knowledgeXpBonus)));
-                if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add(Loc.F("passive.cur.Knowledge.treasure", Pct(EnemySpawner.ExtraTreasureChance)));
+                if (EnemySpawner.ExtraTreasureChance > 0f) lines.Add(Loc.F("passive.cur.Knowledge.treasure", (EnemySpawner.ExtraTreasureChance * 100f).ToString("0.###")));   // 0.075%p 단위라 Pct(소수 1자리)로는 뭉개진다
                 if (HomingKillXpMultiplier > 1f) lines.Add(Loc.F("passive.cur.Knowledge.homingXp", HomingKillXpMultiplier.ToString("0.##")));
                 break;
 
@@ -527,8 +527,9 @@ public class PlayerPassives : MonoBehaviour
             case (PassiveSkillId.Health, 2, 1): HeartDropMultiplier = HeartDropBase; break;
 
             // 지식 R0 「보물 탐지」 — 보물상자 블루베리 등장 확률
-            case (PassiveSkillId.Knowledge, 1, 1): EnemySpawner.ExtraTreasureChance += 0.005f; break;
-            case (PassiveSkillId.Knowledge, 1, 2): EnemySpawner.ExtraTreasureChance += 0.005f; break;
+            // 🔴 전 구간 절반(2026-10-07 사용자) — 진화 순간 0.5 → 0.25%p × 2, 레벨업 0.15 → 0.075%p. 만렙 합계 2.5% → 1.25%.
+            case (PassiveSkillId.Knowledge, 1, 1): EnemySpawner.ExtraTreasureChance += 0.0025f; break;
+            case (PassiveSkillId.Knowledge, 1, 2): EnemySpawner.ExtraTreasureChance += 0.0025f; break;
             // 지식 R1 「전투 통찰」 — **호밍 미사일로 처리한 적**이 추가 경험치를 남긴다(2026-09-08 문구 개정).
             // ⚠️ 예전엔 "독수리 투하 시전마다 XP"였다. 루트 조건이 호밍인데 대상이 독수리라 어긋나 있었다.
             case (PassiveSkillId.Knowledge, 2, 1): HomingKillXpMultiplier = HomingKillXpBase; break;
@@ -572,7 +573,7 @@ public class PlayerPassives : MonoBehaviour
     // ⚠️ 진화 직후에도 한 번 불린다(EvolvePassive가 ApplyPassiveLevelEffect를 부른다) — 그게 진화의 "도약" 몫이다.
     // 가속 R0 「리프레쉬」: 진화 즉시 10%(티어 8% + 도약 2%p) + 레벨마다 +2%p (사용자 결정 2026-09-27 · 10/1 재확인). 만렙 28%.
     private const float RefreshChancePerLevel = 0.02f;
-    private const float TreasureChancePerLevel = 0.0015f;  // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.15%p(2026-10-01 사용자)
+    private const float TreasureChancePerLevel = 0.00075f; // 지식 R0 「보물 탐지」: 레벨마다 보물 블루베리 변환 확률 +0.075%p(2026-10-07 사용자 — 0.15에서 절반)
     private const float StrengthQDamagePerLevel = 0.10f;   // 힘 R1 「생활 근육」: 레벨마다 Q스킬 피해 +10%(2026-10-01 사용자 — 15에서 정정)
     // 힘 R0 「불타는 근육」: 레벨마다 치명타 피해 배율 +0.1(= 카드 "+10%", 스킬트리 치명타 피해 노드와 같은 표기). 기본 배율 ×2에 더해진다.
     //   진화 순간 +0.5(T1·T2) + 도약 1회 0.1, 만렙까지 9회 더 → ×2 기준 최대 ×3.5. 0.2 → 0.1(2026-10-07 사용자).

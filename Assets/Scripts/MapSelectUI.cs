@@ -37,6 +37,11 @@ public class MapSelectUI : MonoBehaviour
     [SerializeField] private TMP_Text characterNameText;          // 현재 선택된 캐릭터 이름
     [SerializeField] private Image characterPortrait;             // 현재 캐릭터 초상화(선택, 없으면 숨김)
 
+    // 난이도별 클리어 훈장. 그림·위치·크기는 **씬의 `CardTemplate/Medals`가 정한다**(자식 순서 = 쉬움·보통·어려움) —
+    // 맵 이름 박스 아래 가운데에 두었고, 씬에서 직접 옮겨 맞춘다(2026-10-07 사용자). 코드는 색만 칠한다.
+    // 아직 못 깬 난이도는 검은 실루엣만 남기고, 깨면 원래 색으로 드러난다.
+    private static readonly Color MedalSilhouette = new Color(0f, 0f, 0f, 0.85f);
+
     // 잠긴 맵 카드의 썸네일 색 — 실루엣만 남긴다(CharacterSelectUI와 같은 규칙).
     private static readonly Color LockedSilhouette = new Color(0.08f, 0.08f, 0.1f, 0.85f);
 
@@ -48,6 +53,7 @@ public class MapSelectUI : MonoBehaviour
     private readonly List<Image> cardGlows = new List<Image>();
     private readonly List<JuicyButton> cardJuicy = new List<JuicyButton>(); // 고른 카드만 원본 크기·색으로 남긴다
     private readonly List<Image> cardThumbs = new List<Image>();            // 배경 컷을 여기서 돌린다
+    private readonly List<Image[]> cardMedals = new List<Image[]>();        // maps 순서. 칸 = 난이도 순서
     private Coroutine thumbRoutine;
     private Image animThumb;      // 지금 돌고 있는 썸네일(끊겼을 때 정지 그림으로 되돌리려고)
     private Sprite animStill;
@@ -96,6 +102,7 @@ public class MapSelectUI : MonoBehaviour
     public void Open()
     {
         if (!built) BuildCards();
+        RefreshMedals();
         if (splitTransition != null) splitTransition.Show();
         else if (panelTransition != null) panelTransition.Show();
         else if (panelRoot != null) panelRoot.SetActive(true);
@@ -232,6 +239,7 @@ public class MapSelectUI : MonoBehaviour
             cardThumbs.Add(thumb);
 
             if (locked) LockBadge.Add(card, lockIcon);
+            cardMedals.Add(FindMedals(card.transform));
 
             var nameText = UITreeUtil.FindDeep(card.transform, "Name")?.GetComponent<TMP_Text>();
             if (nameText != null && map != null)
@@ -257,6 +265,38 @@ public class MapSelectUI : MonoBehaviour
                 // 잠긴 맵도 **누를 수는 있다** — 눌러야 해금 조건을 볼 수 있기 때문이다.
                 // 판이 시작되는 것은 startButton.interactable과 Confirm()이 따로 막는다.
                 btn.onClick.AddListener(() => Select(idx));
+            }
+        }
+    }
+
+    // 카드의 `Medals` 아래 그림들을 자식 순서대로 모은다. 그 자식이 없는 카드면 빈 배열(훈장 없이 돈다).
+    private static Image[] FindMedals(Transform card)
+    {
+        Transform root = UITreeUtil.FindDeep(card, "Medals");
+        if (root == null) return new Image[0];
+        var medals = new List<Image>();
+        foreach (Transform child in root)
+        {
+            var img = child.GetComponent<Image>();
+            if (img != null) medals.Add(img);
+        }
+        return medals.ToArray();
+    }
+
+    // 그 맵에서 깬 난이도까지만 훈장을 드러내고 나머지는 실루엣으로 둔다.
+    private void RefreshMedals()
+    {
+        for (int m = 0; m < cardMedals.Count && m < maps.Length; m++)
+        {
+            int cleared = maps[m] != null ? MapClearSave.ClearedAscension(maps[m].name) : 0;
+            // 🔴 색을 직접 대입하면 안 된다 — 카드의 JuicyButton이 자식 그림의 "원본 색"을 기억해 두고
+            //    고르지 않은 카드를 어둡게 칠할 때 그 색으로 덮어쓴다. 깬 뒤에도 실루엣으로 남는다.
+            JuicyButton juicy = m < cardJuicy.Count ? cardJuicy[m] : null;
+            for (int i = 0; i < cardMedals[m].Length; i++)
+            {
+                Color c = i < cleared ? Color.white : MedalSilhouette;
+                if (juicy != null) juicy.SetDimBaseColor(cardMedals[m][i], c);
+                else cardMedals[m][i].color = c;
             }
         }
     }

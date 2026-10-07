@@ -993,7 +993,7 @@ MonoBehaviour:
   thanksHold: 4.5
   fade: 0.9
   zoomScale: 0.7
-  clusterStopRatio: 0.22
+  clusterStopRatio: 0.5
   burstChunks: 40
 --- !u!1 &6497703877214859140
 GameObject:

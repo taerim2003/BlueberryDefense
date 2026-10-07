@@ -3,7 +3,7 @@ using UnityEngine;
 
 // 낙뢰 버프는 지속시간 버프다. 🔴 **스택은 R0 진화(되감기 연계)를 올려야만 쌓인다**(사용자 결정 2026-09-17).
 // 진화 전엔 다시 쓰면 기존 버프를 지우고 지속시간만 새로 시작한다 — 쿨감으로 쿨이 지속시간보다 짧아져도 안 겹친다.
-// 진화 후엔 기존 버프를 지우지 않고 각자 자기 지속시간을 갖는 별도 스택으로 쌓인다.
+// 진화 후엔 기존 버프를 지우지 않고 스택으로 쌓인다. 다시 시전하면 전부의 지속시간이 새로 채워진다(AddStack).
 // 그래서 타격 한 번에 발동 확률을 스택 수만큼 독립적으로 굴린다(스택 2개면 최대 2번 발동 가능).
 public static class LightningStorm
 {
@@ -110,16 +110,14 @@ public static class LightningStorm
     {
         Prune();
         if (!StackingEnabled) stackEndTimes.Clear();
-        // 상한에 닿으면 **가장 먼저 꺼질 스택을 갱신**한다. 그냥 버리면 만스택에서 버프가 통째로 끊긴다.
-        if (StackingEnabled && stackEndTimes.Count >= Mathf.Max(1, MaxStacks))
-        {
-            int oldest = 0;
-            for (int i = 1; i < stackEndTimes.Count; i++)
-                if (stackEndTimes[i] < stackEndTimes[oldest]) oldest = i;
-            stackEndTimes[oldest] = Time.time + duration;
-            return;
-        }
-        stackEndTimes.Add(Time.time + duration);
+        // 🔴 다시 시전하면 **걸려 있는 스택 전부의 남은 시간을 새로 채운다**(2026-10-07 사용자 "4스택까지밖에 안 쌓인다").
+        //    종전엔 스택마다 따로 꺼져서 동시 스택이 `유지 시간 ÷ 시전 간격`에서 멈췄다 — 실측(뇌운 축적, 유지 30초):
+        //    Lv1 상한 4·실제 4 / Lv4 상한 6·실제 5 / Lv7 상한 8·실제 5 / Lv10 상한 10·실제 7. "최대 스택" 카드가 반쯤 빈 카드였다.
+        //    이제 유지 시간 안에 다시 쓰기만 하면 상한까지 쌓이고, 한 번 놓치면 통째로 꺼진다. 상한에 닿으면 시간만 채운다.
+        float endTime = Time.time + duration;
+        for (int i = 0; i < stackEndTimes.Count; i++) stackEndTimes[i] = endTime;
+        if (StackingEnabled && stackEndTimes.Count >= Mathf.Max(1, MaxStacks)) return;
+        stackEndTimes.Add(endTime);
     }
 
     // 타격 1회당 살아있는 스택 수만큼 독립적으로 발동 확률을 판정한다.

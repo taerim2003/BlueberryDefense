@@ -112,6 +112,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: ec01cc21a5e172f48a59104e7891b70b, type: 3}
   - {fileID: 21300000, guid: 1e3732f53017d9a4a8ff8a1a64c098fd, type: 3}
   - {fileID: 21300000, guid: ae35e5aacaf35384e82bd5210a966723, type: 3}
-  fps: 16
+  fps: 5.3333335
   loop: 0
   despawnOnFinish: 1

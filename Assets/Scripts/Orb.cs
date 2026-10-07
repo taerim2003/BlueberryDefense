@@ -24,7 +24,6 @@ public class Orb : MonoBehaviour
     // "오브 자체는 엄청 천천히 움직이고 · 방패병도 관통 · 관통 무한 · 대신 지속시간이 있다"
     public bool PiercesShields { get; set; }          // 방패 블루베리에 안 막히고 통과한다
     public float SpeedMultiplier { get; set; } = 1f;  // 이동 속도 배율(초대형은 아주 낮다)
-    public float LifetimeOverride { get; set; }       // >0이면 프리팹 수명 대신 이 값을 쓴다
     public float PullInterval { get; set; }           // 0이면 끌어당기지 않는다(= 기존 오브 전부)
     public float PullRadius { get; set; } = 4f;
     public float PullDistance { get; set; } = 1.6f;
@@ -49,14 +48,17 @@ public class Orb : MonoBehaviour
     {
         // 🔴 기본 오브에는 **수명도 관통 예산도 없다**(2026-09-27 사용자: "지속시간이나 관통력 다 없애고
         //    그냥 방패 블루베리 아니면 맵 끝까지 무조건 가게"). 소멸 경로는 ① 방패에 막힘 ② 맵 밖으로 나감 둘뿐이다.
-        // 🔴 단 초대형 오브(LifetimeOverride > 0)에서는 지속시간이 **명세된 대가**다("대신 지속시간이 있다").
-        if (LifetimeOverride > 0f) Destroy(gameObject, LifetimeOverride);
+        //    초대형 오브도 2026-10-07부터 같다(종전엔 6초 수명이 있었다).
 
         // 화면 왼쪽 경계보다 이만큼 더 나가면 소멸. 여유(DespawnMargin)가 필요하다 —
         // ScreenShake가 카메라 x를 최대 0.12유닛 흔들어서, 딱 경계로 잡으면 화면 안에서 사라지는 프레임이 생긴다.
+        // 🔴 오브 **반폭**도 더 나가야 한다 — 위치는 중심이라, 큰 오브(초대형은 반폭 3유닛 안팎)는 여유만으로는
+        //    절반이 화면에 남은 채 사라진다. 크기는 FireOrb가 Start 전에 넣어 두므로 여기서 재면 된다.
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        float halfWidth = sr != null ? sr.bounds.extents.x : 0f;
         Camera cam = Camera.main;
         despawnX = cam != null
-            ? cam.transform.position.x - cam.orthographicSize * cam.aspect - DespawnMargin
+            ? cam.transform.position.x - cam.orthographicSize * cam.aspect - DespawnMargin - halfWidth
             : float.NegativeInfinity;
 
         nextPullTime = Time.time + PullInterval;
